@@ -91,8 +91,8 @@ publishing {
                 url = 'https://qishr.github.io/cascara-common'
                 licenses {
                     license {
-                        name = 'GPLv3'
-                        url = 'https://www.gnu.org/licenses/gpl-3.0.html'
+                        name = 'GPLv3Apache License, Version 2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0'
                     }
                 }
                 developers {
