@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.yaml;
+package io.github.qishr.cascara.yaml.parser;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 

@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'io.github.qishr'
-version = '0.1.0'
+version = '0.1.1'
 
 repositories {
 	mavenLocal()
@@ -23,8 +23,8 @@ dependencies {
 }
 
 java {
-    // withJavadocJar()
-    // withSourcesJar()
+    withJavadocJar()
+    withSourcesJar()
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
