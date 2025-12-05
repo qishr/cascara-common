@@ -30,6 +30,10 @@ public class Property {
         this.kind = kind;
     }
 
+    public String getString() {
+        return value;
+    }
+
     public String getValue() {
         return value;
     }
@@ -54,6 +58,10 @@ public class Property {
         }
         return (value.equalsIgnoreCase("true") ||
              value.equalsIgnoreCase("yes"));
+    }
+
+    public boolean isEmpty() {
+        return value == null || value.isEmpty();
     }
 
     public enum Kind {

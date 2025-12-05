@@ -1,7 +1,6 @@
 package io.github.qishr.cascara.yaml.parser;
 
 import java.util.List;
-import java.util.Objects;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.yaml.ast.YamlMap;
@@ -213,8 +212,24 @@ public class Parser {
                 consume(Tokenizer.TokenType.KEY_INDICATOR, "Expected ':' after map key at root level.");
 
                 // Parse Value (this will handle the subsequent NEWLINE and INDENT)
-                YamlNode value = parseValue();
-trace("##1");
+                // Consume NEWLINEs before the value, if any.
+                while (check(Tokenizer.TokenType.NEWLINE)) {
+                    advance();
+                }
+
+                // CRITICAL FIX: Check for missing value before calling parseValue.
+                YamlNode value;
+                if (check(Tokenizer.TokenType.SCALAR) && peekAfterNewlines().type() == Tokenizer.TokenType.KEY_INDICATOR ||
+                    check(Tokenizer.TokenType.EOF)) {
+
+                    // Value is missing (e.g., "key:\nnextkey:") -> assign null
+                    value = new YamlScalar(null, YamlScalar.ScalarStyle.PLAIN);
+                } else {
+                    // Parse Value (this will handle the subsequent INDENT/data)
+                    value = parseValue();
+                }
+
+                trace("##1");
                 // Build Entry
                 YamlMappingEntry entry = new YamlMappingEntry();
                 entry.addChild(key);
@@ -241,8 +256,6 @@ trace("##1");
         YamlMap map = new YamlMap();
 
         while (true) {
-
-            // 2. CRITICAL CLEANUP: Consume all NEWLINEs at the start of the loop.
             while (check(Tokenizer.TokenType.NEWLINE)) {
                  advance();
             }
@@ -267,8 +280,27 @@ trace("##1");
                 // Consume Colon
                 consume(Tokenizer.TokenType.KEY_INDICATOR, "Expected ':' after map key.");
 
+                // Consume NEWLINEs before the value, if any.
+                while (check(Tokenizer.TokenType.NEWLINE)) {
+                    advance();
+                }
+
                 // Parse Value (this will handle the subsequent NEWLINE and INDENT)
-                YamlNode value = parseValue();
+                YamlNode value;
+                nextSignificantToken = peekAfterNewlines();
+
+                // If the next token is the start of a new entry (SCALAR:KEY_INDICATOR)
+                // OR the end of the current block (DEDENT/EOF), the value is implicit null.
+                if ((check(Tokenizer.TokenType.SCALAR) && nextSignificantToken.type() == Tokenizer.TokenType.KEY_INDICATOR) ||
+                    check(Tokenizer.TokenType.DEDENT) ||
+                    check(Tokenizer.TokenType.EOF)) {
+
+                    // Value is missing/null (e.g., "key:\nnextkey:")
+                    value = new YamlScalar(null, YamlScalar.ScalarStyle.PLAIN);
+                } else {
+                    // Parse Value (this will handle the subsequent NEWLINE and INDENT)
+                    value = parseValue();
+                }
 
                 // Build Entry
                 YamlMappingEntry entry = new YamlMappingEntry();

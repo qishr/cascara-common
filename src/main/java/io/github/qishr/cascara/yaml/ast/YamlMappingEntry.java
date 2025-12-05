@@ -124,4 +124,12 @@ public class YamlMappingEntry extends YamlNode {
         }
         return Collections.emptyList();
     }
+
+    public YamlMap getValueAsMap() {
+        YamlNode valueNode = getValue();
+        if (valueNode instanceof YamlMap map) {
+            return map;
+        }
+        return new YamlMap();
+    }
 }
