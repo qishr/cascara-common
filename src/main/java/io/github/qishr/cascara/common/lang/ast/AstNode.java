@@ -8,7 +8,7 @@ public interface AstNode {
     int getStartColumn();
     int getEndLine();
     int getEndColumn();
-    URI getUri();
+    URI getOriginUri();
     List<? extends AstNode> getChildren();
     List<CommentAstNode> getComments();
 

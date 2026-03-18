@@ -2,12 +2,13 @@ package io.github.qishr.cascara.common.lang.simple;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 
 import io.github.qishr.cascara.common.lang.StructuredDocument;
 import io.github.qishr.cascara.common.lang.ast.*;
 
 public final class SimpleDocument extends SimpleNode implements StructuredDocument {
+    private URI originUri;
+    private URI schemaUri;
 
     private final SimpleMapNode root;
 
@@ -19,9 +20,11 @@ public final class SimpleDocument extends SimpleNode implements StructuredDocume
         return root;
     }
 
-    public Optional<URI> getSchemaUri() {
-        return Optional.empty();
-    }
+    public URI getOriginUri() { return originUri; }
+    public void setOriginUri(URI originUri) { this.schemaUri = originUri; }
+
+    public URI getSchemaUri() { return schemaUri; }
+    public void setSchemaUri(URI schemaUri) { this.schemaUri = schemaUri; }
 
     public AstNode get(String key) {
         return root.get(key);

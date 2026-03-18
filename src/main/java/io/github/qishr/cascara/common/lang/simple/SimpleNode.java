@@ -13,5 +13,5 @@ public abstract class SimpleNode implements AstNode {
     @Override
     public int getEndColumn() { return 0; }
     @Override
-    public URI getUri() { return null; }
+    public URI getOriginUri() { return null; }
 }

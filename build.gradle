@@ -7,9 +7,6 @@ plugins {
 }
 
 
-group = 'io.github.qishr'
-
-
 sourceSets {
     main {
         java {

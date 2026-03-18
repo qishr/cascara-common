@@ -29,10 +29,10 @@ public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> ext
     MapAstNode<T,E> getMap(String key);
     SequenceAstNode<T> getSequence(String key);
 
-    // TODO: Should this return null or ""?
+    /// @return Returns the string value of the map entry, or null if it doesn't exist.
     default String getString(String key) {
         T node = get(key);
-        return (node instanceof ScalarAstNode scalar) ? scalar.getString() : "";
+        return (node instanceof ScalarAstNode scalar) ? scalar.getString() : null;
     }
 
     default int getInteger(String key, int defaultValue) {
