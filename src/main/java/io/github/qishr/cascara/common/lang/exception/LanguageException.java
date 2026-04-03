@@ -9,11 +9,12 @@ public abstract class LanguageException extends RuntimeException implements Loca
     private final int line;
     private final int column;
     private final URI uri;
+    private final String rawMessage;
 
     // Standard constructor for parser-detected logic errors
     public LanguageException(String message, int line, int column, URI uri) {
-        super(message);
-        // super(String.format("%s (%s:%d:%d)", message, uri, line, column));
+        super(messageWithLocation(message, line, uri));
+        this.rawMessage = message;
         this.line = line;
         this.column = column;
         this.uri = uri;
@@ -21,8 +22,8 @@ public abstract class LanguageException extends RuntimeException implements Loca
 
     // The "Wrapper" constructor for I/O or Stream failures
     public LanguageException(String message, Throwable cause, int line, int column, URI uri) {
-        super(message);
-        // super(String.format("%s (Context: L:%d C:%d)", message, line, column), cause);
+        super(messageWithLocation(message, line, uri));
+        this.rawMessage = message;
         this.line = line;
         this.column = column;
         this.uri = uri;
@@ -33,7 +34,16 @@ public abstract class LanguageException extends RuntimeException implements Loca
         this(message, cause, UNKNOWN_COORD, UNKNOWN_COORD, uri);
     }
 
+    private static String messageWithLocation(String message, int line, URI uri) {
+        if (uri == null) {
+            return String.format("%s at line %d", message, line);
+        } else {
+            return String.format("%s at %s:%d", message, uri.toString(), line);
+        }
+    }
+
     @Override public int getLine() { return line; }
     @Override public int getColumn() { return column; }
     @Override public URI getUri() { return uri; }
+    @Override public String getRawMessage() { return rawMessage; }
 }

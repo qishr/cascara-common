@@ -7,4 +7,5 @@ public interface LocatableException {
     int getColumn();
     URI getUri();
     String getMessage();
+    String getRawMessage();
 }
