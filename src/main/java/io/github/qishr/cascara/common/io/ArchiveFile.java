@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.util;
+package io.github.qishr.cascara.common.io;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;

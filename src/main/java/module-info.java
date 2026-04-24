@@ -1,12 +1,16 @@
 module cascara.common {
+    requires java.net.http;
+
     uses io.github.qishr.cascara.common.lang.processor.AstConverter;
     uses io.github.qishr.cascara.common.lang.processor.Emitter;
     uses io.github.qishr.cascara.common.lang.processor.Parser;
 
     exports io.github.qishr.cascara.common.lang.annotation;
     exports io.github.qishr.cascara.common.content;
-    exports io.github.qishr.cascara.common.filewatcher;
     exports io.github.qishr.cascara.common.diagnostic;
+    exports io.github.qishr.cascara.common.io;
+    exports io.github.qishr.cascara.common.io.filewatcher;
+    exports io.github.qishr.cascara.common.io.provider;
     exports io.github.qishr.cascara.common.lang;
     exports io.github.qishr.cascara.common.lang.ast;
     exports io.github.qishr.cascara.common.lang.exception;

@@ -103,4 +103,11 @@ public class ContentType {
         return false;
     }
 
+    @Override
+    public String toString() {
+        if (mimeTypes.isEmpty()) {
+            return id;
+        }
+        return mimeTypes.getFirst();
+    }
 }

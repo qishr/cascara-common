@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.util;
+package io.github.qishr.cascara.common.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -6,6 +6,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+
+import io.github.qishr.cascara.common.util.JarManifest;
+import io.github.qishr.cascara.common.util.Properties;
 
 public class JarFile extends ArchiveFile {
     private Properties manifestProperties = new Properties();

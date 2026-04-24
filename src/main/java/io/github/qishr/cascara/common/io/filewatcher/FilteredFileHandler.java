@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.filewatcher;
+package io.github.qishr.cascara.common.io.filewatcher;
 
 import java.nio.file.Path;
 import java.util.Set;
