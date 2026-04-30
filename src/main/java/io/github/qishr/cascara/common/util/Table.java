@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.diagnostic;
+package io.github.qishr.cascara.common.util;
 
 import java.io.IOException;
 import java.io.Writer;
