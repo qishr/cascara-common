@@ -7,7 +7,8 @@ public class Properties {
     List<Property> propertiesList = new ArrayList<>();
 
     public Property get(String k) {
-        for (Property prop : propertiesList) {
+        List<Property> copy = new ArrayList<>(propertiesList);
+        for (Property prop : copy) {
             if (prop.getKey() == null) {
                 System.out.println("shoud not be null");
             } else {

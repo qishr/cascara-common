@@ -5,10 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Indicates that a field should be ignored during YAML serialization (toYaml)
- * and deserialization (fromYaml).
- */
+/// Indicates that a field should be ignored during serialization
+/// and deserialization.
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DataIgnore {

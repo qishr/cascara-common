@@ -4,8 +4,7 @@ import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
 
-import io.github.qishr.cascara.common.content.ContentType;
-import io.github.qishr.cascara.common.lang.annotation.Nullable;
+import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.lang.processor.Parser;
 
 public class ContentTypes {

@@ -1,8 +1,10 @@
-package io.github.qishr.cascara.common.io;
+package io.github.qishr.cascara.common.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +19,11 @@ public class ArchiveFile {
 
     protected ArchiveFile(Path archivePath) {
         this.archivePath = archivePath;
+    }
+
+    public InputStream getInputStream(String filePath) {
+        byte[] byteArray = this.extractFile(filePath);
+        return new ByteArrayInputStream(byteArray);
     }
 
     public byte[] extractFile(String filePath) {
@@ -44,24 +51,32 @@ public class ArchiveFile {
         return new byte[0];
     }
 
+    public List<FileInfo> listFiles() throws IOException {
+        return listFiles(archivePath, null);
+    }
+
     public List<FileInfo> listFiles(String dirPath) throws IOException {
         return listFiles(archivePath, dirPath);
     }
 
     protected static List<FileInfo> listFiles(Path archivePath, String dirPath) throws IOException {
-        if (!dirPath.isEmpty() && !dirPath.endsWith("/")) {
+        if (dirPath != null && !dirPath.isEmpty() && !dirPath.endsWith("/")) {
             dirPath = dirPath + "/";
         }
         List<FileInfo> fileInfoList = new ArrayList<>();
         try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(archivePath.toFile()))) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
-                if (entry.getName().startsWith(dirPath) && !entry.getName().equals(dirPath)) {
+                if (dirPath == null) {
+                    FileInfo fileInfo = new FileInfo(entry.getName());
+                    fileInfoList.add(fileInfo);
+                } else if (entry.getName().startsWith(dirPath) && !entry.getName().equals(dirPath)) {
                     FileInfo fileInfo = new FileInfo(entry.getName().substring(dirPath.length()));
                     fileInfoList.add(fileInfo);
                 }
             }
         }
+
         return fileInfoList;
     }
 

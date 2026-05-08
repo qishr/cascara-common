@@ -1,6 +1,6 @@
 package io.github.qishr.cascara.common.lang.processor;
 
-import io.github.qishr.cascara.common.content.ContentType;
+import io.github.qishr.cascara.common.util.ContentType;
 
 /// A generic interface for emitting structured text.
 public interface Emitter extends Processor {

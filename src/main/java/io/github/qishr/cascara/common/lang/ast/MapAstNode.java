@@ -61,4 +61,13 @@ public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> ext
     default boolean getBoolean(String key) {
         return getBoolean(key, false);
     }
+
+    default String getString(String key, String defaultValue) {
+        T value = get(key);
+        return (value != null) ? value.getString() : defaultValue;
+    }
+
+    default String getAttributeOrDefault(String key, String defaultValue) {
+        return getString(key, defaultValue);
+    }
 }

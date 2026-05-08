@@ -2,7 +2,9 @@ package io.github.qishr.cascara.common.lang.exception;
 
 import java.net.URI;
 
-public abstract class LanguageException extends RuntimeException implements LocatableException {
+import io.github.qishr.cascara.common.util.CascaraRuntimeException;
+
+public abstract class LanguageException extends CascaraRuntimeException implements LocatableException {
     // Common constants for LocatableException implementations
     public static final int UNKNOWN_COORD = -1;
 

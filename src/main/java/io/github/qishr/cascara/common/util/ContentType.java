@@ -1,15 +1,28 @@
-package io.github.qishr.cascara.common.content;
+package io.github.qishr.cascara.common.util;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import io.github.qishr.cascara.common.content.ContentType;
 import io.github.qishr.cascara.common.lang.annotation.DataField;
+import io.github.qishr.cascara.common.lang.annotation.Serializable;
 
+/// A stable, persisted canonical content type used throughout Cascara.
+/// This class represents the authoritative identity of a content type,
+/// including its canonical ID, canonical name, and the full set of MIME
+/// types and filename suffixes associated with it.
+///
+/// ContentType instances are loaded from and saved to the
+/// canonical-content-types.yaml registry file. They provide stable,
+/// user‑facing identifiers that remain consistent across application runs,
+/// module changes, and plugin installations.
+///
+/// All editor selection, syntax highlighting, file associations, and
+/// user preferences should reference ContentType.
+@Serializable
 public class ContentType {
     @DataField
     /// Unique ID, used for menu items etc
-    private String id = "";
+    protected String canonicalId = "";
 
     @DataField
     protected String name = "";
@@ -36,9 +49,9 @@ public class ContentType {
         return this;
     }
 
-    public String getId() { return id; }
+    public String getCanonicalId() { return canonicalId; }
 
-    public void setId(String id) { this.id = id; }
+    public void setCanonicalId(String id) { this.canonicalId = id; }
 
     public String getName() {
         return name;
@@ -67,6 +80,15 @@ public class ContentType {
     //
     //
     //
+
+    public boolean isText() {
+        for (String mimeType : mimeTypes) {
+            if (mimeType.startsWith("text/")) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public boolean matches(String mimeType) {
         if (mimeTypes.contains(mimeType)) {
@@ -106,8 +128,18 @@ public class ContentType {
     @Override
     public String toString() {
         if (mimeTypes.isEmpty()) {
-            return id;
+            return canonicalId;
         }
         return mimeTypes.getFirst();
+    }
+
+    @Override
+    public int hashCode() {
+        return System.identityHashCode(this);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return this == o;
     }
 }

@@ -2,7 +2,7 @@ package io.github.qishr.cascara.common.spi;
 
 import java.util.ServiceLoader;
 
-import io.github.qishr.cascara.common.content.ContentType;
+import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.lang.annotation.Nullable;
 import io.github.qishr.cascara.common.lang.processor.AstConverter;
 

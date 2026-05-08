@@ -1,28 +1,30 @@
-package io.github.qishr.cascara.common.io;
+package io.github.qishr.cascara.common.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.module.InvalidModuleDescriptorException;
+import java.lang.module.ModuleDescriptor;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
-
-import io.github.qishr.cascara.common.util.JarManifest;
-import io.github.qishr.cascara.common.util.Properties;
+import java.util.Set;
 
 public class JarFile extends ArchiveFile {
     private Properties manifestProperties = new Properties();
     private Properties mavenProperties = new Properties();
-    private List<String> packageList = new ArrayList<>();
-    private String moduleName = "";
+    private Set<String> packageNames = null;
+    private Set<String> classNames = null;
+    private String moduleName = null;
+    // File file = null;
 
-    public static JarFile load(Path vsixPath) throws IOException {
-        String jarManifest = new String(extractFile(vsixPath, "META-INF/MANIFEST.MF"));
-        JarFile jar = new JarFile(vsixPath);
+    public static JarFile load(Path jarPath) throws IOException {
+        String jarManifest = new String(extractFile(jarPath, "META-INF/MANIFEST.MF"));
+        JarFile jar = new JarFile(jarPath);
         jar.manifestProperties = JarManifest.parse(jarManifest);
-        jar.extractMavenInfo();
-        jar.determineModuleName();
-        jar.discoverPackages();
+        jar.extractMavenInfo(); // TODO: Make this lazy
+        // jar.determineModuleName();
         return jar;
     }
 
@@ -43,11 +45,33 @@ public class JarFile extends ArchiveFile {
     }
 
     public String getModuleName() {
+        if (moduleName == null) {
+            moduleName = getJpmsModuleName();
+        }
+        if (moduleName == null) {
+            String automaticModuleName = manifestProperties.getString("Automatic-Module-Name");
+            if (automaticModuleName != null && !automaticModuleName.isBlank()) {
+                moduleName = automaticModuleName;
+            }
+        }
+        if (moduleName == null) {
+            determineModuleName();
+        }
         return moduleName;
     }
 
-    public List<String> getPackages() {
-        return packageList;
+    public Set<String> getPackages() {
+        if (packageNames == null) {
+            discoverPackages();
+        }
+        return packageNames;
+    }
+
+    public Set<String> getClassNames() {
+        if (classNames == null) {
+            discoverClasses();
+        }
+        return classNames;
     }
 
     private void extractMavenInfo() {
@@ -86,11 +110,6 @@ public class JarFile extends ArchiveFile {
     }
 
     private void determineModuleName() {
-        String automaticModuleName = manifestProperties.getString("Automatic-Module-Name");
-        if (automaticModuleName != null && !automaticModuleName.isBlank()) {
-            moduleName = automaticModuleName;
-            return;
-        }
         String[] fileNameSegments = getPath().getFileName().toString().split("-");
         StringBuilder sb = new StringBuilder();
         for (String segment : fileNameSegments) {
@@ -109,13 +128,53 @@ public class JarFile extends ArchiveFile {
         moduleName = sb.toString();
     }
 
+    private String getJpmsModuleName() {
+        InputStream is = getInputStream("module-info.class");
+        ModuleDescriptor descriptor;
+        try {
+            descriptor = ModuleDescriptor.read(is);
+            return descriptor.name();
+        } catch (IOException | InvalidModuleDescriptorException e) {
+            return null;
+        }
+    }
+
+    private void discoverClasses() {
+        List<FileInfo> allFiles;
+        try {
+            allFiles = listFiles();
+        } catch (IOException e) {
+            return;
+        }
+        classNames = new HashSet<>();
+        for (FileInfo fileInfo : allFiles) {
+            String entryName = fileInfo.getPath();
+            // if (fileInfo.getPath().endsWith(".class")) {
+            if (entryName.endsWith(".class")) {
+                // if (checkClassFile(jarFile, entry)) {
+                // }
+
+                if (entryName.endsWith("module-info.class")) {
+                    continue;
+                }
+
+                String className = entryName
+                    .replace("/", ".")
+                    .replace("\\", ".")
+                    .substring(0, entryName.length() - 6); // Remove DOT_CLASS
+                classNames.add(className);
+            }
+        }
+    }
+
     private void discoverPackages() {
+        packageNames = new HashSet<>();
         try {
             List<FileInfo> files = listFiles("");
             for (FileInfo info : files) {
                 String packageName = JarFile.getPackageName(info);
-                if (packageName != null && !packageList.contains(packageName)) {
-                    packageList.add(packageName);
+                if (packageName != null && !packageNames.contains(packageName)) {
+                    packageNames.add(packageName);
                 }
             }
         } catch (IOException _) {
@@ -143,4 +202,18 @@ public class JarFile extends ArchiveFile {
         }
         return null;
     }
+
+    // private static boolean checkClassFile(JarFile jarFile, JarEntry jarEntry) {
+    //     String arch = System.getProperty("os.arch");
+    //     System.out.println("JVM Architecture: " + arch);
+    //     try {
+    //         InputStream is = jarFile.getInputStream(jarEntry);
+    //         // System.out.println();
+    //         return true;
+    //     } catch (Exception e) {
+    //         System.out.println(e.getMessage());
+    //         e.printStackTrace();
+    //     }
+    //     return false;
+    // }
 }

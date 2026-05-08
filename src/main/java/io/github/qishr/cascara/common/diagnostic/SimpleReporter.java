@@ -1,23 +1,39 @@
 package io.github.qishr.cascara.common.diagnostic;
 
+import java.io.PrintStream;
 import java.net.URI;
 import java.util.Arrays;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 
 public class SimpleReporter implements Reporter {
+    private Class<?> clazz;
     private Level level = Level.INFO;
-    private ReportWriter logger = null;
-    private ReportCollector collector = null;
+    private ReportStringWriter stringWriter;
+    private ReportDiagnosticWriter diagnosticWriter;
+    private ReportCollector collector;
     private boolean disableSystemOutput = false;
     private boolean disableFlush = true;
 
-    public SimpleReporter(ReportWriter logger) {
-        this.logger = logger;
+    public SimpleReporter(ReportStringWriter writer) {
+        this.stringWriter = writer;
     }
 
     public SimpleReporter() {
         // Nothing to see here
+    }
+
+    @Override
+    public SimpleReporter forClass(Class<?> clazz) {
+        SimpleReporter reporter = new SimpleReporter();
+        reporter.clazz = clazz;
+        reporter.level = level;
+        reporter.stringWriter = stringWriter;
+        reporter.diagnosticWriter = diagnosticWriter;
+        reporter.collector = collector;
+        reporter.disableSystemOutput = disableSystemOutput;
+        reporter.disableFlush = disableFlush;
+        return reporter;
     }
 
     @Override
@@ -26,9 +42,21 @@ public class SimpleReporter implements Reporter {
         return this;
     }
 
+    // @Override
+    // public SimpleReporter setWriter(Writer writer) {
+    //     this.writer = writer;
+    //     return this;
+    // }
+
     @Override
-    public SimpleReporter setLogger(ReportWriter logger) {
-        this.logger = logger;
+    public SimpleReporter setStringWriter(ReportStringWriter writer) {
+        this.stringWriter = writer;
+        return this;
+    }
+
+    @Override
+    public SimpleReporter setDiagnosticWriter(ReportDiagnosticWriter writer) {
+        this.diagnosticWriter = writer;
         return this;
     }
 
@@ -52,48 +80,40 @@ public class SimpleReporter implements Reporter {
     /// @param msg The message to report.
     @Override
     public void trace(Object... msg) {
-        String message = format(msg);
-        if (level == Level.TRACE) {
-            print(Level.TRACE, message, 0, 0, null);
-        }
+        MsgAndEx mae = processParams(msg);
+        report(Level.TRACE, 0, 0, null, mae.msg(), mae.ex());
     }
 
     /// Reports a debug message through the reporter.
     /// @param msg The message to report.
     @Override
     public void debug(Object... msg) {
-        String message = format(msg);
-        if (level.compareTo(Level.DEBUG) >= 0) {
-            print(Level.DEBUG, message, 0, 0, null);
-        }
+        MsgAndEx mae = processParams(msg);
+        report(Level.DEBUG, 0, 0, null, mae.msg(), mae.ex());
     }
 
     /// Reports an informational message through the reporter.
     /// @param msg The message to report.
     @Override
     public void info(Object... msg) {
-        String message = format(msg);
-        if (level.compareTo(Level.INFO) >= 0) {
-            print(Level.INFO, message, 0, 0, null);
-        }
+        MsgAndEx mae = processParams(msg);
+        report(Level.INFO, 0, 0, null, mae.msg(), mae.ex());
     }
 
     /// Reports a warning message including location information.
     /// @param msg The warning message to report.
     @Override
     public void warn(Object... msg) {
-        String message = format(msg);
-        if (level.compareTo(Level.WARNING) >= 0) {
-            print(Level.WARNING, message, 0, 0, null);
-        }
+        MsgAndEx mae = processParams(msg);
+        report(Level.WARNING, 0, 0, null, mae.msg(), mae.ex());
     }
 
     /// Reports an error message including location information.
     /// @param msg The error message to report.
     @Override
     public void error(Object... msg) {
-        String message = format(msg);
-        print(Level.ERROR, message, 0, 0, null);
+        MsgAndEx mae = processParams(msg);
+        report(Level.ERROR, 0, 0, null, mae.msg(), mae.ex());
     }
 
     //
@@ -102,84 +122,97 @@ public class SimpleReporter implements Reporter {
 
     @Override
     public void infoAt(int line, int column, URI uri, Object... msg) {
-        String message = format(msg);
-        if (collector == null) {
-            if (level.compareTo(Level.INFO) >= 0) {
-                print(Level.INFO, message, line, column, uri);
-            }
-        } else {
-            collect(Level.INFO, message, line, column, uri);
-        }
+        MsgAndEx mae = processParams(msg);
+        report(Level.INFO, line, column, uri, mae.msg(), mae.ex());
     }
 
     @Override
     public void warnAt(int line, int column, URI uri, Object... msg) {
-        String message = format(msg);
-        collect(Level.WARNING, message, line, column, uri);
-        if (collector == null) {
-            if (level.compareTo(Level.WARNING) >= 0) {
-                print(Level.WARNING, message, line, column, uri);
-            }
-        } else {
-            collect(Level.WARNING, message, line, column, uri);
-        }
+        MsgAndEx mae = processParams(msg);
+        report(Level.WARNING, line, column, uri, mae.msg(), mae.ex());
     }
 
     @Override
     public void errorAt(int line, int column, URI uri, Object... msg) {
-        String message = format(msg);
-        if (collector == null) {
-            print(Level.ERROR, message, line, column, uri);
+        MsgAndEx mae = processParams(msg);
+        report(Level.ERROR, line, column, uri, mae.msg(), mae.ex());
+    }
+
+    //
+    //
+    //
+
+    private void report(Level level, int line, int column, URI uri, String message, Exception exception) {
+        if (collector == null || (level != Level.WARNING && level != Level.ERROR)) {
+            if (this.level.compareTo(level) >= 0) {
+                writeString(level, line, column, uri, message, exception);
+            }
+            if (this.diagnosticWriter != null) {
+                writeDiagnostic(level, line, column, uri, message, exception);
+            }
         } else {
-            collect(Level.ERROR, message, line, column, uri);
+            collect(level, line, column, uri, message, exception);
         }
     }
 
-    //
-    //
-    //
-
-    private void collect(Level level, String msg, int line, int column, URI uri) {
-        if (collector != null) {
-            Diagnostic diagnostic = new Diagnostic(level, msg, line, column, uri);
-            collector.collect(diagnostic);
-        }
+    private void collect(Level level, int line, int column, URI uri, String message, Exception exception) {
+        Diagnostic diagnostic = new Diagnostic(clazz, level, message, line, column, uri, exception);
+        collector.collect(diagnostic);
     }
 
-    private void print(Level kind, String message, int line, int column, URI uri) {
+    private void writeDiagnostic(Level level, int line, int column, URI uri, String message, Exception exception) {
+        Diagnostic diagnostic = new Diagnostic(clazz, level, message, line, column, uri, exception);
+        diagnosticWriter.write(diagnostic);
+    }
+
+    private void writeString(Level level, int line, int column, URI uri, String message, Exception exception) {
+        // Write to console / writer
         if (uri == null) {
-            write ("[" + kind + "] " + message + "\n");
+            writeString (level, "[" + level + "] " + message + "\n");
         } else {
             if (line > 0) {
-                write ("[" + kind + "] " + message + " at " + uri + ":" + line + ":" + column+ "\n");
+                writeString (level, "[" + level + "] " + message + " at " + uri + ":" + line + ":" + column+ "\n");
             } else {
-                write ("[" + kind + "] " + message + " in file: " + uri + "\n");
+                writeString (level, "[" + level + "] " + message + " in file: " + uri + "\n");
             }
         }
     }
 
-    private void write(String text) {
-        if (logger != null) {
-            logger.write(text);
-        } else if (!disableSystemOutput) {
-            System.out.print(text);
+    private void writeString(Level level, String text) {
+        PrintStream console = level == Level.ERROR ? System.err : System.out;
+        if (!disableSystemOutput) {
+            console.print(text);
             if (!disableFlush) {
-                System.out.flush();
+                console.flush();
             }
+        }
+        if (stringWriter != null) {
+            stringWriter.write(text);
         }
     }
 
-    private String format(Object... s) {
+    //
+    //
+    //
+
+    private MsgAndEx processParams(Object... s) {
         if (s == null || s.length == 0) {
-            return "Null or empty message";
+            return new MsgAndEx("Null or empty message", null);
         } else if (s[0] instanceof String m) {
             if (s.length == 1) {
-                return m;
+                return new MsgAndEx(m, null);
             } else {
-                return String.format(m, Arrays.<Object>copyOfRange(s, 1, s.length));
+                Object last = s[s.length - 1];
+                if (last instanceof Exception e) {
+                    return new MsgAndEx(String.format(m, Arrays.<Object>copyOfRange(s, 1, s.length - 1)), e);
+                } else {
+                    return new MsgAndEx(String.format(m, Arrays.<Object>copyOfRange(s, 1, s.length)), null);
+                }
             }
         } else {
-            return "First parameter must be of type String";
+            return new MsgAndEx("First parameter must be of type String", null);
         }
     }
+
+    private static record MsgAndEx(String msg, Exception ex) {}
 }
