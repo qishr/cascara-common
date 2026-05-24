@@ -7,7 +7,6 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -104,12 +103,15 @@ public class ServiceProviderLayer {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T loadProvider(Class<T> providerClass) {
+    public static <T> T loadProvider(Class<T> providerClass) {
+        if (!ServiceProvider.class.isAssignableFrom(providerClass)) {
+            throw new ServiceException("\"" + providerClass + "\" is not a ServiceProvider.");
+        }
         try {
             Constructor<?> constructor = providerClass.getDeclaredConstructor();
             if (constructor == null) {
-                reporter.debug("No declared constructor for " + providerClass.getName());
-                throw new ServiceException("Class " + providerClass.getName() + " has no no-args constructor");
+                getRootLayer().reporter.debug("No declared constructor for " + providerClass.getName());
+                throw new ServiceException("Class " + providerClass.getName() + " has no no-args constructor.");
             } else {
                 ServiceProvider instance = (ServiceProvider) constructor.newInstance();
                 return (T)instance;
@@ -118,6 +120,21 @@ public class ServiceProviderLayer {
                 | NoSuchMethodException e) {
             throw new ServiceException("Failed to instantiate class " + providerClass.getName() + ". Cause: " + e.getMessage(), e);
         }
+    }
+
+    // TODO: Don't just pick the first one, pick one that's declared in a Cascara module
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static <T> T loadDefault(Class<T> serviceType) {
+        if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
+            throw new ServiceException("\"" + serviceType + "\" is not a ServiceProvider.");
+        }
+        List<ServiceProviderMetadata> providers = getRootLayer().findAllProviders((Class)serviceType);
+        if (providers.isEmpty()) {
+            throw new ServiceException("No providers registered for " + serviceType.getSimpleName());
+        }
+        ServiceProviderMetadata meta = providers.getFirst();
+        Class<ServiceProvider> clazz = meta.getType();
+        return (T)loadProvider(clazz);
     }
 
     public Set<Class<ServiceProvider>> getServiceTypes() {
@@ -133,7 +150,7 @@ public class ServiceProviderLayer {
         return found;
     }
 
-    public <T> ServiceProviderMetadata getProviderMetadata(String providerName) {
+    public ServiceProviderMetadata getProviderMetadata(String providerName) {
         return providers.get(providerName);
     }
 
@@ -240,13 +257,12 @@ public class ServiceProviderLayer {
             moduleName.startsWith("javax.") ||
             moduleName.startsWith("jdk.")) {
             // These modules will never contain a Cascara ServiceProvider
-            getReporter().trace("Module \"%s\" cannot contain Cascara ServiceProvider", moduleName);
             return;
         }
 
         ClassLoader classLoader = module.getClassLoader();
         if (classLoader == null) {
-            getReporter().error("Module \"%s\" has no ClassLoader", moduleName);
+            getReporter().error("Module \"%s\" has no ClassLoader.", moduleName);
             return;
         }
 
@@ -254,7 +270,6 @@ public class ServiceProviderLayer {
         for (Provides provides : desc.provides()) {
             for (String providerClassName : provides.providers()) {
                 try {
-                    getReporter().debug("Discovering providers in \"%s\"", moduleName);
                     Class<?> type = classLoader.loadClass(providerClassName);
                     registerClass((Class)type);
                 } catch (ClassNotFoundException | ServiceException e) {
@@ -270,28 +285,8 @@ public class ServiceProviderLayer {
         if (type == null || !ServiceProvider.class.isAssignableFrom(type)) {
             return;
         }
-        // try {
-            ServiceProvider instance = (ServiceProvider) loadProvider(type);
-            registerProvider(instance, null);
-            // Constructor<?> constructor = type.getDeclaredConstructor();
-            // if (constructor == null) {
-            //     reporter.debug("No declared constructor for " + type.getName());
-            //     Method instanceMethod = type.getDeclaredMethod("instance");
-            //     if (instanceMethod == null) {
-            //         reporter.error("No instance method for " + type.getName());
-            //         throw new ServiceException("Class " + type.getName() + " has no no-args constructor or static instance method");
-            //     } else {
-            //         ServiceProvider instance = (ServiceProvider) instanceMethod.invoke(null);
-            //         registerProvider(instance, null);
-            //     }
-            // } else {
-            //     ServiceProvider instance = (ServiceProvider) constructor.newInstance();
-            //     registerProvider(instance, null);
-            // }
-        // } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-        //         | NoSuchMethodException e) {
-        //     throw new ServiceException("Failed to register class " + type.getName() + ". Cause: " + e.getMessage(), e);
-        // }
+        ServiceProvider instance = (ServiceProvider) loadProvider(type);
+        registerProvider(instance, null);
     }
 
     public void registerJar(Path jarPath) {
@@ -306,7 +301,7 @@ public class ServiceProviderLayer {
         }
 
         if (moduleName == null || moduleName.isEmpty()) {
-            String message = String.format("Jar \"%s\" does not contain a module", jarPath);
+            String message = String.format("Jar \"%s\" does not contain a module.", jarPath);
             throw new ServiceException(message);
         }
 
@@ -356,6 +351,7 @@ public class ServiceProviderLayer {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private void registerProvider(ServiceProvider provider, String location) {
+        getReporter().debug("Registering \"%s\"", provider.getClass().getName());
         try {
             Class<?> providerClass = provider.getClass();
 
@@ -365,8 +361,6 @@ public class ServiceProviderLayer {
 
                 String providerClassName = providerClass.getName();
                 Properties capabilities = provider.getCapabilities();
-
-                // System.out.println("  Valid: " + providerClassName);
 
                 capabilitiesForProvider.put(providerClassName, provider.getCapabilities());
 

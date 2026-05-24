@@ -7,7 +7,6 @@ import java.util.Arrays;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 
 public class SimpleReporter implements Reporter {
-    // private Class<?> clazz;
     private Level level = Level.INFO;
     private ReportStringWriter stringWriter;
     private ReportDiagnosticWriter diagnosticWriter;
@@ -23,36 +22,11 @@ public class SimpleReporter implements Reporter {
         // Nothing to see here
     }
 
-    // @Override
-    // public SimpleReporter forClass(Class<?> clazz) {
-    //     SimpleReporter reporter = new SimpleReporter();
-    //     reporter.clazz = clazz;
-    //     reporter.level = level;
-    //     reporter.stringWriter = stringWriter;
-    //     reporter.diagnosticWriter = diagnosticWriter;
-    //     reporter.collector = collector;
-    //     reporter.disableSystemOutput = disableSystemOutput;
-    //     reporter.disableFlush = disableFlush;
-    //     return reporter;
-    // }
-
     @Override
     public SimpleReporter setLevel(Level level) {
         this.level = level;
         return this;
     }
-
-    // @Override
-    // public SimpleReporter setWriter(Writer writer) {
-    //     this.writer = writer;
-    //     return this;
-    // }
-
-    // @Override
-    // public SimpleReporter setStringWriter(ReportStringWriter writer) {
-    //     this.stringWriter = writer;
-    //     return this;
-    // }
 
     @Override
     public SimpleReporter setDiagnosticWriter(ReportDiagnosticWriter writer) {

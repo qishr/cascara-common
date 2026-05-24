@@ -1,5 +1,6 @@
 package io.github.qishr.cascara.common.lang.ast;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -8,9 +9,12 @@ public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> ext
     T get(T key);
     E getEntry(T key);
     List<E> getEntries();
-    Set<T> keys();
-    void put(T key, T value);
+    Set<E> entrySet();
+    Set<T> keySet();
+    T put(T key, T value);
     void remove(T key);
+
+    Collection<T> values();
 
     @Override
     default List<E> getChildren() {
@@ -18,11 +22,12 @@ public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> ext
     }
 
     //
-    // Convenience Methods for String keys
+    // Convenience Methods
     //
 
     boolean containsKey(String key);
-    void put(String key, T value);
+    T put(String key, T value);
+    T put(String key, String value);
     void remove(String key);
     T get(String key);
 

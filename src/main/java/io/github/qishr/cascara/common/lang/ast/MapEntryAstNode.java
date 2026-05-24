@@ -6,13 +6,19 @@ import java.util.List;
 /// K The type of the key (usually String/ScalarAstNode)
 /// V The type of the value node
 public interface MapEntryAstNode<T extends AstNode> extends AstNode {
+
+    /// Returns the key corresponding to this entry.
     T getKey();
+
+    /// Returns the value corresponding to this entry.
     T getValue();
+
+    /// Replaces the value corresponding to this entry with the specified value (optional operation).
     void setValue(T value);
 
     @Override
     default List<T> getChildren() {
-        return List.of(getValue(), getValue());
+        return List.of(getKey(), getValue());
     }
 }
 

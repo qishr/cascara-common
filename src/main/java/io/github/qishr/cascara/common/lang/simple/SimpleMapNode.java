@@ -1,6 +1,7 @@
 package io.github.qishr.cascara.common.lang.simple;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -37,19 +38,20 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
     }
 
     @Override
-    public Set<SimpleNode> keys() {
+    public Set<SimpleNode> keySet() {
         return Set.copyOf(entries.stream().map(e -> e.getKey()).toList());
     }
 
     @Override
-    public void put(SimpleNode key, SimpleNode value) {
+    public SimpleMapNode put(SimpleNode key, SimpleNode value) {
         for (SimpleMapEntryNode entry : entries) {
             if (entry.getKey().equals(key)) {
                 entry.setValue(value);
-                return;
+                return this;
             }
         }
         entries.add(new SimpleMapEntryNode(key, value));
+        return this;
     }
 
     @Override
@@ -67,30 +69,27 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
         return false;
     }
 
-    public SimpleMapNode put2(String key, SimpleNode value) {
-        put(key, value);
-        return this;
-    }
-
-    public SimpleMapNode put2(String key, String value) {
+    @Override
+    public SimpleMapNode put(String key, String value) {
         SimpleScalarNode scalarValue = new SimpleScalarNode(value);
         put(key, scalarValue);
         return this;
     }
 
     @Override
-    public void put(String key, SimpleNode value) {
+    public SimpleMapNode put(String key, SimpleNode value) {
         for (SimpleMapEntryNode entry : entries) {
             SimpleNode kNode = entry.getKey();
             // Check if the existing key's string value matches the requested key
             if (kNode instanceof SimpleScalarNode scalar && key.equals(scalar.getString())) {
                 entry.setValue(value);
-                return;
+                return this;
             }
         }
         // Only if not found, create the new entry
         SimpleNode keyNode = new SimpleScalarNode(key);
         entries.add(new SimpleMapEntryNode(keyNode, value));
+        return this;
     }
 
     @Override
@@ -144,5 +143,17 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
     @Override
     public SimpleSequenceNode getSequence(String key) {
         throw new UnsupportedOperationException("Unimplemented method 'getSequence'");
+    }
+
+    @Override
+    public Set<SimpleMapEntryNode> entrySet() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'entrySet'");
+    }
+
+    @Override
+    public Collection<SimpleNode> values() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'values'");
     }
 }
