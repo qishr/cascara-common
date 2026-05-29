@@ -39,7 +39,7 @@ public class ContentType {
         this.name = name;
     }
 
-    public ContentType withMimeType(String mimeType) {
+    public ContentType withType(String mimeType) {
         mimeTypes.add(mimeType);
         return this;
     }

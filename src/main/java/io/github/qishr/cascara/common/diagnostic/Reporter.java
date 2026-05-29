@@ -1,49 +1,62 @@
 package io.github.qishr.cascara.common.diagnostic;
 
-import java.io.Writer;
 import java.net.URI;
+import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.lang.token.Token;
 
 public interface Reporter {
-
-    // /// Creates a new `Reporter` with the current settings,
-    // /// specifically for the specified class.
-    // /// Typically used for global logging by modules.
-    // Reporter forClass(Class<?> clazz);
 
     /// Sets the level of output when logging directly to the console.
     Reporter setLevel(Level level);
 
-    // Reporter setWriter(Writer writer);
+    Reporter setDiagnosticCollector(Consumer<Diagnostic> diagnosticCollector);
 
-    // Reporter setStringWriter(ReportStringWriter stringWriter);
+    Reporter setProblemCollector(Consumer<Diagnostic> diagnosticCollector);
 
-    Reporter setDiagnosticWriter(ReportDiagnosticWriter diagnosticWriter);
-
-    Reporter setCollector(ReportCollector collector);
+    boolean collectsProblems();
 
     /// Reports an trace message through the reporter.
-    /// @param m The message to report.
-    void trace(Object... m);
+    /// @param format The format of the message to report.
+    /// @param args Arguments referenced by the format specifiers in the format string.
+    /// If the last argument is a Throwable, it will not be used in message formatting
+    /// and will instead become a field in the Diagnostic produced by this call.
+    void trace(String format, Object... args);
 
     /// Reports an debug message through the reporter.
-    /// @param m The message to report.
-    void debug(Object... m);
+    /// @param format The format of the message to report.
+    /// @param args Arguments referenced by the format specifiers in the format string.
+    /// If the last argument is a Throwable, it will not be used in message formatting
+    /// and will instead become a field in the Diagnostic produced by this call.
+    void debug(String format, Object... args);
 
     /// Reports an informational message through the reporter.
-    /// @param m The message to report.
-    void info(Object... m);
+    /// @param format The format of the message to report.
+    /// @param args Arguments referenced by the format specifiers in the format string.
+    /// If the last argument is a Throwable, it will not be used in message formatting
+    /// and will instead become a field in the Diagnostic produced by this call.
+    void info(String format, Object... args);
 
     /// Reports a warning message including location information.
-    /// @param m The warning message to report.
-    void warn(Object... m);
+    /// @param format The format of the message to report.
+    /// @param args Arguments referenced by the format specifiers in the format string.
+    /// If the last argument is a Throwable, it will not be used in message formatting
+    /// and will instead become a field in the Diagnostic produced by this call.
+    void warn(String format, Object... args);
 
     /// Reports an error message including location information.
-    /// @param m The error message to report.
-    void error(Object... m);
+    /// @param format The format of the message to report.
+    /// @param args Arguments referenced by the format specifiers in the format string.
+    /// If the last argument is a Throwable, it will not be used in message formatting
+    /// and will instead become a field in the Diagnostic produced by this call.
+    void error(String format, Object... args);
 
-    void infoAt(int line, int column, URI uri, Object... m);
-    void warnAt(int line, int column, URI uri, Object... m);
-    void errorAt(int line, int column, URI uri, Object... m);
+    void infoAt(int start, int end, int line, int column, URI uri, String format, Object... args);
+    void warnAt(int start, int end, int line, int column, URI uri, String format, Object... args);
+    void errorAt(int start, int end, int line, int column, URI uri, String format, Object... args);
+
+    void infoAt(Token token, URI uri, String format, Object... args);
+    void warnAt(Token token, URI uri, String format, Object... args);
+    void errorAt(Token token, URI uri, String format, Object... args);
 }

@@ -1,6 +1,6 @@
 package io.github.qishr.cascara.common.lang.exception;
 
-public class SerializerException extends LanguageException {
+public class SerializerException extends LocatableException {
     public SerializerException(String m) {
         super(m, 0, 0, null);
     }

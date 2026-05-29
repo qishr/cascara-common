@@ -105,7 +105,7 @@ public class JarFile extends ArchiveFile {
                     return mavenDirectory + info.getPath();
                 }
             }
-        } catch (IOException _) {
+        } catch (IOException e) {
             // Ignore for now
         }
         return null;
@@ -193,7 +193,7 @@ public class JarFile extends ArchiveFile {
                     packageNames.add(packageName);
                 }
             }
-        } catch (IOException _) {
+        } catch (IOException e) {
             // Ignore for now
         }
     }

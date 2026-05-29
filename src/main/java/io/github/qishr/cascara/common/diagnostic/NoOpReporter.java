@@ -1,40 +1,37 @@
 package io.github.qishr.cascara.common.diagnostic;
 
 import java.net.URI;
+import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.lang.token.Token;
 
 public class NoOpReporter implements Reporter {
 
-    public NoOpReporter(ReportDiagnosticWriter logger) {
+    public NoOpReporter(Consumer<String> writer) {
     }
 
     public NoOpReporter() {
         // Nothing to see here
     }
 
-    // @Override
-    // public NoOpReporter forClass(Class<?> clazz) {
-    //     return this;
-    // }
+    @Override
+    public boolean collectsProblems() {
+        return false;
+    }
 
     @Override
     public NoOpReporter setLevel(Level level) {
         return this;
     }
 
-    // @Override
-    // public NoOpReporter setStringWriter(ReportStringWriter writer) {
-    //     return this;
-    // }
-
     @Override
-    public NoOpReporter setDiagnosticWriter(ReportDiagnosticWriter logger) {
+    public NoOpReporter setDiagnosticCollector(Consumer<Diagnostic> diagnosticCollector) {
         return this;
     }
 
     @Override
-    public NoOpReporter setCollector(ReportCollector collector) {
+    public NoOpReporter setProblemCollector(Consumer<Diagnostic> diagnosticCollector) {
         return this;
     }
 
@@ -42,31 +39,49 @@ public class NoOpReporter implements Reporter {
         return this;
     }
 
-    @Override
-    public void trace(Object... msg) {}
+    //
+    // Plain
+    //
 
     @Override
-    public void debug(Object... msg) {}
+    public void trace(String format, Object... args) {}
 
     @Override
-    public void info(Object... msg) {}
+    public void debug(String format, Object... args) {}
 
     @Override
-    public void warn(Object... msg) {}
+    public void info(String format, Object... args) {}
 
     @Override
-    public void error(Object... msg) {}
+    public void warn(String format, Object... args) {}
+
+    @Override
+    public void error(String format, Object... args) {}
 
     //
     // With Location
     //
 
     @Override
-    public void infoAt(int line, int column, URI uri, Object... msg) {}
+    public void infoAt(int start, int end, int line, int column, URI uri, String format, Object... args) {}
 
     @Override
-    public void warnAt(int line, int column, URI uri, Object... msg) {}
+    public void warnAt(int start, int end, int line, int column, URI uri, String format, Object... args) {}
 
     @Override
-    public void errorAt(int line, int column, URI uri, Object... msg) {}
+    public void errorAt(int start, int end, int line, int column, URI uri, String format, Object... args) {}
+
+    //
+    // With Token
+    //
+
+    @Override
+    public void infoAt(Token token, URI uri, String format, Object... args) {}
+
+    @Override
+    public void warnAt(Token token, URI uri, String format, Object... args) {}
+
+    @Override
+    public void errorAt(Token token, URI uri, String format, Object... args) {}
+
 }

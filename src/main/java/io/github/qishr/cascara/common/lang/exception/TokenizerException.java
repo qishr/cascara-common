@@ -2,7 +2,7 @@ package io.github.qishr.cascara.common.lang.exception;
 
 import java.net.URI;
 
-public class TokenizerException extends LanguageException {
+public class TokenizerException extends LocatableException {
 
     /// Standard constructor for parser-detected logic errors
     public TokenizerException(String message, int line, int column, URI uri) {

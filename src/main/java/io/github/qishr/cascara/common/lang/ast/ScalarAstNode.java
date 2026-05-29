@@ -1,5 +1,7 @@
 package io.github.qishr.cascara.common.lang.ast;
 
+import io.github.qishr.cascara.common.lang.QuoteStyle;
+
 public interface ScalarAstNode<T extends AstNode> extends AstNode {
     void setQuoteStyle(QuoteStyle style);
     QuoteStyle getQuoteStyle();

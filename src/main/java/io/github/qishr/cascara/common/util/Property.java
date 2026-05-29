@@ -65,7 +65,7 @@ public class Property {
     public double getDouble(double defaultValue) {
         try {
             return Double.parseDouble(value);
-        } catch (NumberFormatException _) {
+        } catch (NumberFormatException e) {
             return defaultValue;
         }
     }
@@ -85,11 +85,11 @@ public class Property {
     public long getLong(int defaultValue) {
         try {
             return Long.parseLong(value);
-        } catch (NumberFormatException _) {
+        } catch (NumberFormatException e) {
         }
         try {
             return Double.valueOf(value).longValue();
-        } catch (NumberFormatException _) {
+        } catch (NumberFormatException e) {
         }
         return defaultValue;
     }
