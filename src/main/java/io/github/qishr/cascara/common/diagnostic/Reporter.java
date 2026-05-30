@@ -11,9 +11,9 @@ public interface Reporter {
     /// Sets the level of output when logging directly to the console.
     Reporter setLevel(Level level);
 
-    Reporter setDiagnosticCollector(Consumer<Diagnostic> diagnosticCollector);
+    Reporter setDiagnosticCollector(Consumer<Diagnostic> collector);
 
-    Reporter setProblemCollector(Consumer<Diagnostic> diagnosticCollector);
+    Reporter setProblemCollector(Consumer<Diagnostic> collector);
 
     boolean collectsProblems();
 

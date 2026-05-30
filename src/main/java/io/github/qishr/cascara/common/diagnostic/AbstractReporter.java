@@ -10,7 +10,6 @@ import io.github.qishr.cascara.common.lang.exception.LocatableException;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 public abstract class AbstractReporter<T extends AbstractReporter<?>> implements Reporter {
-    private static final Object[] NULL = null;
     protected Level level = Level.INFO;
 
     protected Class<?> clazz;
