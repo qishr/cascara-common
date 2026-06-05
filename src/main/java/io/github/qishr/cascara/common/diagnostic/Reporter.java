@@ -1,6 +1,5 @@
 package io.github.qishr.cascara.common.diagnostic;
 
-import java.net.URI;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
@@ -72,41 +71,37 @@ public interface Reporter {
     /// Reports an informational message anchored to a resource location by line and column.
     /// Useful when text stream indices are unavailable.
     ///
-    /// @param uri The URI identifying the source resource.
     /// @param line The 1-based line number of the diagnostic.
     /// @param column The 1-based column number of the diagnostic.
     /// @param format The format string.
     /// @param args Arguments for the format string. If the last argument is a [Throwable],
     ///             it maps directly to the diagnostic's cause.
-    void infoAt(URI uri, int line, int column, String format, Object... args);
+    void infoAt(int line, int column, String format, Object... args);
 
     /// Reports a warning anchored to a resource location by line and column.
     /// Useful when text stream indices are unavailable.
     ///
-    /// @param uri The URI identifying the source resource.
     /// @param line The 1-based line number of the diagnostic.
     /// @param column The 1-based column number of the diagnostic.
     /// @param code The semantic classification code for this warning.
     /// @param format The format string.
     /// @param args Arguments for the format string. If the last argument is a [Throwable],
     ///             it maps directly to the diagnostic's cause.
-    void warnAt(URI uri, int line, int column, String code, String format, Object... args);
+    void warnAt(int line, int column, String code, String format, Object... args);
 
     /// Reports an error anchored to a resource location by line and column.
     /// Useful when text stream indices are unavailable.
     ///
-    /// @param uri The URI identifying the source resource.
     /// @param line The 1-based line number of the diagnostic.
     /// @param column The 1-based column number of the diagnostic.
     /// @param code The semantic classification code for this error.
     /// @param format The format string.
     /// @param args Arguments for the format string. If the last argument is a [Throwable],
     ///             it maps directly to the diagnostic's cause.
-    void errorAt(URI uri, int line, int column, String code, String format, Object... args);
+    void errorAt(int line, int column, String code, String format, Object... args);
 
     /// Reports an informational message anchored to a precise character span within a resource.
     ///
-    /// @param uri The URI identifying the source resource.
     /// @param line The 1-based line number of the diagnostic.
     /// @param column The 1-based column number of the diagnostic.
     /// @param start The 0-based absolute character index indicating the start of the span.
@@ -114,11 +109,10 @@ public interface Reporter {
     /// @param format The format string.
     /// @param args Arguments for the format string. If the last argument is a [Throwable],
     ///             it maps directly to the diagnostic's cause.
-    void infoAt(URI uri, int line, int column, int start, int end, String format, Object... args);
+    void infoAt(int line, int column, int start, int end, String format, Object... args);
 
     /// Reports a warning anchored to a precise character span within a resource.
     ///
-    /// @param uri The URI identifying the source resource.
     /// @param line The 1-based line number of the diagnostic.
     /// @param column The 1-based column number of the diagnostic.
     /// @param start The 0-based absolute character index indicating the start of the span.
@@ -127,11 +121,10 @@ public interface Reporter {
     /// @param format The format string.
     /// @param args Arguments for the format string. If the last argument is a [Throwable],
     ///             it maps directly to the diagnostic's cause.
-    void warnAt(URI uri, int line, int column, int start, int end, String code, String format, Object... args);
+    void warnAt(int line, int column, int start, int end, String code, String format, Object... args);
 
     /// Reports an error anchored to a precise character span within a resource.
     ///
-    /// @param uri The URI identifying the source resource.
     /// @param line The 1-based line number of the diagnostic.
     /// @param column The 1-based column number of the diagnostic.
     /// @param start The 0-based absolute character index indicating the start of the span.
@@ -140,34 +133,31 @@ public interface Reporter {
     /// @param format The format string.
     /// @param args Arguments for the format string. If the last argument is a [Throwable],
     ///             it maps directly to the diagnostic's cause.
-    void errorAt(URI uri, int line, int column, int start, int end, String code, String format, Object... args);
+    void errorAt(int line, int column, int start, int end, String code, String format, Object... args);
 
     /// Reports an informational message derived from the location attributes of a structural token.
     ///
-    /// @param uri The URI identifying the source resource.
     /// @param token The syntactic [Token] supplying the positional bounds.
     /// @param format The format string.
     /// @param args Arguments for the format string. If the last argument is a [Throwable],
     ///             it maps directly to the diagnostic's cause.
-    void infoAt(URI uri, Token token, String format, Object... args);
+    void infoAt(Token token, String format, Object... args);
 
     /// Reports a warning derived from the location attributes of a structural token.
     ///
-    /// @param uri The URI identifying the source resource.
     /// @param token The syntactic [Token] supplying the positional bounds.
     /// @param code The semantic classification code for this warning.
     /// @param format The format string.
     /// @param args Arguments for the format string. If the last argument is a [Throwable],
     ///             it maps directly to the diagnostic's cause.
-    void warnAt(URI uri, Token token, String code, String format, Object... args);
+    void warnAt(Token token, String code, String format, Object... args);
 
     /// Reports an error derived from the location attributes of a structural token.
     ///
-    /// @param uri The URI identifying the source resource.
     /// @param token The syntactic [Token] supplying the positional bounds.
     /// @param code The semantic classification code for this error.
     /// @param format The format string.
     /// @param args Arguments for the format string. If the last argument is a [Throwable],
     ///             it maps directly to the diagnostic's cause.
-    void errorAt(URI uri, Token token, String code, String format, Object... args);
+    void errorAt(Token token, String code, String format, Object... args);
 }

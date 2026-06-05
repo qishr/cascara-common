@@ -2,17 +2,17 @@ package io.github.qishr.cascara.common.diagnostic;
 
 import java.util.function.Consumer;
 
-public class SimpleReporter extends AbstractReporter<SimpleReporter> {
-    public SimpleReporter(Consumer<String> writer) {
+public class StandardReporter extends AbstractReporter<StandardReporter> {
+    public StandardReporter(Consumer<String> writer) {
         super(writer);
     }
 
-    public SimpleReporter() {
+    public StandardReporter() {
         // Nothing to see here
     }
 
     @Override
-    protected SimpleReporter self() { return this; }
+    protected StandardReporter self() { return this; }
 
     @Override
     protected void writeString(Diagnostic diagnostic) {

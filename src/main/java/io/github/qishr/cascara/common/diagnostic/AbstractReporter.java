@@ -1,7 +1,6 @@
 package io.github.qishr.cascara.common.diagnostic;
 
 import java.io.PrintStream;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -102,9 +101,9 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
 
     @Override
-    public void infoAt(URI uri, int line, int column, String format, Object... args) {
+    public void infoAt(int line, int column, String format, Object... args) {
         report(buildDiagnostic(
-            uri, line, column,
+            line, column,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
             source, Level.INFO, null,
@@ -113,9 +112,9 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     }
 
     @Override
-    public void warnAt(URI uri, int line, int column, String code, String format, Object... args) {
+    public void warnAt(int line, int column, String code, String format, Object... args) {
         report(buildDiagnostic(
-            uri, line, column,
+            line, column,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
             source, Level.WARN, code,
@@ -124,9 +123,9 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     }
 
     @Override
-    public void errorAt(URI uri, int line, int column, String code, String format, Object... args) {
+    public void errorAt(int line, int column, String code, String format, Object... args) {
         report(buildDiagnostic(
-            uri, line, column,
+            line, column,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
             source, Level.ERROR, code,
@@ -139,18 +138,18 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
 
     @Override
-    public void infoAt(URI uri, int line, int column, int start, int end, String format, Object... args) {
-        report(buildDiagnostic(uri, line, column, start, end, source, Level.INFO, null, format, args));
+    public void infoAt(int line, int column, int start, int end, String format, Object... args) {
+        report(buildDiagnostic(line, column, start, end, source, Level.INFO, null, format, args));
     }
 
     @Override
-    public void warnAt(URI uri, int line, int column, int start, int end, String code, String format, Object... args) {
-        report(buildDiagnostic(uri, line, column, start, end, source, Level.WARN, code, format, args));
+    public void warnAt(int line, int column, int start, int end, String code, String format, Object... args) {
+        report(buildDiagnostic(line, column, start, end, source, Level.WARN, code, format, args));
     }
 
     @Override
-    public void errorAt(URI uri, int line, int column, int start, int end, String code, String format, Object... args) {
-        report(buildDiagnostic(uri, line, column, start, end, source, Level.ERROR, code, format, args));
+    public void errorAt(int line, int column, int start, int end, String code, String format, Object... args) {
+        report(buildDiagnostic(line, column, start, end, source, Level.ERROR, code, format, args));
     }
 
     //
@@ -158,18 +157,18 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
 
     @Override
-    public void infoAt(URI uri, Token token, String format, Object... args) {
-        report(buildDiagnostic(uri, token, source, Level.INFO, null, format, args));
+    public void infoAt(Token token, String format, Object... args) {
+        report(buildDiagnostic(token, source, Level.INFO, null, format, args));
     }
 
     @Override
-    public void warnAt(URI uri, Token token, String code, String format, Object... args) {
-        report(buildDiagnostic(uri, token, source, Level.WARN, code, format, args));
+    public void warnAt(Token token, String code, String format, Object... args) {
+        report(buildDiagnostic(token, source, Level.WARN, code, format, args));
     }
 
     @Override
-    public void errorAt(URI uri, Token token, String code, String format, Object... args) {
-        report(buildDiagnostic(uri, token, source, Level.ERROR, code, format, args));
+    public void errorAt(Token token, String code, String format, Object... args) {
+        report(buildDiagnostic(token, source, Level.ERROR, code, format, args));
     }
 
     //
@@ -224,7 +223,6 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     private Diagnostic buildDiagnostic(String source, Level level, String code, String format, Object... args) {
         return buildDiagnostic(
-            null,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
@@ -234,26 +232,31 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         );
     }
 
-    private Diagnostic buildDiagnostic(URI uri, Token token, String source, Level level, String code, String format, Object... args) {
-        return buildDiagnostic(uri, token.getStartLine(), token.getStartColumn(), token.getOffset(), token.getOffset() + token.getLexeme().length(), source, level, code, format, args);
+    private Diagnostic buildDiagnostic(Token token, String source, Level level, String code, String format, Object... args) {
+        return buildDiagnostic(
+            token.getStartLine(),
+            token.getStartColumn(),
+            token.getOffset(),
+            token.getOffset() + token.getLexeme().length(),
+            source, level, code, format, args);
     }
 
-    private Diagnostic buildDiagnostic(URI uri, int line, int column, int start, int end, String source, Level level, String code, String format, Object... args) {
+    private Diagnostic buildDiagnostic(int line, int column, int start, int end, String source, Level level, String code, String format, Object... args) {
         if (format == null || format.isBlank()) {
             return new Diagnostic(
-                uri, line, column, start, end, source, level, code, "", null
+                null, line, column, start, end, source, level, code, "", null
             );
         } else {
             if (args.length == 0) {
-                return new Diagnostic(uri, line, column, start, end, source, level, code, format, null);
+                return new Diagnostic(null, line, column, start, end, source, level, code, format, null);
             } else {
                 Object last = args[args.length - 1];
                 if (last instanceof Throwable cause) {
                     String message = String.format(format, Arrays.<Object>copyOfRange(args, 0, args.length - 1));
-                    return new Diagnostic(uri, line, column, start, end, source, level, code, message, cause);
+                    return new Diagnostic(null, line, column, start, end, source, level, code, message, cause);
                 } else {
                     String message = String.format(format, args);
-                    return new Diagnostic(uri, line, column, start, end, source, level, code, message, null);
+                    return new Diagnostic(null, line, column, start, end, source, level, code, message, null);
                 }
             }
         }

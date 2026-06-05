@@ -12,7 +12,7 @@ import io.github.qishr.cascara.common.lang.token.Token;
 /// structural tracking indicators like thread name and execution timestamps, and
 /// an optional underlying exception cause.
 public class Diagnostic {
-    private final URI uri;
+    private URI uri;
     private final int line;
     private final int column;
     private final int startOffset;
@@ -121,6 +121,9 @@ public class Diagnostic {
 
     /// Returns the exact timestamp indicating when this diagnostic was instantiated.
     public LocalDateTime getTimestamp() { return timestamp; }
+
+    /// Sets the URI of the source resource associated with this diagnostic.
+    public void setUri(URI uri) { this.uri = uri; }
 
     /// Defines the severity hierarchy classifications available for diagnostic tracking.
     public enum Level {
