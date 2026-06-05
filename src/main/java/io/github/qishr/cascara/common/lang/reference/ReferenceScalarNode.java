@@ -1,16 +1,16 @@
-package io.github.qishr.cascara.common.lang.simple;
+package io.github.qishr.cascara.common.lang.reference;
 
 import io.github.qishr.cascara.common.lang.QuoteStyle;
 import io.github.qishr.cascara.common.lang.ast.*;
 import java.util.Collections;
 import java.util.List;
 
-public final class SimpleScalarNode extends SimpleNode implements ScalarAstNode<SimpleNode> {
+public final class ReferenceScalarNode extends ReferenceNode implements ScalarAstNode<ReferenceNode> {
 
     private Object value;
     private QuoteStyle quoteStyle = QuoteStyle.PLAIN;
 
-    public SimpleScalarNode(Object value) {
+    public ReferenceScalarNode(Object value) {
         this.value = value;
     }
 
@@ -20,60 +20,55 @@ public final class SimpleScalarNode extends SimpleNode implements ScalarAstNode<
     }
 
     @Override
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    @Override
-    public String getRawValue() {
+    public String getRaw() {
         return value == null ? "null" : value.toString();
     }
 
     @Override
-    public String getString() {
+    public String asString() {
         return value == null ? "" : value.toString();
     }
 
     @Override
-    public int getInteger() {
-        return getInteger(0);
+    public int asInteger() {
+        return asInteger(0);
     }
 
     @Override
-    public int getInteger(int defaultValue) {
+    public int asInteger(int defaultValue) {
         if (value instanceof Number n) return n.intValue();
-        try { return Integer.parseInt(getString()); } catch (Exception e) { return defaultValue; }
+        try { return Integer.parseInt(asString()); } catch (Exception e) { return defaultValue; }
     }
 
     @Override
-    public double getDouble() {
-        return getDouble(0);
+    public double asDouble() {
+        return asDouble(0);
     }
 
     @Override
-    public double getDouble(double defaultValue) {
+    public double asDouble(double defaultValue) {
         if (value instanceof Number n) return n.doubleValue();
-        try { return Double.parseDouble(getString()); } catch (Exception e) { return defaultValue; }
+        try { return Double.parseDouble(asString()); } catch (Exception e) { return defaultValue; }
     }
 
     @Override
-    public boolean getBoolean() {
-        return getBoolean(false);
+    public boolean asBoolean() {
+        return asBoolean(false);
     }
 
     @Override
-    public boolean getBoolean(boolean defaultValue) {
+    public boolean asBoolean(boolean defaultValue) {
         if (value instanceof Boolean b) return b;
-        return Boolean.parseBoolean(getString());
+        return Boolean.parseBoolean(asString());
     }
 
     @Override
-    public Object getPrimitiveValue() {
+    public Object getPrimitive() {
         return value;
     }
 
     @Override
-    public void setPrimitiveValue(Object value) {
+    public void setPrimitive(Object value) {
         this.value = value;
     }
 

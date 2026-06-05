@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.util;
+package io.github.qishr.cascara.common.data;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -12,10 +12,20 @@ import java.util.List;
 public class Table {
     List<Column> columns = new ArrayList<>();
     List<String[]> rows = new ArrayList<>();
+    boolean showBorder = true;
+    boolean showHeaders = true;
 
     /// Constructs an empty Table.
     public Table() {
         // Nothing to do here
+    }
+
+    public void setShowBorder(boolean v) {
+        showBorder = v;
+    }
+
+    public void setShowHeaders(boolean v) {
+        showHeaders = v;
     }
 
     /// Adds a column with the specified heading to the table.
@@ -25,6 +35,25 @@ public class Table {
         columns.add(new Column(heading));
         return this;
     }
+
+
+    public Table addRow(TableData row) {
+        String[] rowStrings = getRowStrings(row);
+        addRow(rowStrings);
+        return this;
+    }
+
+
+    private String[] getRowStrings(TableData row) {
+        String[] strings = new String[columns.size()];
+        for (int i = 0; i < columns.size(); i++) {
+            String columnName = columns.get(i).getName();
+            Object value = row.get(columnName);
+            strings[i] = value == null ? "" : value.toString();
+        }
+        return strings;
+    }
+
 
     /// Adds a row of data to the table.
     /// The number of values should match or be less than the number of columns.
@@ -54,23 +83,25 @@ public class Table {
     /// @param indent The number of spaces to indent each line.
     /// @throws IOException If an error occurs during writing.
     public void render(Writer writer, int indent) throws IOException {
-        writer.write(" ".repeat(indent));
-        // Write header line with column headings
-        for (Column column : columns) {
-            writer.write("| ");
-            writer.write(column.name);
-            // Padding spaces to align to column width + 1 trailing space
-            writer.write(" ".repeat(column.width - column.name.length() + 1));
-        }
-        writer.write("|\n");
+        if (showHeaders) {
+            writer.write(" ".repeat(indent));
+            // Write header line with column headings
+            for (Column column : columns) {
+                writer.write("| ");
+                writer.write(column.name);
+                // Padding spaces to align to column width + 1 trailing space
+                writer.write(" ".repeat(column.width - column.name.length() + 1));
+            }
+            writer.write("|\n");
 
-        writer.write(" ".repeat(indent));
-        // Write separator line with dashes for table header separator
-        for (Column column : columns) {
-            writer.write("|");
-            writer.write("-".repeat(column.width + 2));
+            writer.write(" ".repeat(indent));
+            // Write separator line with dashes for table header separator
+            for (Column column : columns) {
+                writer.write("|");
+                writer.write("-".repeat(column.width + 2));
+            }
+            writer.write("|\n");
         }
-        writer.write("|\n");
 
         // Write data rows
         for (String[] data : rows) {
@@ -83,20 +114,7 @@ public class Table {
             }
             writer.write("|\n");
         }
-        writer.write("\n\n");
+        // writer.write("\n\n");
         writer.flush();
-    }
-
-    /// A class to represent the name and width of a column within a table.
-    public class Column {
-        String name;
-        int width;
-
-        /// Constructs a new `Column` object with the specified name.
-        /// @param name The name (heading) of the column.
-        public Column(String name) {
-            this.name = name;
-            this.width = name.length();
-        }
     }
 }

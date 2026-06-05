@@ -1,7 +1,6 @@
 package io.github.qishr.cascara.common.diagnostic;
 
 import java.io.PrintStream;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -12,10 +11,10 @@ import io.github.qishr.cascara.common.lang.token.Token;
 public abstract class AbstractReporter<T extends AbstractReporter<?>> implements Reporter {
     protected Level level = Level.INFO;
 
-    protected Class<?> clazz;
+    protected String source;
 
-    // Consumes diagnostics included in the current Level or more
-    // important, with ERROR being the most important.
+    /// Consumes diagnostics included in the current Level or more
+    /// important, with ERROR being the most important.
     protected Consumer<Diagnostic> diagnosticCollector;
 
     // Consumes ERROR, WARN, and INFO diagnostics.
@@ -74,27 +73,27 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     @Override
     public void trace(String format, Object... args) {
-        report(buildDiagnostic(clazz, Level.TRACE, null, format, args));
+        report(buildDiagnostic(source, Level.TRACE, null, format, args));
     }
 
     @Override
     public void debug(String format, Object... args) {
-        report(buildDiagnostic(clazz, Level.DEBUG, null, format, args));
+        report(buildDiagnostic(source, Level.DEBUG, null, format, args));
     }
 
     @Override
     public void info(String format, Object... args) {
-        report(buildDiagnostic(clazz, Level.INFO, null, format, args));
+        report(buildDiagnostic(source, Level.INFO, null, format, args));
     }
 
     @Override
-    public void warn(String format, Object... args) {
-        report(buildDiagnostic(clazz, Level.WARN, null, format, args));
+    public void warn(String code, String format, Object... args) {
+        report(buildDiagnostic(source, Level.WARN, code, format, args));
     }
 
     @Override
-    public void error(String format, Object... args) {
-        report(buildDiagnostic(clazz, Level.ERROR, null, format, args));
+    public void error(String code, String format, Object... args) {
+        report(buildDiagnostic(source, Level.ERROR, code, format, args));
     }
 
     //
@@ -102,18 +101,55 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
 
     @Override
-    public void infoAt(int start, int end, int line, int column, URI uri, String format, Object... args) {
-        report(buildDiagnostic(clazz, Level.INFO, start, end, line, column, uri, format, args));
+    public void infoAt(int line, int column, String format, Object... args) {
+        report(buildDiagnostic(
+            line, column,
+            LocatableException.UNKNOWN_COORD,
+            LocatableException.UNKNOWN_COORD,
+            source, Level.INFO, null,
+            format, args
+        ));
     }
 
     @Override
-    public void warnAt(int start, int end, int line, int column, URI uri, String format, Object... args) {
-        report(buildDiagnostic(clazz, Level.WARN, start, end, line, column, uri, format, args));
+    public void warnAt(int line, int column, String code, String format, Object... args) {
+        report(buildDiagnostic(
+            line, column,
+            LocatableException.UNKNOWN_COORD,
+            LocatableException.UNKNOWN_COORD,
+            source, Level.WARN, code,
+            format, args
+        ));
     }
 
     @Override
-    public void errorAt(int start, int end, int line, int column, URI uri, String format, Object... args) {
-        report(buildDiagnostic(clazz, Level.ERROR, start, end, line, column, uri, format, args));
+    public void errorAt(int line, int column, String code, String format, Object... args) {
+        report(buildDiagnostic(
+            line, column,
+            LocatableException.UNKNOWN_COORD,
+            LocatableException.UNKNOWN_COORD,
+            source, Level.ERROR, code,
+            format, args
+        ));
+    }
+
+    //
+    // With Location Including Offset
+    //
+
+    @Override
+    public void infoAt(int line, int column, int start, int end, String format, Object... args) {
+        report(buildDiagnostic(line, column, start, end, source, Level.INFO, null, format, args));
+    }
+
+    @Override
+    public void warnAt(int line, int column, int start, int end, String code, String format, Object... args) {
+        report(buildDiagnostic(line, column, start, end, source, Level.WARN, code, format, args));
+    }
+
+    @Override
+    public void errorAt(int line, int column, int start, int end, String code, String format, Object... args) {
+        report(buildDiagnostic(line, column, start, end, source, Level.ERROR, code, format, args));
     }
 
     //
@@ -121,18 +157,18 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
 
     @Override
-    public void infoAt(Token token, URI uri, String format, Object... args) {
-        report(buildDiagnostic(clazz, Level.INFO, token, uri, format, args));
+    public void infoAt(Token token, String format, Object... args) {
+        report(buildDiagnostic(token, source, Level.INFO, null, format, args));
     }
 
     @Override
-    public void warnAt(Token token, URI uri, String format, Object... args) {
-        report(buildDiagnostic(clazz, Level.WARN, token, uri, format, args));
+    public void warnAt(Token token, String code, String format, Object... args) {
+        report(buildDiagnostic(token, source, Level.WARN, code, format, args));
     }
 
     @Override
-    public void errorAt(Token token, URI uri, String format, Object... args) {
-        report(buildDiagnostic(clazz, Level.ERROR, token, uri, format, args));
+    public void errorAt(Token token, String code, String format, Object... args) {
+        report(buildDiagnostic(token, source, Level.ERROR, code, format, args));
     }
 
     //
@@ -185,35 +221,42 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
     //
 
-    private Diagnostic buildDiagnostic(Class<?> clazz, Level level, URI uri, String format, Object... args) {
+    private Diagnostic buildDiagnostic(String source, Level level, String code, String format, Object... args) {
         return buildDiagnostic(
-            clazz, level,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
-            uri, format, args
+            source, level, code,
+            format, args
         );
     }
 
-    private Diagnostic buildDiagnostic(Class<?> clazz, Level level, Token token, URI uri, String format, Object... args) {
-        return buildDiagnostic(clazz, level, token.getOffset(), token.getOffset() + token.getLexeme().length(), token.getStartLine(), token.getStartColumn(), uri, format, args);
+    private Diagnostic buildDiagnostic(Token token, String source, Level level, String code, String format, Object... args) {
+        return buildDiagnostic(
+            token.getStartLine(),
+            token.getStartColumn(),
+            token.getOffset(),
+            token.getOffset() + token.getLexeme().length(),
+            source, level, code, format, args);
     }
 
-    private Diagnostic buildDiagnostic(Class<?> clazz, Level level, int start, int end, int line, int column, URI uri, String format, Object... args) {
+    private Diagnostic buildDiagnostic(int line, int column, int start, int end, String source, Level level, String code, String format, Object... args) {
         if (format == null || format.isBlank()) {
-            return new Diagnostic(clazz, level, "", start, end, line, column, uri, null);
+            return new Diagnostic(
+                null, line, column, start, end, source, level, code, "", null
+            );
         } else {
             if (args.length == 0) {
-                return new Diagnostic(clazz, level, format, start, end, line, column, uri, null);
+                return new Diagnostic(null, line, column, start, end, source, level, code, format, null);
             } else {
                 Object last = args[args.length - 1];
                 if (last instanceof Throwable cause) {
                     String message = String.format(format, Arrays.<Object>copyOfRange(args, 0, args.length - 1));
-                    return new Diagnostic(clazz, level, message, start, end, line, column, uri, cause);
+                    return new Diagnostic(null, line, column, start, end, source, level, code, message, cause);
                 } else {
                     String message = String.format(format, args);
-                    return new Diagnostic(clazz, level, message, start, end, line, column, uri, null);
+                    return new Diagnostic(null, line, column, start, end, source, level, code, message, null);
                 }
             }
         }

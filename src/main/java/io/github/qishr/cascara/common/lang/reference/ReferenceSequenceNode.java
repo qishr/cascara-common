@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.lang.simple;
+package io.github.qishr.cascara.common.lang.reference;
 
 import io.github.qishr.cascara.common.lang.ast.*;
 import java.util.ArrayList;
@@ -6,9 +6,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public final class SimpleSequenceNode extends SimpleNode implements SequenceAstNode<SimpleNode> {
+public final class ReferenceSequenceNode extends ReferenceNode implements SequenceAstNode<ReferenceNode> {
 
-    private final List<SimpleNode> elements = new ArrayList<>();
+    private final List<ReferenceNode> elements = new ArrayList<>();
 
     @Override
     public int size() {
@@ -21,30 +21,30 @@ public final class SimpleSequenceNode extends SimpleNode implements SequenceAstN
     }
 
     @Override
-    public SimpleSequenceNode add(SimpleNode node) {
+    public ReferenceSequenceNode add(ReferenceNode node) {
         elements.add(node);
         return this;
     }
 
     @Override
-    public SimpleSequenceNode remove(SimpleNode node) {
+    public ReferenceSequenceNode remove(ReferenceNode node) {
         elements.remove(node);
         return this;
     }
 
     @Override
-    public SimpleSequenceNode remove(int index) {
+    public ReferenceSequenceNode remove(int index) {
         elements.remove(index);
         return this;
     }
 
     @Override
-    public SimpleNode get(int index) {
+    public ReferenceNode get(int index) {
         return elements.get(index);
     }
 
     @Override
-    public List<SimpleNode> getElements() {
+    public List<ReferenceNode> getElements() {
         return elements;
     }
 
@@ -59,16 +59,16 @@ public final class SimpleSequenceNode extends SimpleNode implements SequenceAstN
     }
 
     /// Returns Iterator instance
-    public Iterator<SimpleNode> iterator() {
-        return new SequenceIterator<SimpleNode>(this);
+    public Iterator<ReferenceNode> iterator() {
+        return new SequenceIterator<ReferenceNode>(this);
     }
 
-    static class SequenceIterator<T> implements Iterator<SimpleNode> {
-        SimpleSequenceNode list;
+    static class SequenceIterator<T> implements Iterator<ReferenceNode> {
+        ReferenceSequenceNode list;
         int currentIndex = 0;
 
         // initialize pointer to head of the list for iteration
-        public SequenceIterator(SimpleSequenceNode list) {
+        public SequenceIterator(ReferenceSequenceNode list) {
             this.list = list;
         }
 
@@ -78,8 +78,8 @@ public final class SimpleSequenceNode extends SimpleNode implements SequenceAstN
         }
 
         // return current data and update pointer
-        public SimpleNode next() {
-            SimpleNode data = list.get(currentIndex++);
+        public ReferenceNode next() {
+            ReferenceNode data = list.get(currentIndex++);
             return data;
         }
 

@@ -1,10 +1,29 @@
 package io.github.qishr.cascara.common.util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class Properties {
+import io.github.qishr.cascara.common.data.TableData;
+
+public class Properties implements TableData {
     List<Property> propertiesList = new ArrayList<>();
+    Map<String,Property> propertiesMap = new HashMap<>();
+
+    public boolean containsKey(String k) {
+        return null != get(k);
+    }
+
+    @Override
+	public Map<String, Object> getValuesMap() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'getValuesMap'");
+	}
+
+    public List<Property> asList() {
+        return propertiesList;
+    }
 
     public Property get(String k) {
         List<Property> copy = new ArrayList<>(propertiesList);
@@ -41,7 +60,7 @@ public class Properties {
         if (property == null) {
             return defaultValue;
         }
-        return property.getInt(defaultValue);
+        return property.asInt(defaultValue);
     }
 
     public long getLong(String k, int defaultValue) {
@@ -49,7 +68,7 @@ public class Properties {
         if (property == null) {
             return defaultValue;
         }
-        return property.getLong(defaultValue);
+        return property.asLong(defaultValue);
     }
 
     public double getDouble(String k, double defaultValue) {
@@ -57,7 +76,7 @@ public class Properties {
         if (property == null) {
             return defaultValue;
         }
-        return property.getDouble(defaultValue);
+        return property.asDouble(defaultValue);
     }
 
     public boolean getBoolean(String k, boolean defaultValue) {
@@ -65,18 +84,14 @@ public class Properties {
         if (property == null) {
             return defaultValue;
         }
-        return property.getBoolean(defaultValue);
-    }
-
-    public List<Property> getAll() {
-        return propertiesList;
+        return property.asBoolean(defaultValue);
     }
 
     public Properties set(String k, String v) {
         Property prop = get(k);
         if (prop == null) {
             prop = new Property(k);
-            propertiesList.add(prop);
+            add(prop);
         }
         prop.setValue(v);
         return this;
@@ -86,7 +101,7 @@ public class Properties {
         Property prop = get(k);
         if (prop == null) {
             prop = new Property(k);
-            propertiesList.add(prop);
+            add(prop);
         }
         prop.setValue(v);
         return this;
@@ -96,7 +111,7 @@ public class Properties {
         Property prop = get(k);
         if (prop == null) {
             prop = new Property(k);
-            propertiesList.add(prop);
+            add(prop);
         }
         prop.setValue(v);
         return this;
@@ -106,14 +121,56 @@ public class Properties {
         Property prop = get(k);
         if (prop == null) {
             prop = new Property(k);
-            propertiesList.add(prop);
+            add(prop);
         }
         prop.setValue(v);
         return this;
     }
 
+    public void addAll(Properties properties) {
+        for (Property prop : properties.asList()) {
+            set(prop.getKey(), prop.getValue());
+        }
+    }
+
+    public void add(Property property) {
+        Property existing = get(property.getKey());
+        if (existing != null) {
+            existing.setValue(property.getValue());
+        } else {
+            propertiesList.add(property);
+            propertiesMap.put(property.getKey(), property);
+        }
+    }
+
+	@Override
+    public Object[] getValues() {
+        Object[] r = new Object[propertiesList.size()];
+        int i = 0;
+        for (Property property : propertiesList) {
+            r[i] = property.getValue();
+            i++;
+        }
+        return r;
+    }
+
+    public void remove(String k) {
+        for (Property property : propertiesList) {
+            if (property.getKey().equals(k)) {
+                propertiesList.remove(property);
+                propertiesMap.remove(k);
+                return;
+            }
+        }
+    }
+
+    public void remove(Property property) {
+        remove(property.getKey());
+    }
+
     public void clear() {
         propertiesList.clear();
+        propertiesMap.clear();
     }
 
     public boolean isEmpty() {
@@ -126,20 +183,5 @@ public class Properties {
             copy.set(prop.getKey(), prop.getValue());
         }
         return copy;
-    }
-
-    public void addAll(Properties properties) {
-        for (Property prop : properties.getAll()) {
-            set(prop.getKey(), prop.getValue());
-        }
-    }
-
-    public void add(Property property) {
-        Property existing = get(property.getKey());
-        if (existing != null) {
-            existing.setValue(property.getValue());
-        } else {
-            propertiesList.add(property);
-        }
     }
 }

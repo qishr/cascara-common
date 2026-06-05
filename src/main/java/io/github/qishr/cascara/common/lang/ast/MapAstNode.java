@@ -37,22 +37,22 @@ public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> ext
     /// @return Returns the string value of the map entry, or null if it doesn't exist.
     default String getString(String key) {
         T node = get(key);
-        return (node instanceof ScalarAstNode scalar) ? scalar.getString() : null;
+        return (node instanceof ScalarAstNode scalar) ? scalar.asString() : null;
     }
 
     default int getInteger(String key, int defaultValue) {
         T node = get(key);
-        return (node instanceof ScalarAstNode scalar) ? scalar.getInteger() : defaultValue;
+        return (node instanceof ScalarAstNode scalar) ? scalar.asInteger() : defaultValue;
     }
 
     default double getDouble(String key, double defaultValue) {
         T node = get(key);
-        return (node instanceof ScalarAstNode scalar) ? scalar.getDouble() : defaultValue;
+        return (node instanceof ScalarAstNode scalar) ? scalar.asDouble() : defaultValue;
     }
 
     default boolean getBoolean(String key, boolean defaultValue) {
         T node = get(key);
-        return (node instanceof ScalarAstNode scalar) ? scalar.getBoolean() : defaultValue;
+        return (node instanceof ScalarAstNode scalar) ? scalar.asBoolean() : defaultValue;
     }
 
     default int getInteger(String key) {
@@ -69,7 +69,7 @@ public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> ext
 
     default String getString(String key, String defaultValue) {
         T value = get(key);
-        return (value != null) ? value.getString() : defaultValue;
+        return (value != null) ? value.asString() : defaultValue;
     }
 
     default String getAttributeOrDefault(String key, String defaultValue) {

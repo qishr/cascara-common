@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.lang.simple;
+package io.github.qishr.cascara.common.lang.reference;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,60 +9,60 @@ import java.util.Set;
 import io.github.qishr.cascara.common.lang.ast.*;
 
 
-public final class SimpleMapNode extends SimpleNode implements MapAstNode<SimpleNode, SimpleMapEntryNode> {
+public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<ReferenceNode, ReferenceMapEntryNode> {
 
-    private List<SimpleMapEntryNode> entries = new ArrayList<>();
+    private List<ReferenceMapEntryNode> entries = new ArrayList<>();
 
     @Override
-    public boolean containsKey(SimpleNode key) {
+    public boolean containsKey(ReferenceNode key) {
         return getEntry(key) != null;
     }
 
     @Override
-    public SimpleNode get(SimpleNode key) {
-        SimpleMapEntryNode value = getEntry(key);
+    public ReferenceNode get(ReferenceNode key) {
+        ReferenceMapEntryNode value = getEntry(key);
         return value == null ? null : value.getValue();
     }
 
     @Override
-    public SimpleMapEntryNode getEntry(SimpleNode key) {
-        for (SimpleMapEntryNode entry : entries) {
+    public ReferenceMapEntryNode getEntry(ReferenceNode key) {
+        for (ReferenceMapEntryNode entry : entries) {
             if (entry.getKey().equals(key)) return entry;
         }
         return null;
     }
 
     @Override
-    public List<SimpleMapEntryNode> getEntries() {
+    public List<ReferenceMapEntryNode> getEntries() {
         return entries;
     }
 
     @Override
-    public Set<SimpleNode> keySet() {
+    public Set<ReferenceNode> keySet() {
         return Set.copyOf(entries.stream().map(e -> e.getKey()).toList());
     }
 
     @Override
-    public SimpleMapNode put(SimpleNode key, SimpleNode value) {
-        for (SimpleMapEntryNode entry : entries) {
+    public ReferenceMapNode put(ReferenceNode key, ReferenceNode value) {
+        for (ReferenceMapEntryNode entry : entries) {
             if (entry.getKey().equals(key)) {
-                entry.setValue(value);
+                entry.setRaw(value);
                 return this;
             }
         }
-        entries.add(new SimpleMapEntryNode(key, value));
+        entries.add(new ReferenceMapEntryNode(key, value));
         return this;
     }
 
     @Override
-    public void remove(SimpleNode key) {
+    public void remove(ReferenceNode key) {
         entries.remove(key);
     }
 
     @Override
     public boolean containsKey(String key) {
-        for (SimpleMapEntryNode entry : entries) {
-            if (entry.getKey() instanceof SimpleScalarNode scalar && key.equals(scalar.getString())) {
+        for (ReferenceMapEntryNode entry : entries) {
+            if (entry.getKey() instanceof ReferenceScalarNode scalar && key.equals(scalar.asString())) {
                 return true;
             }
         }
@@ -70,35 +70,35 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
     }
 
     @Override
-    public SimpleMapNode put(String key, String value) {
-        SimpleScalarNode scalarValue = new SimpleScalarNode(value);
+    public ReferenceMapNode put(String key, String value) {
+        ReferenceScalarNode scalarValue = new ReferenceScalarNode(value);
         put(key, scalarValue);
         return this;
     }
 
     @Override
-    public SimpleMapNode put(String key, SimpleNode value) {
-        for (SimpleMapEntryNode entry : entries) {
-            SimpleNode kNode = entry.getKey();
+    public ReferenceMapNode put(String key, ReferenceNode value) {
+        for (ReferenceMapEntryNode entry : entries) {
+            ReferenceNode kNode = entry.getKey();
             // Check if the existing key's string value matches the requested key
-            if (kNode instanceof SimpleScalarNode scalar && key.equals(scalar.getString())) {
-                entry.setValue(value);
+            if (kNode instanceof ReferenceScalarNode scalar && key.equals(scalar.asString())) {
+                entry.setRaw(value);
                 return this;
             }
         }
         // Only if not found, create the new entry
-        SimpleNode keyNode = new SimpleScalarNode(key);
-        entries.add(new SimpleMapEntryNode(keyNode, value));
+        ReferenceNode keyNode = new ReferenceScalarNode(key);
+        entries.add(new ReferenceMapEntryNode(keyNode, value));
         return this;
     }
 
     @Override
     public void remove(String key) {
-        Iterator<SimpleMapEntryNode> it = entries.iterator();
+        Iterator<ReferenceMapEntryNode> it = entries.iterator();
         while (it.hasNext()) {
-            SimpleMapEntryNode entry = it.next();
+            ReferenceMapEntryNode entry = it.next();
             AstNode k = entry.getKey();
-            if (k instanceof ScalarAstNode scalar && scalar.getString().equals(key)) {
+            if (k instanceof ScalarAstNode scalar && scalar.asString().equals(key)) {
                 it.remove();
                 return;
             }
@@ -106,19 +106,19 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
     }
 
     @Override
-    public SimpleNode get(String key) {
+    public ReferenceNode get(String key) {
         if (key == null) return null;
-        for (SimpleMapEntryNode entry : entries) {
-            SimpleNode kNode = entry.getKey();
+        for (ReferenceMapEntryNode entry : entries) {
+            ReferenceNode kNode = entry.getKey();
             String entryKey = null;
-            if (kNode instanceof SimpleScalarNode scalar) {
-                entryKey = scalar.getString();
+            if (kNode instanceof ReferenceScalarNode scalar) {
+                entryKey = scalar.asString();
             } else {
                 entryKey = kNode.toString();
             }
 
             if (key.equals(entryKey)) {
-                SimpleNode val = entry.getValue();
+                ReferenceNode val = entry.getValue();
                 return val;
             }
         }
@@ -126,7 +126,7 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
     }
 
     @Override
-    public List<SimpleMapEntryNode> getChildren() {
+    public List<ReferenceMapEntryNode> getChildren() {
         return entries;
     }
 
@@ -136,23 +136,23 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
     }
 
     @Override
-    public SimpleMapNode getMap(String key) {
+    public ReferenceMapNode getMap(String key) {
         throw new UnsupportedOperationException("Unimplemented method 'getMap'");
     }
 
     @Override
-    public SimpleSequenceNode getSequence(String key) {
+    public ReferenceSequenceNode getSequence(String key) {
         throw new UnsupportedOperationException("Unimplemented method 'getSequence'");
     }
 
     @Override
-    public Set<SimpleMapEntryNode> entrySet() {
+    public Set<ReferenceMapEntryNode> entrySet() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'entrySet'");
     }
 
     @Override
-    public Collection<SimpleNode> values() {
+    public Collection<ReferenceNode> values() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'values'");
     }

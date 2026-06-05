@@ -21,7 +21,7 @@ public class PropertyTests {
         Property property = new Property("key");
         property.setValue(true);
 
-        assertEquals(true, property.getBoolean());
+        assertEquals(true, property.asBoolean());
     }
 
 }

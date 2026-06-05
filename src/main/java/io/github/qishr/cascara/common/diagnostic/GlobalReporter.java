@@ -1,6 +1,8 @@
 package io.github.qishr.cascara.common.diagnostic;
 
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
@@ -9,10 +11,13 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     private static final DateTimeFormatter TIME_FORMAT =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
-    private static GlobalReporter globalInstance;
+    private static final GlobalReporter globalInstance = new GlobalReporter();
 
-    private GlobalReporter(Class<?> clazz) {
-        this.clazz = clazz;
+    private static final Map<String,GlobalReporter> classInstances = new HashMap<>();
+
+    private GlobalReporter(String source) {
+        this.source = source;
+        this.level = globalInstance.level;
     }
 
     private GlobalReporter() {
@@ -23,23 +28,24 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     protected GlobalReporter self() { return this; }
 
     public static GlobalReporter globalInstance() {
-        if (globalInstance == null) {
-            globalInstance = new GlobalReporter();
-        }
         return globalInstance;
     }
 
     public static GlobalReporter forClass(Class<?> clazz) {
-        globalInstance();
-        GlobalReporter reporter = new GlobalReporter(clazz);
+        return forSource(clazz.getSimpleName());
+    }
+
+    public static GlobalReporter forSource(String source) {
+        GlobalReporter reporter = classInstances.get(source);
+        if (reporter == null) {
+            reporter = new GlobalReporter(source);
+            classInstances.put(source, reporter);
+        }
         return reporter;
     }
 
     @Override
     public GlobalReporter setLevel(Level level) {
-        if (this != globalInstance) {
-            throw new UnsupportedOperationException("The method setLevel in GlobalReporter may only be called on the global instance.");
-        }
         this.level = level;
         return this;
     }
@@ -104,8 +110,8 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 String.format(
                     "[%5s] [%s] [%s] %s\n",
                     diagnostic.getLevel(),
-                    diagnostic.getTime().format(TIME_FORMAT),
-                    diagnostic.getClazz(),
+                    diagnostic.getTimestamp().format(TIME_FORMAT),
+                    diagnostic.getSource(),
                     diagnostic.getMessage()
                 )
             );
@@ -115,26 +121,24 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                     String.format(
                         "[%5s] [%s] [%s] %s at %s:%d\n",
                         diagnostic.getLevel(),
-                        diagnostic.getTime().format(TIME_FORMAT),
-                        diagnostic.getClazz(),
+                        diagnostic.getTimestamp().format(TIME_FORMAT),
+                        diagnostic.getSource(),
                         diagnostic.getMessage(),
                         diagnostic.getUri(),
                         diagnostic.getLine()
                     )
                 );
             } else {
-                if (diagnostic.getLine() > 0) {
-                    writeString (diagnostic.getLevel(),
-                        String.format(
-                            "[%5s] [%s] [%s] %s in file %s\n",
-                            diagnostic.getLevel(),
-                            diagnostic.getTime().format(TIME_FORMAT),
-                            diagnostic.getClazz(),
-                            diagnostic.getMessage(),
-                            diagnostic.getUri()
-                        )
-                    );
-                }
+                writeString (diagnostic.getLevel(),
+                    String.format(
+                        "[%5s] [%s] [%s] %s in file %s\n",
+                        diagnostic.getLevel(),
+                        diagnostic.getTimestamp().format(TIME_FORMAT),
+                        diagnostic.getSource(),
+                        diagnostic.getMessage(),
+                        diagnostic.getUri()
+                    )
+                );
             }
         }
     }

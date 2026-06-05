@@ -1,10 +1,9 @@
-package io.github.qishr.cascara.common.spi;
+package io.github.qishr.cascara.common.util;
 
 import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
 
-import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.lang.processor.Parser;
 
 public class ContentTypes {

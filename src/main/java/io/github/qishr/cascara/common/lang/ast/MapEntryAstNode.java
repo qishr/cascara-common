@@ -14,7 +14,7 @@ public interface MapEntryAstNode<T extends AstNode> extends AstNode {
     T getValue();
 
     /// Replaces the value corresponding to this entry with the specified value (optional operation).
-    void setValue(T value);
+    void setRaw(T value);
 
     @Override
     default List<T> getChildren() {

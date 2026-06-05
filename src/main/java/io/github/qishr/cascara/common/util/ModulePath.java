@@ -132,7 +132,7 @@ public class ModulePath {
                 }
             }
         } catch (IOException e) {
-            // ctx.error("Error reading classes in directory: " + directory.getAbsolutePath());
+            // ctx.error(null, "Error reading classes in directory: " + directory.getAbsolutePath());
         }
         return moduleName;
     }
@@ -158,9 +158,9 @@ public class ModulePath {
                 }
             }
         } catch (java.lang.NoClassDefFoundError e) {
-            // ctx.error("Class not found: " + className + "\n" + e.getMessage());
+            // ctx.error("null, Class not found: " + className + "\n" + e.getMessage());
         } catch (Exception e) {
-            // ctx.error("Failed to read class file: " + file);
+            // ctx.error(null, "Failed to read class file: " + file);
         }
         return moduleName;
     }

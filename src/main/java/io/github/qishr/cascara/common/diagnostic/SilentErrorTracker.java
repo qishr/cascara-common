@@ -5,36 +5,34 @@ import java.util.function.Consumer;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.lang.token.Token;
 
-public class NoOpReporter implements Reporter {
+public class SilentErrorTracker implements Reporter {
 
-    public NoOpReporter(Consumer<String> writer) {
-    }
+    private boolean hasErrors;
 
-    public NoOpReporter() {
+    public SilentErrorTracker() {
         // Nothing to see here
     }
 
+    public boolean hasErrors() { return hasErrors; }
+
     @Override
     public boolean collectsProblems() {
-        return false;
+        // Returning true here means the parser won't throw exceptions
+        return true;
     }
 
     @Override
-    public NoOpReporter setLevel(Level level) {
+    public SilentErrorTracker setLevel(Level level) {
         return this;
     }
 
     @Override
-    public NoOpReporter setDiagnosticCollector(Consumer<Diagnostic> diagnosticCollector) {
+    public SilentErrorTracker setDiagnosticCollector(Consumer<Diagnostic> diagnosticCollector) {
         return this;
     }
 
     @Override
-    public NoOpReporter setProblemCollector(Consumer<Diagnostic> diagnosticCollector) {
-        return this;
-    }
-
-    public NoOpReporter setDisableSystemOutput(boolean b) {
+    public SilentErrorTracker setProblemCollector(Consumer<Diagnostic> diagnosticCollector) {
         return this;
     }
 
@@ -55,7 +53,9 @@ public class NoOpReporter implements Reporter {
     public void warn(String code, String format, Object... args) {}
 
     @Override
-    public void error(String code, String format, Object... args) {}
+    public void error(String code, String format, Object... args) {
+        hasErrors = true;
+    }
 
     //
     // With Location
@@ -68,7 +68,9 @@ public class NoOpReporter implements Reporter {
     public void warnAt(int line, int column, String code, String format, Object... args) {}
 
     @Override
-    public void errorAt(int line, int column, String code, String format, Object... args) {}
+    public void errorAt(int line, int column, String code, String format, Object... args) {
+        hasErrors = true;
+    }
 
     //
     // With Location invluding offset
@@ -81,7 +83,9 @@ public class NoOpReporter implements Reporter {
     public void warnAt(int line, int column, int start, int end, String code, String format, Object... args) {}
 
     @Override
-    public void errorAt(int line, int column, int start, int end, String code, String format, Object... args) {}
+    public void errorAt(int line, int column, int start, int end, String code, String format, Object... args) {
+        hasErrors = true;
+    }
 
     //
     // With Token
@@ -94,6 +98,8 @@ public class NoOpReporter implements Reporter {
     public void warnAt(Token token, String code, String format, Object... args) {}
 
     @Override
-    public void errorAt(Token token, String code, String format, Object... args) {}
+    public void errorAt(Token token, String code, String format, Object... args) {
+        hasErrors = true;
+    }
 
 }

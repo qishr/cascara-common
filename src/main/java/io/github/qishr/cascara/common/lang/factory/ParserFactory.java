@@ -1,10 +1,12 @@
-package io.github.qishr.cascara.common.spi;
+package io.github.qishr.cascara.common.lang.factory;
+
+import io.github.qishr.cascara.common.lang.annotation.Nullable;
+import io.github.qishr.cascara.common.lang.processor.Parser;
+import io.github.qishr.cascara.common.service.ServiceException;
+import io.github.qishr.cascara.common.util.ContentType;
 
 import java.util.ServiceLoader;
 
-import io.github.qishr.cascara.common.util.ContentType;
-import io.github.qishr.cascara.common.lang.annotation.Nullable;
-import io.github.qishr.cascara.common.lang.processor.Parser;
 
 public class ParserFactory {
 
@@ -42,3 +44,4 @@ public class ParserFactory {
         throw new ServiceException("No parser found for " + type);
     }
 }
+
