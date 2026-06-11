@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.type;
+package io.github.qishr.cascara.common.lang.type;
 
 import java.nio.file.Path;
 

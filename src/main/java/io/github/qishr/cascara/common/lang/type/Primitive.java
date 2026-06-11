@@ -1,18 +1,18 @@
-package io.github.qishr.cascara.common.type;
+package io.github.qishr.cascara.common.lang.type;
 
 import java.util.Objects;
 
 import io.github.qishr.cascara.common.lang.QuoteStyle;
 
 public class Primitive {
-    protected final Object original;
+    protected final Object rawInput;
     private final QuoteStyle originalQuotedStyle;
-    private final boolean originalIsNative;
+    private final boolean isAlreadyNative;
     private PrimitiveDelegate delegate;
     protected QuoteStyle specifiedQuoteStyle;
 
-    public static Primitive of(Object primitiveValue) {
-        Primitive primitive = new Primitive(primitiveValue, null, true);
+    public static Primitive of(Object nativeInstance) {
+        Primitive primitive = new Primitive(nativeInstance, null, true);
         return primitive;
     }
 
@@ -21,10 +21,10 @@ public class Primitive {
         return new Primitive(unescapedContent, quoteStyle, false);
     }
 
-    private Primitive(Object original, QuoteStyle quoteStyle, boolean isNative) {
-        this.original = original;
+    private Primitive(Object rawInput, QuoteStyle quoteStyle, boolean isNative) {
+        this.rawInput = rawInput;
         this.originalQuotedStyle = quoteStyle;
-        this.originalIsNative = isNative;
+        this.isAlreadyNative = isNative;
     }
 
     public Primitive setDelegate(PrimitiveDelegate delegate) {
@@ -41,7 +41,7 @@ public class Primitive {
 
         if (originalQuotedStyle == null) {
             // TODO: Do we want to cache this?
-            return inferQuoteStyle(original);
+            return inferQuoteStyle(rawInput);
         }
         return originalQuotedStyle;
     }
@@ -135,17 +135,17 @@ public class Primitive {
     //
 
     private Object nativeValue() {
-        if (originalIsNative) {
+        if (isAlreadyNative) {
             // eg Integer, Boolean
-            return original;
+            return rawInput;
         } else {
             // A String
             // TODO: Cache these values for returning next time
             if (originalQuotedStyle != QuoteStyle.PLAIN) {
                 // Unescape contextually based on the quoting rules of the dialect
-                return unescapeQuotedString(original == null ? "" : original.toString(), originalQuotedStyle);
+                return unescapeQuotedString(rawInput == null ? "" : rawInput.toString(), originalQuotedStyle);
             } else {
-                return coerce(original);
+                return coerce(rawInput);
             }
         }
     }

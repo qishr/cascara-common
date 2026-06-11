@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.type;
+package io.github.qishr.cascara.common.lang.type;
 
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.exception.SerializerException;
@@ -12,8 +12,8 @@ public interface TypeSerializer<T> extends TypeDescriptor<T> {
 
     /// Deserializes an AST node into a strongly-typed Java object.
     ///
-    /// @param node        The structural AST node being parsed (e.g., YamlScalarNode, YamlMapNode).
+    /// @param jvmInstance        The structural AST node being parsed (e.g., YamlScalarNode, YamlMapNode).
     /// @return            The fully constructed Java object instance.
     /// @throws SerializerException If the node structure violates the type constraints.
-    public abstract T deserialize(AstNode node) throws SerializerException;
+    public abstract T deserialize(AstNode jvmInstance) throws SerializerException;
 }

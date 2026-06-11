@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.type;
+package io.github.qishr.cascara.common.lang.type;
 
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 

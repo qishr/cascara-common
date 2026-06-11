@@ -16,16 +16,16 @@ module cascara.common {
     exports io.github.qishr.cascara.common.lang.token;
     exports io.github.qishr.cascara.common.semver;
     exports io.github.qishr.cascara.common.service;
-    exports io.github.qishr.cascara.common.type;
+    exports io.github.qishr.cascara.common.lang.type;
     exports io.github.qishr.cascara.common.util;
 
     opens io.github.qishr.cascara.common.util;
 
-    provides io.github.qishr.cascara.common.type.ScalarDescriptor
-        with io.github.qishr.cascara.common.type.ByteArrayDescriptor,
-             io.github.qishr.cascara.common.type.InstantTypeDescriptor,
-             io.github.qishr.cascara.common.type.LocalDateTimeTypeDescriptor,
-             io.github.qishr.cascara.common.type.PathTypeDescriptor,
-             io.github.qishr.cascara.common.type.UriTypeDescriptor,
-             io.github.qishr.cascara.common.type.UuidTypeDescriptor;
+    provides io.github.qishr.cascara.common.lang.type.ScalarDescriptor
+        with io.github.qishr.cascara.common.lang.type.ByteArrayDescriptor,
+             io.github.qishr.cascara.common.lang.type.InstantTypeDescriptor,
+             io.github.qishr.cascara.common.lang.type.LocalDateTimeTypeDescriptor,
+             io.github.qishr.cascara.common.lang.type.PathTypeDescriptor,
+             io.github.qishr.cascara.common.lang.type.UriTypeDescriptor,
+             io.github.qishr.cascara.common.lang.type.UuidTypeDescriptor;
 }

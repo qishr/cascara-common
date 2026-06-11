@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.type;
+package io.github.qishr.cascara.common.lang.type;
 
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
@@ -7,7 +7,7 @@ public interface ScalarDescriptor<T> extends TypeDescriptor<T> {
     T toJvmType(String text);
 
     /// Converts the JVM type specified by this TypeDescriptor into a Primitive.
-    Primitive toPrimitive(T value);
+    Primitive toPrimitive(T jvmInstance);
 
     /// Retuns the JSON Schema `format` used by this TypeDescriptor.
     String getFormat();
