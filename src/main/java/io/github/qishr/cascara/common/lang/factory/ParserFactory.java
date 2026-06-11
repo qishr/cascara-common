@@ -1,5 +1,7 @@
 package io.github.qishr.cascara.common.lang.factory;
 
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.lang.annotation.Nullable;
 import io.github.qishr.cascara.common.lang.processor.Parser;
 import io.github.qishr.cascara.common.service.ServiceException;
@@ -18,7 +20,8 @@ public class ParserFactory {
 
     private <P extends Parser<?, ?>> P findParser(ServiceLoader<P> loader, String type) throws ServiceException {
         if (loader == null) {
-            throw new ServiceException("ServiceLoader failed for Parser");
+            // THis should never happen
+            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE, "Parser");
         }
         for (ServiceLoader.Provider<P> provider : loader.stream().toList()) {
             try {
@@ -32,16 +35,16 @@ public class ParserFactory {
                 }
             } catch (NullPointerException e) {
                 e.printStackTrace();
-                throw new ServiceException(e.getMessage(), e);
+                throw new ServiceException(e, GenericDiagnosticCode.NPE, e.getMessage());
             } catch (RuntimeException e) {
                 e.printStackTrace();
-                throw new ServiceException(e.getMessage(), e);
+                throw new ServiceException(e, GenericDiagnosticCode.RUNTIME_EXCEPTION, e.getMessage(), e);
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new ServiceException(e.getMessage(), e);
+                throw new ServiceException(e, GenericDiagnosticCode.EXCEPTION, e.getMessage(), e);
             }
         }
-        throw new ServiceException("No parser found for " + type);
+        throw new ServiceException(ServiceDiagnosticCode.NO_PROVIDER_REGISTERED_FOR, "Parser", type);
     }
 }
 

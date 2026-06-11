@@ -1,8 +1,10 @@
 package io.github.qishr.cascara.common.diagnostic;
 
 import java.net.URI;
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 
+import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 /// Represents a discrete event, log entry, or syntax/semantic problem identified
@@ -20,8 +22,9 @@ public class Diagnostic {
 
     private final String source;
     private final Level level;
-    private final String code;      // This can be used for localization
+    private final DiagnosticCode code;
     private final String message;
+    private final Object[] details;
     private final Throwable cause;
 
     private final String thread;    // This can be taken from the Thread class. No param needed.
@@ -39,10 +42,11 @@ public class Diagnostic {
     /// @param endOffset The 0-based absolute character index indicating the end of the text span (exclusive).
     /// @param source A identifier string representing the subsystem or component that created this diagnostic.
     /// @param level The severity [Level] classification of this diagnostic.
+    /// @param cause The cause of this report
     /// @param code An optional stable error or classification code, primarily useful for localization and documentation lookups.
     /// @param message The descriptive message explaining this diagnostic event.
-    /// @param cause An optional underlying [Throwable] that triggered this diagnostic.
-    public Diagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, String code, String message, Throwable cause) {
+    /// @param details Arguments referenced by the format specifiers in the format string.
+    public Diagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, Throwable cause, DiagnosticCode code, String message, Object... details) {
         this.uri = uri;
         this.line = line;
         this.column = column;
@@ -51,12 +55,34 @@ public class Diagnostic {
 
         this.source = source;
         this.level = level;
-        this.code = code;
-        this.message = message;
         this.cause = cause;
+        this.code = code;
+        this.details = details;
 
-        this.thread = Thread.currentThread().getName(); // This is not considered time-consuming
+        this.thread = Thread.currentThread().getName();
         this.timestamp = LocalDateTime.now();
+
+        String formattedMessage;
+
+        if (message == null) {
+            if (code == null) {
+                formattedMessage = ("Message code or text required when creating Diagnostic.");
+            } else {
+                try {
+                    formattedMessage = MessageFormat.format(code.getMessage(), details);
+                } catch (IllegalArgumentException e) {
+                    formattedMessage = "Formatting problem while reporting error code " + code.getCode() + ": " + code.getMessage() + ".";
+                }
+            }
+        } else {
+            try {
+                formattedMessage = String.format(message, details);
+            } catch (IllegalArgumentException e) {
+                formattedMessage = "Formatting problem while reporting error: " + message + ".";
+            }
+        }
+
+        this.message = formattedMessage;
     }
 
     /// Constructs a [Diagnostic] entry by resolving positioning metadata directly from a parsing [Token].
@@ -68,10 +94,11 @@ public class Diagnostic {
     /// @param token The syntactic [Token] supplying the positional bounds.
     /// @param source A identifier string representing the subsystem or component that created this diagnostic.
     /// @param level The severity [Level] classification of this diagnostic.
+    /// @param cause The cause of this report
     /// @param code An optional stable error or classification code, primarily useful for localization and documentation lookups.
     /// @param message The descriptive message explaining this diagnostic event.
-    /// @param cause An optional underlying [Throwable] that triggered this diagnostic.
-    public Diagnostic(URI uri, Token token, String source, Level level, String code, String message, Throwable cause) {
+    /// @param details Arguments referenced by the format specifiers in the format string.
+    public Diagnostic(URI uri, Token token, String source, Level level, Throwable cause, DiagnosticCode code, String message, Object... details) {
         this(
             uri,
             token.getStartLine(),
@@ -80,9 +107,10 @@ public class Diagnostic {
             token.getOffset() + token.getLexeme().length(),
             source,
             level,
+            cause,
             code,
             message,
-            cause
+            details
         );
     }
 
@@ -108,10 +136,13 @@ public class Diagnostic {
     public Level getLevel() { return level; }
 
     /// Returns the stable classification code, suitable for localization and system filtering.
-    public String getCode() { return code; }
+    public DiagnosticCode getCode() { return code; }
 
     /// Returns the formatted descriptive text message of this diagnostic.
     public String getMessage() { return message; }
+
+    /// Returns the arguments for the message format placeholders.
+    public Object[] getDetails() { return details; }
 
     /// Returns the underlying exception that caused this diagnostic, or `null` if none was provided.
     public Throwable getCause() { return cause; }

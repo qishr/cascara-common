@@ -5,6 +5,9 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+
 /// A utility class for creating tables .
 ///
 /// This class allows adding columns with headings and rows with data.
@@ -73,16 +76,17 @@ public class Table {
 
     /// Renders the table as text without any indentation.
     /// @param writer The Writer to output text to.
-    /// @throws IOException If an error occurs during writing.
-    public void render(Writer writer) throws IOException {
+    /// @throws LocalizableIOException If an error occurs during writing.
+    public void render(Writer writer) throws LocalizableIOException {
         render(writer, 0);
     }
 
     /// Renders the table as text with a given indentation level (number of spaces).
     /// @param writer The Writer to output text to.
     /// @param indent The number of spaces to indent each line.
-    /// @throws IOException If an error occurs during writing.
-    public void render(Writer writer, int indent) throws IOException {
+    /// @throws LocalizableIOException If an error occurs during writing.
+    public void render(Writer writer, int indent) throws LocalizableIOException {
+        try {
         if (showHeaders) {
             writer.write(" ".repeat(indent));
             // Write header line with column headings
@@ -114,7 +118,9 @@ public class Table {
             }
             writer.write("|\n");
         }
-        // writer.write("\n\n");
         writer.flush();
+    } catch (IOException e) {
+        throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+    }
     }
 }

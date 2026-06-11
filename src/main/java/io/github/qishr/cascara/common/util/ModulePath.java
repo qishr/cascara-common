@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
+
 public class ModulePath {
     private static final String DOT_CLASS = ".class";
     private static final String DOT_JAR = ".jar";
@@ -105,7 +107,7 @@ public class ModulePath {
             }
             moduleToPath.put(jarModuleName, file.toPath());
             return jarModuleName;
-        } catch(IOException e) {
+        } catch(LocalizableIOException e) {
 
         }
         return null;
@@ -122,7 +124,7 @@ public class ModulePath {
         return moduleName;
     }
 
-    private String processDirectoryUrl(File directory, URL[] urls, String moduleName) {
+    public String processDirectoryUrl(File directory, URL[] urls, String moduleName) {
         try (URLClassLoader classLoader = new URLClassLoader(urls)) {
             try(Stream<Path> classFiles = Files.walk(directory.toPath())) {
                 for (Path classFile : classFiles.toList()) {
@@ -131,13 +133,13 @@ public class ModulePath {
                     }
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | LocalizableIOException e) {
             // ctx.error(null, "Error reading classes in directory: " + directory.getAbsolutePath());
         }
         return moduleName;
     }
 
-    private String processClassFile(File directory, File file, URLClassLoader classLoader, String moduleName) throws IOException{
+    public String processClassFile(File directory, File file, URLClassLoader classLoader, String moduleName) throws LocalizableIOException {
         Path filePath = file.toPath();
         String className = "";
         String relativePath = "";
@@ -169,9 +171,9 @@ public class ModulePath {
     // It's only reading the list of contents and extracting enough to get the module descriptor.
     /// Processes a JAR file to extract module and package information relevant for sibling module linking.
     /// @param jarFile The file path to the JAR file.
-    /// @throws IOException if an error occurs while processing the JAR.
+    /// @throws LocalizableIOException if an error occurs while processing the JAR.
     @java.lang.SuppressWarnings("squid:S5042")
-    String processJarFile(JarFile jarFile, String moduleName) throws IOException{
+    String processJarFile(JarFile jarFile, String moduleName) throws LocalizableIOException{
         String newModuleName = "Unnamed Module";
         if (jarFile.getModuleName() != null) {
             newModuleName = jarFile.getModuleName();

@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
+
 public class JarFile extends ArchiveFile {
     private Properties manifestProperties = new Properties();
     private Properties mavenProperties;
@@ -18,11 +20,11 @@ public class JarFile extends ArchiveFile {
     private Set<String> classNames = null;
     private String moduleName = null;
 
-    public static JarFile load(Path jarPath) throws IOException {
+    public static JarFile load(Path jarPath) throws LocalizableIOException {
         return new JarFile(jarPath);
     }
 
-    private JarFile(Path jarPath) throws IOException {
+    private JarFile(Path jarPath) throws LocalizableIOException {
         super(jarPath);
         String jarManifest = new String(extractFile("META-INF/MANIFEST.MF"));
         manifestProperties = JarManifest.parse(jarManifest);
@@ -105,7 +107,7 @@ public class JarFile extends ArchiveFile {
                     return mavenDirectory + info.getPath();
                 }
             }
-        } catch (IOException e) {
+        } catch (LocalizableIOException e) {
             // Ignore for now
         }
         return null;
@@ -159,7 +161,7 @@ public class JarFile extends ArchiveFile {
         List<FileInfo> allFiles;
         try {
             allFiles = listFiles();
-        } catch (IOException e) {
+        } catch (LocalizableIOException e) {
             return;
         }
         classNames = new HashSet<>();
@@ -193,7 +195,7 @@ public class JarFile extends ArchiveFile {
                     packageNames.add(packageName);
                 }
             }
-        } catch (IOException e) {
+        } catch (LocalizableIOException e) {
             // Ignore for now
         }
     }

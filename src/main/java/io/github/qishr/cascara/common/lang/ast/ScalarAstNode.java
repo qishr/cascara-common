@@ -27,6 +27,10 @@ public interface ScalarAstNode<T extends AstNode> extends AstNode {
     int asInteger(int defaultValue);
     double asDouble();
     double asDouble(double defaultValue);
+
+    /// Returns the boolean value of the scalar, if there is one.
     boolean asBoolean();
+
+    /// Returns the boolean value of the scalar, if there is one, otherwise the specified default is returned.
     boolean asBoolean(boolean defaultValue);
 }

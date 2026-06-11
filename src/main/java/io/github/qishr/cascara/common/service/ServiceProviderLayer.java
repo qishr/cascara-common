@@ -21,6 +21,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ModulePath;
@@ -78,26 +81,25 @@ public class ServiceProviderLayer {
     @SuppressWarnings("unchecked")
     public static <T> T loadProvider(Class<T> providerClass) {
         if (!ServiceProvider.class.isAssignableFrom(providerClass)) {
-            throw new ServiceException("\"" + providerClass + "\" is not a ServiceProvider.");
+            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, providerClass);
         }
         try {
             Constructor<?> constructor = providerClass.getDeclaredConstructor();
             if (constructor == null) {
-                getRootLayer().reporter.debug("No declared constructor for " + providerClass.getName());
-                throw new ServiceException("Class " + providerClass.getName() + " has no no-args constructor.");
+                throw new ServiceException(ServiceDiagnosticCode.NOARGS_CONSTRUCTOR_REQUIRED, providerClass.getName());
             } else {
                 ServiceProvider instance = (ServiceProvider) constructor.newInstance();
                 return (T)instance;
             }
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
                 | NoSuchMethodException e) {
-            throw new ServiceException("Failed to instantiate class " + providerClass.getName() + ". Cause: " + e.getMessage(), e);
+            throw new ServiceException(e, ServiceDiagnosticCode.FAILED_TO_INSTANTIATE_CLASS, providerClass.getName(), e.getMessage());
         }
     }
 
     public static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
-            throw new ServiceException("\"" + serviceType + "\" is not a ServiceProvider.");
+            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, serviceType);
         }
         Class<? extends ServiceProvider> clazz = metadata.getType();
         return serviceType.cast(loadProvider(clazz));
@@ -107,11 +109,11 @@ public class ServiceProviderLayer {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T> T loadDefault(Class<T> serviceType) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
-            throw new ServiceException("\"" + serviceType + "\" is not a ServiceProvider.");
+            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, serviceType);
         }
         List<ServiceMetadata> providers = getRootLayer().findAllProviders((Class)serviceType);
         if (providers.isEmpty()) {
-            throw new ServiceException("No providers registered for " + serviceType.getSimpleName());
+            throw new ServiceException(ServiceDiagnosticCode.NO_PROVIDER_REGISTERED, serviceType.getSimpleName());
         }
         ServiceMetadata meta = providers.getFirst();
         Class<T> clazz = (Class<T> )meta.getType();
@@ -268,10 +270,6 @@ public class ServiceProviderLayer {
         }
 
         ClassLoader classLoader = module.getClassLoader();
-        if (classLoader == null) {
-            getReporter().error(null, "Module \"%s\" has no ClassLoader.", moduleName);
-            return;
-        }
 
         ModuleDescriptor desc = module.getDescriptor();
         for (Provides provides : desc.provides()) {
@@ -280,7 +278,7 @@ public class ServiceProviderLayer {
                     Class<?> type = classLoader.loadClass(providerClassName);
                     registerClass((Class)type);
                 } catch (ClassNotFoundException | ServiceException e) {
-                    getReporter().warn(null, "Failed to load class " + providerClassName +". Cause: " + e.getMessage(), e);
+                    getReporter().warn(ServiceDiagnosticCode.FAILED_TO_LOAD_CLASS, providerClassName, e.getMessage());
                 }
             }
         }
@@ -300,14 +298,12 @@ public class ServiceProviderLayer {
         try {
             JarFile jar = JarFile.load(jarPath);
             moduleName = jar.getModuleName();
-        } catch (IOException e) {
-            String message = String.format("Failed to read Jar \"%s\". Cause: " + e.getMessage(), jarPath);
-            throw new ServiceException(message, e);
+        } catch (LocalizableIOException e) {
+            throw new ServiceException(e, ServiceDiagnosticCode.FAILED_TO_READ_JAR, jarPath, e.getMessage());
         }
 
         if (moduleName == null || moduleName.isEmpty()) {
-            String message = String.format("Jar \"%s\" does not contain a module.", jarPath);
-            throw new ServiceException(message);
+            throw new ServiceException(ServiceDiagnosticCode.NON_MODULAR_JAR, jarPath);
         }
 
         getReporter().debug("Discovering providers in \"%s\"", jarPath);
@@ -470,7 +466,7 @@ public class ServiceProviderLayer {
         if (t != null) {
             logMessage = logMessage + " " + t.getMessage();
         }
-        getReporter().error(null, logMessage);
+        getReporter().error(GenericDiagnosticCode.ERROR, logMessage);
     }
 
     private Path[] getJarPaths() {

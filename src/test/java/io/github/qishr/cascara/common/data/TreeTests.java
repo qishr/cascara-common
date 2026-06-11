@@ -1,6 +1,5 @@
 package io.github.qishr.cascara.common.data;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
@@ -8,10 +7,11 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.data.reference.ReferenceTableData;
 import io.github.qishr.cascara.common.data.reference.ReferenceTreeData;
+import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 
 public class TreeTests {
     @Test
-    void t1() throws IOException {
+    void t1() throws LocalizableIOException {
         ReferenceTreeData root = new ReferenceTreeData("root");
 
         ReferenceTreeData branch1 = new ReferenceTreeData("branch 1");

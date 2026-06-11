@@ -1,7 +1,5 @@
 package io.github.qishr.cascara.common.lang.simple;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.lang.reference.ReferenceNode;

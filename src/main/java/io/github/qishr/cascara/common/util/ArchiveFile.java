@@ -3,6 +3,7 @@ package io.github.qishr.cascara.common.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -10,10 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.*;
 
+import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.code.FileDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+
 public class ArchiveFile {
     protected Path archivePath = null;
 
-    public static ArchiveFile load(Path archivePath) throws IOException {
+    public static ArchiveFile load(Path archivePath) throws LocalizableIOException {
         return new ArchiveFile(archivePath);
     }
 
@@ -51,15 +56,15 @@ public class ArchiveFile {
         return new byte[0];
     }
 
-    public List<FileInfo> listFiles() throws IOException {
+    public List<FileInfo> listFiles() throws LocalizableIOException {
         return listFiles(archivePath, null);
     }
 
-    public List<FileInfo> listFiles(String dirPath) throws IOException {
+    public List<FileInfo> listFiles(String dirPath) throws LocalizableIOException {
         return listFiles(archivePath, dirPath);
     }
 
-    protected static List<FileInfo> listFiles(Path archivePath, String dirPath) throws IOException {
+    protected static List<FileInfo> listFiles(Path archivePath, String dirPath) throws LocalizableIOException {
         if (dirPath != null && !dirPath.isEmpty() && !dirPath.endsWith("/")) {
             dirPath = dirPath + "/";
         }
@@ -75,6 +80,10 @@ public class ArchiveFile {
                     fileInfoList.add(fileInfo);
                 }
             }
+        } catch (FileNotFoundException e) {
+            throw new LocalizableIOException(e, FileDiagnosticCode.FILE_NOT_FOUND, archivePath);
+        } catch (IOException e) {
+            throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
         }
 
         return fileInfoList;

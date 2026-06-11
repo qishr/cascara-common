@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 
+import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.util.Properties;
 import io.github.qishr.cascara.common.util.Property;
 
@@ -27,14 +29,18 @@ public class Tree<T extends TreeData<T,V>,V> {
         root = node;
     }
 
-    public void render(Writer writer) throws IOException {
+    public void render(Writer writer) throws LocalizableIOException {
         render(writer, root, 0);
     }
 
-    public void render(Writer writer, TreeData<T,V> node, int indent) throws IOException {
+    public void render(Writer writer, TreeData<T,V> node, int indent) throws LocalizableIOException {
+        try {
         writer.write(" ".repeat(TAB_SIZE * indent));
         writer.write(node.getNodeName());
         writer.write(NL);
+        } catch (IOException e) {
+            throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+        }
 
         if (renderValues && node.getPayload() != null) {
             renderValue(writer, node.getPayload(), indent + 1);
@@ -46,7 +52,7 @@ public class Tree<T extends TreeData<T,V>,V> {
     }
 
     /// Renders TreeData.getValue()
-    private void renderValue(Writer writer, V value, int indent) throws IOException {
+    private void renderValue(Writer writer, V value, int indent) throws LocalizableIOException {
         if (value instanceof List list && !list.isEmpty()) {
             Object firstElement = list.getFirst();
             if (firstElement instanceof TableData firstRow) {
@@ -66,7 +72,7 @@ public class Tree<T extends TreeData<T,V>,V> {
         }
     }
 
-    private void renderTable(Writer writer, int columns, List<? extends TableData> rows, int indent) throws IOException {
+    private void renderTable(Writer writer, int columns, List<? extends TableData> rows, int indent) throws LocalizableIOException {
         Table table = new Table();
         table.setShowHeaders(false);
 

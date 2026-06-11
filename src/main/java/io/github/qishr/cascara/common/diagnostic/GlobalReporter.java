@@ -24,6 +24,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         // Nothing to see here
     }
 
+    /// {@inheritDoc}
     @Override
     protected GlobalReporter self() { return this; }
 

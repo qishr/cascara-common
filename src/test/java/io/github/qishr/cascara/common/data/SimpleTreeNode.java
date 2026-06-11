@@ -9,7 +9,7 @@ public class SimpleTreeNode implements TreeData<SimpleTreeNode,List<TableData>> 
     private String name;
     private List<SimpleTreeNode> children = new ArrayList<>();
     private SimpleTreeNode parent;
-    private List<TableData> value;
+    private List<TableData> values;
 
     public SimpleTreeNode(String name) {
         this.name = name;
@@ -49,12 +49,16 @@ public class SimpleTreeNode implements TreeData<SimpleTreeNode,List<TableData>> 
 
 	@Override
 	public List<TableData> getPayload() {
-        return value;
+        return values;
 	}
 
-    public SimpleTreeNode setValue(List<TableData> data) {
-        value = data;
+    public SimpleTreeNode setValues(List<TableData> data) {
+        values = data;
         return this;
     }
+
+	public Object[] getValues() {
+		return values.toArray();
+	}
 
 }

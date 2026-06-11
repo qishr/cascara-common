@@ -28,10 +28,10 @@ public class Properties implements TableData {
     public Property get(String k) {
         List<Property> copy = new ArrayList<>(propertiesList);
         for (Property prop : copy) {
-            if (prop.getKey() == null) {
+            if (prop.getName() == null) {
                 System.out.println("shoud not be null");
             } else {
-                if (prop.getKey().equals(k)) {
+                if (prop.getName().equals(k)) {
                     return prop;
                 }
             }
@@ -129,17 +129,17 @@ public class Properties implements TableData {
 
     public void addAll(Properties properties) {
         for (Property prop : properties.asList()) {
-            set(prop.getKey(), prop.getValue());
+            set(prop.getName(), prop.getValue());
         }
     }
 
     public void add(Property property) {
-        Property existing = get(property.getKey());
+        Property existing = get(property.getName());
         if (existing != null) {
             existing.setValue(property.getValue());
         } else {
             propertiesList.add(property);
-            propertiesMap.put(property.getKey(), property);
+            propertiesMap.put(property.getName(), property);
         }
     }
 
@@ -156,7 +156,7 @@ public class Properties implements TableData {
 
     public void remove(String k) {
         for (Property property : propertiesList) {
-            if (property.getKey().equals(k)) {
+            if (property.getName().equals(k)) {
                 propertiesList.remove(property);
                 propertiesMap.remove(k);
                 return;
@@ -165,7 +165,7 @@ public class Properties implements TableData {
     }
 
     public void remove(Property property) {
-        remove(property.getKey());
+        remove(property.getName());
     }
 
     public void clear() {
@@ -180,7 +180,7 @@ public class Properties implements TableData {
     public Properties duplicate() {
         Properties copy = new Properties();
         for (Property prop : propertiesList) {
-            copy.set(prop.getKey(), prop.getValue());
+            copy.set(prop.getName(), prop.getValue());
         }
         return copy;
     }
