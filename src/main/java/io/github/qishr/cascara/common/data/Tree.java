@@ -34,10 +34,11 @@ public class Tree<T extends TreeData<T,V>,V> {
     }
 
     public void render(Writer writer, TreeData<T,V> node, int indent) throws LocalizableIOException {
+        if (node == null) return;
         try {
-        writer.write(" ".repeat(TAB_SIZE * indent));
-        writer.write(node.getNodeName());
-        writer.write(NL);
+            writer.write(" ".repeat(TAB_SIZE * indent));
+            writer.write(node.getNodeName() == null ? "NULL" : node.getNodeName());
+            writer.write(NL);
         } catch (IOException e) {
             throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
         }

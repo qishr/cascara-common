@@ -4,11 +4,17 @@ import io.github.qishr.cascara.common.util.Properties;
 
 public class ServiceMetadata {
     private final Class<? extends ServiceProvider> type;
+    private Class<?> capabilityType;
     private final Properties properties;
 
     public ServiceMetadata(Class<? extends ServiceProvider> type, Properties properties) {
         this.type = type;
         this.properties = properties;
+        String capTypeString = properties.getString("javaType");
+        try {
+            capabilityType = capTypeString == null ? null : Class.forName(capTypeString);
+        } catch (Exception e) {
+        }
     }
 
     public boolean getBooleanCapability(String capName) {
@@ -20,12 +26,18 @@ public class ServiceMetadata {
         return type.getModule().getName();
     }
 
+    // TODO: This should be getProviderTypeName or getProviderClassName
     public String getTypeName() {
         return type.getName();
     }
 
+    // TODO: This should be getProviderType or getProviderClass
     public Class<? extends ServiceProvider> getType() {
         return type;
+    }
+
+    public Class<?> getCapabilityType() {
+        return capabilityType;
     }
 
     public Properties getProperties() {

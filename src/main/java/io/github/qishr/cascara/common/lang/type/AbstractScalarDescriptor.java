@@ -9,8 +9,8 @@ public abstract class AbstractScalarDescriptor<T> extends AbstractTypeDescriptor
     private String format;
     private String contentEncoding;
 
-    protected AbstractScalarDescriptor(Class<T> jvmType, String type, String format) {
-        this(jvmType, type, format, null);
+    protected AbstractScalarDescriptor(Class<T> jvmType, String schemaType, String format) {
+        this(jvmType, schemaType, format, null);
     }
 
     protected AbstractScalarDescriptor(Class<T> jvmType, String schemaType, String format, String contentEncoding) {

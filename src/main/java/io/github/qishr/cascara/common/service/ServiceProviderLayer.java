@@ -1,6 +1,5 @@
 package io.github.qishr.cascara.common.service;
 
-import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
@@ -143,17 +142,25 @@ public class ServiceProviderLayer {
         return found;
     }
 
+    /// Retrieves metadata of the nearest known provider of the specified service type.
+    public ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType) {
+        List<ServiceMetadata> all = internalFindAllProviders(serviceType, null, null);
+        return all.isEmpty() ? null : all.getFirst();
+    }
+
+    /// Retrieves metadata of the nearest known provider whose capabilities satisfy the given predicate.
+    public ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate) {
+        List<ServiceMetadata> all = internalFindAllProviders(serviceType, capabilityPredicate, null);
+        return all.isEmpty() ? null : all.getFirst();
+    }
+
     /// Retrieves metadata of all known providers of the specified service type.
     public List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType) {
-        String startLayer = (name == null ? "unnamed layer" : "layer " + name);
-        getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
         return internalFindAllProviders(serviceType, null, null);
     }
 
     /// Retrieves metadata of all known providers whose capabilities satisfy the given predicate.
     public List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate) {
-        String startLayer = (name == null ? "unnamed layer" : "layer " + name);
-        getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
         return internalFindAllProviders(serviceType, capabilityPredicate, null);
     }
 
@@ -222,8 +229,10 @@ public class ServiceProviderLayer {
             Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
             for (ServiceMetadata provider : set) {
                 if (capabilityPredicate.test(provider.getProperties())) {
-                    found.add(provider);
-                    reportFinding(provider, 0);
+                    // if (capabilityType == null || provider.getCapabilityType().isAssignableFrom(capabilityType)) {
+                        found.add(provider);
+                        reportFinding(provider, 0);
+                    // }
                 }
             }
         }
@@ -482,6 +491,8 @@ public class ServiceProviderLayer {
     }
 
     private List<ServiceMetadata> internalFindAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate, ServiceProviderLayer previous) {
+        String startLayer = (name == null ? "unnamed layer" : "layer " + name);
+        getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
         List<ServiceMetadata> found = new ArrayList<>();
 
         if (providersByServiceType.get(serviceType) != null) {
