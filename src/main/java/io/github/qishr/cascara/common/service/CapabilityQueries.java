@@ -16,6 +16,21 @@ public class CapabilityQueries {
         return props -> props.containsKey(key) && Boolean.TRUE.equals(props.getBoolean(key, false));
     }
 
+    /// Matches if a property is a boolean flag set to true
+    public static Predicate<Properties> supportsJvmType(Class<?> jvmType) {
+        return props -> {
+            String capTypeString = props.getString("javaType");
+            Class<?> capabilityType;
+            try {
+                // TODO: For performance, have Properties be able to return the Class<?> instead of a string
+                capabilityType = capTypeString == null ? null : Class.forName(capTypeString);
+            } catch (ClassNotFoundException e) {
+                return false;
+            }
+            return (capabilityType == null || capabilityType.isAssignableFrom(jvmType));
+        };
+    }
+
     /// Combines multiple capability predicates using logical AND (All must match)
     /// @return predicate
     @SafeVarargs

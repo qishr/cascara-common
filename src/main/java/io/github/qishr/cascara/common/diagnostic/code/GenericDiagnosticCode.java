@@ -21,6 +21,8 @@ public enum GenericDiagnosticCode implements DiagnosticCode {
     INVALID_URI("ERROR-402", "Invalid URI: {0}."),
     UNKNOWN_URI_SCHEME("ERROR-403", "Unknown URI scheme: {0}."),
     MALFORMED_BASE64("ERROR-404", "Malformed Base64 payload"),
+    MESSAGE_FORMATTING_ERROR("ERROR-405", "Problem encountered while formatting message with key {0}: {1}"),
+    DIAGNOSTIC_FORMATTING_ERROR("ERROR-406", "Problem encountered while formatting error with code {0}: {1}"),
 
     NO_RESOURCE_PROVIDER("ERROR-501", "No resource provider.");
 
