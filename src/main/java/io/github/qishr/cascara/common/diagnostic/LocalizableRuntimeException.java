@@ -19,7 +19,7 @@ public class LocalizableRuntimeException extends RuntimeException {
     }
 
     public LocalizableRuntimeException(Throwable cause, DiagnosticCode code, Object... details) {
-        super(localizer.format(code, details));
+        super(localizer.format(code, details), cause);
         this.code = code;
         this.details = details != null ? details : new Object[0];
     }

@@ -1,5 +1,6 @@
 package io.github.qishr.cascara.common.lang.reference;
 
+import io.github.qishr.cascara.common.lang.annotation.Nullable;
 import io.github.qishr.cascara.common.lang.ast.*;
 import io.github.qishr.cascara.common.lang.token.Token;
 
@@ -12,6 +13,8 @@ public abstract class ReferenceNode implements AstNode {
     public int getEndLine() { return 0; }
     @Override
     public int getEndColumn() { return 0; }
+
+    @Nullable
     @Override
     public Token getToken() { return null; }
 }

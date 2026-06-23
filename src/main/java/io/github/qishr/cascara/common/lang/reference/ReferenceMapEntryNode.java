@@ -35,8 +35,9 @@ public final class ReferenceMapEntryNode extends ReferenceNode implements MapEnt
     }
 
     @Override
-    public void setRaw(ReferenceNode value) {
+    public ReferenceMapEntryNode setRaw(ReferenceNode value) {
         this.value = value;
+        return this;
     }
 
     @Override

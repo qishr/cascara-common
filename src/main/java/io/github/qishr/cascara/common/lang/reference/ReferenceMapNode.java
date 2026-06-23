@@ -1,7 +1,6 @@
 package io.github.qishr.cascara.common.lang.reference;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -55,8 +54,9 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
     }
 
     @Override
-    public void remove(ReferenceNode key) {
+    public ReferenceMapNode remove(ReferenceNode key) {
         entries.remove(key);
+        return this;
     }
 
     @Override
@@ -93,16 +93,17 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
     }
 
     @Override
-    public void remove(String key) {
+    public ReferenceMapNode remove(String key) {
         Iterator<ReferenceMapEntryNode> it = entries.iterator();
         while (it.hasNext()) {
             ReferenceMapEntryNode entry = it.next();
             AstNode k = entry.getKey();
             if (k instanceof ScalarAstNode scalar && scalar.asString().equals(key)) {
                 it.remove();
-                return;
+                return this;
             }
         }
+        return this;
     }
 
     @Override
@@ -152,7 +153,7 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
     }
 
     @Override
-    public Collection<ReferenceNode> values() {
+    public List<ReferenceNode> values() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'values'");
     }

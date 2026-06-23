@@ -8,7 +8,17 @@ public class CapabilityQueries {
 
     /// Matches if a property has a specific exact value (matches JSON Schema types like String, Boolean, Number)
     public static Predicate<Properties> hasExactValue(String key, Object expectedValue) {
-        return props -> props.containsKey(key) && expectedValue.toString().equals(props.getString(key));
+        return props -> {
+            if (props.containsKey(key)) {
+                if (expectedValue == null) {
+                    return props.getString(key) == null;
+                } else {
+                    return expectedValue.toString().equals(props.getString(key));
+                }
+            } else {
+                return expectedValue == null;
+            }
+        };
     }
 
     /// Matches if a property is a boolean flag set to true

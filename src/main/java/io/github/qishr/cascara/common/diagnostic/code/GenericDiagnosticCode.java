@@ -7,14 +7,16 @@ public enum GenericDiagnosticCode implements DiagnosticCode {
     UNIMPLEMENTED_METHOD("WARN-102", "Unimplemented method: {0}.{1}."),
 
     ERROR("ERROR-101", "Error: {0}."),
-    EXCEPTION("ERROR-102", "Exception: {0}."),
-    RUNTIME_EXCEPTION("ERROR-103", "Runtime exception: {0}."),
-    NPE("ERROR-104", "Null pointer exception: {0}."),
-    UNEXPECTED_NULL("ERROR-105","Unexpected null {0}."),
-    INCONSISTENT_STATE("ERROR-106","Inconsistent state."),
-    UNSUPPORTED_OPERATION("ERROR-107","Unsupported operation: {0}."),
+    UNEXPECTED_NULL("ERROR-102","Unexpected null: {0}"),
+    UNEXPECTED_NULL_PARAMETER("ERROR-103","Unexpected null paramter \"{1}\" in {0}"),
 
-    IO_ERROR("ERROR-201", "IO error: {0}."),
+    EXCEPTION("ERROR-202", "Exception: {0}."),
+    RUNTIME_EXCEPTION("ERROR-203", "Runtime exception: {0}."),
+    NPE("ERROR-204", "Null pointer exception: {0}."),
+    INCONSISTENT_STATE("ERROR-206","Inconsistent state."),
+    UNSUPPORTED_OPERATION("ERROR-207","Unsupported operation: {0}."),
+
+    IO_ERROR("ERROR-301", "IO error: {0}."),
     INTERRUPT_ERROR("ERROR-301", "Interrupt error: {0}."),
 
     FORMAT_ERROR("ERROR-401", "Format error: {0}."),

@@ -1,20 +1,16 @@
 package io.github.qishr.cascara.common.service;
 
-import java.util.function.Predicate;
-
 import io.github.qishr.cascara.common.lang.processor.Parser;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
-import io.github.qishr.cascara.common.util.Properties;
 
-public class ServiceProviderFactory {
-    private final ServiceProviderLayer layer;
+public class ServiceProviderFactory extends AbstractServiceProviderFactory {
 
     public ServiceProviderFactory() {
-        this(null);
+        super();
     }
 
     public ServiceProviderFactory(ServiceProviderLayer layer) {
-        this.layer = layer == null ? ServiceProviderLayer.getRootLayer() : layer;
+        super(layer);
     }
 
     public Parser<?, ?> createParser(String contentType) throws ServiceException {
@@ -32,20 +28,4 @@ public class ServiceProviderFactory {
             )
         );
     }
-
-    //
-    //
-    //
-
-    protected <T extends ServiceProvider> T createServiceProvider(Class<T> serviceType, Predicate<Properties> capabilityPredicate) {
-        ServiceMetadata metadata = layer.findProvider(
-            serviceType,
-            capabilityPredicate
-        );
-        if (metadata != null) {
-            return ServiceProviderLayer.loadProvider(serviceType, metadata);
-        }
-        return null;
-    }
-
 }

@@ -1,6 +1,7 @@
 package io.github.qishr.cascara.common.lang.ast;
 
 import io.github.qishr.cascara.common.lang.QuoteStyle;
+import io.github.qishr.cascara.common.lang.annotation.Nullable;
 
 public interface ScalarAstNode<T extends AstNode> extends AstNode {
     /// Returns the [QuoteStyle] used by a node: PLAIN, SINGLE, DOUBLE, LITERAL, or FOLDED.
@@ -10,9 +11,11 @@ public interface ScalarAstNode<T extends AstNode> extends AstNode {
     void setQuoteStyle(QuoteStyle style);
 
     /// Returns the exact, unparsed text block directly from the file buffer.
+    @Nullable
     String getRaw();
 
     /// Returns the Java-native representation of the scalar (e.g., Integer, Boolean, String).
+    @Nullable
     Object getPrimitive();
 
     /// Updates the logical native primitive value of this node.
@@ -20,9 +23,12 @@ public interface ScalarAstNode<T extends AstNode> extends AstNode {
     /// This method invalidates any pre-existing raw string cache derived from
     /// a file buffer, marking the node as dirty so the emitter can contextually
     /// re-serialize the new value on the next text export pass.
-    void setPrimitive(Object value);
+    ScalarAstNode<T> setPrimitive(Object value);
 
+    /// Returns the string form or the primitive.
+    /// If the primitive is `null`, an empty string is returned.
     String asString();
+
     int asInteger();
     int asInteger(int defaultValue);
     double asDouble();

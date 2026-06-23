@@ -5,10 +5,12 @@ import java.util.Objects;
 import io.github.qishr.cascara.common.lang.QuoteStyle;
 
 public class Primitive {
-    protected final Object rawInput;
-    private final QuoteStyle originalQuotedStyle;
-    private final boolean isAlreadyNative;
     private PrimitiveDelegate delegate;
+    protected final Object rawInput;
+    private Object nativeValueCache;
+    private boolean nativeValueCacheIsCached;
+    private final boolean isAlreadyNative;
+    private final QuoteStyle originalQuotedStyle;
     protected QuoteStyle specifiedQuoteStyle;
 
     public static Primitive of(Object nativeInstance) {
@@ -135,19 +137,22 @@ public class Primitive {
     //
 
     private Object nativeValue() {
-        if (isAlreadyNative) {
-            // eg Integer, Boolean
-            return rawInput;
-        } else {
-            // A String
-            // TODO: Cache these values for returning next time
-            if (originalQuotedStyle != QuoteStyle.PLAIN) {
-                // Unescape contextually based on the quoting rules of the dialect
-                return unescapeQuotedString(rawInput == null ? "" : rawInput.toString(), originalQuotedStyle);
+        if (!nativeValueCacheIsCached) {
+            if (isAlreadyNative) {
+                // eg Integer, Boolean
+                nativeValueCache = rawInput;
             } else {
-                return coerce(rawInput);
+                // A String
+                if (originalQuotedStyle != QuoteStyle.PLAIN) {
+                    // Unescape contextually based on the quoting rules of the dialect
+                    nativeValueCache = unescapeQuotedString(rawInput == null ? "" : rawInput.toString(), originalQuotedStyle);
+                } else {
+                    nativeValueCache = coerce(rawInput);
+                }
             }
+            nativeValueCacheIsCached = true;
         }
+        return nativeValueCache;
     }
 
     /// Iterates through core conversions. Can be overridden for language-specific nuances.
@@ -160,17 +165,34 @@ public class Primitive {
         if (customCoercion != null) return customCoercion;
 
         // Fall back to baseline universal primitives
-        String trimmed = str.trim();
+        // String trimmed = str.trim();
 
         // Universal numbers
-        try {
-            return Integer.parseInt(trimmed);
-        } catch (NumberFormatException e) { /* move on */ }
+        if (isLikelyNumeric(str)) {
+            try {
+                return Integer.parseInt(str);
+            } catch (NumberFormatException e) { /* move on */ }
 
-        try {
-            return Double.parseDouble(trimmed);
-        } catch (NumberFormatException e) { /* move on */ }
+            try {
+                return Double.parseDouble(str);
+            } catch (NumberFormatException e) { /* move on */ }
+        }
 
         return str;
+    }
+
+    private static boolean isLikelyNumeric(String str) {
+        if (str == null || str.isEmpty()) return false;
+        char first = str.charAt(0);
+        // Quick check for standard start characters
+        if (!Character.isDigit(first) && first != '-' && first != '+' && first != '.') {
+            return false;
+        }
+        // Optional: scan to ensure there's at least one digit
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (Character.isDigit(c)) return true;
+        }
+        return false;
     }
 }

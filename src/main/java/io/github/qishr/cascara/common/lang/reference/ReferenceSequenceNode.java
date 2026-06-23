@@ -16,8 +16,9 @@ public final class ReferenceSequenceNode extends ReferenceNode implements Sequen
     }
 
     @Override
-    public void clear() {
+    public ReferenceSequenceNode clear() {
         elements.clear();
+        return this;
     }
 
     @Override

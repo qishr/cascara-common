@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface SequenceAstNode<T extends AstNode> extends AstNode, Iterable<T> {
     int size();
-    void clear();
+    SequenceAstNode<T> clear();
     SequenceAstNode<T> add(T node);
     SequenceAstNode<T> remove(T node);
     SequenceAstNode<T> remove(int index);

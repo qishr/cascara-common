@@ -184,4 +184,16 @@ public class Properties implements TableData {
         }
         return copy;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (Property prop : propertiesList) {
+            sb.append(prop.getName());
+            sb.append(" = ");
+            sb.append(prop.getValue());
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
 }
