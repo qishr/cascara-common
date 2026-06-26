@@ -17,12 +17,14 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// important, with ERROR being the most important.
     protected Consumer<Diagnostic> diagnosticCollector;
 
-    // Consumes ERROR, WARN, and INFO diagnostics.
+    /// Consumes ERROR, WARN, and INFO diagnostics.
     protected Consumer<Diagnostic> problemCollector;
 
     protected Consumer<String> stringWriter;
+
     protected boolean disableSystemOutput = false;
     protected boolean disableFlush = true;
+    protected boolean printStackTrace;
 
     protected AbstractReporter(Consumer<String> writer) {
         this.stringWriter = writer;
@@ -68,6 +70,11 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     public T setDisableFlush(boolean b) {
         disableFlush = b;
+        return self();
+    }
+
+    public T setPrintStackTrace(boolean b) {
+        printStackTrace = b;
         return self();
     }
 
@@ -257,6 +264,8 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected boolean disableFlush() { return disableFlush; }
 
+    protected boolean printStackTrace() { return printStackTrace; }
+
     protected void report(Diagnostic diagnostic) {
         if (this.level.compareTo(diagnostic.getLevel()) >= 0) {
             writeString(diagnostic);
@@ -270,17 +279,20 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         }
     }
 
-    protected void writeString(Level level, String message) {
-        outputToConsole(level, message);
+    protected void writeString(Throwable cause, Level level, String message) {
+        outputToConsole(cause, level, message);
         if (getStringWriter() != null) {
             getStringWriter().accept(message);
         }
     }
 
-    protected void outputToConsole(Level level, String message) {
-        PrintStream console = level == Level.ERROR ? System.err : System.out;
+    protected void outputToConsole(Throwable cause, Level level, String message) {
         if (!disableSystemOutput()) {
+            PrintStream console = level == Level.ERROR ? System.err : System.out;
             console.print(message);
+            if (cause != null && printStackTrace()) {
+                cause.printStackTrace();
+            }
             if (!disableFlush()) {
                 console.flush();
             }

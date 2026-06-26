@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.lang;
+package io.github.qishr.cascara.common.lang.util;
 
 public enum QuoteStyle {
     PLAIN,

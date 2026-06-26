@@ -1,5 +1,7 @@
 package io.github.qishr.cascara.common.lang.processor;
 
+import java.io.InputStream;
+
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.exception.SerializerException;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
@@ -29,6 +31,7 @@ public interface Serializer<N extends AstNode> extends Processor {
     /// @throws SerializerException If parsing or mapping fails.
     <C> C fromText(String text, Class<C> jvmType) throws SerializerException;
 
+    <C> C fromStream(InputStream is, Class<C> jvmType) throws SerializerException;
 
     /// Transforms a Java Object into an AST representation.
     ///

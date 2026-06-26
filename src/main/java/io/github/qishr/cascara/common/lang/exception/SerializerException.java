@@ -19,4 +19,18 @@ public class SerializerException extends LocatableException {
     public SerializerException(Throwable cause, DiagnosticCode code, Object... details) {
         super(null, UNKNOWN_COORD, UNKNOWN_COORD, cause, code, details);
     }
+
+
+    //
+    // With Location
+    //
+
+    // public SerializerException(AstNode node, Throwable cause, DiagnosticCode code, Object... details) {
+    //     super(cause, code, details);
+    // }
+
+    public SerializerException(AstNode node, DiagnosticCode code, Object... details) {
+        this(node, null, code, details);
+    }
+
 }

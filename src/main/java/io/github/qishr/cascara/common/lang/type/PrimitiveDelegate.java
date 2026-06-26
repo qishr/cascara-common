@@ -1,6 +1,6 @@
 package io.github.qishr.cascara.common.lang.type;
 
-import io.github.qishr.cascara.common.lang.QuoteStyle;
+import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 public interface PrimitiveDelegate {
     QuoteStyle inferQuoteStyle(Object value);

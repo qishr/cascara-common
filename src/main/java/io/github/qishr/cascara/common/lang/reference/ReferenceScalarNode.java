@@ -1,8 +1,9 @@
 package io.github.qishr.cascara.common.lang.reference;
 
-import io.github.qishr.cascara.common.lang.QuoteStyle;
 import io.github.qishr.cascara.common.lang.annotation.Nullable;
 import io.github.qishr.cascara.common.lang.ast.*;
+import io.github.qishr.cascara.common.lang.util.QuoteStyle;
+
 import java.util.Collections;
 import java.util.List;
 

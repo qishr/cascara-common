@@ -17,7 +17,9 @@ public class StandardReporter extends AbstractReporter<StandardReporter> {
     @Override
     protected void writeString(Diagnostic diagnostic) {
         if (diagnostic.getUri() == null) {
-            writeString (diagnostic.getLevel(),
+            writeString (
+                diagnostic.getCause(),
+                diagnostic.getLevel(),
                 String.format(
                     "[%5s] %s\n",
                     diagnostic.getLevel(),
@@ -26,7 +28,9 @@ public class StandardReporter extends AbstractReporter<StandardReporter> {
             );
         } else {
             if (diagnostic.getLine() > 0) {
-                writeString (diagnostic.getLevel(),
+                writeString (
+                    diagnostic.getCause(),
+                    diagnostic.getLevel(),
                     String.format(
                         "[%5s] %s at %s:%d\n",
                         diagnostic.getLevel(),
@@ -36,7 +40,9 @@ public class StandardReporter extends AbstractReporter<StandardReporter> {
                     )
                 );
             } else {
-                writeString (diagnostic.getLevel(),
+                writeString (
+                    diagnostic.getCause(),
+                    diagnostic.getLevel(),
                     String.format(
                         "[%5s] %s in file %s\n",
                         diagnostic.getLevel(),

@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.lang;
+package io.github.qishr.cascara.common.lang.util;
 
 /// Base class for all language-specific configuration.
 /// T is the specific implementation type for fluent chaining.

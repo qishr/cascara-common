@@ -56,7 +56,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         if (this != globalInstance) {
             throw new UnsupportedOperationException("The method setDiagnosticWriter in GlobalReporter may only be called on the global instance.");
         }
-        this.diagnosticCollector = collector;
+        super.setDiagnosticCollector(collector);
         return this;
     }
 
@@ -65,7 +65,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         if (this != globalInstance) {
             throw new UnsupportedOperationException("The method setCollector in GlobalReporter may only be called on the global instance.");
         }
-        this.problemCollector = collector;
+        super.setProblemCollector(collector);
         return this;
     }
 
@@ -73,7 +73,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         if (this != globalInstance) {
             throw new UnsupportedOperationException("The method setDisableSystemOutput in GlobalReporter may only be called on the global instance.");
         }
-        globalInstance.disableSystemOutput = b;
+        super.setDisableSystemOutput(b);
         return this;
     }
 
@@ -81,7 +81,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         if (this != globalInstance) {
             throw new UnsupportedOperationException("The method setDisableFlush in GlobalReporter may only be called on the global instance.");
         }
-        globalInstance.disableFlush = b;
+        super.setDisableFlush(b);
         return this;
     }
 
@@ -90,24 +90,41 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     //
 
     @Override
-    protected Consumer<Diagnostic> getDiagnosticCollector() { return globalInstance.diagnosticCollector; }
+    protected Consumer<Diagnostic> getDiagnosticCollector() {
+        return this == globalInstance ? diagnosticCollector : globalInstance.getDiagnosticCollector();
+    }
 
     @Override
-    protected Consumer<Diagnostic> getProblemCollector() { return globalInstance.problemCollector; }
+    protected Consumer<Diagnostic> getProblemCollector() {
+        return this == globalInstance ? problemCollector : globalInstance.getProblemCollector();
+    }
 
     @Override
-    protected Consumer<String> getStringWriter() { return globalInstance.stringWriter; }
+    protected Consumer<String> getStringWriter() {
+        return this == globalInstance ? stringWriter : globalInstance.getStringWriter();
+    }
 
     @Override
-    protected boolean disableSystemOutput() { return globalInstance.disableSystemOutput; }
+    protected boolean disableSystemOutput() {
+        return this == globalInstance ? disableSystemOutput : globalInstance.disableSystemOutput();
+    }
 
     @Override
-    protected boolean disableFlush() { return globalInstance.disableFlush; }
+    protected boolean disableFlush() {
+        return this == globalInstance ? disableFlush : globalInstance.disableFlush();
+    }
+
+    @Override
+    protected boolean printStackTrace() {
+        return this == globalInstance ? printStackTrace : globalInstance.printStackTrace();
+    }
 
     @Override
     protected void writeString(Diagnostic diagnostic) {
         if (diagnostic.getUri() == null) {
-            writeString (diagnostic.getLevel(),
+            writeString (
+                diagnostic.getCause(),
+                diagnostic.getLevel(),
                 String.format(
                     "[%5s] [%s] [%s] %s\n",
                     diagnostic.getLevel(),
@@ -118,7 +135,9 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
             );
         } else {
             if (diagnostic.getLine() > 0) {
-                writeString (diagnostic.getLevel(),
+                writeString (
+                    diagnostic.getCause(),
+                    diagnostic.getLevel(),
                     String.format(
                         "[%5s] [%s] [%s] %s at %s:%d\n",
                         diagnostic.getLevel(),
@@ -130,7 +149,9 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                     )
                 );
             } else {
-                writeString (diagnostic.getLevel(),
+                writeString (
+                    diagnostic.getCause(),
+                    diagnostic.getLevel(),
                     String.format(
                         "[%5s] [%s] [%s] %s in file %s\n",
                         diagnostic.getLevel(),

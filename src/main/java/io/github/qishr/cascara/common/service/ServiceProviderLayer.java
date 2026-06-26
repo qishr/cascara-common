@@ -67,12 +67,21 @@ public class ServiceProviderLayer {
             reporter = new NoOpReporter();
         }
         if (rootLayer == null) {
+            final Reporter finalReporter = reporter;
             rootLayer = new ServiceProviderLayer();
             rootLayer.name = "root";
             rootLayer.setReporter(reporter);
             ModuleLayer boot = ModuleLayer.boot();
             boot.modules().forEach((module) -> {
-                rootLayer.registerModule(module);
+                try {
+                    rootLayer.registerModule(module);
+                } catch (Exception e) {
+                    if (finalReporter instanceof NoOpReporter) {
+                        System.err.println("Failed to register " + module.getName() + " module.");
+                    } else {
+                        finalReporter.error(e, ServiceDiagnosticCode.FAILED_TO_REGISTER_MODULE, module.getName());
+                    }
+                }
             });
         }
         return rootLayer;

@@ -2,7 +2,7 @@ package io.github.qishr.cascara.common.lang.type;
 
 import java.util.Objects;
 
-import io.github.qishr.cascara.common.lang.QuoteStyle;
+import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 public class Primitive {
     private PrimitiveDelegate delegate;
@@ -40,9 +40,9 @@ public class Primitive {
         if (specifiedQuoteStyle != null) {
             return specifiedQuoteStyle;
         }
-
         if (originalQuotedStyle == null) {
-            // TODO: Do we want to cache this?
+            // Do we want to cache this?
+            // If we really want to cache it, then invalidate the cache when the delegate gets set
             return inferQuoteStyle(rawInput);
         }
         return originalQuotedStyle;
@@ -183,6 +183,12 @@ public class Primitive {
 
     private static boolean isLikelyNumeric(String str) {
         if (str == null || str.isEmpty()) return false;
+
+        // Explicitly treat unquoted Infinity variations as numeric names
+        if (str.endsWith("Infinity") || "NaN".equals(str)) {
+            return true;
+        }
+
         char first = str.charAt(0);
         // Quick check for standard start characters
         if (!Character.isDigit(first) && first != '-' && first != '+' && first != '.') {
