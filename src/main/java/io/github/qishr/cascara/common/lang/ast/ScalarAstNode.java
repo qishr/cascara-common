@@ -8,7 +8,7 @@ public interface ScalarAstNode<T extends AstNode> extends AstNode {
     QuoteStyle getQuoteStyle();
 
     /// Sets the [QuoteStyle] used by a node
-    void setQuoteStyle(QuoteStyle style);
+    ScalarAstNode<T> setQuoteStyle(QuoteStyle style);
 
     /// Returns the exact, unparsed text block directly from the file buffer.
     @Nullable

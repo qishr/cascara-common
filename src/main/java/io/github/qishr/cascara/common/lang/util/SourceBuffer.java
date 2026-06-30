@@ -7,6 +7,10 @@ public interface SourceBuffer {
     char peekAhead(int steps);
     void backup();
     boolean isAtEnd();
+    
+    char charAt(int index);
+    CharSequence subSequence(int start, int end);
+    int length();
 
     int line();
     int column();

@@ -13,9 +13,11 @@ public class Primitive {
     private final QuoteStyle originalQuotedStyle;
     protected QuoteStyle specifiedQuoteStyle;
 
+    private boolean stringIsCached;
+    private String stringCache;
+
     public static Primitive of(Object nativeInstance) {
-        Primitive primitive = new Primitive(nativeInstance, null, true);
-        return primitive;
+        return new Primitive(nativeInstance, null, true);
     }
 
     /// Parses unescaped text and infers its type.
@@ -54,8 +56,12 @@ public class Primitive {
     }
 
     public String asString() {
-        Object nativeValue = nativeValue();
-        return nativeValue == null ? null : String.valueOf(nativeValue);
+        if (!stringIsCached) {
+            Object nativeValue = nativeValue();
+            stringCache = nativeValue == null ? null : String.valueOf(nativeValue);
+            stringIsCached = true;
+        }
+        return stringCache;
     }
 
     public double asDouble(double defaultValue) {

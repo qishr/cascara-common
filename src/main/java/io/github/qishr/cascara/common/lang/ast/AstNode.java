@@ -10,7 +10,7 @@ public interface AstNode {
     int getEndLine();
     int getEndColumn();
     List<? extends AstNode> getChildren();
-    List<CommentAstNode> getComments();
+    List<? extends CommentAstNode> getComments();
     default Token getToken() { return null; }
     default String asString() { return ""; }
 }

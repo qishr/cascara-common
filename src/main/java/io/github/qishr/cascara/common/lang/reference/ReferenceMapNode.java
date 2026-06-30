@@ -12,6 +12,18 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
 
     private List<ReferenceMapEntryNode> entries = new ArrayList<>();
 
+    /// {@inheritDoc}
+    @Override
+    public boolean isEmpty() {
+        return entries.isEmpty();
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public int size() {
+        return entries.size();
+    }
+
     @Override
     public boolean containsKey(ReferenceNode key) {
         return getEntry(key) != null;

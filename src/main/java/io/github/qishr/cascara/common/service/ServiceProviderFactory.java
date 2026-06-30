@@ -1,8 +1,10 @@
 package io.github.qishr.cascara.common.service;
 
-import io.github.qishr.cascara.common.lang.processor.Parser;
+import io.github.qishr.cascara.common.lang.annotation.Beta;
+import io.github.qishr.cascara.common.lang.processor.AstParser;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
 
+@Beta
 public class ServiceProviderFactory extends AbstractServiceProviderFactory {
 
     public ServiceProviderFactory() {
@@ -13,9 +15,9 @@ public class ServiceProviderFactory extends AbstractServiceProviderFactory {
         super(layer);
     }
 
-    public Parser<?, ?> createParser(String contentType) throws ServiceException {
+    public AstParser<?, ?> createParser(String contentType) throws ServiceException {
         return createServiceProvider(
-            Parser.class,
+            AstParser.class,
             CapabilityQueries.hasExactValue("contentType", contentType)
         );
     }

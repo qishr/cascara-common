@@ -17,8 +17,9 @@ public final class ReferenceScalarNode extends ReferenceNode implements ScalarAs
     }
 
     @Override
-    public void setQuoteStyle(QuoteStyle style) {
+    public ReferenceScalarNode setQuoteStyle(QuoteStyle style) {
         this.quoteStyle = style;
+        return this;
     }
 
     @Override

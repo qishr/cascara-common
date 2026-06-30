@@ -1,6 +1,6 @@
 package io.github.qishr.cascara.common.lang.util;
 
-public class SourceStringBuffer implements SourceBuffer {
+public class SourceStringBuffer implements SourceBuffer, CharSequence {
     private final String source;
     private int line = 1;
     private int column = 1;
@@ -9,9 +9,23 @@ public class SourceStringBuffer implements SourceBuffer {
     private int windowStartLine = 1;
     private int windowStartColumn = 1;
 
-
     public SourceStringBuffer(String source) {
         this.source = source != null ? source : "";
+    }
+
+    @Override
+    public int length() {
+        return source.length();
+    }
+
+    @Override
+    public char charAt(int index) {
+        return source.charAt(index);
+    }
+
+    @Override
+    public CharSequence subSequence(int start, int end) {
+        return source.subSequence(start, end);
     }
 
     @Override

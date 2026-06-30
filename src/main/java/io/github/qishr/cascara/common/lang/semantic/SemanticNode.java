@@ -7,7 +7,7 @@ public interface SemanticNode {
     String getId();
     String getDisplayName();
     Path getSourcePath();
-    int getLine();
-    int getColumn();
+    int getStartLine();
+    int getStartColumn();
     List<? extends SemanticNode> getChildren();
 }

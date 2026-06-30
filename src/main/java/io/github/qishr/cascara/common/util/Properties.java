@@ -7,7 +7,7 @@ import java.util.Map;
 
 import io.github.qishr.cascara.common.data.TableData;
 
-public class Properties implements TableData {
+public class Properties implements TableData, Duplicable<Properties> {
     List<Property> propertiesList = new ArrayList<>();
     Map<String,Property> propertiesMap = new HashMap<>();
 
@@ -177,6 +177,7 @@ public class Properties implements TableData {
         return propertiesList.isEmpty();
     }
 
+    @Override
     public Properties duplicate() {
         Properties copy = new Properties();
         for (Property prop : propertiesList) {

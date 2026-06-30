@@ -74,6 +74,7 @@ public class ServiceProviderLayer {
             ModuleLayer boot = ModuleLayer.boot();
             boot.modules().forEach((module) -> {
                 try {
+                    finalReporter.trace("Found module " + module.getName());
                     rootLayer.registerModule(module);
                 } catch (Exception e) {
                     if (finalReporter instanceof NoOpReporter) {
@@ -83,8 +84,20 @@ public class ServiceProviderLayer {
                     }
                 }
             });
+            // Fallback: classic ServiceLoader scanning for classpath/unnamed-module usage,
+            // and to pick up any providers using META-INF/services even when modular.
+            rootLayer.registerViaServiceLoader();
         }
         return rootLayer;
+    }
+
+    private void registerViaServiceLoader() {
+        ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
+        for (ServiceProvider provider : loader) {
+            if (!providersByFqcn.containsKey(provider.getClass().getName())) {
+                registerProvider(provider, null);
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -283,21 +296,29 @@ public class ServiceProviderLayer {
         String moduleName = module.getName();
         if (moduleName.startsWith("java.") ||
             moduleName.startsWith("javax.") ||
-            moduleName.startsWith("jdk.")) {
+            moduleName.startsWith("jdk.") ||
+            moduleName.startsWith("jfx.") ||
+            moduleName.startsWith("javafx.")) {
             // These modules will never contain a Cascara ServiceProvider
             return;
         }
 
+        getReporter().trace("Checking " + moduleName);
         ClassLoader classLoader = module.getClassLoader();
-
         ModuleDescriptor desc = module.getDescriptor();
-        for (Provides provides : desc.provides()) {
-            for (String providerClassName : provides.providers()) {
-                try {
-                    Class<?> type = classLoader.loadClass(providerClassName);
-                    registerClass((Class)type);
-                } catch (ClassNotFoundException | ServiceException e) {
-                    getReporter().warn(ServiceDiagnosticCode.FAILED_TO_LOAD_CLASS, providerClassName, e.getMessage());
+        Set<Provides> services = desc.provides();
+
+        if (!services.isEmpty()) {
+            getReporter().debug("Discovering providers in " + moduleName);
+            for (Provides service : services) {
+                for (String providerClassName : service.providers()) {
+                    getReporter().trace("  Attempting to reigster " + providerClassName);
+                    try {
+                        Class<?> type = classLoader.loadClass(providerClassName);
+                        registerClass((Class)type);
+                    } catch (ClassNotFoundException | ServiceException e) {
+                        getReporter().warn(ServiceDiagnosticCode.FAILED_TO_LOAD_CLASS, providerClassName, e.getMessage());
+                    }
                 }
             }
         }
@@ -381,7 +402,7 @@ public class ServiceProviderLayer {
     }
 
     private void registerProvider(ServiceProvider instance, Path jarPath) {
-        getReporter().debug("Registering \"%s\"", instance.getClass().getName());
+        getReporter().trace("  Registering %s", instance.getClass().getName());
         try {
             Class<? extends ServiceProvider> providerClass = instance.getClass();
 
@@ -405,6 +426,8 @@ public class ServiceProviderLayer {
                     }
                     providers.add(provider);
                 }
+
+                getReporter().debug("  Registered " + providerClass.getName());
             }
         } catch(AbstractMethodError e) {
             registrationError("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e);

@@ -31,6 +31,59 @@ public class SourceInputStreamBuffer implements SourceBuffer {
     }
 
     @Override
+    public int length() {
+        // The total length of the processed text stream up to what is visible in the window
+        return offset + windowSize;
+    }
+
+    @Override
+    public char charAt(int index) {
+        if (index < 0 || index >= length()) {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for buffer length " + length());
+        }
+
+        // Case 1: The index falls within the historical window accumulated for the current token
+        if (index >= windowStartOffset && index < offset) {
+            int builderIndex = index - windowStartOffset;
+            return lexemeBuilder.charAt(builderIndex);
+        }
+
+        // Case 2: The index is ahead of the current pointer, residing inside our circular lookahead window
+        if (index >= offset && index < offset + windowSize) {
+            int windowIndex = (windowHead + (index - offset)) % window.length;
+            return window[windowIndex];
+        }
+
+        // Fallback/Exception: If an absolute index is requested from a long-past, garbage-collected token window,
+        // a streaming buffer cannot fetch it. However, for parser slicing logic within active regions, this is safe.
+        throw new UnsupportedOperationException(
+            "Stream-backed buffer does not support random access accessors outside the active token window scope (Index: " 
+            + index + ", Window Scope: [" + windowStartOffset + " -> " + (offset + windowSize) + "])"
+        );
+    }
+
+    @Override
+    public CharSequence subSequence(int start, int end) {
+        if (start < 0 || end > length() || start > end) {
+            throw new IndexOutOfBoundsException("Invalid subsequence bounds: [" + start + " -> " + end + "]");
+        }
+
+        // Optimized path: If the requested subSequence stays completely within the current accumulated lexeme window
+        if (start >= windowStartOffset && end <= offset) {
+            int relativeStart = start - windowStartOffset;
+            int relativeEnd = end - windowStartOffset;
+            return lexemeBuilder.subSequence(relativeStart, relativeEnd);
+        }
+
+        // General stream window slicing fallback
+        StringBuilder sb = new StringBuilder(end - start);
+        for (int i = start; i < end; i++) {
+            sb.append(charAt(i));
+        }
+        return sb.toString();
+    }
+
+    @Override
     public char advance() {
         if (isAtEnd()) {
             return '\0';
@@ -48,7 +101,6 @@ public class SourceInputStreamBuffer implements SourceBuffer {
             column++;
         }
 
-        // FIX: Advance forward, not backward
         windowHead = (windowHead + 1) % window.length;
         windowSize--;
         fillWindow();

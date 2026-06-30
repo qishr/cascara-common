@@ -16,6 +16,11 @@ public final class ReferenceSequenceNode extends ReferenceNode implements Sequen
     }
 
     @Override
+    public boolean isEmpty() {
+        return elements.isEmpty();
+    }
+
+    @Override
     public ReferenceSequenceNode clear() {
         elements.clear();
         return this;

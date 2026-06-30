@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Set;
 
 public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> extends AstNode {
+    int size();
+    boolean isEmpty();
     boolean containsKey(T key);
     T get(T key);
     E getEntry(T key);

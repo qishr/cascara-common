@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
 
-import io.github.qishr.cascara.common.lang.processor.Parser;
+import io.github.qishr.cascara.common.lang.processor.AstParser;
 
 public class ContentTypes {
     private static Set<ContentType> contentTypes;
@@ -23,10 +23,10 @@ public class ContentTypes {
     }
 
     private static void enumerateContentTypes() {
-        enumerateContentTypes(ServiceLoader.load(Parser.class));
+        enumerateContentTypes(ServiceLoader.load(AstParser.class));
     }
 
-    private static <P extends Parser<?, ?>> void enumerateContentTypes(ServiceLoader<P> loader) {
+    private static <P extends AstParser<?, ?>> void enumerateContentTypes(ServiceLoader<P> loader) {
         contentTypes = new HashSet<>();
         for (ServiceLoader.Provider<P> provider : loader.stream().toList()) {
             try {
