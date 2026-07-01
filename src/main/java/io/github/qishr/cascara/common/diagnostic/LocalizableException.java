@@ -44,6 +44,16 @@ public class LocalizableException extends Exception {
         }
     }
 
+    /// Returns a localized, formatted error message.
+    @Override
+    public String getMessage() {
+        try {
+            return DiagnosticLocalizer.DEFAULT.format(code, details);
+        } catch (IllegalArgumentException e) {
+            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, code.getCode(), code.getMessage());
+        }
+    }
+
     /// Formats a [DiagnosticCode]'s message without localizing it.
     private static String format(DiagnosticCode code, Object... details) {
         return DiagnosticLocalizer.DEFAULT.format(code, details);

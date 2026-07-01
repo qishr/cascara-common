@@ -24,6 +24,7 @@ import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
+import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ModulePath;
 import io.github.qishr.cascara.common.util.Properties;
@@ -409,7 +410,15 @@ public class ServiceProviderLayer {
             List<Class<ServiceProvider>> interfaceHierarchy = new ArrayList<>();
 
             if (collectCascaraModuleInterfaces(providerClass, interfaceHierarchy)) {
-                ServiceMetadata provider = new ServiceMetadata(providerClass, getProviderProperties(instance, jarPath));
+
+                // Experimental:
+                // Store the rich ContentTypes that services support
+                ContentType contentType = null;
+                if (instance instanceof ContentTypeProvider ctp) {
+                    contentType = ctp.getContentType();
+                }
+
+                ServiceMetadata provider = new ServiceMetadata(providerClass, getProviderProperties(instance, jarPath), contentType);
 
                 orderedProviders.add(provider);
                 providersByFqcn.put(providerClass.getName(), provider);

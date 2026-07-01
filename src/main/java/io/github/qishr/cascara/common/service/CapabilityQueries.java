@@ -2,6 +2,8 @@ package io.github.qishr.cascara.common.service;
 
 import java.util.function.Predicate;
 
+import io.github.qishr.cascara.common.lang.annotation.Experimental;
+import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.Properties;
 
 public class CapabilityQueries {
@@ -41,6 +43,16 @@ public class CapabilityQueries {
         };
     }
 
+    /// Matches if a property is a boolean flag set to true
+    @Experimental
+    public static Predicate<Properties> supportsContentType(ContentType contentType) {
+        return props -> {
+            contentType.matches(contentType);
+            String capTypeString = props.getString("contentType");
+            return matches(contentType, capTypeString);
+        };
+    }
+
     /// Combines multiple capability predicates using logical AND (All must match)
     /// @return predicate
     @SafeVarargs
@@ -60,5 +72,16 @@ public class CapabilityQueries {
             result = result.or(p);
         }
         return result;
+    }
+
+    private static boolean matches(ContentType contentType, String capability) {
+        if (contentType.getCanonicalId().equals(capability)
+            || contentType.getName().equalsIgnoreCase(capability)
+            || contentType.getMimeTypes().contains(capability)
+            || contentType.getSuffixes().contains("." + capability)
+        ){
+            return true;
+        }
+        return false;
     }
 }
