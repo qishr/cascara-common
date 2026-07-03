@@ -1,5 +1,6 @@
 package io.github.qishr.cascara.common.lang.type;
 
+import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.exception.SerializerException;
 
@@ -16,4 +17,11 @@ public interface TypeSerializer<T> extends TypeDescriptor<T> {
     /// @return        The fully constructed Java object instance.
     /// @throws SerializerException If the node structure violates the type constraints.
     public abstract T deserialize(AstNode astNode) throws SerializerException;
+
+    /// Type serializers don't need to validate, but they do
+    /// everything else a type descriptor does, so we provide a
+    /// default validate method here so implementations don't need to.
+    default boolean validate(String text, Reporter collector) {
+        return true;
+    }
 }

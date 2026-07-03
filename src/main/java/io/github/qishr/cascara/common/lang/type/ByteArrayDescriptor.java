@@ -3,6 +3,7 @@ package io.github.qishr.cascara.common.lang.type;
 import java.util.Base64;
 
 import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 
 public class ByteArrayDescriptor extends AbstractScalarDescriptor<byte[]> {
@@ -23,6 +24,17 @@ public class ByteArrayDescriptor extends AbstractScalarDescriptor<byte[]> {
     @Override
     public Primitive toPrimitive(byte[] value) {
         return Primitive.of(Base64.getEncoder().encodeToString(value));
+    }
+
+    @Override
+    public boolean validate(String text, Reporter collector) {
+        try {
+            Base64.getDecoder().decode(text);
+            return true;
+        } catch (IllegalArgumentException e) {
+            formatError(text, collector);
+            return false;
+        }
     }
 }
 

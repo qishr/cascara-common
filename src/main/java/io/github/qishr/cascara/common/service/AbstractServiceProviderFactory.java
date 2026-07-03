@@ -8,7 +8,7 @@ import io.github.qishr.cascara.common.util.Properties;
 
 public class AbstractServiceProviderFactory {
     private final ServiceProviderLayer layer;
-    private Map<String,Map<Predicate<Properties>,ServiceMetadata>> cache = new HashMap<>();
+    private Map<String,Map<Predicate<ServiceMetadata>,ServiceMetadata>> cache = new HashMap<>();
 
     public AbstractServiceProviderFactory() {
         this(null);
@@ -18,10 +18,10 @@ public class AbstractServiceProviderFactory {
         this.layer = layer == null ? ServiceProviderLayer.getRootLayer() : layer;
     }
 
-    protected <T extends ServiceProvider> T createServiceProvider(Class<T> serviceType, Predicate<Properties> capabilityPredicate) {
+    protected <T extends ServiceProvider> T createServiceProvider(Class<T> serviceType, Predicate<ServiceMetadata> capabilityPredicate) {
         String serviceName = serviceType.getName();
 
-        Map<Predicate<Properties>,ServiceMetadata> providerMap = cache.get(serviceType.getName());
+        Map<Predicate<ServiceMetadata>,ServiceMetadata> providerMap = cache.get(serviceType.getName());
         if (providerMap == null) {
             providerMap = new HashMap<>();
             cache.put(serviceName, providerMap);

@@ -25,4 +25,22 @@ public class TypeDescriptorFactory extends AbstractServiceProviderFactory {
             )
         );
     }
+
+    public ScalarDescriptor<?> createScalarDescriptor(Class<?> jvmType) throws ServiceException {
+        return createServiceProvider(
+            ScalarDescriptor.class,
+            CapabilityQueries.allOf(
+                CapabilityQueries.supportsJvmType(jvmType)
+            )
+        );
+    }
+
+    public ScalarDescriptor<?> createScalarDescriptor(String schemaFormat) throws ServiceException {
+        return createServiceProvider(
+            ScalarDescriptor.class,
+            CapabilityQueries.allOf(
+                CapabilityQueries.hasExactValue(AbstractScalarDescriptor.KEYWORD_FORMAT, schemaFormat)
+            )
+        );
+    }
 }

@@ -4,7 +4,8 @@ import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.util.Properties;
 
 public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
-    private static final String KEYWORD_TYPE = "type";
+    public static final String KEYWORD_TYPE = "type";
+    public static final String JVM_TYPE = "javaType";
 
     protected Properties properties = new Properties();
 
@@ -14,7 +15,7 @@ public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
     protected AbstractTypeDescriptor(Class<T> jvmType, String schemaType) {
         this.jvmType = jvmType;
         this.schemaType = schemaType;
-        properties.set("javaType", jvmType.getName());
+        properties.set(JVM_TYPE, jvmType.getName());
         if (schemaType != null && !schemaType.isEmpty()) {
             properties.set(KEYWORD_TYPE, schemaType);
         }
