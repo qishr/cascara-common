@@ -1,5 +1,6 @@
 package io.github.qishr.cascara.common.diagnostic;
 
+import java.net.URI;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
@@ -83,6 +84,9 @@ public class NoOpReporter implements Reporter {
 
     @Override
     public void errorAt(int line, int column, DiagnosticCode code, Object... args) {}
+
+    @Override
+    public void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... args) {}
 
     @Override
     public void errorAt(int line, int column, Throwable cause, DiagnosticCode code, Object... args) {}

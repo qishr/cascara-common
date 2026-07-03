@@ -1,13 +1,15 @@
 package io.github.qishr.cascara.common.lang.type;
 
+import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.code.LangDiagnosticCode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
 public abstract class AbstractScalarDescriptor<T> extends AbstractTypeDescriptor<T> implements ScalarDescriptor<T> {
-    private static final String KEYWORD_FORMAT = "format";
-    private static final String KEYWORD_CONTENT_ENCODING = "contentEncoding";
+    public static final String KEYWORD_FORMAT = "format";
+    public static final String KEYWORD_CONTENT_ENCODING = "contentEncoding";
 
-    private String format;
-    private String contentEncoding;
+    private final String format;
+    private final String contentEncoding;
 
     protected AbstractScalarDescriptor(Class<T> jvmType, String schemaType, String format) {
         this(jvmType, schemaType, format, null);
@@ -49,6 +51,12 @@ public abstract class AbstractScalarDescriptor<T> extends AbstractTypeDescriptor
 
         if (contentEncoding != null && !contentEncoding.isEmpty()) {
             node.put(KEYWORD_CONTENT_ENCODING, contentEncoding);
+        }
+    }
+
+    protected void formatError(String text, Reporter collector) {
+        if (collector != null) {
+            collector.error(LangDiagnosticCode.WRONG_FORMAT, text, format);
         }
     }
 }

@@ -24,6 +24,7 @@ import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
+import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ModulePath;
 import io.github.qishr.cascara.common.util.Properties;
@@ -50,6 +51,8 @@ public class ServiceProviderLayer {
     private Map<String,ServiceMetadata> providersByFqcn = new HashMap<>();
     private Map<String,ServiceMetadata> servicesByFqcn = new HashMap<>();
     private Map<Class<ServiceProvider>, Set<ServiceMetadata>> providersByServiceType = new HashMap<>();
+
+    private Set<ContentType> contentTypes = new HashSet<>();
 
     private ServiceProviderLayer() { }
 
@@ -98,6 +101,10 @@ public class ServiceProviderLayer {
                 registerProvider(provider, null);
             }
         }
+    }
+
+    public Set<ContentType> getContentTypes() {
+        return rootLayer.contentTypes;
     }
 
     @SuppressWarnings("unchecked")
@@ -172,7 +179,7 @@ public class ServiceProviderLayer {
     }
 
     /// Retrieves metadata of the nearest known provider whose capabilities satisfy the given predicate.
-    public ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate) {
+    public ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate) {
         List<ServiceMetadata> all = internalFindAllProviders(serviceType, capabilityPredicate, null);
         return all.isEmpty() ? null : all.getFirst();
     }
@@ -183,7 +190,7 @@ public class ServiceProviderLayer {
     }
 
     /// Retrieves metadata of all known providers whose capabilities satisfy the given predicate.
-    public List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate) {
+    public List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate) {
         return internalFindAllProviders(serviceType, capabilityPredicate, null);
     }
 
@@ -247,12 +254,12 @@ public class ServiceProviderLayer {
     }
 
     /// Retrieves metadata of providers in this layer whose capabilities satisfy the given predicate.
-    public List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate) {
+    public List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate) {
         List<ServiceMetadata> found = new ArrayList<>();
         if (providersByServiceType.get(serviceType) != null) {
             for (ServiceMetadata provider : orderedProviders) {
                 if (serviceType.isAssignableFrom(provider.getType())) {
-                    if (capabilityPredicate.test(provider.getProperties())) {
+                    if (capabilityPredicate.test(provider)) {
                         found.add(provider);
                         reportFinding(provider, 0);
                     }
@@ -409,7 +416,16 @@ public class ServiceProviderLayer {
             List<Class<ServiceProvider>> interfaceHierarchy = new ArrayList<>();
 
             if (collectCascaraModuleInterfaces(providerClass, interfaceHierarchy)) {
-                ServiceMetadata provider = new ServiceMetadata(providerClass, getProviderProperties(instance, jarPath));
+
+                // Experimental:
+                // Store the rich ContentTypes that services support
+                ContentType contentType = null;
+                if (instance instanceof ContentTypeProvider ctp) {
+                    contentType = ctp.getContentType();
+                    rootLayer.contentTypes.add(contentType);
+                }
+
+                ServiceMetadata provider = new ServiceMetadata(providerClass, getProviderProperties(instance, jarPath), contentType);
 
                 orderedProviders.add(provider);
                 providersByFqcn.put(providerClass.getName(), provider);
@@ -427,7 +443,14 @@ public class ServiceProviderLayer {
                     providers.add(provider);
                 }
 
-                getReporter().debug("  Registered " + providerClass.getName());
+                if (contentType == null) {
+                    getReporter().debug("  Registered " + providerClass.getName());
+                } else {
+                    getReporter().debug("  Registered " + providerClass.getName() + " with content types:");
+                    for (String type : contentType.getMimeTypes()) {
+                        getReporter().debug("    " + type);
+                    }
+                }
             }
         } catch(AbstractMethodError e) {
             registrationError("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e);
@@ -524,7 +547,7 @@ public class ServiceProviderLayer {
         return strings;
     }
 
-    private List<ServiceMetadata> internalFindAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate, ServiceProviderLayer previous) {
+    private List<ServiceMetadata> internalFindAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate, ServiceProviderLayer previous) {
         String startLayer = (name == null ? "unnamed layer" : "layer " + name);
         getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
         List<ServiceMetadata> found = new ArrayList<>();
@@ -536,7 +559,7 @@ public class ServiceProviderLayer {
                         found.add(provider);
                         reportFinding(provider, 0);
                     } else {
-                        if (capabilityPredicate.test(provider.getProperties())) {
+                        if (capabilityPredicate.test(provider)) {
                             found.add(provider);
                             reportFinding(provider, 0);
                         }
@@ -561,7 +584,7 @@ public class ServiceProviderLayer {
         return found;
     }
 
-    private List<ServiceMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate, int depth) {
+    private List<ServiceMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate, int depth) {
         List<ServiceMetadata> found = new ArrayList<>();
         getReporter().trace("" + "  ".repeat(depth) + "⬇ " + name);
 
@@ -572,7 +595,7 @@ public class ServiceProviderLayer {
                         found.add(provider);
                         reportFinding(provider, depth);
                     } else {
-                        if (capabilityPredicate.test(provider.getProperties())) {
+                        if (capabilityPredicate.test(provider)) {
                             found.add(provider);
                             reportFinding(provider, depth);
                         }

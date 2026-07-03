@@ -16,6 +16,11 @@ public final class ReferenceScalarNode extends ReferenceNode implements ScalarAs
         this.value = value;
     }
 
+    public ReferenceScalarNode(Object value, QuoteStyle quoteStyle) {
+        this.value = value;
+        this.quoteStyle = quoteStyle;
+    }
+
     @Override
     public ReferenceScalarNode setQuoteStyle(QuoteStyle style) {
         this.quoteStyle = style;

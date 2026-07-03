@@ -11,6 +11,7 @@ import io.github.qishr.cascara.common.lang.token.Token;
 public abstract class AbstractReporter<T extends AbstractReporter<?>> implements Reporter {
     protected Level level = Level.INFO;
 
+    /// The simple name of the class that made the report
     protected String source;
 
     /// Consumes diagnostics included in the current Level or more
@@ -183,6 +184,17 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     /// {@inheritDoc}
     @Override
+    public void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(
+            uri, line, column,
+            LocatableException.UNKNOWN_COORD,
+            LocatableException.UNKNOWN_COORD,
+            source, Level.ERROR, null, code, details
+        ));
+    }
+
+    /// {@inheritDoc}
+    @Override
     public void errorAt(int line, int column, Throwable cause, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             null, line, column,
@@ -340,7 +352,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         return new Diagnostic(null, token, source, level, cause, code, null, details);
     }
 
-    private boolean isProblem(Level level) {
+    protected boolean isProblem(Level level) {
         return (level == Level.ERROR || level == Level.WARN || level == Level.INFO);
     }
 }

@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.lang.simple;
+package io.github.qishr.cascara.common.lang.reference;
 
 import org.junit.jupiter.api.Test;
 

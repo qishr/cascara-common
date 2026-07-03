@@ -45,18 +45,43 @@ public abstract class LocatableException extends LocalizableRuntimeException {
     public int getLine() { return line; }
     public int getColumn() { return column; }
     public URI getUri() { return uri; }
-    public String getMessage() { return message; }
     public String getRawMessage() { return rawMessage; }
+
+    public String getMessage() {
+        String baseMessage = super.getMessage();
+        if (uri == null) {
+            if (line > 0) {
+                return String.format("%s at line %d", baseMessage, line);
+            } else {
+                return baseMessage;
+            }
+        } else {
+            if (line > 0) {
+                return String.format("%s in %s:%d", baseMessage, uri.toString(), line);
+            } else {
+                return String.format("%s in %s", baseMessage, uri.toString());
+            }
+        }
+    }
+
 
     @Override
     public String getLocalizedMessage() {
         String baseMessage = super.getLocalizedMessage();
         if (uri == null) {
             // TODO: i18n this
-            return String.format("%s at line %d", baseMessage, line);
+            if (line > 0) {
+                return String.format("%s at line %d", baseMessage, line);
+            } else {
+                return baseMessage;
+            }
         } else {
             // TODO: i18n this
-            return String.format("%s at %s:%d", baseMessage, uri.toString(), line);
+            if (line > 0) {
+                return String.format("%s in %s:%d", baseMessage, uri.toString(), line);
+            } else {
+                return String.format("%s in %s", baseMessage, uri.toString());
+            }
         }
     }
 }

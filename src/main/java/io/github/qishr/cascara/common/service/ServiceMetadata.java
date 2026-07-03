@@ -1,15 +1,22 @@
 package io.github.qishr.cascara.common.service;
 
+import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.Properties;
 
 public class ServiceMetadata {
     private final Class<? extends ServiceProvider> type;
     private Class<?> capabilityType;
     private final Properties properties;
+    private final ContentType contentType;
 
     public ServiceMetadata(Class<? extends ServiceProvider> type, Properties properties) {
+        this(type, properties, null);
+    }
+
+    public ServiceMetadata(Class<? extends ServiceProvider> type, Properties properties, ContentType contentType) {
         this.type = type;
         this.properties = properties;
+        this.contentType = contentType;
         String capTypeString = properties.getString("javaType");
         try {
             capabilityType = capTypeString == null ? null : Class.forName(capTypeString);
@@ -57,7 +64,9 @@ public class ServiceMetadata {
         return getProperty("title");
     }
 
-
+    public ContentType getContentType() {
+        return contentType;
+    }
 
     @Override
     public boolean equals(Object o) {

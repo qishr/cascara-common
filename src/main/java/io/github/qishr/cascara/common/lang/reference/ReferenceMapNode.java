@@ -1,32 +1,41 @@
 package io.github.qishr.cascara.common.lang.reference;
 
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.lang.ast.*;
+import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 
 public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<ReferenceNode, ReferenceMapEntryNode> {
 
-    private List<ReferenceMapEntryNode> entries = new ArrayList<>();
+    // private List<ReferenceMapEntryNode> entries = new ArrayList<>();
+    // private final LinkedHashMap<ReferenceNode,ReferenceNode> entries = new LinkedHashMap<>();
+    private final LinkedHashMap<ReferenceNode,ReferenceMapEntryNode> entriesByKey = new LinkedHashMap<>();
 
     /// {@inheritDoc}
     @Override
     public boolean isEmpty() {
-        return entries.isEmpty();
+        return entriesByKey.isEmpty();
     }
 
     /// {@inheritDoc}
     @Override
     public int size() {
-        return entries.size();
+        return entriesByKey.size();
     }
 
     @Override
     public boolean containsKey(ReferenceNode key) {
         return getEntry(key) != null;
+    }
+
+    @Override
+    public Set<ReferenceNode> keySet() {
+        return entriesByKey.keySet();
     }
 
     @Override
@@ -37,44 +46,60 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
 
     @Override
     public ReferenceMapEntryNode getEntry(ReferenceNode key) {
-        for (ReferenceMapEntryNode entry : entries) {
-            if (entry.getKey().equals(key)) return entry;
-        }
-        return null;
+        return entriesByKey.get(key);
     }
 
     @Override
     public List<ReferenceMapEntryNode> getEntries() {
-        return entries;
+        return List.copyOf(entriesByKey.values());
     }
 
     @Override
-    public Set<ReferenceNode> keySet() {
-        return Set.copyOf(entries.stream().map(e -> e.getKey()).toList());
+    public Set<ReferenceMapEntryNode> entrySet() {
+        entriesByKey.entrySet();
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'entrySet'");
+    }
+
+    @Override
+    public List<ReferenceNode> values() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'values'");
     }
 
     @Override
     public ReferenceMapNode put(ReferenceNode key, ReferenceNode value) {
-        for (ReferenceMapEntryNode entry : entries) {
-            if (entry.getKey().equals(key)) {
-                entry.setRaw(value);
-                return this;
-            }
+
+
+
+        ReferenceMapEntryNode entry = getEntry(key);
+        if (entry == null) {
+            entry = new ReferenceMapEntryNode(key, value);
+
+
+
+            entriesByKey.put(key, entry);
+
+            // entries.entrySet().add(entry);
+
+
+
+            return this;
         }
-        entries.add(new ReferenceMapEntryNode(key, value));
+        entry.setRaw(value);
         return this;
     }
 
     @Override
     public ReferenceMapNode remove(ReferenceNode key) {
-        entries.remove(key);
+        entriesByKey.remove(key);
         return this;
     }
 
     @Override
     public boolean containsKey(String key) {
-        for (ReferenceMapEntryNode entry : entries) {
-            if (entry.getKey() instanceof ReferenceScalarNode scalar && key.equals(scalar.asString())) {
+        for (ReferenceNode keyNode : entriesByKey.keySet()) {
+            if (keyNode instanceof ReferenceScalarNode scalar && key.equals(scalar.asString())) {
                 return true;
             }
         }
@@ -90,7 +115,7 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
 
     @Override
     public ReferenceMapNode put(String key, ReferenceNode value) {
-        for (ReferenceMapEntryNode entry : entries) {
+        for (ReferenceMapEntryNode entry : entriesByKey.values()) {
             ReferenceNode kNode = entry.getKey();
             // Check if the existing key's string value matches the requested key
             if (kNode instanceof ReferenceScalarNode scalar && key.equals(scalar.asString())) {
@@ -98,21 +123,22 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
                 return this;
             }
         }
+
         // Only if not found, create the new entry
-        ReferenceNode keyNode = new ReferenceScalarNode(key);
-        entries.add(new ReferenceMapEntryNode(keyNode, value));
+        ReferenceNode keyNode = new ReferenceScalarNode(key, QuoteStyle.PLAIN);
+        ReferenceMapEntryNode entry = new ReferenceMapEntryNode(keyNode, value);
+        entriesByKey.put(entry.getKey(), entry);
         return this;
     }
 
     @Override
     public ReferenceMapNode remove(String key) {
-        Iterator<ReferenceMapEntryNode> it = entries.iterator();
-        while (it.hasNext()) {
-            ReferenceMapEntryNode entry = it.next();
-            AstNode k = entry.getKey();
-            if (k instanceof ScalarAstNode scalar && scalar.asString().equals(key)) {
-                it.remove();
-                return this;
+        for (Map.Entry<ReferenceNode,ReferenceMapEntryNode> entry : entriesByKey.entrySet()) {
+            if (entry.getKey() instanceof ReferenceScalarNode scalar) {
+                if (scalar.asString().equals(key)) {
+                    entriesByKey.remove(scalar);
+                    return this;
+                }
             }
         }
         return this;
@@ -121,8 +147,11 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
     @Override
     public ReferenceNode get(String key) {
         if (key == null) return null;
-        for (ReferenceMapEntryNode entry : entries) {
-            ReferenceNode kNode = entry.getKey();
+
+        for (Map.Entry<ReferenceNode,ReferenceMapEntryNode> entry : entriesByKey.entrySet()) {
+            ReferenceMapEntryNode entryNode = entry.getValue();
+
+            ReferenceNode kNode = entryNode.getKey();
             String entryKey = null;
             if (kNode instanceof ReferenceScalarNode scalar) {
                 entryKey = scalar.asString();
@@ -131,7 +160,8 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
             }
 
             if (key.equals(entryKey)) {
-                ReferenceNode val = entry.getValue();
+                ReferenceNode val = entryNode.getValue();
+                // return (val instanceof ReferenceAnchorNode a) ? a.getInnerNode() : val;
                 return val;
             }
         }
@@ -140,7 +170,7 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
 
     @Override
     public List<ReferenceMapEntryNode> getChildren() {
-        return entries;
+        return List.copyOf(entriesByKey.values());
     }
 
     @Override
@@ -158,15 +188,10 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
         throw new UnsupportedOperationException("Unimplemented method 'getSequence'");
     }
 
+    /// Returns Iterator instance
     @Override
-    public Set<ReferenceMapEntryNode> entrySet() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'entrySet'");
-    }
-
-    @Override
-    public List<ReferenceNode> values() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'values'");
+    public Iterator<ReferenceMapEntryNode> iterator() {
+        return entriesByKey.sequencedValues().iterator();
+        // return new MapEntryIterator<JsonNode>(entriesByKey);
     }
 }

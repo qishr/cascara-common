@@ -1,5 +1,6 @@
 package io.github.qishr.cascara.common.lang.type;
 
+import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.service.ServiceProvider;
 
@@ -13,4 +14,6 @@ public interface TypeDescriptor<T> extends ServiceProvider {
     /// Adds JSON Schema keywords and values to a map representing a
     /// JSON schema for the JSON type handled by this TypeDescriptor.
     void populateSchema(MapAstNode<?,?> node);
+
+    boolean validate(String text, Reporter collector);
 }

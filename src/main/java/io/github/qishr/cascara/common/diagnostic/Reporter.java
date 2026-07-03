@@ -1,9 +1,11 @@
 package io.github.qishr.cascara.common.diagnostic;
 
+import java.net.URI;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.lang.annotation.Experimental;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 public interface Reporter {
@@ -94,6 +96,11 @@ public interface Reporter {
     /// @param details Arguments referenced by the format specifiers in the [DiagnosticCode]'s localized format string.
     void errorAt(int line, int column, DiagnosticCode code, Object... details);
 
+
+    @Experimental
+    void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... details);
+
+
     /// Reports an error anchored to a resource location by line and column.
     /// Useful when text stream indices are unavailable.
     ///
@@ -183,116 +190,4 @@ public interface Reporter {
     ///
     /// @param exception The exception to report.
     void error(LocalizableRuntimeException exception);
-
-    //
-    // Deprecated Methods
-    //
-
-    /// @deprecated As of release 1.1.0, replaced by info(DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void info(String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method info(String, Object...) is deprecated. " +
-            "Use info(DiagnosticCode, Object...) instead."
-        );
-    }
-
-    /// @deprecated As of release 1.1.0, replaced by warn(DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void warn(String code, String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method warn(String, Object...) is deprecated. " +
-            "Use warn(DiagnosticCode, Object...) instead."
-        );
-    }
-
-    /// @deprecated As of release 1.1.0, replaced by error(DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void error(String code, String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method error(String, Object...) is deprecated. " +
-            "Use error(Throwable, DiagnosticCode, Object...) instead."
-        );
-    }
-
-    /// @deprecated As of release 1.1.0, replaced by infoAt(int, int, DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void infoAt(int line, int column, String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method infoAt(int, int, String, Object...) is deprecated. " +
-            "Use infoAt(int, int, DiagnosticCode, Object...) instead."
-        );
-    }
-
-    /// @deprecated As of release 1.1.0, replaced by infoAt(int, int, DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void warnAt(int line, int column, String code, String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method warnAt(int, int, String, Object...) is deprecated. " +
-            "Use warnAt(int, int, DiagnosticCode, Object...) instead."
-        );
-    }
-
-    /// @deprecated As of release 1.1.0, replaced by infoAt(int, int, DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void errorAt(int line, int column, String code, String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method errorAt(int, int, String, Object...) is deprecated. " +
-            "Use errorAt(int, int, Throwable, DiagnosticCode, Object...) instead."
-        );
-    }
-
-    /// @deprecated As of release 1.1.0, replaced by infoAt(int, int, int, int, DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void infoAt(int line, int column, int start, int end, String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method infoAt(int, int, int, int, String, Object...) is deprecated. " +
-            "Use infoAt(int, int, int, int, DiagnosticCode, Object...) instead."
-        );
-    }
-
-    /// @deprecated As of release 1.1.0, replaced by infoAt(int, int, int, int, DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void warnAt(int line, int column, int start, int end, String code, String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method warnAt(int, int, int, int, String, Object...) is deprecated. " +
-            "Use warnAt(int, int, int, int, DiagnosticCode, Object...) instead."
-        );
-    }
-
-    /// @deprecated As of release 1.1.0, replaced by infoAt(int, int, int, int, DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void errorAt(int line, int column, int start, int end, String code, String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method errorAt(int, int, int, int, String, Object...) is deprecated. " +
-            "Use errorAt(int, int, int, int, Throwable, DiagnosticCode, Object...) instead."
-        );
-    }
-
-    /// @deprecated As of release 1.1.0, replaced by info(Token, DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void infoAt(Token token, String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method infoAt(Token, String, Object...) is deprecated. " +
-            "Use infoAt(Token, DiagnosticCode, Object...) instead."
-        );
-    }
-
-    /// @deprecated As of release 1.1.0, replaced by info(Token, DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void warnAt(Token token, String code, String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method warnAt(Token, String, Object...) is deprecated. " +
-            "Use warnAt(Token, DiagnosticCode, Object...) instead."
-        );
-    }
-
-    /// @deprecated As of release 1.1.0, replaced by info(Token, DiagnosticCode, Object...)
-    @Deprecated(forRemoval = true)
-    default void errorAt(Token token, String code, String format, Object... args) {
-        throw new UnsupportedOperationException(
-            "Method errorAt(Token, String, Object...) is deprecated. " +
-            "Use errorAt(Token, Throwable, DiagnosticCode, Object...) instead."
-        );
-    }
 }

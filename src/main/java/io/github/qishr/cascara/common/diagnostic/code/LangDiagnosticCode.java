@@ -19,11 +19,15 @@ public enum LangDiagnosticCode implements DiagnosticCode {
     EXPECTED_MAP_STRUCTURE("YAML-", "Expected a map structure for class {0}"),
     FAILED_SERIALIZE("YAML-", "Failed to serialize: {0}"),
     FAILED_DESERIALIZE("YAML-", "Failed to deserialize: {0}: {1}."),
-    // EXPECTED_YAML_NODE("YAML-", "Expected YamlNode for serializable type: {0}"),
+    WRONG_FORMAT("YAML-", "Data {0} does not conform to format {1}"),
     INCOMPATIBLE_TYPES("YAML-", "Incompatible types: Cannot map {0} to Java type {1}"),
     FAILED_DESERIALIZE_SCALAR("YAML-", "Failed to deserialize scalar to {0}: {1}"),
     UNSUPPORTED_TYPE("YAML-", "Unsupported field type: {0}"),
-    EXPECTED_SEQUENCE("YAML-", "Expected a sequence for field: {0}");
+    EXPECTED_SEQUENCE("YAML-", "Expected a sequence for field: {0}"),
+    NOT_ARRAY_OR_OBJECT("", "Value {0} is not an array or object therefore its key {1} cannot be resolved"),
+    OUT_OF_BOUNDS("", "index {0} is out of bounds - the array has {1} elements"),
+    ERROR_READING_VALUE_AT("", "Error reading value at index position {0"),
+    NOT_AN_ARRAY_INDEX("", "{0} is not an array index");
 
     private final String code;
     private final String message;

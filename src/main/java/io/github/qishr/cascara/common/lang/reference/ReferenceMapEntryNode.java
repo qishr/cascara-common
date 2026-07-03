@@ -49,4 +49,10 @@ public final class ReferenceMapEntryNode extends ReferenceNode implements MapEnt
     public List<CommentAstNode> getComments() {
         return Collections.emptyList();
     }
+
+    @Override
+    public ReferenceNode setValue(ReferenceNode value) {
+        this.value = value;
+        return this;
+    }
 }

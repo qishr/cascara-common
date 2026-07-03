@@ -3,7 +3,7 @@ package io.github.qishr.cascara.common.lang.ast;
 import java.util.List;
 import java.util.Set;
 
-public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> extends AstNode {
+public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> extends AstNode, Iterable<E> {
     int size();
     boolean isEmpty();
     boolean containsKey(T key);
