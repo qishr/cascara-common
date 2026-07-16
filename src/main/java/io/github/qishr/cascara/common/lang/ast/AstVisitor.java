@@ -8,8 +8,8 @@ public interface AstVisitor {
     // void visit(DirectiveNode node);
 
     // Standard structural nodes
-    void visit(MapAstNode<?,?> node);
-    void visit(MapEntryAstNode<?> node);
+    void visit(MapAstNode<?,?,?> node);
+    void visit(MapEntryAstNode<?,?> node);
     void visit(SequenceAstNode<?> node);
     void visit(ScalarAstNode<?> node);
     // void visit(AliasAstNode node);

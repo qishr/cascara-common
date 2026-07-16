@@ -34,6 +34,8 @@ public interface Reporter {
     /// @return `true` if warnings or errors are being collected, otherwise `false`.
     boolean collectsProblems();
 
+    boolean isSilent();
+
     //
     // Reporting Methods
     //

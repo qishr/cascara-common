@@ -6,6 +6,11 @@ import java.io.Reader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.lang.annotation.Experimental;
+
+@Experimental
 public class SourceInputStreamBuffer implements SourceBuffer {
     private final Reader reader;
 
@@ -27,6 +32,11 @@ public class SourceInputStreamBuffer implements SourceBuffer {
 
     public SourceInputStreamBuffer(InputStream is) {
         this.reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+        fillWindow();
+    }
+
+    public SourceInputStreamBuffer(Reader reader) {
+        this.reader = reader;
         fillWindow();
     }
 
@@ -57,7 +67,7 @@ public class SourceInputStreamBuffer implements SourceBuffer {
         // Fallback/Exception: If an absolute index is requested from a long-past, garbage-collected token window,
         // a streaming buffer cannot fetch it. However, for parser slicing logic within active regions, this is safe.
         throw new UnsupportedOperationException(
-            "Stream-backed buffer does not support random access accessors outside the active token window scope (Index: " 
+            "Stream-backed buffer does not support random access accessors outside the active token window scope (Index: "
             + index + ", Window Scope: [" + windowStartOffset + " -> " + (offset + windowSize) + "])"
         );
     }
@@ -220,5 +230,14 @@ public class SourceInputStreamBuffer implements SourceBuffer {
     @Override
     public int windowStartColumn() {
         return windowStartColumn;
+    }
+
+    @Override
+    public void setOffset(int newOffset) {
+        throw new LocalizableRuntimeException(
+            GenericDiagnosticCode.UNIMPLEMENTED_METHOD,
+            getClass().getSimpleName(),
+            "setOffset"
+        );
     }
 }

@@ -6,6 +6,7 @@ import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public final class ReferenceScalarNode extends ReferenceNode implements ScalarAstNode<ReferenceNode> {
 
@@ -29,7 +30,7 @@ public final class ReferenceScalarNode extends ReferenceNode implements ScalarAs
 
     @Override
     @Nullable
-    public String getRaw() {
+    public String getLexeme() {
         return value == null ? null : value.toString();
     }
 
@@ -77,11 +78,11 @@ public final class ReferenceScalarNode extends ReferenceNode implements ScalarAs
         return value;
     }
 
-    @Override
-    public ReferenceScalarNode setPrimitive(Object value) {
-        this.value = value;
-        return this;
-    }
+    // @Override
+    // public ReferenceScalarNode setPrimitive(Object value) {
+    //     this.value = value;
+    //     return this;
+    // }
 
     @Override
     public List<? extends AstNode> getChildren() {
@@ -96,5 +97,23 @@ public final class ReferenceScalarNode extends ReferenceNode implements ScalarAs
     @Override
     public QuoteStyle getQuoteStyle() {
         return quoteStyle;
+    }
+
+    @Override
+    public String getContent() {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ReferenceScalarNode that)) return false;
+        return Objects.equals(value, that.value)
+            && quoteStyle == that.quoteStyle;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value, quoteStyle);
     }
 }

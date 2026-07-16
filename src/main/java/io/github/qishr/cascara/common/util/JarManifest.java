@@ -1,17 +1,29 @@
 package io.github.qishr.cascara.common.util;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-public class JarManifest {
+import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.semver.SemVer;
+
+public class JarManifest extends Properties {
+    private JarManifest() {
+        // No public constructor
+    }
+
     /// Parses the content of a MANIFEST.MF file string, handles line continuations,
     /// and prints the resulting property names and values.
     ///
     /// @param manifest The string containing the MANIFEST.MF file content.
-    public static Properties parse(String manifest) {
-        Properties manifestProperties = new Properties();
+    public static JarManifest parse(String manifest) {
+        JarManifest manifestProperties = new JarManifest();
         Map<String, StringBuilder> mf = new LinkedHashMap<>();
         String currentKey = null;
         try (BufferedReader reader = new BufferedReader(new StringReader(manifest))) {
@@ -41,8 +53,7 @@ public class JarManifest {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error parsing manifest content: " + e.getMessage());
-            return new Properties();
+            throw new LocalizableRuntimeException(e, GenericDiagnosticCode.MANIFEST_READ, e.getMessage());
         }
 
         for (Map.Entry<String, StringBuilder> entry : mf.entrySet()) {
@@ -50,5 +61,32 @@ public class JarManifest {
         }
 
         return manifestProperties;
+    }
+
+    public static JarManifest of(Class<?> clazz) {
+        InputStream is;
+        try {
+            is = JreUtil.getResourceAsStream(clazz, "/META-INF/MANIFEST.MF");
+        } catch (LocalizableIOException e) {
+            throw new LocalizableRuntimeException(
+                e,
+                GenericDiagnosticCode.MANIFEST_READ,
+                clazz.getSimpleName()
+            );
+        }
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+            String content = br.lines().collect(Collectors.joining("\n"));
+            return parse(content);
+        } catch (Exception e) {
+            throw new LocalizableRuntimeException(
+                e,
+                GenericDiagnosticCode.MANIFEST_READ,
+                clazz.getSimpleName()
+            );
+        }
+    }
+
+    public SemVer getVersion() {
+        return new SemVer(getString("Implementation-Version", "0.0.0"));
     }
 }

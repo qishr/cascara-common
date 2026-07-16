@@ -1,6 +1,15 @@
 package io.github.qishr.cascara.common.semver;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Objects;
+import java.util.stream.Collectors;
+
+import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.util.JarManifest;
+import io.github.qishr.cascara.common.util.Properties;
 
 
 /// Semver is a tool that provides useful methods to manipulate versions that follow the "semantic versioning" specification

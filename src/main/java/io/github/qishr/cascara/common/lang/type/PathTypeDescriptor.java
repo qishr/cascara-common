@@ -2,8 +2,10 @@ package io.github.qishr.cascara.common.lang.type;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 public class PathTypeDescriptor extends AbstractScalarDescriptor<Path> {
     public PathTypeDescriptor() {
@@ -16,8 +18,8 @@ public class PathTypeDescriptor extends AbstractScalarDescriptor<Path> {
     }
 
     @Override
-    public Primitive toPrimitive(Path value) {
-        return Primitive.of(value.toString());
+    public Object toPrimitive(Path jvmInstance) {
+        return jvmInstance.toString();
     }
 
     @Override

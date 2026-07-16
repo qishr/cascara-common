@@ -5,5 +5,6 @@ public enum QuoteStyle {
     SINGLE,
     DOUBLE,
     LITERAL_BLOCK,
-    FOLDED;
+    FOLDED,
+    UNDETERMINED;
 }

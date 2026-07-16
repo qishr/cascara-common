@@ -21,6 +21,11 @@ public class SilentCollectingReporter extends AbstractReporter<SilentCollectingR
         return true;
     }
 
+    @Override
+    public boolean isSilent() {
+        return true;
+    }
+
     //
     //
     //

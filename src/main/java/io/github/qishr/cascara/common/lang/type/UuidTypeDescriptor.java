@@ -1,8 +1,10 @@
 package io.github.qishr.cascara.common.lang.type;
 
+import java.net.URI;
 import java.util.UUID;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 public class UuidTypeDescriptor extends AbstractScalarDescriptor<UUID> {
     public UuidTypeDescriptor() {
@@ -15,8 +17,8 @@ public class UuidTypeDescriptor extends AbstractScalarDescriptor<UUID> {
     }
 
     @Override
-    public Primitive toPrimitive(UUID value) {
-        return Primitive.of(value.toString());
+    public Object toPrimitive(UUID jvmInstance) {
+        return jvmInstance.toString();
     }
 
     @Override

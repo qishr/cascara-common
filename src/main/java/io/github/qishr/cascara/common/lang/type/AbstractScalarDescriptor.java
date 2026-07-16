@@ -40,17 +40,17 @@ public abstract class AbstractScalarDescriptor<T> extends AbstractTypeDescriptor
     }
 
     @Override
-    public void populateSchema(MapAstNode<?,?> node) {
-        super.populateSchema(node);
+    public void populateSchema(MapAstNode<?,?,?> schema) {
+        super.populateSchema(schema);
 
         // Inject other properties scalars might declare.
 
         if (format != null && !format.isEmpty()) {
-            node.put(KEYWORD_FORMAT, format);
+            schema.put(KEYWORD_FORMAT, format);
         }
 
         if (contentEncoding != null && !contentEncoding.isEmpty()) {
-            node.put(KEYWORD_CONTENT_ENCODING, contentEncoding);
+            schema.put(KEYWORD_CONTENT_ENCODING, contentEncoding);
         }
     }
 

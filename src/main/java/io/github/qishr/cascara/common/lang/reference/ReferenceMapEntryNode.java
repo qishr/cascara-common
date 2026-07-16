@@ -4,7 +4,7 @@ import io.github.qishr.cascara.common.lang.ast.*;
 import java.util.Collections;
 import java.util.List;
 
-public final class ReferenceMapEntryNode extends ReferenceNode implements MapEntryAstNode<ReferenceNode> {
+public final class ReferenceMapEntryNode extends ReferenceNode implements MapEntryAstNode<ReferenceNode,ReferenceNode> {
 
     private final ReferenceNode key;
     private ReferenceNode value;
@@ -28,6 +28,15 @@ public final class ReferenceMapEntryNode extends ReferenceNode implements MapEnt
     public ReferenceNode getKey() {
         return key;
     }
+
+    // @Override
+    // public String getKeyString() {
+    //     if (key instanceof ScalarAstNode scalar) {
+
+    //     } else {
+
+    //     }
+    // }
 
     @Override
     public ReferenceNode getValue() {

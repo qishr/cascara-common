@@ -1,9 +1,11 @@
 package io.github.qishr.cascara.common.lang.exception;
 
-import io.github.qishr.cascara.common.diagnostic.LocalizableException;
+import io.github.qishr.cascara.common.diagnostic.AbstractLocalizableException;
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.lang.annotation.Experimental;
 
-public class JsonPointerException extends LocalizableException {
+@Experimental
+public class JsonPointerException extends AbstractLocalizableException {
 
 	public JsonPointerException(DiagnosticCode code, Object... details) {
 		super(code, details);

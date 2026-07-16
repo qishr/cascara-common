@@ -12,18 +12,14 @@ public interface ScalarAstNode<T extends AstNode> extends AstNode {
 
     /// Returns the exact, unparsed text block directly from the file buffer.
     @Nullable
-    String getRaw();
+    String getLexeme();
 
     /// Returns the Java-native representation of the scalar (e.g., Integer, Boolean, String).
     @Nullable
     Object getPrimitive();
 
-    /// Updates the logical native primitive value of this node.
-    ///
-    /// This method invalidates any pre-existing raw string cache derived from
-    /// a file buffer, marking the node as dirty so the emitter can contextually
-    /// re-serialize the new value on the next text export pass.
-    ScalarAstNode<T> setPrimitive(Object value);
+    @Nullable
+    String getContent();
 
     /// Returns the string form or the primitive.
     /// If the primitive is `null`, an empty string is returned.

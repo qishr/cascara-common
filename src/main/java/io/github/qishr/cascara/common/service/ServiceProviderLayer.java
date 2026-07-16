@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.util.ContentType;
@@ -70,21 +71,20 @@ public class ServiceProviderLayer {
             reporter = new NoOpReporter();
         }
         if (rootLayer == null) {
-            final Reporter finalReporter = reporter;
+            final Reporter bootReporter = reporter;
             rootLayer = new ServiceProviderLayer();
             rootLayer.name = "root";
             rootLayer.setReporter(reporter);
             ModuleLayer boot = ModuleLayer.boot();
             boot.modules().forEach((module) -> {
+                final String moduleName = module.getName();
                 try {
-                    finalReporter.trace("Found module " + module.getName());
+                    bootReporter.trace("Found module " + moduleName);
                     rootLayer.registerModule(module);
                 } catch (Exception e) {
-                    if (finalReporter instanceof NoOpReporter) {
-                        System.err.println("Failed to register " + module.getName() + " module.");
-                    } else {
-                        finalReporter.error(e, ServiceDiagnosticCode.FAILED_TO_REGISTER_MODULE, module.getName());
-                    }
+                    bootError(e,
+                        ServiceDiagnosticCode.FAILED_TO_REGISTER_MODULE,
+                        moduleName);
                 }
             });
             // Fallback: classic ServiceLoader scanning for classpath/unnamed-module usage,
@@ -95,11 +95,15 @@ public class ServiceProviderLayer {
     }
 
     private void registerViaServiceLoader() {
-        ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
-        for (ServiceProvider provider : loader) {
-            if (!providersByFqcn.containsKey(provider.getClass().getName())) {
-                registerProvider(provider, null);
+        try {
+            ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
+            for (ServiceProvider provider : loader) {
+                if (!providersByFqcn.containsKey(provider.getClass().getName())) {
+                    registerProvider(provider, null);
+                }
             }
+        } catch (ServiceConfigurationError e) {
+            bootError(e, ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
         }
     }
 
@@ -622,8 +626,23 @@ public class ServiceProviderLayer {
         return servicesByFqcn.values();
     }
 
+    //
+    // Diagnostics
+    //
+
     private void reportFinding(ServiceMetadata item, int depth) {
         getReporter().debug("[" + name + "] " + "  ".repeat(depth) + item.getType().getName() +
                 (item.getJarPath() == null ? "" : " from " + item.getJarPath()));
+    }
+
+    private static void bootError(Throwable e, ServiceDiagnosticCode code, Object... details) {
+        final Reporter reporter = rootLayer.reporter;
+        if (reporter.isSilent()) {
+            System.err.println(
+                DiagnosticLocalizer.DEFAULT.format(code, details)
+            );
+        } else {
+            reporter.error(e, code, details);
+        }
     }
 }

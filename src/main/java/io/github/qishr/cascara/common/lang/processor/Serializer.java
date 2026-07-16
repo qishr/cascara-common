@@ -1,10 +1,14 @@
 package io.github.qishr.cascara.common.lang.processor;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
+import java.io.Writer;
 
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.exception.SerializerException;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
+import io.github.qishr.cascara.common.lang.type.TypeReference;
 
 /// Handles the transformation between Java Objects (POJOs) and the AST or textual formats.
 ///
@@ -21,6 +25,15 @@ public interface Serializer<N extends AstNode> extends Processor {
     /// @throws SerializerException If serialization fails.
     String toText(Object jvmInstance) throws SerializerException;
 
+    void toWriter(Object jvmInstance, Writer writer) throws IOException;
+
+    /// Transforms a Java Object into an AST representation.
+    ///
+    /// @param jvmInstance The POJO or collection to transform.
+    /// @return An AST representation of the provided object.
+    /// @throws SerializerException If the object cannot be mapped to the AST.
+    N toAst(Object jvmInstance);
+
     /// Parses a string (e.g. JSON or YAML) directly into a Java Object
     // of the specified type.
     ///
@@ -31,14 +44,15 @@ public interface Serializer<N extends AstNode> extends Processor {
     /// @throws SerializerException If parsing or mapping fails.
     <C> C fromText(String text, Class<C> jvmType) throws SerializerException;
 
+    <C> C fromText(String text, TypeReference<C> typeRef) throws SerializerException;
+
+    <C> C fromReader(Reader reader, Class<C> jvmType) throws SerializerException;
+
+    <C> C fromReader(Reader reader, TypeReference<C> typeRef) throws SerializerException;
+
     <C> C fromStream(InputStream is, Class<C> jvmType) throws SerializerException;
 
-    /// Transforms a Java Object into an AST representation.
-    ///
-    /// @param jvmInstance The POJO or collection to transform.
-    /// @return An AST representation of the provided object.
-    /// @throws SerializerException If the object cannot be mapped to the AST.
-    N toAst(Object jvmInstance);
+    <C> C fromStream(InputStream is, TypeReference<C> typeRef) throws SerializerException;
 
     /// Transforms an AST representation back into a specific Java type.
     ///
@@ -48,6 +62,8 @@ public interface Serializer<N extends AstNode> extends Processor {
     /// @return A populated instance of the requested class.
     /// @throws SerializerException If the AST structure does not match the target type.
     <C> C fromAst(N astNode, Class<C> jvmType);
+
+    <C> C fromAst(N astNode, TypeReference<C> typeRef);
 
     Serializer<N> registerTypeDescriptor(TypeDescriptor<?> typeDescriptor);
     Serializer<N> setParser(AstParser<N,?> parser);

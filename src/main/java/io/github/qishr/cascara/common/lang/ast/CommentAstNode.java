@@ -5,7 +5,7 @@ public interface CommentAstNode extends AstNode {
     String asString();
 
     /// The lexeme, including the '#'
-    String getRaw();
+    String getLexeme();
 
     /// Useful for CSS or Java modules
     boolean isMultiLine();

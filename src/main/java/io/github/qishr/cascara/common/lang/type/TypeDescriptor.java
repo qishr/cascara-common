@@ -13,7 +13,7 @@ public interface TypeDescriptor<T> extends ServiceProvider {
 
     /// Adds JSON Schema keywords and values to a map representing a
     /// JSON schema for the JSON type handled by this TypeDescriptor.
-    void populateSchema(MapAstNode<?,?> node);
+    void populateSchema(MapAstNode<?,?,?> schema);
 
     boolean validate(String text, Reporter collector);
 }

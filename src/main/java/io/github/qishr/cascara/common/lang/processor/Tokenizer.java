@@ -1,6 +1,7 @@
 package io.github.qishr.cascara.common.lang.processor;
 
 import java.io.InputStream;
+import java.io.Reader;
 import java.util.List;
 import java.util.Set;
 
@@ -23,6 +24,8 @@ public interface Tokenizer<T extends Token> extends Processor {
 
     /// Low-level Streaming API: Resets the tokenizer state to read from a String.
     void open(String text);
+
+    void open(Reader reader);
 
     /// Low-level Streaming API: Resets the tokenizer state to read from a stream.
     void open(InputStream is);

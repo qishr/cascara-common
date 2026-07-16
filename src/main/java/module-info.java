@@ -1,4 +1,6 @@
 module cascara.common {
+    requires jdk.incubator.vector;
+
     uses io.github.qishr.cascara.common.service.ServiceProvider;
 
     exports io.github.qishr.cascara.common.data;
@@ -24,7 +26,7 @@ module cascara.common {
     provides io.github.qishr.cascara.common.lang.type.ScalarDescriptor
         with io.github.qishr.cascara.common.lang.type.ByteArrayDescriptor,
              io.github.qishr.cascara.common.lang.type.InstantTypeDescriptor,
-             io.github.qishr.cascara.common.lang.type.LocalDateTimeTypeDescriptor,
+             io.github.qishr.cascara.common.lang.type.DateTimeTypeDescriptor,
              io.github.qishr.cascara.common.lang.type.PathTypeDescriptor,
              io.github.qishr.cascara.common.lang.type.UriTypeDescriptor,
              io.github.qishr.cascara.common.lang.type.UuidTypeDescriptor;
