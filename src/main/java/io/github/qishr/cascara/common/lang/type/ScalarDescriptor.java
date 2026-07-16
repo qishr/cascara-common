@@ -6,8 +6,9 @@ public interface ScalarDescriptor<T> extends TypeDescriptor<T> {
     /// Converts the `text` into the JVM type specified by this TypeDescriptor.
     T toJvmType(String text);
 
-    /// Converts the JVM type specified by this TypeDescriptor into a Primitive.
-    Primitive toPrimitive(T jvmInstance);
+    /// Converts the JVM type specified by this TypeDescriptor into a JSON Schema primitive type.
+    /// @return One of: null, string, integer (JVM Long), number (JVM Double), boolean.
+    Object toPrimitive(T jvmInstance);
 
     /// Retuns the JSON Schema `format` used by this TypeDescriptor.
     String getFormat();
@@ -16,7 +17,7 @@ public interface ScalarDescriptor<T> extends TypeDescriptor<T> {
     String getContentEncoding();
 
     @Override
-    default void populateSchema(MapAstNode<?,?> node) {
+    default void populateSchema(MapAstNode<?,?,?> node) {
         // Automatically inject the core properties every scalar might declare.
         node.put("type", getSchemaType());
 

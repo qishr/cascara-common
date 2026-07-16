@@ -1,8 +1,9 @@
 package io.github.qishr.cascara.common.diagnostic.code;
 
 public enum ServiceDiagnosticCode implements DiagnosticCode {
-    NOT_A_SERVICE("SPL-101", "{0} is not a ServiceProvider."),
-    NOT_A_SERVICE_PROVIDER("SPL-102", "{0} is not a ServiceProvider."),
+    CONFIGURATION_ERROR("SPL-101", "Configuration error: {0}"),
+    NOT_A_SERVICE("SPL-102", "{0} is not a ServiceProvider."),
+    NOT_A_SERVICE_PROVIDER("SPL-103", "{0} is not a ServiceProvider."),
 
     FAILED_TO_REGISTER_MODULE("SPL-201", "Failed to register {0} module."),
 

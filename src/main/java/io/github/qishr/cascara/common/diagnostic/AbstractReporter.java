@@ -79,6 +79,10 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         return self();
     }
 
+    public boolean isSilent() {
+        return false;
+    }
+
     //
     // Exception
     //

@@ -3,7 +3,7 @@ package io.github.qishr.cascara.common.lang.streaming;
 import io.github.qishr.cascara.common.lang.annotation.Experimental;
 
 @Experimental
-public enum EventType {
+public enum StreamingEventType {
     START_DOCUMENT,
 
     END_DOCUMENT,

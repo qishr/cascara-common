@@ -15,6 +15,7 @@ public enum LangDiagnosticCode implements DiagnosticCode {
     INVOCATION_TARGET_EXCEPTION("", "Method {0} threw an invocation target exception"),
     ILLEGAL_ARGUMENT_EXCEPTION("", "Field {0} threw an illegal argument exception"),
     INSTANTIATION_EXCEPTION("", "Field {0} threw an instantiation exception"),
+    EXCEPTION_IN_INITIALIZER("", "Exception in initializer for {0}"),
 
     EXPECTED_MAP_STRUCTURE("YAML-", "Expected a map structure for class {0}"),
     FAILED_SERIALIZE("YAML-", "Failed to serialize: {0}"),

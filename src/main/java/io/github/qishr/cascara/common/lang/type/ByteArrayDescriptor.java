@@ -20,10 +20,9 @@ public class ByteArrayDescriptor extends AbstractScalarDescriptor<byte[]> {
         }
     }
 
-    // Arrays are not counted as Primitive
     @Override
-    public Primitive toPrimitive(byte[] value) {
-        return Primitive.of(Base64.getEncoder().encodeToString(value));
+    public Object toPrimitive(byte[] jvmInstance) {
+        return Base64.getEncoder().encodeToString(jvmInstance);
     }
 
     @Override

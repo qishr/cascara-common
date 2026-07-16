@@ -3,6 +3,7 @@ package io.github.qishr.cascara.common.lang.type;
 import java.net.URI;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 public class UriTypeDescriptor extends AbstractScalarDescriptor<URI> {
     public UriTypeDescriptor() {
@@ -15,8 +16,8 @@ public class UriTypeDescriptor extends AbstractScalarDescriptor<URI> {
     }
 
     @Override
-    public Primitive toPrimitive(URI value) {
-        return Primitive.of(value.toString());
+    public Object toPrimitive(URI jvmInstance) {
+        return jvmInstance.toString();
     }
 
     @Override

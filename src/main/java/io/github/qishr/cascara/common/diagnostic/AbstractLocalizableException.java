@@ -1,22 +1,32 @@
 package io.github.qishr.cascara.common.diagnostic;
 
-import java.io.IOException;
-
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 
-public class LocalizableIOException extends IOException implements LocalizableException {
+public class AbstractLocalizableException extends Exception implements LocalizableException {
+
+    private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
 
     private final DiagnosticCode code;
     private final Object[] details;
 
-    public LocalizableIOException(DiagnosticCode code, Object... details) {
-        this(null, code, details);
+    public static DiagnosticLocalizer getLocalizer() {
+        return localizer;
     }
 
-    public LocalizableIOException(Throwable cause, DiagnosticCode code, Object... details) {
-        super(cause);
+    public static void setLocalizer(DiagnosticLocalizer customLocalizer) {
+        localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
+    }
+
+    public AbstractLocalizableException(DiagnosticCode code, Object... details) {
+        super(format(code, details));
         this.code = code;
-        this.details = details;
+        this.details = details != null ? details : new Object[0];
+    }
+
+    public AbstractLocalizableException(Throwable cause, DiagnosticCode code, Object... details) {
+        super(format(code, details));
+        this.code = code;
+        this.details = details != null ? details : new Object[0];
     }
 
     /// Returns a diagnostic error code for the error message.
@@ -35,7 +45,7 @@ public class LocalizableIOException extends IOException implements LocalizableEx
     @Override
     public String getLocalizedMessage() {
         try {
-            return AbstractLocalizableException.getLocalizer().format(code, details);
+            return localizer.format(code, details);
         } catch (IllegalArgumentException e) {
             return String.format(DiagnosticLocalizer.FORMATTING_ERROR, code.getCode(), code.getMessage());
         }
@@ -49,5 +59,10 @@ public class LocalizableIOException extends IOException implements LocalizableEx
         } catch (IllegalArgumentException e) {
             return String.format(DiagnosticLocalizer.FORMATTING_ERROR, code.getCode(), code.getMessage());
         }
+    }
+
+    /// Formats a [DiagnosticCode]'s message without localizing it.
+    private static String format(DiagnosticCode code, Object... details) {
+        return DiagnosticLocalizer.DEFAULT.format(code, details);
     }
 }

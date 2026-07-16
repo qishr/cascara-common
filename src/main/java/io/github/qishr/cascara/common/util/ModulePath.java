@@ -133,7 +133,7 @@ public class ModulePath {
                     }
                 }
             }
-        } catch (IOException | LocalizableIOException e) {
+        } catch (IOException e) {
             // ctx.error(null, "Error reading classes in directory: " + directory.getAbsolutePath());
         }
         return moduleName;

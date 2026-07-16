@@ -37,7 +37,7 @@ public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
     }
 
     @Override
-    public void populateSchema(MapAstNode<?,?> node) {
+    public void populateSchema(MapAstNode<?,?,?> node) {
         // Automatically inject the type property every JSON Schema definition requires.
         node.put(KEYWORD_TYPE, getSchemaType());
     }

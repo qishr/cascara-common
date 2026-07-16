@@ -3,19 +3,19 @@ package io.github.qishr.cascara.common.lang.ast;
 import java.util.List;
 import java.util.Set;
 
-public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> extends AstNode, Iterable<E> {
+public interface MapAstNode<K, V extends AstNode, E extends MapEntryAstNode<K,V>> extends AstNode, Iterable<E> {
     int size();
     boolean isEmpty();
-    boolean containsKey(T key);
-    T get(T key);
-    E getEntry(T key);
+    boolean containsKey(K key);
+    V get(K key);
+    E getEntry(K key);
     List<E> getEntries();
     Set<E> entrySet();
-    Set<T> keySet();
-    MapAstNode<T,E> put(T key, T value);
-    MapAstNode<T,E> remove(T key);
+    Set<K> keySet();
+    MapAstNode<K,V,E> put(K key, V value);
+    MapAstNode<K,V,E> remove(K key);
 
-    List<T> values();
+    List<V> values();
 
     @Override
     default List<E> getChildren() {
@@ -27,32 +27,32 @@ public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> ext
     //
 
     boolean containsKey(String key);
-    MapAstNode<T,E> put(String key, T value);
-    MapAstNode<T,E> put(String key, String value);
-    MapAstNode<T,E> remove(String key);
-    T get(String key);
+    MapAstNode<K,V,E> put(String key, V value);
+    MapAstNode<K,V,E> put(String key, String value);
+    MapAstNode<K,V,E> remove(String key);
+    V get(String key);
 
-    MapAstNode<T,E> getMap(String key);
-    SequenceAstNode<T> getSequence(String key);
+    MapAstNode<K,V,E> getMap(String key);
+    SequenceAstNode<V> getSequence(String key);
 
     /// @return Returns the string value of the map entry, or null if it doesn't exist.
     default String getString(String key) {
-        T node = get(key);
+        V node = get(key);
         return (node instanceof ScalarAstNode scalar) ? scalar.asString() : null;
     }
 
     default int getInteger(String key, int defaultValue) {
-        T node = get(key);
+        V node = get(key);
         return (node instanceof ScalarAstNode scalar) ? scalar.asInteger() : defaultValue;
     }
 
     default double getDouble(String key, double defaultValue) {
-        T node = get(key);
+        V node = get(key);
         return (node instanceof ScalarAstNode scalar) ? scalar.asDouble() : defaultValue;
     }
 
     default boolean getBoolean(String key, boolean defaultValue) {
-        T node = get(key);
+        V node = get(key);
         return (node instanceof ScalarAstNode scalar) ? scalar.asBoolean() : defaultValue;
     }
 
@@ -69,7 +69,7 @@ public interface MapAstNode<T extends AstNode, E extends MapEntryAstNode<T>> ext
     }
 
     default String getString(String key, String defaultValue) {
-        T value = get(key);
+        V value = get(key);
         return (value != null) ? value.asString() : defaultValue;
     }
 

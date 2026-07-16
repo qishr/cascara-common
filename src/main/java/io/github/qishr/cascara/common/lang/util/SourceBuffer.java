@@ -1,5 +1,8 @@
 package io.github.qishr.cascara.common.lang.util;
 
+import io.github.qishr.cascara.common.lang.annotation.Experimental;
+
+@Experimental
 public interface SourceBuffer {
     char advance();
     char peek();
@@ -7,7 +10,7 @@ public interface SourceBuffer {
     char peekAhead(int steps);
     void backup();
     boolean isAtEnd();
-    
+
     char charAt(int index);
     CharSequence subSequence(int start, int end);
     int length();
@@ -15,6 +18,7 @@ public interface SourceBuffer {
     int line();
     int column();
     int offset();
+    void setOffset(int newOffset);
 
     // The window tracking state metrics needed by token factories
     void startTokenWindow();

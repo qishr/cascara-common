@@ -1,6 +1,7 @@
 package io.github.qishr.cascara.common.lang.processor;
 
 import java.io.InputStream;
+import java.io.Reader;
 import java.util.List;
 
 import io.github.qishr.cascara.common.lang.annotation.Beta;
@@ -15,9 +16,11 @@ public interface AstParser<N extends AstNode, T extends Token> extends Processor
     /// @return The root [AstNode].
     N parse(String text);
 
+    N parse(Reader reader);
+
     /// Entry point for parsing an `InputStream`.
     ///
-    /// @param InputStream is An input stream of the raw text source.
+    /// @param is is An input stream of the raw text source.
     /// @return The root [AstNode].
     N parse(InputStream is);
 

@@ -2,6 +2,7 @@ package io.github.qishr.cascara.common.lang.reference;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -10,7 +11,7 @@ import io.github.qishr.cascara.common.lang.ast.*;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 
-public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<ReferenceNode, ReferenceMapEntryNode> {
+public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<ReferenceNode, ReferenceNode, ReferenceMapEntryNode> {
 
     // private List<ReferenceMapEntryNode> entries = new ArrayList<>();
     // private final LinkedHashMap<ReferenceNode,ReferenceNode> entries = new LinkedHashMap<>();
@@ -56,9 +57,7 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
 
     @Override
     public Set<ReferenceMapEntryNode> entrySet() {
-        entriesByKey.entrySet();
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'entrySet'");
+        return new LinkedHashSet<>(entriesByKey.values());
     }
 
     @Override

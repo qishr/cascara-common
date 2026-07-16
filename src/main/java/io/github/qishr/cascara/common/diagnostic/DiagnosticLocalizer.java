@@ -14,7 +14,8 @@ public interface DiagnosticLocalizer {
     /// A default fail-safe implementation that falls back to standard MessageFormat
     DiagnosticLocalizer DEFAULT = (code, details) -> {
         try {
-            return MessageFormat.format(code.getMessage(), details);
+            String pattern = code.getMessage().replace("'", "''");
+            return MessageFormat.format(pattern, details);
         } catch (IllegalArgumentException e) {
             return String.format(FORMATTING_ERROR, code.getCode(), code.getMessage());
         }

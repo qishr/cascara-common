@@ -5,7 +5,7 @@ import java.lang.annotation.*;
 /// This element has an experimental maturity.  Use with caution.
 ///
 /// !!! note
-///     The developers of this element is not responsible for the issues created,
+///     The developers of this element are not responsible for the issues created,
 ///     using it is not suggested for production environment. If you see this annotation do this, do not do that etc
 ///     Enjoy responsibly....
 @Documented

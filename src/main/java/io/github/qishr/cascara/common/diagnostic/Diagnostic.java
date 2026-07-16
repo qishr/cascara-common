@@ -104,7 +104,7 @@ public class Diagnostic {
             token.getStartLine(),
             token.getStartColumn(),
             token.getOffset(),
-            token.getOffset() + token.getLexeme().length(),
+            token.getOffset() + (token.getLexeme() == null ? 0 : token.getLexeme().length()),
             source,
             level,
             cause,

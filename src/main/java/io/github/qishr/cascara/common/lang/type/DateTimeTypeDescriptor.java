@@ -1,29 +1,30 @@
 package io.github.qishr.cascara.common.lang.type;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 
-public class LocalDateTimeTypeDescriptor extends AbstractScalarDescriptor<LocalDateTime> {
-    public LocalDateTimeTypeDescriptor() {
-        super(LocalDateTime.class, "string", "date-time");
+public class DateTimeTypeDescriptor extends AbstractScalarDescriptor<ZonedDateTime> {
+    public DateTimeTypeDescriptor() {
+        super(ZonedDateTime.class, "string", "date-time");
     }
 
     @Override
-    public LocalDateTime toJvmType(String text) {
-        return LocalDateTime.parse(text);
+    public ZonedDateTime toJvmType(String text) {
+        return ZonedDateTime.parse(text);
     }
 
     @Override
-    public Primitive toPrimitive(LocalDateTime value) {
-        return Primitive.of(value.toString());
+    public Object toPrimitive(ZonedDateTime jvmInstance) {
+        return jvmInstance.toString();
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
         try {
-            LocalDateTime.parse(text);
+            ZonedDateTime.parse(text);
             return true;
         } catch (DateTimeParseException e) {
             formatError(text, collector);
