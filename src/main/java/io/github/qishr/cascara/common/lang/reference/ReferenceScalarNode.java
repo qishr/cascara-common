@@ -37,6 +37,7 @@ package io.github.qishr.cascara.common.lang.reference;
 
 import io.github.qishr.cascara.common.lang.annotation.Nullable;
 import io.github.qishr.cascara.common.lang.ast.*;
+import io.github.qishr.cascara.common.lang.type.PrimitiveType;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 import java.util.Collections;
@@ -71,7 +72,7 @@ public final class ReferenceScalarNode extends ReferenceNode implements ScalarAs
 
     @Override
     public String asString() {
-        return value == null ? "" : value.toString();
+        return value == null ? null : value.toString();
     }
 
     @Override
@@ -150,5 +151,10 @@ public final class ReferenceScalarNode extends ReferenceNode implements ScalarAs
     @Override
     public int hashCode() {
         return Objects.hash(value, quoteStyle);
+    }
+
+    @Override
+    public PrimitiveType getPrimitiveType() {
+        return PrimitiveType.of(value);
     }
 }

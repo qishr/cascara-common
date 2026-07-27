@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public final class ReferenceSequenceNode extends ReferenceNode implements SequenceAstNode<ReferenceNode> {
 
@@ -82,6 +83,22 @@ public final class ReferenceSequenceNode extends ReferenceNode implements Sequen
     @Override
     public ReferenceNode get(int index) {
         return elements.get(index);
+    }
+
+    @Override
+    public ReferenceNode getFirst() {
+        if (elements.isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        return elements.getFirst();
+    }
+
+    @Override
+    public ReferenceNode getLast() {
+        if (elements.isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        return elements.getLast();
     }
 
     @Override

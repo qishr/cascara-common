@@ -89,7 +89,7 @@ public class TestSerializer extends AbstractSerializer<TestSerializer,ReferenceN
 
     /// {@inheritDoc}
     @Override
-    public TestSerializer setParser(AstParser<ReferenceNode,?> parser) {
+    public TestSerializer setParser(AstParser<ReferenceNode,?,?> parser) {
         return this;
     }
 

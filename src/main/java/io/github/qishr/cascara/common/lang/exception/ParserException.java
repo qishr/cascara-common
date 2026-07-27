@@ -35,11 +35,17 @@
 
 package io.github.qishr.cascara.common.lang.exception;
 
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.LocatableException;
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 public class ParserException extends LocatableException {
+
+    /// Standard constructor for generic errors.
+    public ParserException(DiagnosticCode code, Object... details) {
+        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, code, details);
+    }
 
     /// Standard constructor for parser-detected logic errors.
     public ParserException(int line, int column, DiagnosticCode code, Object... details) {
@@ -53,6 +59,6 @@ public class ParserException extends LocatableException {
 
     /// Constructor for I/O or Stream failures.
     public ParserException(Throwable cause, DiagnosticCode code, Object... details) {
-        super(null, UNKNOWN_COORD, UNKNOWN_COORD, cause, code, details);
+        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
     }
 }

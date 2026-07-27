@@ -68,14 +68,14 @@ public class ProcessorFactory extends AbstractServiceProviderFactory {
         );
     }
 
-    public AstParser<?, ?> createAstParser(String contentType) throws ServiceException {
+    public AstParser<?,?,?> createAstParser(String contentType) throws ServiceException {
         return createServiceProvider(
             AstParser.class,
             CapabilityQueries.hasExactValue(CONTENT_TYPE, contentType)
         );
     }
 
-    public AstParser<?, ?> createAstParser(ContentType contentType) throws ServiceException {
+    public AstParser<?,?,?> createAstParser(ContentType contentType) throws ServiceException {
         return createServiceProvider(
             AstParser.class,
             CapabilityQueries.supportsContentType(contentType)

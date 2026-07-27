@@ -104,19 +104,19 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         return this;
     }
 
-    public GlobalReporter setDisableSystemOutput(boolean b) {
+    public GlobalReporter setSystemOutputEnabled(boolean b) {
         if (this != globalInstance) {
             throw new UnsupportedOperationException("The method setDisableSystemOutput in GlobalReporter may only be called on the global instance.");
         }
-        super.setDisableSystemOutput(b);
+        super.setSystemOutputEnabled(b);
         return this;
     }
 
-    public GlobalReporter setDisableFlush(boolean b) {
+    public GlobalReporter setFlushEnabled(boolean b) {
         if (this != globalInstance) {
             throw new UnsupportedOperationException("The method setDisableFlush in GlobalReporter may only be called on the global instance.");
         }
-        super.setDisableFlush(b);
+        super.setFlushEnabled(b);
         return this;
     }
 
@@ -140,61 +140,68 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     @Override
-    protected boolean disableSystemOutput() {
-        return this == globalInstance ? disableSystemOutput : globalInstance.disableSystemOutput();
+    protected boolean isSystemOutputEnabled() {
+        return this == globalInstance ? systemOutputEnabled : globalInstance.isSystemOutputEnabled();
     }
 
     @Override
-    protected boolean disableFlush() {
-        return this == globalInstance ? disableFlush : globalInstance.disableFlush();
+    protected boolean isFlushEnabled() {
+        return this == globalInstance ? flushEnabled : globalInstance.isFlushEnabled();
     }
 
     @Override
-    protected boolean printStackTrace() {
-        return this == globalInstance ? printStackTrace : globalInstance.printStackTrace();
+    protected boolean isStackTraceEnabled() {
+        return this == globalInstance ? stackTraceEnabled : globalInstance.isStackTraceEnabled();
     }
 
     @Override
     protected void writeString(Diagnostic diagnostic) {
+        writeString (
+            diagnostic.getCause(),
+            diagnostic.getLevel(),
+            formatString(diagnostic)
+        );
+    }
+
+    private String formatString(Diagnostic diagnostic) {
         if (diagnostic.getUri() == null) {
-            writeString (
-                diagnostic.getCause(),
-                diagnostic.getLevel(),
-                String.format(
+            if (diagnostic.getLine() > 0) {
+                return String.format(
+                    "[%5s] [%s] [%s] %s at line %d\n",
+                    diagnostic.getLevel(),
+                    diagnostic.getTimestamp().format(TIME_FORMAT),
+                    diagnostic.getSource(),
+                    diagnostic.getMessage(),
+                    diagnostic.getLine()
+                );
+            } else {
+                return String.format(
                     "[%5s] [%s] [%s] %s\n",
                     diagnostic.getLevel(),
                     diagnostic.getTimestamp().format(TIME_FORMAT),
                     diagnostic.getSource(),
                     diagnostic.getMessage()
-                )
-            );
+                );
+            }
         } else {
             if (diagnostic.getLine() > 0) {
-                writeString (
-                    diagnostic.getCause(),
+                return String.format(
+                    "[%5s] [%s] [%s] %s at %s:%d\n",
                     diagnostic.getLevel(),
-                    String.format(
-                        "[%5s] [%s] [%s] %s at %s:%d\n",
-                        diagnostic.getLevel(),
-                        diagnostic.getTimestamp().format(TIME_FORMAT),
-                        diagnostic.getSource(),
-                        diagnostic.getMessage(),
-                        diagnostic.getUri(),
-                        diagnostic.getLine()
-                    )
+                    diagnostic.getTimestamp().format(TIME_FORMAT),
+                    diagnostic.getSource(),
+                    diagnostic.getMessage(),
+                    diagnostic.getUri(),
+                    diagnostic.getLine()
                 );
             } else {
-                writeString (
-                    diagnostic.getCause(),
+                return String.format(
+                    "[%5s] [%s] [%s] %s in file %s\n",
                     diagnostic.getLevel(),
-                    String.format(
-                        "[%5s] [%s] [%s] %s in file %s\n",
-                        diagnostic.getLevel(),
-                        diagnostic.getTimestamp().format(TIME_FORMAT),
-                        diagnostic.getSource(),
-                        diagnostic.getMessage(),
-                        diagnostic.getUri()
-                    )
+                    diagnostic.getTimestamp().format(TIME_FORMAT),
+                    diagnostic.getSource(),
+                    diagnostic.getMessage(),
+                    diagnostic.getUri()
                 );
             }
         }

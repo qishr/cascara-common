@@ -50,7 +50,7 @@ public class ServiceProviderFactory extends AbstractServiceProviderFactory {
         super(layer);
     }
 
-    public AstParser<?, ?> createParser(String contentType) throws ServiceException {
+    public AstParser<?,?,?> createParser(String contentType) throws ServiceException {
         return createServiceProvider(
             AstParser.class,
             CapabilityQueries.hasExactValue("contentType", contentType)

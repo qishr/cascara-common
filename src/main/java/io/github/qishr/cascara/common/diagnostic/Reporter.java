@@ -69,6 +69,8 @@ public interface Reporter {
     /// @return `true` if warnings or errors are being collected, otherwise `false`.
     boolean collectsProblems();
 
+    Level getLevel();
+
     boolean isSilent();
 
     //

@@ -37,7 +37,7 @@ package io.github.qishr.cascara.common.lang.type;
 
 import java.util.SequencedCollection;
 
-/// Based on https://json-schema.org/draft-04/json-schema-core#rfc.section.3.5
+/// Based on [JSON Schema: core definitions and terminology §3.5](https://json-schema.org/draft-04/json-schema-core#rfc.section.3.5)
 public enum PrimitiveType {
     ANY,
     ARRAY,

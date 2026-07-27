@@ -44,6 +44,7 @@ public interface MapAstNode<K, V extends AstNode, E extends MapEntryAstNode<K,V>
     boolean containsKey(K key);
     V get(K key);
     E getEntry(K key);
+    E getEntry(int i);
     List<E> getEntries();
     Set<E> entrySet();
     Set<K> keySet();
@@ -69,6 +70,7 @@ public interface MapAstNode<K, V extends AstNode, E extends MapEntryAstNode<K,V>
 
     MapAstNode<K,V,E> getMap(String key);
     SequenceAstNode<V> getSequence(String key);
+    ScalarAstNode<V> getScalar(String key);
 
     /// @return Returns the string value of the map entry, or null if it doesn't exist.
     default String getString(String key) {

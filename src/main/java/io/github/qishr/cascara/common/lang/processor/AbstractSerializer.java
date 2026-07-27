@@ -89,6 +89,8 @@ public abstract class AbstractSerializer<
     private Properties properties;
     private final String contentType;
     private final AstNodeFactory<N,S,L,M,E,K> astFactory;
+    private int depthLimit = 500;
+    private int depth = 0;
 
     private final Map<Class<?>,TypeDescriptor<?>> typeDescriptors = new HashMap<>();
     private final ServiceProviderFactory providerFactory = new ServiceProviderFactory();
@@ -133,63 +135,66 @@ public abstract class AbstractSerializer<
     @SuppressWarnings("unchecked")
     protected N serialize(Object jvmInstance) {
 
-        // JVM primitive → scalar
-        if (isScalar(jvmInstance)) {
-            return (N) astFactory.createScalarNode(
-                jvmInstance,
-                QuoteStyle.UNDETERMINED, // Only the ScalarAstNode implementation knows what it should be.
-                options
-            );
+        depth++;
+        if (depth > depthLimit) {
+            throw new SerializerException(LangDiagnosticCode.FAILED_SERIALIZE, "Depth limit exceeded");
         }
 
-        TypeDescriptor<?> typeDescriptor = getTypeDescriptor(jvmInstance.getClass());
-
-        if (typeDescriptor != null) {
-
-            // Custom serializer
-            if (typeDescriptor instanceof TypeSerializer typeSerializer) {
-                return castToNode(typeSerializer.serialize(jvmInstance));
-            }
-
-            // ScalarDescriptor → ScalarValue → ScalarNode
-            if (typeDescriptor instanceof ScalarDescriptor descriptor) {
-                Object scalarValue;
-                try {
-                    scalarValue = descriptor.toPrimitive(jvmInstance);
-                } catch (Exception e) {
-                    throw new SerializerException(
-                        e,
-                        LangDiagnosticCode.FAILED_TO_MAP_AST,
-                        jvmInstance.getClass().getSimpleName(),
-                        e.getMessage()
-                    );
-                }
-
+        try {
+            // JVM primitive → scalar
+            if (isScalar(jvmInstance)) {
                 return (N) astFactory.createScalarNode(
-                    scalarValue,
-                    QuoteStyle.UNDETERMINED,
+                    jvmInstance,
+                    QuoteStyle.UNDETERMINED, // Only the ScalarAstNode implementation knows what it should be.
                     options
                 );
             }
-        }
 
-        // Lists
-        if (jvmInstance instanceof List<?> list) {
-            return (N) serializeList(list);
-        }
+            TypeDescriptor<?> typeDescriptor = getTypeDescriptor(jvmInstance.getClass());
 
-        // Maps
-        if (jvmInstance instanceof Map<?, ?> map) {
-            return (N) serializeMap(map);
-        }
+            if (typeDescriptor != null) {
 
-        // TODO: ALL OBJECTS should be handled this way. @Serializable should not be neccesary
-        // Serializable objects
-        if (jvmInstance.getClass().isAnnotationPresent(Serializable.class)) {
+                // Custom serializer
+                if (typeDescriptor instanceof TypeSerializer typeSerializer) {
+                    return castToNode(typeSerializer.serialize(jvmInstance));
+                }
+
+                // ScalarDescriptor → ScalarValue → ScalarNode
+                if (typeDescriptor instanceof ScalarDescriptor descriptor) {
+                    Object scalarValue;
+                    try {
+                        scalarValue = descriptor.toPrimitive(jvmInstance);
+                    } catch (Exception e) {
+                        throw new SerializerException(
+                            e,
+                            LangDiagnosticCode.FAILED_TO_MAP_AST,
+                            jvmInstance.getClass().getSimpleName(),
+                            e.getMessage()
+                        );
+                    }
+
+                    return (N) astFactory.createScalarNode(
+                        scalarValue,
+                        QuoteStyle.UNDETERMINED,
+                        options
+                    );
+                }
+            }
+
+            // Lists
+            if (jvmInstance instanceof List<?> list) {
+                return (N) serializeList(list);
+            }
+
+            // Maps
+            if (jvmInstance instanceof Map<?, ?> map) {
+                return (N) serializeMap(map);
+            }
+
             return (N) serializeObject(jvmInstance);
+        } finally {
+            depth--;
         }
-
-        throw new SerializerException(LangDiagnosticCode.FAILED_SERIALIZE, jvmInstance.getClass());
     }
 
 
@@ -744,9 +749,7 @@ public abstract class AbstractSerializer<
             if (method.isAnnotationPresent(AnySetter.class)) {
                 method.setAccessible(true);
                 for (E entry : rootMap.getEntries()) {
-                    // entry.getKey() returns an Astode.
-                    // We use toString() because our ScalarAstNode override returns stringValue.
-                    String key = entry.getKey().toString();
+                    String key = entry.getKeyString();
 
                     if (!claimedKeys.contains(key) && !isSchemaOrId(key)) {
                         Object value;

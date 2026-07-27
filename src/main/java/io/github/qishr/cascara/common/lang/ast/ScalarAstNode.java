@@ -36,6 +36,7 @@
 package io.github.qishr.cascara.common.lang.ast;
 
 import io.github.qishr.cascara.common.lang.annotation.Nullable;
+import io.github.qishr.cascara.common.lang.type.PrimitiveType;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 public interface ScalarAstNode<T extends AstNode> extends AstNode {
@@ -52,6 +53,8 @@ public interface ScalarAstNode<T extends AstNode> extends AstNode {
     /// Returns the Java-native representation of the scalar (e.g., Integer, Boolean, String).
     @Nullable
     Object getPrimitive();
+
+    PrimitiveType getPrimitiveType();
 
     @Nullable
     String getContent();

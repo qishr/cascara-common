@@ -71,4 +71,7 @@ public interface Tokenizer<T extends Token> extends Processor {
     default Set<? extends TokenType> getTokenTypes() {
         return Set.of();
     }
+
+    int getOffset();
+
 }

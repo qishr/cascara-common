@@ -44,7 +44,7 @@ import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 @Beta
-public interface AstParser<N extends AstNode, T extends Token> extends Processor {
+public interface AstParser<N extends AstNode, T extends Token, L extends Tokenizer<T>> extends Processor {
     /// Entry point for parsing a source string.
     ///
     /// @param text The raw text source.
@@ -63,11 +63,15 @@ public interface AstParser<N extends AstNode, T extends Token> extends Processor
     ///
     /// @param tokenizer the tokenizer instance.
     /// @return The root [AstNode].
-    N parse(Tokenizer<T> tokenizer);
+    N parse(L tokenizer);
 
     /// Entry point for parsing a list of tokens.
     ///
     /// @param tokens A list of tokens representing the tokenized text source.
     /// @return The root [AstNode].
     N parse(List<T> tokens);
+
+    List<T> getTokens();
+
+    L getTokenizer();
 }

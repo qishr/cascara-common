@@ -101,5 +101,5 @@ public interface Serializer<N extends AstNode> extends Processor {
     <C> C fromAst(N astNode, TypeReference<C> typeRef);
 
     Serializer<N> registerTypeDescriptor(TypeDescriptor<?> typeDescriptor);
-    Serializer<N> setParser(AstParser<N,?> parser);
+    Serializer<N> setParser(AstParser<N,?,?> parser);
 }

@@ -35,7 +35,55 @@
 
 package io.github.qishr.cascara.common.util;
 
-public class CaseConverter {
+import io.github.qishr.cascara.common.lang.annotation.Experimental;
+
+@Experimental
+public class StringUtils {
+
+    public static String debugString(String string, int pos) {
+        return debugString(string, "", pos);
+    }
+
+    public static String debugString(String string) {
+        if (string == null) return "␀";
+        StringBuilder sb = new StringBuilder();
+        for (int codePoint : string.codePoints().toArray()) {
+            sb.append(visibleChar(codePoint));
+        }
+        return sb.toString();
+    }
+
+    public static String debugString(String string, String name, int pos) {
+        if (string == null) return "␀";
+        StringBuilder sb = new StringBuilder().append(debugString(string));
+        sb.append('\n');
+        for (int i = 0; i < pos; i++) {
+            sb.append(' ');
+        }
+        sb.append("▲\n");
+        int nameLength = (name == null || name.isBlank()) ? 0 : name.length();
+        for (int i = 0; i < pos - nameLength - 1; i++) {
+            sb.append(' ');
+        }
+        sb.append((name == null || name.isBlank()) ? pos : name + " = " + pos);
+        return sb.toString();
+    }
+
+    public static String visibleChar(int c) {
+        switch (c) {
+            case ' ':
+                return "␣";
+            case '\t':
+                return "⇥";
+            case '\r':
+                return "␍";
+            case '\n':
+                return "↵";
+            default:
+                return Character.toString(c);
+        }
+    }
+
     public static String kebabCase(String camelCase) {
         StringBuilder sb = new StringBuilder();
         int[] codePoints = camelCase.codePoints().toArray();

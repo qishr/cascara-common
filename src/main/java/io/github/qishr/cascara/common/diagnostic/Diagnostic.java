@@ -49,6 +49,8 @@ import io.github.qishr.cascara.common.lang.token.Token;
 /// structural tracking indicators like thread name and execution timestamps, and
 /// an optional underlying exception cause.
 public class Diagnostic {
+    public static final int UNKNOWN_COORD = -1;
+
     private URI uri;
     private final int line;
     private final int column;
@@ -89,7 +91,6 @@ public class Diagnostic {
         this.endOffset = endOffset;
 
         this.source = source;
-        this.level = level;
         this.cause = cause;
         this.code = code;
         this.details = details;
@@ -104,9 +105,11 @@ public class Diagnostic {
                 formattedMessage = ("Message code or text required when creating Diagnostic.");
             } else {
                 try {
-                    formattedMessage = MessageFormat.format(code.getMessage(), details);
+                    String format = code.getMessage().replaceAll("'", "''");
+                    formattedMessage = MessageFormat.format(format, details);
                 } catch (IllegalArgumentException e) {
                     formattedMessage = "Formatting problem while reporting error code " + code.getCode() + ": " + code.getMessage() + ".";
+                    level = Level.ERROR;
                 }
             }
         } else {
@@ -114,9 +117,11 @@ public class Diagnostic {
                 formattedMessage = String.format(message, details);
             } catch (IllegalArgumentException e) {
                 formattedMessage = "Formatting problem while reporting error: " + message + ".";
+                level = Level.ERROR;
             }
         }
 
+        this.level = level;
         this.message = formattedMessage;
     }
 
@@ -193,28 +198,38 @@ public class Diagnostic {
 
     /// Defines the severity hierarchy classifications available for diagnostic tracking.
     public enum Level {
-        /// Default fallback fallback logging severity level.
-        DEFAULT(0),
+        /// Default fallback logging severity level.
+        DEFAULT("DEFLT"),
+        /// Level for no-op reporter.
+        NONE(" NONE"),
         /// Represents fatal or execution-halting structural failures.
-        ERROR(1),
+        ERROR("ERROR"),
         /// Indicates non-fatal semantic irregularities or suspicious configurations.
-        WARN(2),
+        WARN(" WARN"),
         /// Standard operational metrics, progress records, or structural notices.
-        INFO(3),
+        INFO("INFO"),
         /// High-fidelity tracing notes optimized for debugging workflows.
-        DEBUG(4),
+        DEBUG("DEBUG"),
         /// Ultra-fine-grained system diagnostic traces.
-        TRACE(5);
+        TRACE("TRACE");
 
-        private int level;
+        private String logPrefix;
 
-        Level(int level) {
-            this.level = level;
+        Level(String logPrefix) {
+            this.logPrefix = logPrefix;
         }
 
         /// Returns the raw integer ordinal configuration weight assigned to this severity tier level.
         public int getLevel() {
-            return level;
+            return ordinal();
+        }
+
+        public String getLogPrefix() {
+            return logPrefix;
+        }
+
+        public boolean includes(Level level) {
+            return ordinal() >= level.ordinal();
         }
     }
 }

@@ -58,9 +58,10 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected Consumer<String> stringWriter;
 
-    protected boolean disableSystemOutput = false;
-    protected boolean disableFlush = true;
-    protected boolean printStackTrace;
+    protected boolean flushEnabled = false;
+    protected boolean systemOutputEnabled = true;
+    protected boolean systemErrorEnabled = false;
+    protected boolean stackTraceEnabled = false;
 
     protected AbstractReporter(Consumer<String> writer) {
         this.stringWriter = writer;
@@ -99,21 +100,32 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         return self();
     }
 
-    public T setDisableSystemOutput(boolean b) {
-        disableSystemOutput = b;
+    public T setSystemOutputEnabled(boolean b) {
+        systemOutputEnabled = b;
         return self();
     }
 
-    public T setDisableFlush(boolean b) {
-        disableFlush = b;
+    public T setFlushEnabled(boolean b) {
+        flushEnabled = b;
         return self();
     }
 
-    public T setPrintStackTrace(boolean b) {
-        printStackTrace = b;
+    public T setStackTraceEnabled(boolean b) {
+        stackTraceEnabled = b;
         return self();
     }
 
+    public T setSystemErrorEnabled(boolean b) {
+        systemErrorEnabled = b;
+        return self();
+    }
+
+    @Override
+    public Level getLevel() {
+        return level;
+    }
+
+    @Override
     public boolean isSilent() {
         return false;
     }
@@ -136,8 +148,8 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
                 locatable.getUri(),
                 locatable.getLine(),
                 locatable.getColumn(),
-                LocatableException.UNKNOWN_COORD,
-                LocatableException.UNKNOWN_COORD,
+                Diagnostic.UNKNOWN_COORD,
+                Diagnostic.UNKNOWN_COORD,
                 source, Level.ERROR, e.getCause(), e.getCode(), e.getDetails()));
         } else {
             report(buildDiagnostic(source, Level.ERROR, e.getCause(), e.getCode(), e.getDetails()));
@@ -193,8 +205,8 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     public void infoAt(int line, int column, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             null, line, column,
-            LocatableException.UNKNOWN_COORD,
-            LocatableException.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
             source, Level.INFO, null, code, details
         ));
     }
@@ -204,8 +216,8 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     public void warnAt(int line, int column, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             null, line, column,
-            LocatableException.UNKNOWN_COORD,
-            LocatableException.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
             source, Level.WARN, null, code, details
         ));
     }
@@ -215,8 +227,8 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     public void errorAt(int line, int column, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             null, line, column,
-            LocatableException.UNKNOWN_COORD,
-            LocatableException.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
             source, Level.ERROR, null, code, details
         ));
     }
@@ -226,8 +238,8 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     public void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             uri, line, column,
-            LocatableException.UNKNOWN_COORD,
-            LocatableException.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
             source, Level.ERROR, null, code, details
         ));
     }
@@ -237,8 +249,8 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     public void errorAt(int line, int column, Throwable cause, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             null, line, column,
-            LocatableException.UNKNOWN_COORD,
-            LocatableException.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
             source, Level.ERROR, cause, code, details
         ));
     }
@@ -311,11 +323,11 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected Consumer<String> getStringWriter() { return stringWriter; }
 
-    protected boolean disableSystemOutput() { return disableSystemOutput; }
+    protected boolean isSystemOutputEnabled() { return systemOutputEnabled; }
 
-    protected boolean disableFlush() { return disableFlush; }
+    protected boolean isFlushEnabled() { return flushEnabled; }
 
-    protected boolean printStackTrace() { return printStackTrace; }
+    protected boolean isStackTraceEnabled() { return stackTraceEnabled; }
 
     protected void report(Diagnostic diagnostic) {
         if (this.level.compareTo(diagnostic.getLevel()) >= 0) {
@@ -338,13 +350,13 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     }
 
     protected void outputToConsole(Throwable cause, Level level, String message) {
-        if (!disableSystemOutput()) {
-            PrintStream console = level == Level.ERROR ? System.err : System.out;
+        if (isSystemOutputEnabled()) {
+            PrintStream console = (level == Level.ERROR && systemErrorEnabled) ? System.err : System.out;
             console.print(message);
-            if (cause != null && printStackTrace()) {
+            if (cause != null && isStackTraceEnabled()) {
                 cause.printStackTrace();
             }
-            if (!disableFlush()) {
+            if (isFlushEnabled()) {
                 console.flush();
             }
         }
@@ -358,10 +370,10 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     protected Diagnostic buildDiagnostic(String source, Level level, String message, Object... details) {
         return new Diagnostic(
             null,
-            LocatableException.UNKNOWN_COORD,
-            LocatableException.UNKNOWN_COORD,
-            LocatableException.UNKNOWN_COORD,
-            LocatableException.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
             source, level, null, null, message, details
         );
     }
@@ -370,10 +382,10 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     protected Diagnostic buildDiagnostic(String source, Level level, Throwable cause, DiagnosticCode code, Object... details) {
         return new Diagnostic(
             null,
-            LocatableException.UNKNOWN_COORD,
-            LocatableException.UNKNOWN_COORD,
-            LocatableException.UNKNOWN_COORD,
-            LocatableException.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
             source, level, cause, code, null, details
         );
     }

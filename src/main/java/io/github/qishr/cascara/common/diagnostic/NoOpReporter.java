@@ -57,6 +57,11 @@ public class NoOpReporter implements Reporter {
     }
 
     @Override
+    public Level getLevel() {
+        return Level.NONE;
+    }
+
+    @Override
     public boolean isSilent() {
         return true;
     }

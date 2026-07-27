@@ -39,6 +39,10 @@ import io.github.qishr.cascara.common.lang.annotation.Experimental;
 
 @Experimental
 public enum StreamingEventType {
+    START_STREAM,
+
+    END_STREAM,
+
     START_DOCUMENT,
 
     END_DOCUMENT,

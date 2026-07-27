@@ -41,7 +41,6 @@ import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 
 public abstract class LocatableException extends LocalizableRuntimeException {
     // Common constants for LocatableException implementations
-    public static final int UNKNOWN_COORD = -1;
 
     private final int line;
     private final int column;
@@ -66,7 +65,7 @@ public abstract class LocatableException extends LocalizableRuntimeException {
 
     /// Constructor for when we only have a URI but no line or column
     public LocatableException(URI uri, Throwable cause, DiagnosticCode code, Object... details) {
-        this(uri, UNKNOWN_COORD, UNKNOWN_COORD, cause, code, details);
+        this(uri, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
     }
 
     private static String messageWithLocation(String message, int line, URI uri) {

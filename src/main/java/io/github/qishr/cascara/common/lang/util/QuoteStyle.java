@@ -39,7 +39,5 @@ public enum QuoteStyle {
     PLAIN,
     SINGLE,
     DOUBLE,
-    LITERAL_BLOCK,
-    FOLDED,
     UNDETERMINED;
 }

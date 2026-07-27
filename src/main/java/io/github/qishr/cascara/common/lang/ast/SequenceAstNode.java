@@ -46,6 +46,8 @@ public interface SequenceAstNode<T extends AstNode> extends AstNode, Iterable<T>
     SequenceAstNode<T> remove(T node);
     SequenceAstNode<T> remove(int index);
     T get(int index);
+    T getFirst();
+    T getLast();
     List<T> getElements();
     Iterator<T> iterator();
 }

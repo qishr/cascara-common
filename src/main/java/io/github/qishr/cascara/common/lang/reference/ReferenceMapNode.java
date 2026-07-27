@@ -40,8 +40,10 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.lang.annotation.Nullable;
 import io.github.qishr.cascara.common.lang.ast.*;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
@@ -83,6 +85,12 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
     @Override
     public ReferenceMapEntryNode getEntry(ReferenceNode key) {
         return entriesByKey.get(key);
+    }
+
+    @Override
+    public ReferenceMapEntryNode getEntry(int i) {
+        if (i < 0 || i > size()) throw new NoSuchElementException();
+        return entriesByKey.sequencedValues().toArray(new ReferenceMapEntryNode[]{})[i];
     }
 
     @Override
@@ -220,6 +228,15 @@ public final class ReferenceMapNode extends ReferenceNode implements MapAstNode<
     @Override
     public ReferenceSequenceNode getSequence(String key) {
         throw new UnsupportedOperationException("Unimplemented method 'getSequence'");
+    }
+
+    @Override
+    @Nullable
+    public ReferenceScalarNode getScalar(String key) {
+        if (get(key) instanceof ReferenceScalarNode scalar) {
+            return scalar;
+        }
+        return null;
     }
 
     /// Returns Iterator instance

@@ -35,6 +35,7 @@
 
 package io.github.qishr.cascara.common.lang.exception;
 
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.LocatableException;
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 
@@ -47,6 +48,6 @@ public class TokenizerException extends LocatableException {
 
     /// Constructor for I/O or Stream failures.
     public TokenizerException(Throwable cause, DiagnosticCode code, Object... details) {
-        super(null, UNKNOWN_COORD, UNKNOWN_COORD, cause, code, details);
+        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
     }
 }

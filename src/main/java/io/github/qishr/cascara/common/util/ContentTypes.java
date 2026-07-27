@@ -61,7 +61,7 @@ public class ContentTypes {
         enumerateContentTypes(ServiceLoader.load(AstParser.class));
     }
 
-    private static <P extends AstParser<?, ?>> void enumerateContentTypes(ServiceLoader<P> loader) {
+    private static <P extends AstParser<?,?,?>> void enumerateContentTypes(ServiceLoader<P> loader) {
         contentTypes = new HashSet<>();
         for (ServiceLoader.Provider<P> provider : loader.stream().toList()) {
             try {
