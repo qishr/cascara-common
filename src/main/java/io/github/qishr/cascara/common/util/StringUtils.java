@@ -62,7 +62,8 @@ public class StringUtils {
         }
         sb.append("▲\n");
         int nameLength = (name == null || name.isBlank()) ? 0 : name.length();
-        for (int i = 0; i < pos - nameLength - 1; i++) {
+        int nameIndent = pos - nameLength - (nameLength > 0 ? 1 : 0);
+        for (int i = 0; i < nameIndent; i++) {
             sb.append(' ');
         }
         sb.append((name == null || name.isBlank()) ? pos : name + " = " + pos);

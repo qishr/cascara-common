@@ -91,9 +91,9 @@ public class Tree<T extends TreeData<T,V>,V> {
     private void renderValue(Writer writer, V value, int indent) throws LocalizableIOException {
         if (value instanceof List list && !list.isEmpty()) {
             Object firstElement = list.getFirst();
-            if (firstElement instanceof TableData firstRow) {
+            if (firstElement instanceof TabularData firstRow) {
                 @SuppressWarnings("unchecked")
-				List<TableData> rows = list;
+				List<TabularData> rows = list;
                 int columnCount = firstRow.getValuesMap().values().size();
                 renderTable(writer, columnCount, rows, indent);
             } else {
@@ -108,17 +108,17 @@ public class Tree<T extends TreeData<T,V>,V> {
         }
     }
 
-    private void renderTable(Writer writer, int columns, List<? extends TableData> rows, int indent) throws LocalizableIOException {
-        Table table = new Table();
+    private void renderTable(Writer writer, int columns, List<? extends TabularData> rows, int indent) throws LocalizableIOException {
+        TextualTable table = new TextualTable();
         table.setShowHeaders(false);
 
-        TableData firstRow = rows.getFirst();
+        TabularData firstRow = rows.getFirst();
         for (String columnName : firstRow.getValuesMap().keySet()) {
             table.addColumn(columnName);
         }
 
         // Add the data
-        for (TableData row : rows) {
+        for (TabularData row : rows) {
             table.addRow(row);
         }
         table.render(writer, TAB_SIZE * indent);

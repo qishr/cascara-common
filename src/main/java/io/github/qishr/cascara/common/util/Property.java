@@ -38,9 +38,9 @@ package io.github.qishr.cascara.common.util;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.github.qishr.cascara.common.data.TableData;
+import io.github.qishr.cascara.common.data.TabularData;
 
-public class Property implements TableData {
+public class Property implements TabularData {
     Kind kind = Kind.STRING;
     String name;
     String value = null;

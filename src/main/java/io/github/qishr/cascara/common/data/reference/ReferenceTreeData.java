@@ -39,16 +39,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import io.github.qishr.cascara.common.data.TableData;
+import io.github.qishr.cascara.common.data.TabularData;
 import io.github.qishr.cascara.common.data.TreeData;
 
 /// A reference implementation of TreeData
-public class ReferenceTreeData implements TreeData<ReferenceTreeData,List<TableData>> {
+public class ReferenceTreeData implements TreeData<ReferenceTreeData,List<TabularData>> {
 
     private String name;
     private List<ReferenceTreeData> children = new ArrayList<>();
     private ReferenceTreeData parent;
-    private List<TableData> value;
+    private List<TabularData> value;
 
     public ReferenceTreeData(String name) {
         this.name = name;
@@ -93,11 +93,11 @@ public class ReferenceTreeData implements TreeData<ReferenceTreeData,List<TableD
 	}
 
 	@Override
-	public List<TableData> getPayload() {
+	public List<TabularData> getPayload() {
         return value;
 	}
 
-    public ReferenceTreeData setValue(List<TableData> data) {
+    public ReferenceTreeData setValue(List<TabularData> data) {
         value = data;
         return this;
     }

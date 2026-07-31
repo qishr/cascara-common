@@ -33,13 +33,46 @@
 // version.
 
 
-package io.github.qishr.cascara.common.data;
+package io.github.qishr.cascara.common.data.reference;
 
+import java.util.HashMap;
 import java.util.Map;
 
-/// Data that can represent a row within a table
-public interface TableData {
-    Object[] getValues();
-    Map<String,Object> getValuesMap();
-    Object get(String key);
+import io.github.qishr.cascara.common.data.TabularData;
+
+/// A reference implementation of TabularData
+public class ReferenceTabularData implements TabularData {
+
+    private Map<String, Object> valuesMap = new HashMap<>();
+
+    public ReferenceTabularData() {
+        // Nothing to see here
+    }
+
+    @Override
+    public final Object[] getValues() {
+        Object[] r = new Object[valuesMap.size()];
+        int i = 0;
+        for (Object value : valuesMap.values()) {
+            r[i] = value;
+            i++;
+        }
+        return r;
+    }
+
+    @Override
+	public Map<String, Object> getValuesMap() {
+        return valuesMap;
+	}
+
+    public ReferenceTabularData put(String key, String value) {
+        valuesMap.put(key, value);
+        return this;
+    }
+
+	@Override
+	public Object get(String key) {
+        return valuesMap.get(key);
+	}
+
 }

@@ -39,12 +39,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class SimpleTreeNode implements TreeData<SimpleTreeNode,List<TableData>> {
+public class SimpleTreeNode implements TreeData<SimpleTreeNode,List<TabularData>> {
 
     private String name;
     private List<SimpleTreeNode> children = new ArrayList<>();
     private SimpleTreeNode parent;
-    private List<TableData> values;
+    private List<TabularData> values;
 
     public SimpleTreeNode(String name) {
         this.name = name;
@@ -83,11 +83,11 @@ public class SimpleTreeNode implements TreeData<SimpleTreeNode,List<TableData>> 
 	}
 
 	@Override
-	public List<TableData> getPayload() {
+	public List<TabularData> getPayload() {
         return values;
 	}
 
-    public SimpleTreeNode setValues(List<TableData> data) {
+    public SimpleTreeNode setValues(List<TabularData> data) {
         values = data;
         return this;
     }

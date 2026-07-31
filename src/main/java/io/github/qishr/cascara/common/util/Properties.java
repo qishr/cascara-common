@@ -40,9 +40,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.github.qishr.cascara.common.data.TableData;
+import io.github.qishr.cascara.common.data.TabularData;
 
-public class Properties implements TableData, Duplicable<Properties> {
+public class Properties implements TabularData, Duplicable<Properties> {
     List<Property> propertiesList = new ArrayList<>();
     Map<String,Property> propertiesMap = new HashMap<>();
 

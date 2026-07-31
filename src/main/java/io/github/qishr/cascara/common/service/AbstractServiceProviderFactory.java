@@ -39,8 +39,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import io.github.qishr.cascara.common.util.Properties;
-
 public class AbstractServiceProviderFactory {
     private final ServiceProviderLayer layer;
     private Map<String,Map<Predicate<ServiceMetadata>,ServiceMetadata>> cache = new HashMap<>();

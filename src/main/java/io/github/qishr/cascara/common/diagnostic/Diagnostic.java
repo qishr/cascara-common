@@ -104,20 +104,28 @@ public class Diagnostic {
             if (code == null) {
                 formattedMessage = ("Message code or text required when creating Diagnostic.");
             } else {
-                try {
-                    String format = code.getMessage().replaceAll("'", "''");
-                    formattedMessage = MessageFormat.format(format, details);
-                } catch (IllegalArgumentException e) {
-                    formattedMessage = "Formatting problem while reporting error code " + code.getCode() + ": " + code.getMessage() + ".";
-                    level = Level.ERROR;
+                if (details.length == 0) {
+                    formattedMessage = code.getMessage();
+                } else {
+                    try {
+                        String format = code.getMessage().replaceAll("'", "''");
+                        formattedMessage = MessageFormat.format(format, details);
+                    } catch (IllegalArgumentException e) {
+                        formattedMessage = "Formatting problem while reporting (code " + code.getCode() + "): " + code.getMessage() + ".";
+                        level = Level.ERROR;
+                    }
                 }
             }
         } else {
-            try {
-                formattedMessage = String.format(message, details);
-            } catch (IllegalArgumentException e) {
-                formattedMessage = "Formatting problem while reporting error: " + message + ".";
-                level = Level.ERROR;
+            if (details.length == 0) {
+                formattedMessage = message;
+            } else {
+                try {
+                    formattedMessage = String.format(message, details);
+                } catch (IllegalArgumentException e) {
+                    formattedMessage = "Formatting problem while reporting: " + message + ".";
+                    level = Level.ERROR;
+                }
             }
         }
 
