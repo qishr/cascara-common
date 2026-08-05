@@ -50,7 +50,7 @@ public class SourceInputStreamBuffer implements SourceBuffer {
     private final Reader reader;
 
     // A small circular or lookahead buffer window to support peek, peekNext, and backup
-    private final char[] window = new char[16];
+    private final char[] window = new char[256];
     private int windowHead = 0; // Points to the current character index in the window
     private int windowSize = 0; // Number of valid characters currently cached in the window
 
