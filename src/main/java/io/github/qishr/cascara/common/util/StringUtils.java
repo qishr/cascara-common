@@ -39,6 +39,88 @@ import io.github.qishr.cascara.common.lang.annotation.Experimental;
 
 @Experimental
 public class StringUtils {
+    public static final String ELLIPSIS = "\u2026";
+
+    public static final String VISIBLE_NULL = "\u2400";
+    public static final String VISIBLE_SPACE = "\u2423";
+    public static final String VISIBLE_TAB = "\u21E5";
+    public static final String VISIBLE_CR = "\u240D";
+    public static final String VISIBLE_LF = "\u23CE";
+
+    public static final String FILLED_UP_POINTING_TRIANGLE = "\u25B2";
+
+    public static String unescapeUnicode(String s) {
+        StringBuilder out = new StringBuilder(s.length());
+        int i = 0;
+        int len = s.length();
+
+        while (i < len) {
+            char c = s.charAt(i);
+
+            if (c != '\\' || i + 1 >= len) {
+                out.append(c);
+                i++;
+                continue;
+            }
+
+            char esc = s.charAt(i + 1);
+
+            // --- \\uXXXX ---
+            if (esc == 'u' && i + 5 < len) {
+                int code = 0;
+                boolean ok = true;
+                for (int j = i + 2; j < i + 6; j++) {
+                    int d = Character.digit(s.charAt(j), 16);
+                    if (d < 0) { ok = false; break; }
+                    code = (code << 4) | d;
+                }
+                if (ok) {
+                    out.append((char) code);
+                    i += 6;
+                    continue;
+                }
+            }
+
+            // Fallback: keep the backslash literally
+            out.append('\\');
+            i++;
+        }
+        return out.toString();
+    }
+
+    public static String unescapeHex(String s) {
+        StringBuilder out = new StringBuilder(s.length());
+        int i = 0;
+        int len = s.length();
+
+        while (i < len) {
+            char c = s.charAt(i);
+
+            if (c != '\\' || i + 1 >= len) {
+                out.append(c);
+                i++;
+                continue;
+            }
+
+            char esc = s.charAt(i + 1);
+
+            // --- \xXX ---
+            if (esc == 'x' && i + 3 < len) {
+                int d1 = Character.digit(s.charAt(i + 2), 16);
+                int d2 = Character.digit(s.charAt(i + 3), 16);
+                if (d1 >= 0 && d2 >= 0) {
+                    out.append((char) ((d1 << 4) | d2));
+                    i += 4;
+                    continue;
+                }
+            }
+
+            // Fallback: keep the backslash literally
+            out.append('\\');
+            i++;
+        }
+        return out.toString();
+    }
 
     public static String debugString(String string, int pos) {
         return debugString(string, "", pos);
@@ -60,7 +142,8 @@ public class StringUtils {
         for (int i = 0; i < pos; i++) {
             sb.append(' ');
         }
-        sb.append("▲\n");
+        sb.append(FILLED_UP_POINTING_TRIANGLE);
+        sb.append("\n");
         int nameLength = (name == null || name.isBlank()) ? 0 : name.length();
         int nameIndent = pos - nameLength - (nameLength > 0 ? 1 : 0);
         for (int i = 0; i < nameIndent; i++) {
@@ -72,14 +155,16 @@ public class StringUtils {
 
     public static String visibleChar(int c) {
         switch (c) {
+            case '\0':
+                return VISIBLE_NULL;
             case ' ':
-                return "␣";
+                return VISIBLE_SPACE;
             case '\t':
-                return "⇥";
+                return VISIBLE_TAB;
             case '\r':
-                return "␍";
+                return VISIBLE_CR;
             case '\n':
-                return "↵";
+                return VISIBLE_LF;
             default:
                 return Character.toString(c);
         }
