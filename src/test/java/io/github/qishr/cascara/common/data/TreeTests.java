@@ -60,7 +60,7 @@ public class TreeTests {
         row1.put("name2", "val2");
         b1leaf1.setValue(List.of(row1));
 
-        Tree<ReferenceTreeData,List<TabularData>> tree = new Tree<>();
+        TextualTree<ReferenceTreeData,List<TabularData>> tree = new TextualTree<>();
         tree.setRoot(root);
         tree.setRenderValues(true);
 

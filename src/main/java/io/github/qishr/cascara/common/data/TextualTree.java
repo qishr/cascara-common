@@ -44,7 +44,7 @@ import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.util.Properties;
 import io.github.qishr.cascara.common.util.Property;
 
-public class Tree<T extends TreeData<T,V>,V> {
+public class TextualTree<T extends TreeData<T,V>,V> {
     private static final String NL = "\n";
     private static final int TAB_SIZE = 2;
 
@@ -52,7 +52,7 @@ public class Tree<T extends TreeData<T,V>,V> {
     private boolean renderValues;
 
     /// Constructs an empty Tree.
-    public Tree() {
+    public TextualTree() {
         // Nothing to do here
     }
 

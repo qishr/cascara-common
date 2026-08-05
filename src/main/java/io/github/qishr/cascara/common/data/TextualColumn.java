@@ -36,18 +36,37 @@
 package io.github.qishr.cascara.common.data;
 
 /// A class to represent the name and width of a column within a table.
-public class Column {
-    String name;
+public class TextualColumn {
+    int index;
+    String headerText;
     int width;
 
     /// Constructs a new `Column` object with the specified name.
     /// @param name The name (heading) of the column.
-    public Column(String name) {
-        this.name = name;
+    public TextualColumn(String name) {
+        this.headerText = name;
         this.width = name.length();
     }
 
-    public String getName() {
-        return name;
+    public String getHeaderText() {
+        return headerText;
+    }
+
+    int getWidth() {
+        return width;
+    }
+
+    int getIndex() {
+        return index;
+    }
+
+    TextualColumn setIndex(int i) {
+        index = i;
+        return this;
+    }
+
+    TextualColumn setWidth(int i) {
+        width = i;
+        return this;
     }
 }
