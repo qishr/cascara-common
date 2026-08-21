@@ -41,18 +41,18 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.lang.reference.ReferenceScalarNode;
-import io.github.qishr.cascara.common.lang.reference.ReferenceSequenceNode;
+import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
+import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
 
 public class SerializerTest {
     @Test
     void test() {
 
-        ReferenceScalarNode s1 = new ReferenceScalarNode("one");
-        ReferenceScalarNode s2 = new ReferenceScalarNode("two");
+        PlainScalarNode s1 = new PlainScalarNode("one");
+        PlainScalarNode s2 = new PlainScalarNode("two");
 
-        ReferenceSequenceNode swq = new ReferenceSequenceNode()
+        PlainSequenceNode swq = new PlainSequenceNode()
             .add(s1)
             .add(s2);
 

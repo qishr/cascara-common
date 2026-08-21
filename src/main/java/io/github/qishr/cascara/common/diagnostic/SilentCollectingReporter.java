@@ -68,13 +68,13 @@ public class SilentCollectingReporter extends AbstractReporter<SilentCollectingR
     @Override
     protected void report(Diagnostic diagnostic) {
         if (this.level.compareTo(diagnostic.getLevel()) >= 0) {
-            if (getDiagnosticCollector() != null) {
-                getDiagnosticCollector().accept(diagnostic);
+            if (getDiagnosticConsumer() != null) {
+                getDiagnosticConsumer().accept(diagnostic);
             }
         }
 
-        if (getProblemCollector() != null && isProblem(level)) {
-            getProblemCollector().accept(diagnostic);
+        if (getProblemConsumer() != null && isProblem(level)) {
+            getProblemConsumer().accept(diagnostic);
         }
 
         if (diagnostic.getLevel() == Level.ERROR) {
@@ -86,4 +86,8 @@ public class SilentCollectingReporter extends AbstractReporter<SilentCollectingR
     protected void writeString(Diagnostic diagnostic) {
     }
 
+    @Override
+    protected String formatMessage(Diagnostic diagnostic, String line, int lineNumber, boolean useColoring) {
+        return "";
+    }
 }

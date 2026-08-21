@@ -40,9 +40,11 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.util.StringUtils;
+import io.github.qishr.cascara.common.util.TermUtils;
 
 /// A utility class for creating text-based tables.
 ///
@@ -57,6 +59,7 @@ public class TextualTable {
     private boolean showHeaders = true;
     private Style style = Style.MARKDOWN;
     private int maxColumnWidth = -1;
+    private String borderColor = null;
 
     /// Constructs an empty Table.
     public TextualTable() {
@@ -78,6 +81,13 @@ public class TextualTable {
     /// @return The table (this) to allow method chaining.
     public TextualTable setMaxColumnWidth(int n) {
         maxColumnWidth = n;
+        return this;
+    }
+
+    /// @return The table (this) to allow method chaining.
+    @Experimental
+    public TextualTable setBorderColor(String s) {
+        borderColor = s;
         return this;
     }
 
@@ -143,80 +153,80 @@ public class TextualTable {
             // Top border
             if (style.top() != '\0') {
                 writer.write(repeatCharacter(SPACE, indent));
-                writer.write(style.topLeft());
+                writer.write(border(style.topLeft()));
                 for (int i = 0; i < columns.size(); i++) {
                     TextualColumn column = columns.get(i);
                     int columnWidth = columnWidth(column);
-                    writer.write(repeatCharacter(style.top(), columnWidth + 2));
+                    writer.write(border(repeatCharacter(style.top(), columnWidth + 2)));
                     if (i < columns.size() - 1) {
-                        writer.write(style.topVertical());
+                        writer.write(border(style.topVertical()));
                     }
                 }
-                writer.write(style.topRight());
+                writer.write(border(style.topRight()));
                 writer.write(NEWLINE);
             }
 
             // Headers
             if (showHeaders) {
                 writer.write(repeatCharacter(SPACE, indent));
-                writer.write(style.left());
+                writer.write(border(style.left()));
                 // Write header line with column headings
                 for (int i = 0; i < columns.size(); i++) {
                     TextualColumn column = columns.get(i);
                     writer.write(' ');
                     writer.write(headerText(column));
                     if (i < columns.size() - 1) {
-                        writer.write(style.midVertical());
+                        writer.write(border(style.midVertical()));
                     }
                 }
-                writer.write(style.right());
+                writer.write(border(style.right()));
                 writer.write(NEWLINE);
 
-                writer.write(repeatCharacter(SPACE, indent));
-                writer.write(style.leftHorizontal());
+                writer.write(border(repeatCharacter(SPACE, indent)));
+                writer.write(border(style.leftHorizontal()));
 
                 // Header separator
                 for (int i = 0; i < columns.size(); i++) {
                     TextualColumn column = columns.get(i);
                     int columnWidth = columnWidth(column);
-                    writer.write(repeatCharacter(style.midHorizontal(), columnWidth + 2));
+                    writer.write(border(repeatCharacter(style.midHorizontal(), columnWidth + 2)));
                     if (i < columns.size() - 1) {
-                        writer.write(style.midIntersect());
+                        writer.write(border(style.midIntersect()));
                     }
                 }
-                writer.write(style.rightHorizontal());
+                writer.write(border(style.rightHorizontal()));
                 writer.write(NEWLINE);
             }
 
             // Data rows
             for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
                 writer.write(repeatCharacter(SPACE, indent));
-                writer.write(style.left());
+                writer.write(border(style.left()));
                 for (int i = 0; i < columns.size(); i++) {
                     TextualColumn column = columns.get(i);
                     writer.write(' ');
                     writer.write(cellText(column, rowIndex));
                     if (i < columns.size() - 1) {
-                        writer.write(style.midVertical());
+                        writer.write(border(style.midVertical()));
                     }
                 }
-                writer.write(style.right());
+                writer.write(border(style.right()));
                 writer.write(NEWLINE);
             }
 
             // Bottom border
             if (style.bot() != '\0') {
                 writer.write(repeatCharacter(SPACE, indent));
-                writer.write(style.botLeft());
+                writer.write(border(style.botLeft()));
                 for (int i = 0; i < columns.size(); i++) {
                     TextualColumn column = columns.get(i);
                     int columnWidth = columnWidth(column);
-                    writer.write(repeatCharacter(style.bot(), columnWidth + 2));
+                    writer.write(border(repeatCharacter(style.bot(), columnWidth + 2)));
                     if (i < columns.size() - 1) {
-                        writer.write(style.botVertical());
+                        writer.write(border(style.botVertical()));
                     }
                 }
-                writer.write(style.botRight());
+                writer.write(border(style.botRight()));
                 writer.write(NEWLINE);
             }
 
@@ -224,6 +234,22 @@ public class TextualTable {
             return this;
         } catch (IOException e) {
             throw new LocalizableRuntimeException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+        }
+    }
+
+    private String border(char c) {
+        if (borderColor == null) {
+            return ""+c;
+        } else {
+            return borderColor + c + TermUtils.ANSI_RESET;
+        }
+    }
+
+    private String border(String s) {
+        if (borderColor == null) {
+            return s;
+        } else {
+            return borderColor + s + TermUtils.ANSI_RESET;
         }
     }
 

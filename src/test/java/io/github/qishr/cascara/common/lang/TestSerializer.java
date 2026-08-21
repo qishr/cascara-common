@@ -41,22 +41,22 @@ import java.io.Writer;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.lang.exception.SerializerException;
+import io.github.qishr.cascara.common.lang.plain.PlainMapEntryNode;
+import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
+import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
+import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.lang.plain.PlainNode;
+import io.github.qishr.cascara.common.lang.plain.PlainNodeFactory;
 import io.github.qishr.cascara.common.lang.processor.AbstractSerializer;
 import io.github.qishr.cascara.common.lang.processor.AstParser;
-import io.github.qishr.cascara.common.lang.reference.ReferenceMapEntryNode;
-import io.github.qishr.cascara.common.lang.reference.ReferenceMapNode;
-import io.github.qishr.cascara.common.lang.reference.ReferenceNode;
-import io.github.qishr.cascara.common.lang.reference.ReferenceNodeFactory;
-import io.github.qishr.cascara.common.lang.reference.ReferenceScalarNode;
-import io.github.qishr.cascara.common.lang.reference.ReferenceSequenceNode;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
 import io.github.qishr.cascara.common.lang.util.LanguageOptions;
 import io.github.qishr.cascara.common.util.ContentType;
 
-public class TestSerializer extends AbstractSerializer<TestSerializer,ReferenceNode,ReferenceScalarNode,ReferenceSequenceNode,ReferenceMapNode,ReferenceMapEntryNode,ReferenceNode> {
+public class TestSerializer extends AbstractSerializer<TestSerializer,PlainNode,PlainScalarNode,PlainSequenceNode,PlainMapNode,PlainMapEntryNode,PlainNode> {
 
     public TestSerializer() {
-        super("", new ReferenceNodeFactory(), null);
+        super("", new PlainNodeFactory(), null);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class TestSerializer extends AbstractSerializer<TestSerializer,ReferenceN
     }
 
     @Override
-    protected ReferenceNode serializeKey(Object key) {
+    protected PlainNode serializeKey(Object key) {
         return serialize(key);
     }
 
@@ -89,25 +89,25 @@ public class TestSerializer extends AbstractSerializer<TestSerializer,ReferenceN
 
     /// {@inheritDoc}
     @Override
-    public TestSerializer setParser(AstParser<ReferenceNode,?,?> parser) {
+    public TestSerializer setParser(AstParser<PlainNode,?,?> parser) {
         return this;
     }
 
     /// {@inheritDoc}
     @Override
-    public String toText(Object jvmInstance) {
+    public String toString(Object jvmInstance) {
         return null;
     }
 
     /// {@inheritDoc}
     @Override
-    public ReferenceNode toAst(Object jvmInstance) {
+    public PlainNode toAst(Object jvmInstance) {
         return serialize(jvmInstance);
     }
 
     /// {@inheritDoc}
     @Override
-    public <C> C fromText(String text, Class<C> jvmType) {
+    public <C> C fromString(String text, Class<C> jvmType) {
         return null;
     }
 
@@ -129,11 +129,11 @@ public class TestSerializer extends AbstractSerializer<TestSerializer,ReferenceN
 
     /// {@inheritDoc}
     @Override
-    public <C> C fromAst(ReferenceNode astNode, Class<C> jvmType) {
+    public <C> C fromAst(PlainNode astNode, Class<C> jvmType) {
         return (C) deserialize(astNode, jvmType);
     }
 
-    public <C> C fromAst(ReferenceNode astNode, TypeReference<C> typeRef) {
+    public <C> C fromAst(PlainNode astNode, TypeReference<C> typeRef) {
         return (C) deserialize(astNode, typeRef);
     }
 

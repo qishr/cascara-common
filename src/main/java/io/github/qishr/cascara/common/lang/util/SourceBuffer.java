@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.lang.util;
 
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.Experimental;
 
 @Experimental
 public interface SourceBuffer {
@@ -43,6 +43,7 @@ public interface SourceBuffer {
     char peek();
     char peekNext();
     char peekAhead(int steps);
+    char previous();
     void backup();
     boolean isAtEnd();
 

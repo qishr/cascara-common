@@ -35,17 +35,26 @@
 
 package io.github.qishr.cascara.common.util;
 
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.Experimental;
 
 @Experimental
 public class StringUtils {
     public static final String ELLIPSIS = "\u2026";
 
     public static final String VISIBLE_NULL = "\u2400";
-    public static final String VISIBLE_SPACE = "\u2423";
-    public static final String VISIBLE_TAB = "\u21E5";
+    public static final String VISIBLE_BELL = "\u2407";
+    public static final String VISIBLE_BACKSPACE = "\u2408";
+    public static final String VISIBLE_TAB = "\u2409";
+    public static final String VISIBLE_LF = "\u240A";
     public static final String VISIBLE_CR = "\u240D";
-    public static final String VISIBLE_LF = "\u23CE";
+    public static final String VISIBLE_ESCAPE = "\u241B";
+    public static final String VISIBLE_SPACE = "\u2423";
+
+    // Return/Enter symbol: "\u21B5";
+    // Tab synbol: "\u21E5"
+    // Backspace symbol: "\u232B"
+
+    public static final String VISIBLE_DELETE = "\u2421";
 
     public static final String FILLED_UP_POINTING_TRIANGLE = "\u25B2";
 
@@ -127,10 +136,18 @@ public class StringUtils {
     }
 
     public static String debugString(String string) {
+        return debugString(-1, string);
+    }
+
+    public static String debugString(int limit, String string) {
         if (string == null) return "␀";
         StringBuilder sb = new StringBuilder();
+        int countdown = limit;
         for (int codePoint : string.codePoints().toArray()) {
             sb.append(visibleChar(codePoint));
+            if (--countdown == 0) {
+                break;
+            }
         }
         return sb.toString();
     }
@@ -159,12 +176,18 @@ public class StringUtils {
                 return VISIBLE_NULL;
             case ' ':
                 return VISIBLE_SPACE;
-            case '\t':
-                return VISIBLE_TAB;
-            case '\r':
-                return VISIBLE_CR;
+            case '\b':
+                return VISIBLE_BACKSPACE;
+            case 7:
+                return VISIBLE_BELL;
             case '\n':
                 return VISIBLE_LF;
+            case '\r':
+                return VISIBLE_CR;
+            case '\t':
+                return VISIBLE_TAB;
+            case 27:
+                return VISIBLE_ESCAPE;
             default:
                 return Character.toString(c);
         }

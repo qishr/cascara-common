@@ -45,27 +45,30 @@ public enum LangDiagnosticCode implements DiagnosticCode {
     // Serializer
     FAILED_TO_MAP_TYPE("LANG-401", "Failed to map {0} to YAML AST: {1}"),
     FAILED_TO_MAP_AST("LANG-402", "Failed to map YAML AST to {0}: {1}"),
+    EXPECTED_MAP_STRUCTURE("LANG-303", "Expected a map structure for class {0}"),
+    FAILED_SERIALIZE("LANG-304", "Failed to serialize: {0}"),
+    FAILED_DESERIALIZE("LANG-305", "Failed to deserialize: {0}: {1}."),
+    WRONG_FORMAT("LANG-306", "Data {0} does not conform to format {1}"),
+    INCOMPATIBLE_TYPES("LANG-307", "Incompatible types: Cannot map {0} to Java type {1}"),
+    FAILED_DESERIALIZE_SCALAR("LANG-308", "Failed to deserialize scalar to {0}: {1}"),
+    UNSUPPORTED_TYPE("LANG-309", "Unsupported field type: {0}"),
+    EXPECTED_SEQUENCE("LANG-310", "Expected a sequence for field: {0}"),
+    FIELD_NOT_ACCESSIBLE_REASON("LANG-311", "Field {0} is not accessible: {1}"),
 
+    // JRE Exceptions
     CLASS_NOT_SERIALIZABLE("LANG-402", "Class {0} is not serializable"),
     NO_SUCH_METHOD("LANG-404", "No such method: {0}"),
     FIELD_NOT_ACCESSIBLE("LANG-405", "Field {0} is not accessible"),
-    INVOCATION_TARGET_EXCEPTION("", "Method {0} threw an invocation target exception"),
-    ILLEGAL_ARGUMENT_EXCEPTION("", "Field {0} threw an illegal argument exception"),
-    INSTANTIATION_EXCEPTION("", "Field {0} threw an instantiation exception"),
-    EXCEPTION_IN_INITIALIZER("", "Exception in initializer for {0}"),
+    INVOCATION_TARGET_EXCEPTION("LANG-406", "Method {0} threw an invocation target exception"),
+    ILLEGAL_ARGUMENT_EXCEPTION("LANG-407", "Field {0} threw an illegal argument exception"),
+    INSTANTIATION_EXCEPTION("LANG-408", "Field {0} threw an instantiation exception"),
+    EXCEPTION_IN_INITIALIZER("LANG-409", "Exception in initializer for {0}"),
 
-    EXPECTED_MAP_STRUCTURE("LANG-", "Expected a map structure for class {0}"),
-    FAILED_SERIALIZE("LANG-", "Failed to serialize: {0}"),
-    FAILED_DESERIALIZE("LANG-", "Failed to deserialize: {0}: {1}."),
-    WRONG_FORMAT("LANG-", "Data {0} does not conform to format {1}"),
-    INCOMPATIBLE_TYPES("LANG", "Incompatible types: Cannot map {0} to Java type {1}"),
-    FAILED_DESERIALIZE_SCALAR("LANG-", "Failed to deserialize scalar to {0}: {1}"),
-    UNSUPPORTED_TYPE("LANG", "Unsupported field type: {0}"),
-    EXPECTED_SEQUENCE("LANG-", "Expected a sequence for field: {0}"),
-    NOT_ARRAY_OR_OBJECT("", "Value {0} is not an array or object therefore its key {1} cannot be resolved"),
-    OUT_OF_BOUNDS("", "index {0} is out of bounds - the array has {1} elements"),
-    ERROR_READING_VALUE_AT("", "Error reading value at index position {0"),
-    NOT_AN_ARRAY_INDEX("", "{0} is not an array index");
+    // TODO: Where are these used?
+    NOT_ARRAY_OR_OBJECT("LANG-501", "Value {0} is not an array or object therefore its key {1} cannot be resolved"),
+    OUT_OF_BOUNDS("LANG-502", "index {0} is out of bounds - the array has {1} elements"),
+    ERROR_READING_VALUE_AT("LANG-503", "Error reading value at index position {0"),
+    NOT_AN_ARRAY_INDEX("LANG-504", "{0} is not an array index");
 
     private final String code;
     private final String message;

@@ -41,9 +41,9 @@ import java.io.Reader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
 
 @Experimental
 public class SourceInputStreamBuffer implements SourceBuffer {
@@ -57,6 +57,8 @@ public class SourceInputStreamBuffer implements SourceBuffer {
     private int line = 1;
     private int column = 1;
     private int offset = 0;
+
+    private char previous;
 
     // Tracks the absolute offset where the current token lexeme window started
     private int windowStartOffset = 0;
@@ -134,6 +136,8 @@ public class SourceInputStreamBuffer implements SourceBuffer {
             return '\0';
         }
 
+        previous = peek();
+
         char c = window[windowHead];
         lexemeBuilder.append(c);
 
@@ -163,6 +167,11 @@ public class SourceInputStreamBuffer implements SourceBuffer {
     public char peekNext() {
         if (windowSize < 2) return '\0';
         return window[(windowHead + 1) % window.length];
+    }
+
+    @Override
+    public char previous() {
+        return previous;
     }
 
     @Override

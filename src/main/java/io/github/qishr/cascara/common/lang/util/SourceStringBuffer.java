@@ -37,7 +37,7 @@ package io.github.qishr.cascara.common.lang.util;
 
 import java.nio.charset.StandardCharsets;
 
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.Experimental;
 import jdk.incubator.vector.ByteVector;
 import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.VectorOperators;
@@ -54,6 +54,7 @@ public class SourceStringBuffer implements SimdCapableBuffer, LexemeProvider, Ch
     private int windowStartLine = 1;
     private int windowStartColumn = 1;
     private final byte[] raw;
+    private char previous;
 
 
     public SourceStringBuffer(String source) {
@@ -86,6 +87,7 @@ public class SourceStringBuffer implements SimdCapableBuffer, LexemeProvider, Ch
         if (isAtEnd()) {
             return '\0';
         }
+        previous = peek();
         char c = source.charAt(offset++);
         if (c == '\n') {
             line++;
@@ -112,6 +114,11 @@ public class SourceStringBuffer implements SimdCapableBuffer, LexemeProvider, Ch
     public char peekNext() {
         if (offset + 1 >= source.length()) return '\0';
         return source.charAt(offset + 1);
+    }
+
+    @Override
+    public char previous() {
+        return previous;
     }
 
     @Override

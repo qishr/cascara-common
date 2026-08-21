@@ -40,9 +40,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.data.reference.ReferenceTabularData;
-import io.github.qishr.cascara.common.data.reference.ReferenceTreeData;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
+import io.github.qishr.cascara.common.reference.ReferenceTabularData;
+import io.github.qishr.cascara.common.reference.ReferenceTreeData;
 
 public class TreeTests {
     @Test

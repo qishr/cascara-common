@@ -35,33 +35,6 @@
 
 package io.github.qishr.cascara.common.lang.streaming;
 
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
+public interface StreamingEventType {
 
-@Experimental
-public enum StreamingEventType {
-    START_STREAM,
-
-    END_STREAM,
-
-    START_DOCUMENT,
-
-    END_DOCUMENT,
-
-    /// Maps to Map/Object entry boundaries
-    START_OBJECT,
-
-    END_OBJECT,
-
-    /// Maps to List/Sequence boundaries
-    START_ARRAY,
-
-    END_ARRAY,
-
-    /// Keys
-    FIELD_NAME,
-
-    /// String, number, boolean, null
-    VALUE_SCALAR,
-
-    COMMENT
 }

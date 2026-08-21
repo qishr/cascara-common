@@ -36,8 +36,10 @@
 package io.github.qishr.cascara.common.lang.processor;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -49,16 +51,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.annotation.AnyGetter;
+import io.github.qishr.cascara.common.annotation.AnySetter;
+import io.github.qishr.cascara.common.annotation.DataField;
+import io.github.qishr.cascara.common.annotation.DataIgnore;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.LangDiagnosticCode;
-import io.github.qishr.cascara.common.lang.annotation.AnyGetter;
-import io.github.qishr.cascara.common.lang.annotation.AnySetter;
-import io.github.qishr.cascara.common.lang.annotation.DataField;
-import io.github.qishr.cascara.common.lang.annotation.DataIgnore;
-import io.github.qishr.cascara.common.lang.annotation.Serializable;
-import io.github.qishr.cascara.common.lang.ast.AstNodeFactory;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.ast.MapEntryAstNode;
@@ -69,6 +71,7 @@ import io.github.qishr.cascara.common.lang.type.ScalarDescriptor;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
 import io.github.qishr.cascara.common.lang.type.TypeSerializer;
+import io.github.qishr.cascara.common.lang.util.AstNodeFactory;
 import io.github.qishr.cascara.common.lang.util.LanguageOptions;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 import io.github.qishr.cascara.common.service.ServiceProviderFactory;
@@ -85,17 +88,21 @@ public abstract class AbstractSerializer<
     K
 > implements Serializer<N> {
 
-    protected Reporter reporter = new NoOpReporter();
+    // Service
     private Properties properties;
     private final String contentType;
-    private final AstNodeFactory<N,S,L,M,E,K> astFactory;
-    private int depthLimit = 500;
-    private int depth = 0;
 
+    // Options
+    protected Reporter reporter = new NoOpReporter();
+    private LanguageOptions<?> options;
+    protected int depthLimit = 500;
+    private final AstNodeFactory<N,S,L,M,E,K> astFactory;
     private final Map<Class<?>,TypeDescriptor<?>> typeDescriptors = new HashMap<>();
     private final ServiceProviderFactory providerFactory = new ServiceProviderFactory();
 
-    private LanguageOptions<?> options;
+    // State
+    private int depth = 0;
+    private Set<String> previousWarnings = new HashSet<>();
 
     protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, LanguageOptions<?> options) {
         this.contentType = contentType;
@@ -107,28 +114,8 @@ public abstract class AbstractSerializer<
 
     protected abstract K serializeKey(Object key);
 
-    public T setOptions(LanguageOptions<?> options) {
-        this.options = options;
-        return self();
-    }
-
-    @Override
-    public Properties getServiceProperties() {
-        if (properties == null) {
-            properties = new Properties();
-            properties.set("contentType", contentType);
-        }
-        return properties;
-    }
-
-    @Override
-    public T registerTypeDescriptor(TypeDescriptor<?> typeDescriptor) {
-        typeDescriptors.put(typeDescriptor.getJvmType(), typeDescriptor);
-        return self();
-    }
-
     //
-    //
+    // Serialization Methods
     //
 
     /// Creates the appropriate AstNode (Scalar, Sequence, or Map) based on the Java value type.
@@ -141,7 +128,7 @@ public abstract class AbstractSerializer<
         }
 
         try {
-            // JVM primitive → scalar
+            // JVM primitive -> scalar
             if (isScalar(jvmInstance)) {
                 return (N) astFactory.createScalarNode(
                     jvmInstance,
@@ -159,7 +146,7 @@ public abstract class AbstractSerializer<
                     return castToNode(typeSerializer.serialize(jvmInstance));
                 }
 
-                // ScalarDescriptor → ScalarValue → ScalarNode
+                // ScalarDescriptor -> ScalarValue -> ScalarNode
                 if (typeDescriptor instanceof ScalarDescriptor descriptor) {
                     Object scalarValue;
                     try {
@@ -181,6 +168,19 @@ public abstract class AbstractSerializer<
                 }
             }
 
+            if (jvmInstance instanceof Enum e) {
+                String value = e.name();
+                return (N) astFactory.createScalarNode(
+                    value,
+                    QuoteStyle.UNDETERMINED, // Only the ScalarAstNode implementation knows what it should be.
+                    options
+                );
+            }
+
+            if (jvmInstance.getClass().isArray()) {
+                // TODO
+            }
+
             // Lists
             if (jvmInstance instanceof List<?> list) {
                 return (N) serializeList(list);
@@ -197,15 +197,25 @@ public abstract class AbstractSerializer<
         }
     }
 
-
-    // @Override
     protected M serializeObject(Object jvmInstance) {
         Class<?> jvmType = jvmInstance.getClass();
-        M rootMap = astFactory.createMapNode();
+        M objectMap = astFactory.createMapNode();
 
         for (Field field : getAllFields(jvmType)) {
-            field.setAccessible(true);
+            // Try to make the field accessible. If this fails, continue to the next field.
+            try {
+                field.setAccessible(true);
+            } catch (InaccessibleObjectException e) {
+                warnInaccessible(jvmType, field, e);
+                continue;
+            }
+
             if (field.isAnnotationPresent(DataIgnore.class)) continue;
+
+            int fieldModifiers = field.getModifiers();
+            if (Modifier.isStatic(fieldModifiers)) {
+                continue;
+            }
 
             if (field.isAnnotationPresent(AnySetter.class)) {
                 Map<?, ?> map;
@@ -220,7 +230,7 @@ public abstract class AbstractSerializer<
                         N valueNode = serialize(entry.getValue());
 
                         // TODO use factory to create key
-                        rootMap.put(keyNode, valueNode);
+                        objectMap.put(keyNode, valueNode);
                     }
                 }
                 continue;
@@ -241,14 +251,20 @@ public abstract class AbstractSerializer<
                 K keyNode = astFactory.createKey(keyName);
 
                 N valueNode = serialize(value);
-                rootMap.put(keyNode, valueNode);
+                objectMap.put(keyNode, valueNode);
             }
         }
 
         // 2. Process dynamic settings (@YamlAnyGetter)
         for (Method method : getAllMethods(jvmType)) { //.getDeclaredMethods()) {
             if (method.isAnnotationPresent(AnyGetter.class)) {
-                method.setAccessible(true);
+                // Try to make the method accessible. If this fails, continue to the next field.
+                try {
+                    method.setAccessible(true);
+                } catch (InaccessibleObjectException e) {
+                    warnInaccessible(jvmType, method, e);
+                    continue;
+                }
 
                 // Invoke the method to get the Map
                 Object result;
@@ -263,12 +279,12 @@ public abstract class AbstractSerializer<
                     for (Map.Entry<?, ?> entry : map.entrySet()) {
                         K keyNode = serializeKey(entry.getKey());
                         N valueNode = serialize(entry.getValue());
-                        rootMap.put(keyNode, valueNode);
+                        objectMap.put(keyNode, valueNode);
                     }
                 }
             }
         }
-        return rootMap;
+        return objectMap;
     }
 
     /// Serializes a List into a YamlSequence.
@@ -278,14 +294,16 @@ public abstract class AbstractSerializer<
         for (Object item : list) {
             if (item == null) continue;
 
-            // Check if the item is itself serializable (a nested object)
-            if (item.getClass().isAnnotationPresent(Serializable.class)) {
-                // Recursive call for nested objects (e.g., JsonSchemaAssociation)
-                sequence.add(castToNode(serializeObject(item)));
-            } else {
-                // Assume it's a primitive/string (e.g., List<String>)
-                sequence.add(serialize(item));
-            }
+            sequence.add(serialize(item));
+            // // TODO: We should not be using @Serializable here.
+
+            // // Check if the item is itself serializable (a nested object)
+            // if (item.getClass().isAnnotationPresent(Serializable.class)) {
+            //     sequence.add(castToNode(serializeObject(item)));
+            // } else {
+            //     // Assume it's a primitive/string (e.g., List<String>)
+            //     sequence.add(serialize(item));
+            // }
         }
         return sequence;
     }
@@ -455,7 +473,14 @@ public abstract class AbstractSerializer<
 
         // 3. Process Declared Fields
         for (Field field : getAllFields(jvmType)) {
-            field.setAccessible(true);
+            // Try to make the field accessible. If this fails, continue to the next field.
+            try {
+                field.setAccessible(true);
+            } catch (InaccessibleObjectException e) {
+                warnInaccessible(jvmType, field, e);
+                continue;
+            }
+
             if (field.isAnnotationPresent(DataIgnore.class)) continue;
 
             // Determine the key for this field
@@ -747,7 +772,14 @@ public abstract class AbstractSerializer<
     private void processAnySetter(Object instance, M rootMap, Set<String> claimedKeys, Class<?> jvmType) {
         for (Method method : getAllMethods(jvmType)) {
             if (method.isAnnotationPresent(AnySetter.class)) {
-                method.setAccessible(true);
+                // Try to make the method accessible. If this fails, continue to the next field.
+                try {
+                    method.setAccessible(true);
+                } catch (InaccessibleObjectException e) {
+                    warnInaccessible(jvmType, method, e);
+                    continue;
+                }
+
                 for (E entry : rootMap.getEntries()) {
                     String key = entry.getKeyString();
 
@@ -854,9 +886,46 @@ public abstract class AbstractSerializer<
         return descriptor;
     }
 
+    //
+    // Setup
+    //
+
+    protected void setupSerializer() {
+        depth = 0;
+        previousWarnings = new HashSet<>();
+    }
+
+    public T setOptions(LanguageOptions<?> options) {
+        this.options = options;
+        return self();
+    }
+
+    @Override
+    public Properties getServiceProperties() {
+        if (properties == null) {
+            properties = new Properties();
+            properties.set("contentType", contentType);
+        }
+        return properties;
+    }
+
+    @Override
+    public T registerTypeDescriptor(TypeDescriptor<?> typeDescriptor) {
+        typeDescriptors.put(typeDescriptor.getJvmType(), typeDescriptor);
+        return self();
+    }
+
+    //
+    // Diagnostics
+    //
+
     protected SerializerException error(Throwable t, Object... details) {
         if (t instanceof InstantiationException e) {
             return new SerializerException(e, LangDiagnosticCode.INSTANTIATION_EXCEPTION, details);
+        }
+        // InaccessibleObjectException - if Java language access checks cannot be suppressed.
+        else if (t instanceof InaccessibleObjectException e) {
+            return new SerializerException(e, LangDiagnosticCode.FIELD_NOT_ACCESSIBLE, details);
         }
         // IllegalAccessException - if this Method object is enforcing Java language access control and the underlying method is inaccessible.
         else if (t instanceof IllegalAccessException e) {
@@ -883,6 +952,42 @@ public abstract class AbstractSerializer<
         }
         else {
             return new SerializerException(t, GenericDiagnosticCode.ERROR, t.getMessage());
+        }
+    }
+
+    protected void warn(DiagnosticCode code, Object... details) {
+        reporter.warn(code, details);
+    }
+
+    protected void warnInaccessible(Class<?> jvmType, Method method, Throwable t) {
+        warnInaccessible(jvmType.getName() + "." + method.getName(), t);
+    }
+
+    protected void warnInaccessible(Class<?> jvmType, Field field, Throwable t) {
+        warnInaccessible(jvmType.getName() + "." + field.getName(), t);
+    }
+
+    private void warnInaccessible(String fullName, Throwable t) {
+        if (previousWarnings.contains(fullName)) return;
+        previousWarnings.add(fullName);
+        warn(LangDiagnosticCode.FIELD_NOT_ACCESSIBLE_REASON, fullName, t.getMessage());
+    }
+
+    protected void debug(String message, Object... details) {
+        if (!reporter.reportsDebug()) return;
+        report(Level.DEBUG, message, details);
+    }
+
+    protected void trace(String message, Object... details) {
+        if (!reporter.reportsTrace()) return;
+        report(Level.TRACE, message, details);
+    }
+
+    protected void report(Level level, String message, Object... details) {
+        if (level == Level.TRACE) {
+            trace(message, details);
+        } else {
+            debug(message, details);
         }
     }
 }

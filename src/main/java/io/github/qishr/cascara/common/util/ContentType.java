@@ -38,8 +38,7 @@ package io.github.qishr.cascara.common.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.github.qishr.cascara.common.lang.annotation.DataField;
-import io.github.qishr.cascara.common.lang.annotation.Serializable;
+import io.github.qishr.cascara.common.annotation.DataField;
 
 /// A stable, persisted canonical content type used throughout Cascara.
 /// This class represents the authoritative identity of a content type,
@@ -53,7 +52,6 @@ import io.github.qishr.cascara.common.lang.annotation.Serializable;
 ///
 /// All editor selection, syntax highlighting, file associations, and
 /// user preferences should reference ContentType.
-@Serializable
 public class ContentType {
     @DataField
     /// Unique ID, used for menu items etc

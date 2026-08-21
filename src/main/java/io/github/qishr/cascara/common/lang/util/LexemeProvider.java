@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.lang.util;
 
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.Experimental;
 
 @Experimental
 public interface LexemeProvider {

@@ -101,7 +101,7 @@ public class JarManifest extends Properties {
     public static JarManifest of(Class<?> clazz) {
         InputStream is;
         try {
-            is = JreUtil.getResourceAsStream(clazz, "/META-INF/MANIFEST.MF");
+            is = JreUtils.getResourceAsStream(clazz, "/META-INF/MANIFEST.MF");
         } catch (LocalizableIOException e) {
             throw new LocalizableRuntimeException(
                 e,

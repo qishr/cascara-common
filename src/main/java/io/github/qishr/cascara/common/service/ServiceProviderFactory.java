@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.service;
 
-import io.github.qishr.cascara.common.lang.annotation.Beta;
+import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.lang.processor.AstParser;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
 

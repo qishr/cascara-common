@@ -36,14 +36,38 @@
 package io.github.qishr.cascara.common.diagnostic;
 
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.util.function.Consumer;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.lang.token.Token;
+import io.github.qishr.cascara.common.util.JreUtils;
+import io.github.qishr.cascara.common.util.TermUtils;
 
 public abstract class AbstractReporter<T extends AbstractReporter<?>> implements Reporter {
+    protected static final boolean CAN_USE_ANSI_COLORING = (
+        JreUtils.isRunningInTerminal() ||
+        JreUtils.isRunningViaEclipse() ||
+        JreUtils.isRunningViaGradle()
+    );
+
+    protected static final String[] levelColors = new String[7];
+    {
+        // levelColors[Level.DEFAULT.ordinal()] = ANSI_WHITE;
+        levelColors[Level.ERROR.ordinal()] = TermUtils.ANSI_RED;
+        levelColors[Level.WARN.ordinal()] = TermUtils.ANSI_YELLOW;
+        levelColors[Level.INFO.ordinal()] = TermUtils.ANSI_BLUE;
+        // levelColors[Level.DEBUG.ordinal()] = TermUtils.ANSI_WHITE;
+        // levelColors[Level.TRACE.ordinal()] = TermUtils.ANSI_WHITE;
+    }
+
+    protected boolean ansiColoringEnabled;
+
     protected Level level = Level.INFO;
 
     /// The simple name of the class that made the report
@@ -51,24 +75,35 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     /// Consumes diagnostics included in the current Level or more
     /// important, with ERROR being the most important.
-    protected Consumer<Diagnostic> diagnosticCollector;
+    protected Consumer<Diagnostic> diagnosticConsumer;
 
     /// Consumes ERROR, WARN, and INFO diagnostics.
-    protected Consumer<Diagnostic> problemCollector;
+    protected Consumer<Diagnostic> problemConsumer;
 
-    protected Consumer<String> stringWriter;
+    /// Consumes every line of diagnostic output as a String.
+    protected Consumer<String> lineConsumer;
 
     protected boolean flushEnabled = false;
     protected boolean systemOutputEnabled = true;
     protected boolean systemErrorEnabled = false;
     protected boolean stackTraceEnabled = false;
+    protected boolean showProblemCodes = false;
+    protected boolean prefixEveryLine = true;
 
-    protected AbstractReporter(Consumer<String> writer) {
-        this.stringWriter = writer;
-    }
+    protected ReportWriter[] writers = new ReportWriter[7];
 
     protected AbstractReporter() {
-        // Nothing to see here
+        this(null);
+    }
+
+    protected AbstractReporter(Consumer<String> logger) {
+        this.lineConsumer = logger;
+        writers[Level.ERROR.ordinal()] = new ReportWriter(this, Level.ERROR);
+        writers[Level.WARN.ordinal()] = new ReportWriter(this, Level.WARN);
+        writers[Level.INFO.ordinal()] = new ReportWriter(this, Level.INFO);
+        writers[Level.DEBUG.ordinal()] = new ReportWriter(this, Level.DEBUG);
+        writers[Level.TRACE.ordinal()] = new ReportWriter(this, Level.TRACE);
+        setAnsiColoringEnabled(true);
     }
 
     protected abstract T self();
@@ -76,7 +111,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public boolean collectsProblems() {
-        return problemCollector != null;
+        return problemConsumer != null;
     }
 
     /// {@inheritDoc}
@@ -88,15 +123,22 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     /// {@inheritDoc}
     @Override
-    public T setDiagnosticCollector(Consumer<Diagnostic> collector) {
-        diagnosticCollector = collector;
+    public T setLineConsumer(Consumer<String> logger) {
+        this.lineConsumer = logger;
         return self();
     }
 
     /// {@inheritDoc}
     @Override
-    public T setProblemCollector(Consumer<Diagnostic> collector) {
-        problemCollector = collector;
+    public T setDiagnosticConsumer(Consumer<Diagnostic> collector) {
+        diagnosticConsumer = collector;
+        return self();
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public T setProblemConsumer(Consumer<Diagnostic> collector) {
+        problemConsumer = collector;
         return self();
     }
 
@@ -120,6 +162,22 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         return self();
     }
 
+    public T setAnsiColoringEnabled(boolean b) {
+        ansiColoringEnabled = CAN_USE_ANSI_COLORING && b;
+        return self();
+    }
+
+    @Experimental
+    public T setPrefixEveryLine(boolean b) {
+        prefixEveryLine = b;
+        return self();
+    }
+
+    public T setShowProblemCodes(boolean b) {
+        showProblemCodes = b;
+        return self();
+    }
+
     @Override
     public Level getLevel() {
         return level;
@@ -130,29 +188,38 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         return false;
     }
 
+    public ReportWriter getWriter(Diagnostic.Level level) {
+        return writers[level.ordinal()];
+    }
+
     //
     // Exception
     //
 
     /// {@inheritDoc}
     @Override
-    public void error(LocalizableException e) {
-        report(buildDiagnostic(source, Level.ERROR, e.getCause(), e.getCode(), e.getDetails()));
-    }
-
-    /// {@inheritDoc}
-    @Override
-    public void error(LocalizableRuntimeException e) {
-        if (e instanceof LocatableException locatable) {
-            report(buildDiagnostic(
-                locatable.getUri(),
-                locatable.getLine(),
-                locatable.getColumn(),
-                Diagnostic.UNKNOWN_COORD,
-                Diagnostic.UNKNOWN_COORD,
-                source, Level.ERROR, e.getCause(), e.getCode(), e.getDetails()));
+    public void error(Exception e) {
+        if (e instanceof LocalizableException localizable) {
+            if (e instanceof LocatableException locatable) {
+                report(buildDiagnostic(
+                    locatable.getUri(),
+                    locatable.getLine(),
+                    locatable.getColumn(),
+                    Diagnostic.UNKNOWN_COORD,
+                    Diagnostic.UNKNOWN_COORD,
+                    source, Level.ERROR, localizable.getCause(),
+                    localizable.getCode(), localizable.getDetails()));
+            } else {
+                report(buildDiagnostic(
+                    source, Level.ERROR, localizable.getCause(),
+                    localizable.getCode(), localizable.getDetails())
+                );
+            }
         } else {
-            report(buildDiagnostic(source, Level.ERROR, e.getCause(), e.getCode(), e.getDetails()));
+            report(buildDiagnostic(
+                source, Level.ERROR, e.getCause(),
+                GenericDiagnosticCode.EXCEPTION, e.getMessage())
+            );
         }
     }
 
@@ -315,13 +382,13 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
     //
 
-    protected abstract void writeString(Diagnostic diagnostic);
+    protected abstract String formatMessage(Diagnostic diagnostic, String line, int lineNumber, boolean ansiColoring);
 
-    protected Consumer<Diagnostic> getDiagnosticCollector() { return diagnosticCollector; }
+    protected Consumer<Diagnostic> getDiagnosticConsumer() { return diagnosticConsumer; }
 
-    protected Consumer<Diagnostic> getProblemCollector() { return problemCollector; }
+    protected Consumer<Diagnostic> getProblemConsumer() { return problemConsumer; }
 
-    protected Consumer<String> getStringWriter() { return stringWriter; }
+    protected Consumer<String> getLineConsumer() { return lineConsumer; }
 
     protected boolean isSystemOutputEnabled() { return systemOutputEnabled; }
 
@@ -332,32 +399,84 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     protected void report(Diagnostic diagnostic) {
         if (this.level.compareTo(diagnostic.getLevel()) >= 0) {
             writeString(diagnostic);
-            if (getDiagnosticCollector() != null) {
-                getDiagnosticCollector().accept(diagnostic);
+            if (getDiagnosticConsumer() != null) {
+                getDiagnosticConsumer().accept(diagnostic);
             }
         }
 
-        if (getProblemCollector() != null && isProblem(level)) {
-            getProblemCollector().accept(diagnostic);
+        if (getProblemConsumer() != null && isProblem(level)) {
+            getProblemConsumer().accept(diagnostic);
         }
     }
 
-    protected void writeString(Throwable cause, Level level, String message) {
-        outputToConsole(cause, level, message);
-        if (getStringWriter() != null) {
-            getStringWriter().accept(message);
+    protected void writeString(Diagnostic diagnostic) {
+        ReportWriter writer = writers[diagnostic.getLevel().ordinal()];
+        if (writer == null) {
+            return;
+        }
+        String[] lines = diagnostic.getMessage().split("\n");
+        for (int i = 0; i < lines.length; i++) {
+            String logLine = formatMessage(diagnostic, lines[i], i, false).stripTrailing();
+            String consoleLine = ansiColoringEnabled
+                ? formatMessage(diagnostic, lines[i], i, true).stripTrailing()
+                : logLine;
+            writer.logLine(logLine, i);
+            writer.outputLine(consoleLine, i);
+        }
+        if (diagnostic.getCause() != null && isStackTraceEnabled()) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            diagnostic.getCause().printStackTrace(pw);
+            lines = sw.toString().split("\n");
+            for (int i = 0; i < lines.length; i++) {
+                String logLine = lines[i];
+                writer.logLine(logLine, i);
+                writer.outputLine(logLine, i);
+            }
         }
     }
 
-    protected void outputToConsole(Throwable cause, Level level, String message) {
+    protected void logLine(Level level, String msgLine, int msgLineNumber) {
+        if (getLineConsumer() != null) {
+            String logLine = "[" + level.getLogPrefix() + "] " + msgLine;
+            getLineConsumer().accept(logLine);
+        }
+    }
+
+    protected void displayLine(Level diagnosticLevel, String msgLine, int msgLineNumber) {
         if (isSystemOutputEnabled()) {
-            PrintStream console = (level == Level.ERROR && systemErrorEnabled) ? System.err : System.out;
-            console.print(message);
-            if (cause != null && isStackTraceEnabled()) {
-                cause.printStackTrace();
+            boolean indented = msgLine.startsWith(" ");
+            PrintStream stream = (diagnosticLevel == Level.ERROR && systemErrorEnabled) ? System.err : System.out;
+
+            if (prefixEveryLine || msgLineNumber == 0) {
+                stream.print("[");
+                if (ansiColoringEnabled) {
+                    String ansiCode = levelColors[diagnosticLevel.ordinal()];
+                    if (ansiCode != null) {
+                        stream.print(ansiCode);
+                        stream.print(diagnosticLevel.getLogPrefix());
+                        stream.print(TermUtils.ANSI_RESET);
+                    } else {
+                        stream.print(diagnosticLevel.getLogPrefix());
+                    }
+                } else {
+                    stream.print(diagnosticLevel.getLogPrefix());
+                }
+                stream.print("] ");
+            } else {
+                stream.print("        ");
             }
+
+            if (indented && ansiColoringEnabled) {
+                stream.print(TermUtils.ANSI_GREEN);
+                stream.print(msgLine);
+                stream.print(TermUtils.ANSI_RESET);
+            } else {
+                stream.print(msgLine);
+            }
+            stream.print("\n");
             if (isFlushEnabled()) {
-                console.flush();
+                stream.flush();
             }
         }
     }
@@ -405,5 +524,13 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected boolean isProblem(Level level) {
         return (level == Level.ERROR || level == Level.WARN || level == Level.INFO);
+    }
+
+    public boolean reportsDebug() {
+        return !isSilent() && level.includes(Level.DEBUG);
+    }
+
+    public boolean reportsTrace() {
+        return !isSilent() && level.includes(Level.TRACE);
     }
 }

@@ -209,13 +209,13 @@ public class Diagnostic {
         /// Default fallback logging severity level.
         DEFAULT("DEFLT"),
         /// Level for no-op reporter.
-        NONE(" NONE"),
+        NONE("NONE "),
         /// Represents fatal or execution-halting structural failures.
         ERROR("ERROR"),
         /// Indicates non-fatal semantic irregularities or suspicious configurations.
-        WARN(" WARN"),
+        WARN("WARN "),
         /// Standard operational metrics, progress records, or structural notices.
-        INFO("INFO"),
+        INFO("INFO "),
         /// High-fidelity tracing notes optimized for debugging workflows.
         DEBUG("DEBUG"),
         /// Ultra-fine-grained system diagnostic traces.
@@ -238,6 +238,10 @@ public class Diagnostic {
 
         public boolean includes(Level level) {
             return ordinal() >= level.ordinal();
+        }
+
+        public boolean isProblem() {
+            return this == ERROR || this == WARN;
         }
     }
 }

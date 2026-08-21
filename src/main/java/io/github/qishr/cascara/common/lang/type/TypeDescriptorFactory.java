@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.lang.type;
 
-import io.github.qishr.cascara.common.lang.annotation.Beta;
+import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.service.AbstractServiceProviderFactory;
 import io.github.qishr.cascara.common.service.CapabilityQueries;
 import io.github.qishr.cascara.common.service.ServiceException;
