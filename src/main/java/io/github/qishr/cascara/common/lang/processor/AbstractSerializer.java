@@ -101,7 +101,7 @@ public abstract class AbstractSerializer<
     private final ServiceProviderFactory providerFactory = new ServiceProviderFactory();
 
     // State
-    private int depth = 0;
+    protected int depth = 0;
     private Set<String> previousWarnings = new HashSet<>();
 
     protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, LanguageOptions<?> options) {
@@ -155,7 +155,7 @@ public abstract class AbstractSerializer<
                         throw new SerializerException(
                             e,
                             LangDiagnosticCode.FAILED_TO_MAP_AST,
-                            jvmInstance.getClass().getSimpleName(),
+                            jvmInstance.getClass().getName(),
                             e.getMessage()
                         );
                     }
@@ -456,7 +456,7 @@ public abstract class AbstractSerializer<
             return deserializeObject(node, jvmInstance);
 
         } catch (NoSuchMethodException e) {
-            throw new SerializerException(node, e, LangDiagnosticCode.NO_SUCH_METHOD, jvmType.getSimpleName());
+            throw new SerializerException(node, e, LangDiagnosticCode.NO_SUCH_CONSTRUCTOR, jvmType.getName());
         }
 
     }
@@ -468,7 +468,7 @@ public abstract class AbstractSerializer<
 
         // 2. We now check against the generic MapAstNode interface
         if (!(node instanceof MapAstNode mapNode)) {
-            throw new SerializerException(node, LangDiagnosticCode.EXPECTED_MAP_STRUCTURE, jvmType.getSimpleName());
+            throw new SerializerException(node, LangDiagnosticCode.EXPECTED_MAP_STRUCTURE, jvmType.getName());
         }
 
         // 3. Process Declared Fields
@@ -558,7 +558,7 @@ public abstract class AbstractSerializer<
                     Object object = descriptor.toJvmType(stringValue);
                     return object;
                 } catch (Exception e) {
-                    throw new SerializerException(node, e, LangDiagnosticCode.FAILED_TO_MAP_TYPE, targetType.getSimpleName(), e.getMessage());
+                    throw new SerializerException(node, e, LangDiagnosticCode.FAILED_TO_MAP_TYPE, targetType.getName(), e.getMessage());
                 }
             }
 
@@ -696,7 +696,7 @@ public abstract class AbstractSerializer<
         // Proper solution is black box testing, make the tests their own module.
         // Quick fix might be to let the caller tell the serializer what type descriptors to use.
 
-        throw new SerializerException(scalar, LangDiagnosticCode.UNSUPPORTED_TYPE, targetType.getSimpleName());
+        throw new SerializerException(scalar, LangDiagnosticCode.UNSUPPORTED_TYPE, targetType.getName());
     }
 
     //
@@ -985,9 +985,9 @@ public abstract class AbstractSerializer<
 
     protected void report(Level level, String message, Object... details) {
         if (level == Level.TRACE) {
-            trace(message, details);
+            reporter.trace(message, details);
         } else {
-            debug(message, details);
+            reporter.debug(message, details);
         }
     }
 }

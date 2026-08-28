@@ -40,6 +40,7 @@ import java.io.Reader;
 import java.util.List;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.lang.internal.TokenizerUtils;
 import io.github.qishr.cascara.common.lang.token.Token;
 import io.github.qishr.cascara.common.lang.token.TokenType;
 

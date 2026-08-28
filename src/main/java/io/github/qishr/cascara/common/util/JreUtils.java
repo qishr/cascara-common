@@ -42,14 +42,23 @@ import io.github.qishr.cascara.common.diagnostic.code.FileDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 
 public class JreUtils {
-    /// Returns an `InputStream `for a JRE resource.
+    /// Returns an `InputStream` for a JRE resource.
     /// @return The `InputStream` returned by `Class.getResourceAsStream`.
     /// @throws LocalizableIOException an exception detailing why the resource was inaccessible.
     public static InputStream getResourceAsStream(Class<?> clazz, String path) throws LocalizableIOException {
         InputStream is = clazz.getResourceAsStream(path);
+
+        // Fallback 1: Handle leading slash path variation
         if (is == null && path.startsWith("/")) {
             path = path.substring(1);
             is = clazz.getResourceAsStream(path);
+        }
+
+        // Fallback 2: GraalVM Native Image package-relative resolution
+        if (is == null && !path.startsWith("/")) {
+            String pkg = clazz.getPackageName();
+            String fullPath = pkg.isEmpty() ? path : pkg.replace('.', '/') + "/" + path;
+            is = clazz.getClassLoader().getResourceAsStream(fullPath);
         }
 
         // If clazz is in a JPMS module, check if the module opens the package to the class's module.

@@ -58,11 +58,12 @@ public enum LangDiagnosticCode implements DiagnosticCode {
     // JRE Exceptions
     CLASS_NOT_SERIALIZABLE("LANG-402", "Class {0} is not serializable"),
     NO_SUCH_METHOD("LANG-404", "No such method: {0}"),
-    FIELD_NOT_ACCESSIBLE("LANG-405", "Field {0} is not accessible"),
-    INVOCATION_TARGET_EXCEPTION("LANG-406", "Method {0} threw an invocation target exception"),
-    ILLEGAL_ARGUMENT_EXCEPTION("LANG-407", "Field {0} threw an illegal argument exception"),
-    INSTANTIATION_EXCEPTION("LANG-408", "Field {0} threw an instantiation exception"),
-    EXCEPTION_IN_INITIALIZER("LANG-409", "Exception in initializer for {0}"),
+    NO_SUCH_CONSTRUCTOR("LANG-405", "No such constructor: {0}"),
+    FIELD_NOT_ACCESSIBLE("LANG-406", "Field {0} is not accessible"),
+    INVOCATION_TARGET_EXCEPTION("LANG-407", "Method {0} threw an invocation target exception"),
+    ILLEGAL_ARGUMENT_EXCEPTION("LANG-408", "Field {0} threw an illegal argument exception"),
+    INSTANTIATION_EXCEPTION("LANG-409", "Field {0} threw an instantiation exception"),
+    EXCEPTION_IN_INITIALIZER("LANG-410", "Exception in initializer for {0}"),
 
     // TODO: Where are these used?
     NOT_ARRAY_OR_OBJECT("LANG-501", "Value {0} is not an array or object therefore its key {1} cannot be resolved"),

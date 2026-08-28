@@ -38,6 +38,7 @@ package io.github.qishr.cascara.common.util;
 import java.net.URI;
 
 public enum UriScheme {
+    NONE(null),
     UNKNOWN(null),
     CASCARA("cascara"),
     FILE("file"),
@@ -56,8 +57,11 @@ public enum UriScheme {
     public String asString() { return string; }
 
     public static UriScheme of(URI uri) {
-        if (uri == null) return UriScheme.UNKNOWN;
+        if (uri == null) return UriScheme.NONE;
         String scheme = uri.getScheme();
+        if (scheme == null || scheme.isEmpty()) {
+            return UriScheme.NONE;
+        }
         for (UriScheme candidate : UriScheme.values()) {
             if (scheme.equals(candidate.asString())) {
                 return candidate;

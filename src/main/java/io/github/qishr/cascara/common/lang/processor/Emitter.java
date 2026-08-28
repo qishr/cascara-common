@@ -35,9 +35,11 @@
 
 package io.github.qishr.cascara.common.lang.processor;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.util.ContentType;
 
 /// A generic interface for emitting structured text.
+@Experimental
 public interface Emitter extends Processor {
     /// Writes a literal scalar value.
     void emitScalar(String value);

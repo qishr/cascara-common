@@ -35,6 +35,9 @@
 
 package io.github.qishr.cascara.common.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.github.qishr.cascara.common.annotation.Experimental;
 
 @Experimental
@@ -248,5 +251,30 @@ public class StringUtils {
             }
         }
         return sb.toString();
+    }
+
+    public static List<Number> parseNumberList(String numbers) {
+        List<Number> list = new ArrayList<>();
+        String[] items = numbers.split(",");
+        for (int i = 0; i < items.length; i++) {
+            String item = items[i];
+            if (item.contains(".")) {
+                list.add(Double.parseDouble(item.trim()));
+            } else {
+                list.add(Integer.parseInt(item.trim()));
+            }
+        }
+        return list;
+    }
+
+    public static String fromDouble(double d, int fractionalPartLen) {
+        String full = Double.toString(d);
+        int dot = full.indexOf(".");
+        for (int i = dot; i < full.length(); i++) {
+            if (i - dot > fractionalPartLen) {
+                return full.substring(0, i);
+            }
+        }
+        return full;
     }
 }

@@ -39,9 +39,16 @@ import io.github.qishr.cascara.common.annotation.Experimental;
 
 @Experimental
 public interface SourceBuffer {
+
+    /// Increases the offset by 1 and returns the character at the new offset.
     char advance();
+
+    // Returns the character at the current offset.
     char peek();
+
+    // Returns the character at the offset after the current offset.
     char peekNext();
+
     char peekAhead(int steps);
     char previous();
     void backup();
