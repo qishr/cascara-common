@@ -33,16 +33,23 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.util;
+package io.github.qishr.cascara.common.diagnostic;
 
-import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.util.Pair;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 
-@Experimental
-public interface SimdCapableBuffer extends SourceBuffer {
+public class UnimplementedMethodException extends LocalizableRuntimeException {
 
-    /// Skips whitespace only (space, tab, CR, LF)
-    void skipWhitespaceSimd();
+    public UnimplementedMethodException() {
+        super(GenericDiagnosticCode.UNSUPPORTED_OPERATION, buildMethoDetails());
+    }
 
-    int scanDigitsSimd(int pos);
-
+    private static Object[] buildMethoDetails() {
+        Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
+        Object[] details = new Object[2];
+        details[0] = caller.getL().getName();  //+ "." + caller.getR();
+        details[1] = caller.getR();
+        return details;
+    }
 }

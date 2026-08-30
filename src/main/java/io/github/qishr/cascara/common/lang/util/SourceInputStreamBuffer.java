@@ -43,11 +43,16 @@ import java.nio.charset.StandardCharsets;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.util.Properties;
 
 @Experimental
 public class SourceInputStreamBuffer implements SourceBuffer {
-    private final Reader reader;
+    private Properties properties;
+    private final String contentType = "text/*";
+
+    private Reader reader;
 
     // A small circular or lookahead buffer window to support peek, peekNext, and backup
     private final char[] window = new char[256];
@@ -67,14 +72,40 @@ public class SourceInputStreamBuffer implements SourceBuffer {
 
     private final StringBuilder lexemeBuilder = new StringBuilder();
 
-    public SourceInputStreamBuffer(InputStream is) {
-        this.reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-        fillWindow();
+    public SourceInputStreamBuffer() {
     }
 
-    public SourceInputStreamBuffer(Reader reader) {
+    @Override
+    public SourceInputStreamBuffer open(Reader reader) {
         this.reader = reader;
         fillWindow();
+        return this;
+    }
+
+    @Override
+    public SourceInputStreamBuffer open(InputStream is) {
+        this.reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+        fillWindow();
+        return this;
+    }
+
+    @Override
+    public SourceInputStreamBuffer open(String string) {
+        throw new UnimplementedMethodException();
+    }
+
+    @Override
+    public SourceInputStreamBuffer open(byte[] data) {
+        throw new UnimplementedMethodException();
+    }
+
+    @Override
+    public Properties getServiceProperties() {
+        if (properties == null) {
+            properties = new Properties();
+            properties.set("contentType", contentType);
+        }
+        return properties;
     }
 
     @Override
@@ -230,7 +261,7 @@ public class SourceInputStreamBuffer implements SourceBuffer {
                 windowSize++;
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error reading from YAML input stream", e);
+            throw new RuntimeException("Error reading from input stream", e);
         }
     }
 

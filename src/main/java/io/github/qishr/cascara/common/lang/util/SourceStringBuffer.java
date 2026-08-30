@@ -35,31 +35,60 @@
 
 package io.github.qishr.cascara.common.lang.util;
 
+import java.io.InputStream;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
-import jdk.incubator.vector.ByteVector;
-import jdk.incubator.vector.VectorMask;
-import jdk.incubator.vector.VectorOperators;
-import jdk.incubator.vector.VectorSpecies;
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+import io.github.qishr.cascara.common.util.Properties;
 
 @Experimental
-public class SourceStringBuffer implements SimdCapableBuffer, LexemeProvider, CharSequence {
+public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSequence {
+    private Properties properties;
+    private final String contentType = "text/*";
 
-    private final String source;
+    private String source;
     private int line = 1;
     private int column = 1;
     private int offset = 0;
     private int windowStartOffset = 0;
     private int windowStartLine = 1;
     private int windowStartColumn = 1;
-    private final byte[] raw;
+    private byte[] raw;
     private char previous;
 
+    public SourceStringBuffer() {
+    }
 
-    public SourceStringBuffer(String source) {
+    @Override
+    public Properties getServiceProperties() {
+        if (properties == null) {
+            properties = new Properties();
+            properties.set("contentType", contentType);
+        }
+        return properties;
+    }
+
+    public SourceStringBuffer open(String source) {
         this.source = source != null ? source : "";
         this.raw = this.source.getBytes(StandardCharsets.UTF_8);
+        return this;
+    }
+
+    @Override
+    public SourceStringBuffer open(byte[] data) {
+        throw new UnimplementedMethodException();
+    }
+
+    @Override
+    public SourceStringBuffer open(Reader reader) {
+        throw new UnimplementedMethodException();
+    }
+
+    @Override
+    public SourceStringBuffer open(InputStream is) {
+        throw new UnimplementedMethodException();
     }
 
     @Override
@@ -170,131 +199,6 @@ public class SourceStringBuffer implements SimdCapableBuffer, LexemeProvider, Ch
     @Override
     public int windowStartColumn() {
         return windowStartColumn;
-    }
-
-    @Override
-    public void skipWhitespaceSimd() {
-        final int len = raw.length;
-        int pos = offset;
-
-        final VectorSpecies<Byte> SPECIES = ByteVector.SPECIES_128;
-
-        final byte SPACE = (byte)' ';
-        final byte TAB   = (byte)'\t';
-        final byte CR    = (byte)'\r';
-        final byte LF    = (byte)'\n';
-
-        while (pos < len) {
-            int remaining = len - pos;
-
-            if (remaining < SPECIES.length()) {
-                // Scalar tail
-                while (pos < len) {
-                    byte b = raw[pos];
-                    if (b == SPACE || b == TAB || b == CR) {
-                        pos++;
-                        column++;
-                    } else if (b == LF) {
-                        pos++;
-                        line++;
-                        column = 1;
-                    } else {
-                        offset = pos;
-                        return;
-                    }
-                }
-                offset = pos;
-                return;
-            }
-
-            // Load 16 bytes
-            ByteVector vec = ByteVector.fromArray(SPECIES, raw, pos);
-
-            // Compare against whitespace
-            VectorMask<Byte> mSpace = vec.compare(VectorOperators.EQ, SPACE);
-            VectorMask<Byte> mTab   = vec.compare(VectorOperators.EQ, TAB);
-            VectorMask<Byte> mCr    = vec.compare(VectorOperators.EQ, CR);
-            VectorMask<Byte> mLf    = vec.compare(VectorOperators.EQ, LF);
-
-            // Combine masks
-            VectorMask<Byte> wsMask = mSpace.or(mTab).or(mCr).or(mLf);
-
-            // Convert mask to a long bitmask
-            long maskBits = wsMask.toLong();  // THIS is the correct API
-
-            // If first byte is non-whitespace, stop
-            if ((maskBits & 1L) == 0L) {
-                offset = pos;
-                return;
-            }
-
-            // Count leading whitespace bytes
-            int leading = Long.numberOfTrailingZeros(~maskBits);
-            if (leading > SPECIES.length()) leading = SPECIES.length();
-
-            // Update line/column
-            for (int i = 0; i < leading; i++) {
-                byte b = raw[pos + i];
-                if (b == LF) {
-                    line++;
-                    column = 1;
-                } else {
-                    column++;
-                }
-            }
-
-            pos += leading;
-        }
-
-        offset = pos;
-    }
-
-    public int scanDigitsSimd(int pos) {
-        final int len = raw.length;
-        final VectorSpecies<Byte> SPECIES = ByteVector.SPECIES_128;
-
-        final byte ZERO = (byte)'0';
-        final byte NINE = (byte)'9';
-
-        while (pos < len) {
-            int remaining = len - pos;
-
-            if (remaining < SPECIES.length()) {
-                // Scalar tail
-                while (pos < len) {
-                    byte b = raw[pos];
-                    if (b >= ZERO && b <= NINE) {
-                        pos++;
-                        column++;
-                    } else {
-                        return pos;
-                    }
-                }
-                return pos;
-            }
-
-            ByteVector vec = ByteVector.fromArray(SPECIES, raw, pos);
-
-            VectorMask<Byte> ge0 = vec.compare(VectorOperators.GE, ZERO);
-            VectorMask<Byte> le9 = vec.compare(VectorOperators.LE, NINE);
-            VectorMask<Byte> digitMask = ge0.and(le9);
-
-            long maskBits = digitMask.toLong();
-
-            // First byte non-digit → stop
-            if ((maskBits & 1L) == 0L) {
-                return pos;
-            }
-
-            // Count leading digits
-            int leading = Long.numberOfTrailingZeros(~maskBits);
-            if (leading > SPECIES.length()) leading = SPECIES.length();
-
-            column += leading;
-            pos += leading;
-        }
-
-        return pos;
     }
 
     @Override

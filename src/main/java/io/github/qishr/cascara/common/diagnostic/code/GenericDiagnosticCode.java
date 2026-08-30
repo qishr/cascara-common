@@ -57,7 +57,7 @@ public enum GenericDiagnosticCode implements DiagnosticCode {
     RUNTIME_EXCEPTION("ERROR-203", "Runtime exception: {0}"),
     NPE("ERROR-204", "Null pointer exception: {0}"),
     INCONSISTENT_STATE("ERROR-206","Inconsistent state"),
-    UNSUPPORTED_OPERATION("ERROR-207","Unsupported operation: {0}"),
+    UNSUPPORTED_OPERATION("ERROR-207","Unsupported operation: {0}.{1}"),
 
     // IO Errors
     IO_ERROR("ERROR-301", "IO error: {0}"),

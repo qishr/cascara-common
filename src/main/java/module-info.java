@@ -32,9 +32,8 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-module cascara.common {
-    requires jdk.incubator.vector;
 
+module cascara.common {
     uses io.github.qishr.cascara.common.service.ServiceProvider;
 
     exports io.github.qishr.cascara.common.annotation;
@@ -63,5 +62,7 @@ module cascara.common {
              io.github.qishr.cascara.common.lang.type.LocalDateTimeTypeDescriptor,
              io.github.qishr.cascara.common.lang.type.PathTypeDescriptor,
              io.github.qishr.cascara.common.lang.type.UriTypeDescriptor,
-             io.github.qishr.cascara.common.lang.type.UuidTypeDescriptor;
+             io.github.qishr.cascara.common.lang.type.UuidTypeDescriptor,
+             io.github.qishr.cascara.common.lang.util.SourceStringBuffer,
+             io.github.qishr.cascara.common.lang.util.SourceInputStreamBuffer;
 }

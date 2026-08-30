@@ -38,6 +38,8 @@ package io.github.qishr.cascara.common.service;
 import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.lang.processor.AstParser;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
+import io.github.qishr.cascara.common.lang.util.SourceBuffer;
+import io.github.qishr.cascara.common.lang.util.SourceBufferOptions;
 
 @Beta
 public class ServiceProviderFactory extends AbstractServiceProviderFactory {
@@ -48,6 +50,13 @@ public class ServiceProviderFactory extends AbstractServiceProviderFactory {
 
     public ServiceProviderFactory(ServiceProviderLayer layer) {
         super(layer);
+    }
+
+    public SourceBuffer createSourceBuffer(SourceBufferOptions options) throws ServiceException {
+        return createServiceProvider(
+            SourceBuffer.class,
+            CapabilityQueries.hasExactValue("supportsSimd", options.supportsSimd())
+        );
     }
 
     public AstParser<?,?,?> createParser(String contentType) throws ServiceException {
