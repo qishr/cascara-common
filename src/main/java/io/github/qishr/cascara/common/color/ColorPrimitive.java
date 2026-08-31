@@ -33,48 +33,19 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.processor;
+package io.github.qishr.cascara.common.color;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.List;
-import java.util.Set;
+public sealed interface ColorPrimitive permits RgbaColor, HsbaColor {
+    static final double BRIGHTNESS_FACTOR = 0.7;
+    static final double SATURATION_FACTOR = 0.7;
 
-import io.github.qishr.cascara.common.lang.internal.TokenizerUtils;
-import io.github.qishr.cascara.common.lang.token.Token;
-import io.github.qishr.cascara.common.lang.token.TokenType;
+    public abstract String toString();
 
+    public abstract double getAlpha();
+    public abstract ColorPrimitive setAlpha(double alpha);
+    // public abstract ColorPrimitive setHexColor(String hex);
 
-public interface Tokenizer<T extends Token> extends Processor {
-
-    /// High-level API: Tokenizes a complete String eagerly.
-    default List<T> tokenize(String text) {
-        // Fallback or default implementation using the stream approach
-        return TokenizerUtils.drain(this, text);
-    }
-
-    /// High-level API: Tokenizes an entire InputStream eagerly.
-    default List<T> tokenize(InputStream is) {
-        return TokenizerUtils.drain(this, is);
-    }
-
-    List<T> tokenize(byte[] data);
-
-    /// Low-level Streaming API: Resets the tokenizer state to read from a String.
-    void open(String text);
-
-    void open(Reader reader);
-
-    /// Low-level Streaming API: Resets the tokenizer state to read from a stream.
-    void open(InputStream is);
-
-    /// Low-level Streaming API: Pulls the next token on demand.
-    T nextToken();
-
-    default Set<? extends TokenType> getTokenTypes() {
-        return Set.of();
-    }
-
-    int getOffset();
-
+    public abstract ColorPrimitive brighter();
+    public abstract ColorPrimitive saturate();
+    public abstract ColorPrimitive deriveColor(double hueShift, double saturationFactor, double brightnessFactor, double opacityFactor);
 }

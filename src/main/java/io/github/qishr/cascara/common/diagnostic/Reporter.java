@@ -148,6 +148,11 @@ public interface Reporter {
     @Experimental
     void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... details);
 
+    @Experimental
+    void errorAt(URI uri, Token token, DiagnosticCode code, Object... details);
+
+    @Experimental
+    void errorAt(URI uri, Token token, Throwable t, DiagnosticCode code, Object... details);
 
     /// Reports an error anchored to a resource location by line and column.
     /// Useful when text stream indices are unavailable.

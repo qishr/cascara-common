@@ -33,48 +33,27 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.processor;
+package io.github.qishr.cascara.common.color;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.List;
-import java.util.Set;
+import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 
-import io.github.qishr.cascara.common.lang.internal.TokenizerUtils;
-import io.github.qishr.cascara.common.lang.token.Token;
-import io.github.qishr.cascara.common.lang.token.TokenType;
+public enum ColorDiagnosticCode implements DiagnosticCode {
+    INVALID_COLOR_FORMAT("COLOR-101", "Invalid color format: {0}"),
+    INVALID_RGBA_FORMAT("COLOR-102", "Invalid RGBa format: {0}"),
+    INVALID_Hsba_FORMAT("COLOR-103", "Invalid Hsba format: {0}"),
 
+    RED_RANGE("COLOR-201", "Integer value for red must be in the range 0 to 255 but was {0}"),
+    GREEN_RANGE("COLOR-202", "Integer value for green must be in the range 0 to 255 but was {0}"),
+    BLUE_RANGE("COLOR-203", "Integer value for red blue be in the range 0 to 255 but was {0}");
 
-public interface Tokenizer<T extends Token> extends Processor {
+    private final String code;
+    private final String message;
 
-    /// High-level API: Tokenizes a complete String eagerly.
-    default List<T> tokenize(String text) {
-        // Fallback or default implementation using the stream approach
-        return TokenizerUtils.drain(this, text);
+    ColorDiagnosticCode(String code, String message) {
+        this.code = code;
+        this.message = message;
     }
 
-    /// High-level API: Tokenizes an entire InputStream eagerly.
-    default List<T> tokenize(InputStream is) {
-        return TokenizerUtils.drain(this, is);
-    }
-
-    List<T> tokenize(byte[] data);
-
-    /// Low-level Streaming API: Resets the tokenizer state to read from a String.
-    void open(String text);
-
-    void open(Reader reader);
-
-    /// Low-level Streaming API: Resets the tokenizer state to read from a stream.
-    void open(InputStream is);
-
-    /// Low-level Streaming API: Pulls the next token on demand.
-    T nextToken();
-
-    default Set<? extends TokenType> getTokenTypes() {
-        return Set.of();
-    }
-
-    int getOffset();
-
+    @Override public String getCode() { return code; }
+    @Override public String getMessage() { return message; }
 }

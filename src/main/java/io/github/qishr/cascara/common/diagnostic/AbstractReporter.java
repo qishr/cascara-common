@@ -378,6 +378,26 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         report(buildDiagnostic(token, source, Level.ERROR, cause, code, details));
     }
 
+    @Override
+    public void errorAt(URI uri, Token token, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(
+            uri, token.getStartLine(), token.getStartColumn(),
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            source, Level.ERROR, null, code, details
+        ));
+    }
+
+    @Override
+    public void errorAt(URI uri, Token token, Throwable t, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(
+            uri, token.getStartLine(), token.getStartColumn(),
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            source, Level.ERROR, t, code, details
+        ));
+    }
+
     //
     //
     //

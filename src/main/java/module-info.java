@@ -37,6 +37,7 @@ module cascara.common {
     uses io.github.qishr.cascara.common.service.ServiceProvider;
 
     exports io.github.qishr.cascara.common.annotation;
+    exports io.github.qishr.cascara.common.color;
     exports io.github.qishr.cascara.common.data;
     exports io.github.qishr.cascara.common.diagnostic;
     exports io.github.qishr.cascara.common.diagnostic.code;

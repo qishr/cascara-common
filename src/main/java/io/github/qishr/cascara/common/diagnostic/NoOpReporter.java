@@ -175,6 +175,12 @@ public class NoOpReporter implements Reporter {
     public void errorAt(Token token, Throwable cause, DiagnosticCode code, Object... args) {}
 
     @Override
+    public void errorAt(URI uri, Token token, DiagnosticCode code, Object... args) {}
+
+    @Override
+    public void errorAt(URI uri, Token token, Throwable t, DiagnosticCode code, Object... args) {}
+
+    @Override
     public boolean reportsDebug() {
         return false;
     }

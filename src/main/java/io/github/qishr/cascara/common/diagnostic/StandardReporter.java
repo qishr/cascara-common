@@ -109,11 +109,14 @@ public class StandardReporter extends AbstractReporter<StandardReporter> {
             }
         } else {
             if (showLineNumber) {
-                sb.append(" at line ");
-                sb.append(diagnosticLineNumber);
                 if (diagnostic.getColumn() > 0) {
+                    sb.append(" at ");
+                    sb.append(diagnosticLineNumber);
                     sb.append(":");
                     sb.append(diagnostic.getColumn());
+                } else {
+                    sb.append(" at line ");
+                    sb.append(diagnosticLineNumber);
                 }
             }
         }

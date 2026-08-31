@@ -33,48 +33,18 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.processor;
+package io.github.qishr.cascara.common.color;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.List;
-import java.util.Set;
+import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 
-import io.github.qishr.cascara.common.lang.internal.TokenizerUtils;
-import io.github.qishr.cascara.common.lang.token.Token;
-import io.github.qishr.cascara.common.lang.token.TokenType;
+public class ColorException extends LocalizableRuntimeException {
 
-
-public interface Tokenizer<T extends Token> extends Processor {
-
-    /// High-level API: Tokenizes a complete String eagerly.
-    default List<T> tokenize(String text) {
-        // Fallback or default implementation using the stream approach
-        return TokenizerUtils.drain(this, text);
+    public ColorException(DiagnosticCode code, Object... details) {
+        super(code, details);
     }
 
-    /// High-level API: Tokenizes an entire InputStream eagerly.
-    default List<T> tokenize(InputStream is) {
-        return TokenizerUtils.drain(this, is);
+    public ColorException(Exception e, DiagnosticCode code, Object... details) {
+        super(e, code, details);
     }
-
-    List<T> tokenize(byte[] data);
-
-    /// Low-level Streaming API: Resets the tokenizer state to read from a String.
-    void open(String text);
-
-    void open(Reader reader);
-
-    /// Low-level Streaming API: Resets the tokenizer state to read from a stream.
-    void open(InputStream is);
-
-    /// Low-level Streaming API: Pulls the next token on demand.
-    T nextToken();
-
-    default Set<? extends TokenType> getTokenTypes() {
-        return Set.of();
-    }
-
-    int getOffset();
-
 }
