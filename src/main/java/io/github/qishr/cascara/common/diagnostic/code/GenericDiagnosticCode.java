@@ -43,7 +43,7 @@ public enum GenericDiagnosticCode implements DiagnosticCode {
     UNIMPLEMENTED_METHOD("WARN-102", "Unimplemented method: {0}.{1}"),
 
     // Errors
-    ERROR("ERROR-101", "Error: {0}."),
+    ERROR("ERROR-101", "{0}."),
     UNEXPECTED_NULL_PARAMETER("ERROR-102","Unexpected null paramter \"{1}\" in {0}"),
     UNEXPECTED_NULL_RETURN("ERROR-103", "Unexpected null return value from {0}.{1}"),
     MANIFEST_NOT_FOUND("ERROR-104", "Manifest not found for {0}"),

@@ -73,7 +73,7 @@ public class SilentCollectingReporter extends AbstractReporter<SilentCollectingR
             }
         }
 
-        if (getProblemConsumer() != null && isProblem(level)) {
+        if (getProblemConsumer() != null && isProblem(diagnostic.getLevel())) {
             getProblemConsumer().accept(diagnostic);
         }
 

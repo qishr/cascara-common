@@ -60,6 +60,9 @@ public class ColorUtils {
     }
 
     public static String toRgbaHex(RgbaColor color) {
+        if (color.alpha * 255 > 254.5) {
+            return toRgbHex(color);
+        }
         String hex = String.format(
             "#%02X%02X%02X%02X",
             (int) (color.getRed() * 255),
@@ -67,9 +70,6 @@ public class ColorUtils {
             (int) (color.getBlue() * 255),
             (int) (color.getAlpha() * 255)
         );
-        if(hex.length() > 9){
-System.out.println("debug");
-        }
         return hex;
     }
 

@@ -52,7 +52,7 @@ public class Diagnostic {
     public static final int UNKNOWN_COORD = -1;
 
     private URI uri;
-    private final int line;
+    private int line;
     private final int column;
     private final int startOffset;
     private final int endOffset;
@@ -203,6 +203,9 @@ public class Diagnostic {
 
     /// Sets the URI of the source resource associated with this diagnostic.
     public void setUri(URI uri) { this.uri = uri; }
+
+    /// Sets the URI of the source resource associated with this diagnostic.
+    public void setLine(int line) { this.line = line; }
 
     /// Defines the severity hierarchy classifications available for diagnostic tracking.
     public enum Level {

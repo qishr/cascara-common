@@ -144,16 +144,6 @@ public interface Reporter {
     /// @param details Arguments referenced by the format specifiers in the [DiagnosticCode]'s localized format string.
     void errorAt(int line, int column, DiagnosticCode code, Object... details);
 
-
-    @Experimental
-    void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... details);
-
-    @Experimental
-    void errorAt(URI uri, Token token, DiagnosticCode code, Object... details);
-
-    @Experimental
-    void errorAt(URI uri, Token token, Throwable t, DiagnosticCode code, Object... details);
-
     /// Reports an error anchored to a resource location by line and column.
     /// Useful when text stream indices are unavailable.
     ///
@@ -233,6 +223,21 @@ public interface Reporter {
     /// @param code The semantic classification code for this error.
     /// @param details Arguments referenced by the format specifiers in the [DiagnosticCode]'s localized format string.
     void errorAt(Token token, Throwable cause, DiagnosticCode code, Object... details);
+
+    @Experimental
+    void warnAt(URI uri, int line, int column, DiagnosticCode code, Object... details);
+
+    @Experimental
+    void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... details);
+
+    @Experimental
+    void warnAt(URI uri, Token token, DiagnosticCode code, Object... details);
+
+    @Experimental
+    void errorAt(URI uri, Token token, DiagnosticCode code, Object... details);
+
+    @Experimental
+    void errorAt(URI uri, Token token, Throwable t, DiagnosticCode code, Object... details);
 
     boolean reportsDebug();
 

@@ -302,17 +302,6 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     /// {@inheritDoc}
     @Override
-    public void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... details) {
-        report(buildDiagnostic(
-            uri, line, column,
-            Diagnostic.UNKNOWN_COORD,
-            Diagnostic.UNKNOWN_COORD,
-            source, Level.ERROR, null, code, details
-        ));
-    }
-
-    /// {@inheritDoc}
-    @Override
     public void errorAt(int line, int column, Throwable cause, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             null, line, column,
@@ -378,11 +367,47 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         report(buildDiagnostic(token, source, Level.ERROR, cause, code, details));
     }
 
+    //
+    // With URI
+    //
+
+    /// {@inheritDoc}
+    @Override
+    public void warnAt(URI uri, int line, int column, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(
+            uri, line, column,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            source, Level.WARN, null, code, details
+        ));
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(
+            uri, line, column,
+            Diagnostic.UNKNOWN_COORD,
+            Diagnostic.UNKNOWN_COORD,
+            source, Level.ERROR, null, code, details
+        ));
+    }
+
+    @Override
+    public void warnAt(URI uri, Token token, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(
+            uri, token.getStartLine(), token.getStartColumn(),
+            token.getOffset(),
+            Diagnostic.UNKNOWN_COORD,
+            source, Level.WARN, null, code, details
+        ));
+    }
+
     @Override
     public void errorAt(URI uri, Token token, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             uri, token.getStartLine(), token.getStartColumn(),
-            Diagnostic.UNKNOWN_COORD,
+            token.getOffset(),
             Diagnostic.UNKNOWN_COORD,
             source, Level.ERROR, null, code, details
         ));
@@ -392,7 +417,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     public void errorAt(URI uri, Token token, Throwable t, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             uri, token.getStartLine(), token.getStartColumn(),
-            Diagnostic.UNKNOWN_COORD,
+            token.getOffset(),
             Diagnostic.UNKNOWN_COORD,
             source, Level.ERROR, t, code, details
         ));

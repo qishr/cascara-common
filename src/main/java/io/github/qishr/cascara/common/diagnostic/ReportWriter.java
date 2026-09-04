@@ -8,45 +8,28 @@ public class ReportWriter extends Writer {
     private final Diagnostic.Level level;
     private final StringBuilder buffer = new StringBuilder();
 
-    // private char[] writeBuffer;
-    // private static final int WRITE_BUFFER_SIZE = 1024;
-
     ReportWriter(AbstractReporter<?> reporter, Diagnostic.Level level) {
         this.reporter = reporter;
         this.level = level;
     }
 
 
-    public void write(int indent, String str) throws IOException {
-        if (indent == 0) {
-            write(str.toString(), 0, str.length());
-            return;
-        }
-        StringBuilder sb = new StringBuilder();
-        String[] lines = str.split("\n");
-        for (int i = 0; i < lines.length; i++) {
-            sb.append(" ".repeat(indent));
-            sb.append(lines[i]);
-            sb.append("\n");
-        }
-        write(sb.toString(), 0, sb.length());
+    public void write(int indent, String str) {
+        try {
+            if (indent == 0) {
+                write(str.toString(), 0, str.length());
+                return;
+            }
+            StringBuilder sb = new StringBuilder();
+            String[] lines = str.split("\n");
+            for (int i = 0; i < lines.length; i++) {
+                sb.append(" ".repeat(indent));
+                sb.append(lines[i]);
+                sb.append("\n");
+            }
+            write(sb.toString(), 0, sb.length());
+        } catch (IOException e) {}
     }
-
-    // public void write(int indent, String str, int off, int len) throws IOException {
-    //     synchronized (lock) {
-    //         char cbuf[];
-    //         if (len <= WRITE_BUFFER_SIZE) {
-    //             if (writeBuffer == null) {
-    //                 writeBuffer = new char[WRITE_BUFFER_SIZE];
-    //             }
-    //             cbuf = writeBuffer;
-    //         } else {    // Don't permanently allocate very large buffers.
-    //             cbuf = new char[len];
-    //         }
-    //         str.getChars(off, (off + len), cbuf, 0);
-    //         write(cbuf, 0, len);
-    //     }
-    // }
 
     //
     //
@@ -58,22 +41,6 @@ public class ReportWriter extends Writer {
         buffer.append(cbuf, off, len);
         flushLines(false);
     }
-
-    // @Override
-    // public void write(String str, int off, int len) throws IOException {
-    //     write(0, str, off, len);
-    // }
-
-    // @Override
-    // public void write(int c) throws IOException {
-    //     synchronized (lock) {
-    //         if (writeBuffer == null){
-    //             writeBuffer = new char[WRITE_BUFFER_SIZE];
-    //         }
-    //         writeBuffer[0] = (char) c;
-    //         write(writeBuffer, 0, 1);
-    //     }
-    // }
 
     @Override
     public void flush() {

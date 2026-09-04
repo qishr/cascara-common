@@ -108,7 +108,7 @@ public class JreUtils {
 
     public static ProcessHandle parentProcess() {
         ProcessHandle ph = ProcessHandle.current();
-        return ph.parent().get();
+        return ph.parent().orElse(null);
     }
 
     private static String[] parentProcessArgs() {
@@ -116,11 +116,11 @@ public class JreUtils {
         if (parent == null) {
             return null; // Unable to determine
         }
-        return parent.info().arguments().get();
+        return parent.info().arguments().orElse(null);
     }
 
     public static boolean isRunningInTerminal() {
-        return System.console() != null && System.console().isTerminal();
+        return System.console() != null;
     }
 
     public static boolean isRunningViaGradle() {
