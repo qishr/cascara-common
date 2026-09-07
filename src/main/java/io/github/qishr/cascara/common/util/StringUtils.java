@@ -196,7 +196,7 @@ public class StringUtils {
         }
     }
 
-    public static String kebabCase(String camelCase) {
+    public static String toKebabCase(String camelCase) {
         StringBuilder sb = new StringBuilder();
         int[] codePoints = camelCase.codePoints().toArray();
         for (int i = 0; i < codePoints.length; i++) {
@@ -213,7 +213,7 @@ public class StringUtils {
         return sb.toString();
     }
 
-    public static String pascalCase(String kebabCase) {
+    public static String toPascalCase(String kebabCase) {
         StringBuilder sb = new StringBuilder();
         boolean nextUpper = true; // Start with uppercase
         int[] codePoints = kebabCase.codePoints().toArray();
@@ -233,7 +233,7 @@ public class StringUtils {
         return sb.toString();
     }
 
-    public static String camelCase(String kebabCase) {
+    public static String toCamelCase(String kebabCase) {
         StringBuilder sb = new StringBuilder();
         boolean nextUpper = false;
         int[] codePoints = kebabCase.codePoints().toArray();

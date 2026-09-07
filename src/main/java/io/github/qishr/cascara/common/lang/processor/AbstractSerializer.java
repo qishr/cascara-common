@@ -732,7 +732,7 @@ public abstract class AbstractSerializer<
             if (entry.getKey() instanceof ScalarAstNode scalarKey) {
                 key = deserializeScalar(scalarKey, keyType instanceof Class<?> kc ? kc : String.class);
             } else {
-                key = entry.getKey().toString();
+                key = entry.getKeyString();
             }
 
             Object value = deserializeWithType(entry.getValue(), valueType);
@@ -743,8 +743,7 @@ public abstract class AbstractSerializer<
     private Map<String, Object> convertAstMapToStandardMap(MapAstNode<?,?,?> mapNode) {
         Map<String, Object> result = new LinkedHashMap<>();
         for (MapEntryAstNode<?,?> entry : mapNode.getEntries()) {
-            // Convert key (usually a scalar) to String
-            String key = entry.getKey().toString();
+            String key = entry.getKeyString();
             // Recursively convert the value
             Object value = deserializeField(entry.getValue(), null, Object.class);
             result.put(key, value);

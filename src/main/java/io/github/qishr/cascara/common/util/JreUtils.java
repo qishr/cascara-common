@@ -35,13 +35,36 @@
 
 package io.github.qishr.cascara.common.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.code.FileDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 
 public class JreUtils {
+    public static String getResourceAsString(Class<?> clazz, String path) throws IOException {
+        InputStream inputStream = clazz.getResourceAsStream(path);
+        InputStreamReader streamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+        String content;
+
+        try (BufferedReader reader = new BufferedReader(streamReader)) {
+            StringBuilder result = new StringBuilder();
+            char[] buffer = new char[8192];
+            int charsRead;
+
+            while ((charsRead = reader.read(buffer)) != -1) {
+                result.append(buffer, 0, charsRead);
+            }
+
+            content = result.toString();
+        }
+        return content;
+    }
+
     /// Returns an `InputStream` for a JRE resource.
     /// @return The `InputStream` returned by `Class.getResourceAsStream`.
     /// @throws LocalizableIOException an exception detailing why the resource was inaccessible.

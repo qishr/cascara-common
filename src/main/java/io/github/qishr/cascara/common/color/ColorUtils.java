@@ -254,6 +254,36 @@ public class ColorUtils {
         return new HsbaColor(hue * 360, saturation, brightness, alpha);
     }
 
+    //
+    //
+    //
+
+    /// Gets the relative luminance of an RGB color, this is useful in determining the contrast ratio
+    /// between two colors.
+    /// @param color The color.
+    /// @see https://www.w3.org/TR/WCAG20/#relativeluminancedef
+    public static double relativeLuminance(RgbaColor color) {
+        double rs = color.red / 255;
+        double gs = color.green / 255;
+        double bs = color.blue / 255;
+        double rr = rs <= 0.03928 ? rs / 12.92 : Math.pow((rs + 0.055) / 1.055, 2.4);
+        double rg = gs <= 0.03928 ? gs / 12.92 : Math.pow((gs + 0.055) / 1.055, 2.4);
+        double rb = bs <= 0.03928 ? bs / 12.92 : Math.pow((bs + 0.055) / 1.055, 2.4);
+        return rr * 0.2126 + rg * 0.7152 + rb * 0.0722;
+    }
+
+
+    public static double contrastRatio(double luminance1, double luminance2) {
+        if (luminance1 < luminance2) {
+            return (luminance2 + 0.05) / (luminance1 + 0.05);
+        }
+        return (luminance1 + 0.05) / (luminance2 + 0.05);
+    }
+
+    //
+    //
+    //
+
     /// RGB interpolation
     public static RgbaColor lerp(RgbaColor a, RgbaColor b, double t) {
         t = Math.clamp(t, 0, 1);

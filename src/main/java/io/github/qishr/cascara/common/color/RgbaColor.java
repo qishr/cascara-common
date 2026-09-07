@@ -71,7 +71,8 @@ public final class RgbaColor implements ColorPrimitive, Duplicable<RgbaColor> {
 
     public String toString() {
         return String.format(
-            "%s, %s, %s, %s",
+            "%s (%s, %s, %s, %s)",
+            ColorUtils.toRgbaHex(this),
             StringUtils.fromDouble(red, 3),
             StringUtils.fromDouble(green, 3),
             StringUtils.fromDouble(blue, 3),
