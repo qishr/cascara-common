@@ -40,60 +40,83 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.util.StringUtils;
+import io.github.qishr.cascara.common.util.TermUtils;
 
 /// A utility class for creating text-based tables.
 ///
 /// This class allows adding columns with headings and rows with data.
 /// It automatically calculates column widths to align the table content.
 public class TextualTable {
-    private static final String NL = "\n";
+    private static final String NEWLINE = "\n";
+    private static final char SPACE = ' ';
 
-    private List<Column> columns = new ArrayList<>();
+    private List<TextualColumn> columns = new ArrayList<>();
     private List<String[]> rows = new ArrayList<>();
     private boolean showHeaders = true;
     private Style style = Style.MARKDOWN;
+    private int maxColumnWidth = -1;
+    private String borderColor = null;
 
     /// Constructs an empty Table.
     public TextualTable() {
         // Nothing to do here
     }
 
-    public void setShowHeaders(boolean v) {
-        showHeaders = v;
-    }
-
-    public void setStyle(Style style) {
-        this.style = style;
-    }
-
-    /// Adds a column with the specified heading to the table.
-    /// @param heading String to be used as the column heading.
     /// @return The table (this) to allow method chaining.
-    public TextualTable addColumn(String heading) {
-        columns.add(new Column(heading));
+    public TextualTable setShowHeaders(boolean v) {
+        showHeaders = v;
         return this;
     }
 
+    /// @return The table (this) to allow method chaining.
+    public TextualTable setStyle(Style style) {
+        this.style = style;
+        return this;
+    }
 
+    /// @return The table (this) to allow method chaining.
+    public TextualTable setMaxColumnWidth(int n) {
+        maxColumnWidth = n;
+        return this;
+    }
+
+    /// @return The table (this) to allow method chaining.
+    @Experimental
+    public TextualTable setBorderColor(String s) {
+        borderColor = s;
+        return this;
+    }
+
+    /// Adds a column with the specified heading to the table.
+    /// @param headerText String to be used as the column heading.
+    /// @return The table (this) to allow method chaining.
+    public TextualTable addColumn(String headerText) {
+        TextualColumn column = new TextualColumn(headerText);
+        column.setIndex(columns.size());
+        columns.add(column);
+        return this;
+    }
+
+    /// @return The table (this) to allow method chaining.
     public TextualTable addRow(TabularData row) {
         String[] rowStrings = getRowStrings(row);
         addRow(rowStrings);
         return this;
     }
 
-
     private String[] getRowStrings(TabularData row) {
         String[] strings = new String[columns.size()];
         for (int i = 0; i < columns.size(); i++) {
-            String columnName = columns.get(i).getName();
+            String columnName = columns.get(i).getHeaderText();
             Object value = row.get(columnName);
             strings[i] = value == null ? "" : value.toString();
         }
         return strings;
     }
-
 
     /// Adds a row of data to the table.
     /// The number of values should match or be less than the number of columns.
@@ -103,9 +126,10 @@ public class TextualTable {
         rows.add(valueStrings);
         // Update column widths if any value is longer than current width
         for (int i = 0; i < valueStrings.length; i++) {
-            Column column = columns.get(i);
-            if (valueStrings[i] != null && valueStrings[i].length() > column.width) {
-                column.width = valueStrings[i].length();
+            TextualColumn column = columns.get(i);
+            int cellWidth = valueStrings[i].length();
+            if (valueStrings[i] != null && cellWidth > column.width) {
+                column.width = cellWidth;
             }
         }
         return this;
@@ -113,103 +137,147 @@ public class TextualTable {
 
     /// Renders the table as text without any indentation.
     /// @param writer The Writer to output text to.
+    /// @return The table (this) to allow method chaining.
     /// @throws LocalizableRuntimeException If an error occurs during writing.
-    public void render(Writer writer) {
+    public TextualTable render(Writer writer) {
         render(writer, 0);
+        return this;
     }
 
     /// Renders the table as text with a given indentation level (number of spaces).
     /// @param writer The Writer to output text to.
     /// @param indent The number of spaces to indent each line.
     /// @throws LocalizableRuntimeException If an error occurs during writing.
-    public void render(Writer writer, int indent) {
+    public TextualTable render(Writer writer, int indent) {
         try {
+            // Top border
             if (style.top() != '\0') {
-                writer.write(" ".repeat(indent));
-                writer.write(style.topLeft());
+                writer.write(repeatCharacter(SPACE, indent));
+                writer.write(border(style.topLeft()));
                 for (int i = 0; i < columns.size(); i++) {
-                    Column column = columns.get(i);
-                    repeatCharacter(writer, style.top(), column.width + 2);
+                    TextualColumn column = columns.get(i);
+                    int columnWidth = columnWidth(column);
+                    writer.write(border(repeatCharacter(style.top(), columnWidth + 2)));
                     if (i < columns.size() - 1) {
-                        writer.write(style.topVertical());
+                        writer.write(border(style.topVertical()));
                     }
                 }
-                writer.write(style.topRight());
-                writer.write(NL);
+                writer.write(border(style.topRight()));
+                writer.write(NEWLINE);
             }
 
+            // Headers
             if (showHeaders) {
-                writer.write(" ".repeat(indent));
-                writer.write(style.left());
+                writer.write(repeatCharacter(SPACE, indent));
+                writer.write(border(style.left()));
                 // Write header line with column headings
                 for (int i = 0; i < columns.size(); i++) {
-                    Column column = columns.get(i);
+                    TextualColumn column = columns.get(i);
                     writer.write(' ');
-                    writer.write(column.name);
-                    // Padding spaces to align to column width + 1 trailing space
-                    repeatCharacter(writer, ' ', column.width - column.name.length() + 1);
+                    writer.write(headerText(column));
                     if (i < columns.size() - 1) {
-                        writer.write(style.midVertical());
+                        writer.write(border(style.midVertical()));
                     }
                 }
-                writer.write(style.right());
-                writer.write(NL);
+                writer.write(border(style.right()));
+                writer.write(NEWLINE);
 
-                writer.write(" ".repeat(indent));
-                writer.write(style.leftHorizontal());
-                // Write separator line with dashes for table header separator
+                writer.write(border(repeatCharacter(SPACE, indent)));
+                writer.write(border(style.leftHorizontal()));
+
+                // Header separator
                 for (int i = 0; i < columns.size(); i++) {
-                    Column column = columns.get(i);
-                    repeatCharacter(writer, style.midHorizontal(), column.width + 2);
+                    TextualColumn column = columns.get(i);
+                    int columnWidth = columnWidth(column);
+                    writer.write(border(repeatCharacter(style.midHorizontal(), columnWidth + 2)));
                     if (i < columns.size() - 1) {
-                        writer.write(style.midIntersect());
+                        writer.write(border(style.midIntersect()));
                     }
                 }
-                writer.write(style.rightHorizontal());
-                writer.write(NL);
+                writer.write(border(style.rightHorizontal()));
+                writer.write(NEWLINE);
             }
 
-            // Write data rows
-            for (String[] data : rows) {
-                writer.write(" ".repeat(indent));
-                writer.write(style.left());
+            // Data rows
+            for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+                writer.write(repeatCharacter(SPACE, indent));
+                writer.write(border(style.left()));
                 for (int i = 0; i < columns.size(); i++) {
+                    TextualColumn column = columns.get(i);
                     writer.write(' ');
-                    writer.write(data[i]);
-                    // Padding spaces for alignment + 1 trailing space
-                    repeatCharacter(writer, ' ', columns.get(i).width - data[i].length() + 1);
+                    writer.write(cellText(column, rowIndex));
                     if (i < columns.size() - 1) {
-                        writer.write(style.midVertical());
+                        writer.write(border(style.midVertical()));
                     }
                 }
-                writer.write(style.right());
-                writer.write(NL);
+                writer.write(border(style.right()));
+                writer.write(NEWLINE);
             }
 
+            // Bottom border
             if (style.bot() != '\0') {
-                writer.write(" ".repeat(indent));
-                writer.write(style.botLeft());
+                writer.write(repeatCharacter(SPACE, indent));
+                writer.write(border(style.botLeft()));
                 for (int i = 0; i < columns.size(); i++) {
-                    Column column = columns.get(i);
-                    repeatCharacter(writer, style.bot(), column.width + 2);
+                    TextualColumn column = columns.get(i);
+                    int columnWidth = columnWidth(column);
+                    writer.write(border(repeatCharacter(style.bot(), columnWidth + 2)));
                     if (i < columns.size() - 1) {
-                        writer.write(style.botVertical());
+                        writer.write(border(style.botVertical()));
                     }
                 }
-                writer.write(style.botRight());
-                writer.write(NL);
+                writer.write(border(style.botRight()));
+                writer.write(NEWLINE);
             }
 
             writer.flush();
+            return this;
         } catch (IOException e) {
             throw new LocalizableRuntimeException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
         }
     }
 
-    private void repeatCharacter(Writer writer, char c, int times) throws IOException {
-        for (int i = 0; i < times; i++) {
-            writer.write(c);
+    private String border(char c) {
+        if (borderColor == null) {
+            return ""+c;
+        } else {
+            return borderColor + c + TermUtils.ANSI_RESET;
         }
+    }
+
+    private String border(String s) {
+        if (borderColor == null) {
+            return s;
+        } else {
+            return borderColor + s + TermUtils.ANSI_RESET;
+        }
+    }
+
+    private int columnWidth(TextualColumn column) {
+        return maxColumnWidth == -1
+            ? column.width
+            : Math.min(column.width, maxColumnWidth);
+    }
+
+    private String headerText(TextualColumn column) {
+        return pad(column.headerText, columnWidth(column) + 1);
+    }
+
+    private String cellText(TextualColumn column, int rowIndex) {
+        return pad(rows.get(rowIndex)[column.index], columnWidth(column) + 1);
+    }
+
+    private String pad(String text, int maxLength) {
+        int textLength = text.length();
+        if (textLength <= maxLength) {
+            return text + repeatCharacter(SPACE, maxLength - textLength);
+        } else {
+            return text.substring(0, maxLength - 1) + StringUtils.ELLIPSIS;
+        }
+    }
+
+    private String repeatCharacter(char c, int times) {
+        return Character.toString(c).repeat(times);
     }
 
     public static interface Style {

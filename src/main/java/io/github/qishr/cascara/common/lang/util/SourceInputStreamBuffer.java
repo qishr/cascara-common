@@ -41,22 +41,29 @@ import java.io.Reader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
+import io.github.qishr.cascara.common.util.Properties;
 
 @Experimental
 public class SourceInputStreamBuffer implements SourceBuffer {
-    private final Reader reader;
+    private Properties properties;
+    private final String contentType = "text/*";
+
+    private Reader reader;
 
     // A small circular or lookahead buffer window to support peek, peekNext, and backup
-    private final char[] window = new char[16];
+    private final char[] window = new char[256];
     private int windowHead = 0; // Points to the current character index in the window
     private int windowSize = 0; // Number of valid characters currently cached in the window
 
     private int line = 1;
     private int column = 1;
     private int offset = 0;
+
+    private char previous;
 
     // Tracks the absolute offset where the current token lexeme window started
     private int windowStartOffset = 0;
@@ -65,14 +72,40 @@ public class SourceInputStreamBuffer implements SourceBuffer {
 
     private final StringBuilder lexemeBuilder = new StringBuilder();
 
-    public SourceInputStreamBuffer(InputStream is) {
-        this.reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-        fillWindow();
+    public SourceInputStreamBuffer() {
     }
 
-    public SourceInputStreamBuffer(Reader reader) {
+    @Override
+    public SourceInputStreamBuffer open(Reader reader) {
         this.reader = reader;
         fillWindow();
+        return this;
+    }
+
+    @Override
+    public SourceInputStreamBuffer open(InputStream is) {
+        this.reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+        fillWindow();
+        return this;
+    }
+
+    @Override
+    public SourceInputStreamBuffer open(String string) {
+        throw new UnimplementedMethodException();
+    }
+
+    @Override
+    public SourceInputStreamBuffer open(byte[] data) {
+        throw new UnimplementedMethodException();
+    }
+
+    @Override
+    public Properties getServiceProperties() {
+        if (properties == null) {
+            properties = new Properties();
+            properties.set("contentType", contentType);
+        }
+        return properties;
     }
 
     @Override
@@ -134,6 +167,8 @@ public class SourceInputStreamBuffer implements SourceBuffer {
             return '\0';
         }
 
+        previous = peek();
+
         char c = window[windowHead];
         lexemeBuilder.append(c);
 
@@ -163,6 +198,11 @@ public class SourceInputStreamBuffer implements SourceBuffer {
     public char peekNext() {
         if (windowSize < 2) return '\0';
         return window[(windowHead + 1) % window.length];
+    }
+
+    @Override
+    public char previous() {
+        return previous;
     }
 
     @Override
@@ -221,7 +261,7 @@ public class SourceInputStreamBuffer implements SourceBuffer {
                 windowSize++;
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error reading from YAML input stream", e);
+            throw new RuntimeException("Error reading from input stream", e);
         }
     }
 

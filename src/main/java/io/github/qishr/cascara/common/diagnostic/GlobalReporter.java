@@ -87,20 +87,20 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     @Override
-    public GlobalReporter setDiagnosticCollector(Consumer<Diagnostic> collector) {
+    public GlobalReporter setDiagnosticConsumer(Consumer<Diagnostic> collector) {
         if (this != globalInstance) {
             throw new UnsupportedOperationException("The method setDiagnosticWriter in GlobalReporter may only be called on the global instance.");
         }
-        super.setDiagnosticCollector(collector);
+        super.setDiagnosticConsumer(collector);
         return this;
     }
 
     @Override
-    public GlobalReporter setProblemCollector(Consumer<Diagnostic> collector) {
+    public GlobalReporter setProblemConsumer(Consumer<Diagnostic> collector) {
         if (this != globalInstance) {
             throw new UnsupportedOperationException("The method setCollector in GlobalReporter may only be called on the global instance.");
         }
-        super.setProblemCollector(collector);
+        super.setProblemConsumer(collector);
         return this;
     }
 
@@ -125,18 +125,18 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     //
 
     @Override
-    protected Consumer<Diagnostic> getDiagnosticCollector() {
-        return this == globalInstance ? diagnosticCollector : globalInstance.getDiagnosticCollector();
+    protected Consumer<Diagnostic> getDiagnosticConsumer() {
+        return this == globalInstance ? diagnosticConsumer : globalInstance.getDiagnosticConsumer();
     }
 
     @Override
-    protected Consumer<Diagnostic> getProblemCollector() {
-        return this == globalInstance ? problemCollector : globalInstance.getProblemCollector();
+    protected Consumer<Diagnostic> getProblemConsumer() {
+        return this == globalInstance ? problemConsumer : globalInstance.getProblemConsumer();
     }
 
     @Override
-    protected Consumer<String> getStringWriter() {
-        return this == globalInstance ? stringWriter : globalInstance.getStringWriter();
+    protected Consumer<String> getLineConsumer() {
+        return this == globalInstance ? lineConsumer : globalInstance.getLineConsumer();
     }
 
     @Override
@@ -154,16 +154,17 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         return this == globalInstance ? stackTraceEnabled : globalInstance.isStackTraceEnabled();
     }
 
-    @Override
-    protected void writeString(Diagnostic diagnostic) {
-        writeString (
-            diagnostic.getCause(),
-            diagnostic.getLevel(),
-            formatString(diagnostic)
-        );
-    }
+    // @Override
+    // protected void writeString(Diagnostic diagnostic) {
+    //     writeString (
+    //         diagnostic.getCause(),
+    //         diagnostic.getLevel(),
+    //         formatString(diagnostic)
+    //     );
+    // }
 
-    private String formatString(Diagnostic diagnostic) {
+    @Override
+    protected String formatMessage(Diagnostic diagnostic, String message, int messageLine, boolean useColoring) {
         if (diagnostic.getUri() == null) {
             if (diagnostic.getLine() > 0) {
                 return String.format(

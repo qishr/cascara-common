@@ -52,7 +52,7 @@ public class Diagnostic {
     public static final int UNKNOWN_COORD = -1;
 
     private URI uri;
-    private final int line;
+    private int line;
     private final int column;
     private final int startOffset;
     private final int endOffset;
@@ -204,18 +204,21 @@ public class Diagnostic {
     /// Sets the URI of the source resource associated with this diagnostic.
     public void setUri(URI uri) { this.uri = uri; }
 
+    /// Sets the URI of the source resource associated with this diagnostic.
+    public void setLine(int line) { this.line = line; }
+
     /// Defines the severity hierarchy classifications available for diagnostic tracking.
     public enum Level {
         /// Default fallback logging severity level.
         DEFAULT("DEFLT"),
         /// Level for no-op reporter.
-        NONE(" NONE"),
+        NONE("NONE "),
         /// Represents fatal or execution-halting structural failures.
         ERROR("ERROR"),
         /// Indicates non-fatal semantic irregularities or suspicious configurations.
-        WARN(" WARN"),
+        WARN("WARN "),
         /// Standard operational metrics, progress records, or structural notices.
-        INFO("INFO"),
+        INFO("INFO "),
         /// High-fidelity tracing notes optimized for debugging workflows.
         DEBUG("DEBUG"),
         /// Ultra-fine-grained system diagnostic traces.
@@ -238,6 +241,10 @@ public class Diagnostic {
 
         public boolean includes(Level level) {
             return ordinal() >= level.ordinal();
+        }
+
+        public boolean isProblem() {
+            return this == ERROR || this == WARN;
         }
     }
 }

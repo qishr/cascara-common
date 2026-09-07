@@ -39,7 +39,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
 
-import io.github.qishr.cascara.common.lang.annotation.Beta;
+import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.token.Token;
 

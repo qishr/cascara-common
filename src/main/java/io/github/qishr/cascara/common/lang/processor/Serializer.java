@@ -50,15 +50,15 @@ import io.github.qishr.cascara.common.lang.type.TypeReference;
 /// This interface provides a high-level API for data binding, allowing users to
 /// move seamlessly between raw objects, structured ASTs, and the final string output.
 ///
-/// @param <N> The specific subtype of AstNode used by this language implementation.
+/// @param <N> The specific subtype of AstNode used by the language implementation.
 public interface Serializer<N extends AstNode> extends Processor {
     /// Converts a Java Object directly into its textual representation,
-    // for example JSON or YAML.
+    /// for example JSON or YAML.
     ///
     /// @param jvmInstance The object to serialize.
     /// @return The formatted string (e.g., YAML or JSON).
     /// @throws SerializerException If serialization fails.
-    String toText(Object jvmInstance) throws SerializerException;
+    String toString(Object jvmInstance) throws SerializerException;
 
     void toWriter(Object jvmInstance, Writer writer) throws IOException;
 
@@ -77,7 +77,7 @@ public interface Serializer<N extends AstNode> extends Processor {
     /// @param <C>   The type of the resulting object.
     /// @return A populated instance of the requested class.
     /// @throws SerializerException If parsing or mapping fails.
-    <C> C fromText(String text, Class<C> jvmType) throws SerializerException;
+    <C> C fromString(String text, Class<C> jvmType) throws SerializerException;
 
     <C> C fromText(String text, TypeReference<C> typeRef) throws SerializerException;
 

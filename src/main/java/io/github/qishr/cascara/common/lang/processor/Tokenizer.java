@@ -40,6 +40,7 @@ import java.io.Reader;
 import java.util.List;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.lang.internal.TokenizerUtils;
 import io.github.qishr.cascara.common.lang.token.Token;
 import io.github.qishr.cascara.common.lang.token.TokenType;
 
@@ -56,6 +57,8 @@ public interface Tokenizer<T extends Token> extends Processor {
     default List<T> tokenize(InputStream is) {
         return TokenizerUtils.drain(this, is);
     }
+
+    List<T> tokenize(byte[] data);
 
     /// Low-level Streaming API: Resets the tokenizer state to read from a String.
     void open(String text);

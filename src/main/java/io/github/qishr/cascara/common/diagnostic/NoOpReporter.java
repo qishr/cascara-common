@@ -72,12 +72,17 @@ public class NoOpReporter implements Reporter {
     }
 
     @Override
-    public NoOpReporter setDiagnosticCollector(Consumer<Diagnostic> diagnosticCollector) {
+    public Reporter setLineConsumer(Consumer<String> logger) {
         return this;
     }
 
     @Override
-    public NoOpReporter setProblemCollector(Consumer<Diagnostic> diagnosticCollector) {
+    public NoOpReporter setDiagnosticConsumer(Consumer<Diagnostic> diagnosticCollector) {
+        return this;
+    }
+
+    @Override
+    public NoOpReporter setProblemConsumer(Consumer<Diagnostic> diagnosticCollector) {
         return this;
     }
 
@@ -85,15 +90,16 @@ public class NoOpReporter implements Reporter {
         return this;
     }
 
+    public ReportWriter getWriter(Diagnostic.Level level) {
+        return null;
+    }
+
     //
     // Exception
     //
 
     @Override
-    public void error(LocalizableException e) {}
-
-    @Override
-    public void error(LocalizableRuntimeException e) {}
+    public void error(Exception e) {}
 
     //
     // Plain
@@ -131,9 +137,6 @@ public class NoOpReporter implements Reporter {
     public void errorAt(int line, int column, DiagnosticCode code, Object... args) {}
 
     @Override
-    public void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... args) {}
-
-    @Override
     public void errorAt(int line, int column, Throwable cause, DiagnosticCode code, Object... args) {}
 
     //
@@ -168,4 +171,32 @@ public class NoOpReporter implements Reporter {
     @Override
     public void errorAt(Token token, Throwable cause, DiagnosticCode code, Object... args) {}
 
+    //
+    // With URI
+    //
+
+    @Override
+    public void warnAt(URI uri, int line, int column, DiagnosticCode code, Object... args) {}
+
+    @Override
+    public void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... args) {}
+
+    @Override
+    public void warnAt(URI uri, Token token, DiagnosticCode code, Object... args) {}
+
+    @Override
+    public void errorAt(URI uri, Token token, DiagnosticCode code, Object... args) {}
+
+    @Override
+    public void errorAt(URI uri, Token token, Throwable t, DiagnosticCode code, Object... args) {}
+
+    @Override
+    public boolean reportsDebug() {
+        return false;
+    }
+
+    @Override
+    public boolean reportsTrace() {
+        return false;
+    }
 }

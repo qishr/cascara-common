@@ -40,12 +40,10 @@ import java.net.URI;
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 
 public abstract class LocatableException extends LocalizableRuntimeException {
-    // Common constants for LocatableException implementations
-
     private final int line;
     private final int column;
-    private final URI uri;
-    private final String message;
+    private URI uri;
+    private final String message; // TODO
     private final String rawMessage;
 
     /// Standard Constructor
@@ -80,6 +78,10 @@ public abstract class LocatableException extends LocalizableRuntimeException {
     public int getColumn() { return column; }
     public URI getUri() { return uri; }
     public String getRawMessage() { return rawMessage; }
+
+    public void setUri(URI uri) {
+        this.uri = uri;
+    }
 
     public String getMessage() {
         String baseMessage = super.getMessage();

@@ -35,10 +35,10 @@
 
 package io.github.qishr.cascara.common.lang.streaming;
 
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.Experimental;
 
 @Experimental
 @FunctionalInterface
-public interface StreamHandler {
-    void onEvent(StreamingEvent event);
+public interface StreamHandler<E extends StreamingEvent> {
+    void onEvent(E event);
 }

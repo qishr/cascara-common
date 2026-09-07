@@ -35,11 +35,11 @@
 
 package io.github.qishr.cascara.common.lang.streaming;
 
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.Experimental;
 
 @Experimental
-public interface StreamingEvent {
-    StreamingEventType getType();
+public interface StreamingEvent<E extends StreamingEventType> {
+    E getType();
     String getContent();
     long getLineNumber();
     long getColumnNumber();

@@ -35,14 +35,31 @@
 
 package io.github.qishr.cascara.common.lang.util;
 
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
+import java.io.InputStream;
+import java.io.Reader;
+
+import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.service.ServiceProvider;
 
 @Experimental
-public interface SourceBuffer {
+public interface SourceBuffer extends ServiceProvider {
+
+    SourceBuffer open(byte[] data);
+    SourceBuffer open(String data);
+    SourceBuffer open(Reader reader);
+    SourceBuffer open(InputStream is);
+
+    /// Increases the offset by 1 and returns the character at the new offset.
     char advance();
+
+    // Returns the character at the current offset.
     char peek();
+
+    // Returns the character at the offset after the current offset.
     char peekNext();
+
     char peekAhead(int steps);
+    char previous();
     void backup();
     boolean isAtEnd();
 

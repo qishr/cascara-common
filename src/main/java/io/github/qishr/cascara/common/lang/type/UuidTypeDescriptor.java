@@ -35,11 +35,9 @@
 
 package io.github.qishr.cascara.common.lang.type;
 
-import java.net.URI;
 import java.util.UUID;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 public class UuidTypeDescriptor extends AbstractScalarDescriptor<UUID> {
     public UuidTypeDescriptor() {

@@ -35,12 +35,19 @@
 
 package io.github.qishr.cascara.common.util;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
+import io.github.qishr.cascara.common.annotation.Nullable;
+
 public class ReflectionUtils {
+
+    @Nullable
     public static Class<?> getGenericTypeOfListField(Field field) {
         // Check if the field is a List type
         if (List.class.isAssignableFrom(field.getType())) {
@@ -80,7 +87,98 @@ public class ReflectionUtils {
                 }
             }
         }
+
+        // TODO: This looks very tied in to serializers...
         return String.class; // Fallback to String if type cannot be determined
+    }
+
+    @Nullable
+    public static String getTestName() {
+        Method testMethod = getTestMethod();
+        if (testMethod == null) {
+            return null;
+        }
+        return testMethod.getName();
+    }
+
+    @Nullable
+    public static Method getTestMethod() {
+        StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
+        for (StackTraceElement frame : callStack) {
+            String className = frame.getClassName();
+            String methodName = frame.getMethodName();
+            Class<?> clazz;
+            try {
+                clazz = Class.forName(className);
+                List<Method> methods = getMethodsByName(clazz, methodName);
+                for (Method method : methods) {
+                    if (hasTestAnnotation(method)) {
+                        return method;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                break;
+            }
+        }
+        return null;
+    }
+
+    private static boolean hasTestAnnotation(Method method) {
+        Annotation[] annotations = method.getDeclaredAnnotations();
+        for (Annotation annotation : annotations) {
+            Class<? extends Annotation> type = annotation.annotationType();
+            String name = type.getName();
+            if (name.startsWith("org.junit.jupiter.api.Test")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<Method> getMethodsByName(Class<?> clazz, String name) {
+        List<Method> methods = new ArrayList<>();
+        for (Method method : clazz.getMethods()){
+            if(method.getName().equals(name)){
+                // System.out.println("Possible match : " + method);
+                methods.add(method);
+            }
+        }
+        for (Method method : clazz.getDeclaredMethods()){
+            if(method.getName().equals(name)){
+                // System.out.println("Possible match : " + method);
+                methods.add(method);
+            }
+        }
+        return methods;
+    }
+
+    @Nullable
+    public static Pair<Class<?>,String> getCaller() {
+        return getCaller(false);
+    }
+
+    @Nullable
+    public static Pair<Class<?>,String> getCaller(boolean ignoreQueryingClass) {
+        String thisClass = ReflectionUtils.class.getName();
+        String queryingClass = null;
+        StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
+        for (StackTraceElement frame : callStack) {
+            String className = frame.getClassName();
+            String methodName = frame.getMethodName();
+            if (!className.equals("java.lang.Thread") && !className.equals(thisClass)) {
+                if (queryingClass == null) {
+                    queryingClass = className;
+                } else if (!ignoreQueryingClass || !className.equals(queryingClass)) {
+                    try {
+                        Class<?> callingClass = Class.forName(className);
+                        return new Pair<>(callingClass, methodName);
+                    } catch (ClassNotFoundException e) {
+                        break;
+                    }
+                }
+            }
+        }
+        return null;
     }
 }
 

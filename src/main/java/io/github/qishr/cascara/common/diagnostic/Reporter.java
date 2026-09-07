@@ -38,12 +38,14 @@ package io.github.qishr.cascara.common.diagnostic;
 import java.net.URI;
 import java.util.function.Consumer;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 public interface Reporter {
+
+    Reporter setLineConsumer(Consumer<String> logger);
 
     /// Sets the level of output when logging directly to the console.
     Reporter setLevel(Level level);
@@ -52,13 +54,13 @@ public interface Reporter {
     /// This includes debugging info, trace states, warnings, and error diagnostics.
     ///
     /// @param collector The consumer that processes each produced [Diagnostic].
-    Reporter setDiagnosticCollector(Consumer<Diagnostic> collector);
+    Reporter setDiagnosticConsumer(Consumer<Diagnostic> collector);
 
     /// Registers a specialized collector to receive only problem-level diagnostics.
     /// This collector is filtered to intercept only `Level.WARN` and `Level.ERROR` items.
     ///
     /// @param collector The consumer that processes problem [Diagnostic] objects.
-    Reporter setProblemCollector(Consumer<Diagnostic> collector);
+    Reporter setProblemConsumer(Consumer<Diagnostic> collector);
 
     /// Checks whether any active listener or collector is tracking problems.
     ///
@@ -73,9 +75,16 @@ public interface Reporter {
 
     boolean isSilent();
 
+    ReportWriter getWriter(Diagnostic.Level level);
+
     //
     // Reporting Methods
     //
+
+    /// Reports an [Exception]
+    ///
+    /// @param exception The exception to report.
+    void error(Exception exception);
 
     /// Reports a trace message through the reporter.
     /// @param format The format of the message to report.
@@ -134,11 +143,6 @@ public interface Reporter {
     /// @param code The semantic classification code for this error.
     /// @param details Arguments referenced by the format specifiers in the [DiagnosticCode]'s localized format string.
     void errorAt(int line, int column, DiagnosticCode code, Object... details);
-
-
-    @Experimental
-    void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... details);
-
 
     /// Reports an error anchored to a resource location by line and column.
     /// Useful when text stream indices are unavailable.
@@ -220,13 +224,22 @@ public interface Reporter {
     /// @param details Arguments referenced by the format specifiers in the [DiagnosticCode]'s localized format string.
     void errorAt(Token token, Throwable cause, DiagnosticCode code, Object... details);
 
-    /// Reports a [LocalizableException]
-    ///
-    /// @param exception The exception to report.
-    void error(LocalizableException exception);
+    @Experimental
+    void warnAt(URI uri, int line, int column, DiagnosticCode code, Object... details);
 
-    /// Reports a [LocalizableRuntimeException]
-    ///
-    /// @param exception The exception to report.
-    void error(LocalizableRuntimeException exception);
+    @Experimental
+    void errorAt(URI uri, int line, int column, DiagnosticCode code, Object... details);
+
+    @Experimental
+    void warnAt(URI uri, Token token, DiagnosticCode code, Object... details);
+
+    @Experimental
+    void errorAt(URI uri, Token token, DiagnosticCode code, Object... details);
+
+    @Experimental
+    void errorAt(URI uri, Token token, Throwable t, DiagnosticCode code, Object... details);
+
+    boolean reportsDebug();
+
+    boolean reportsTrace();
 }

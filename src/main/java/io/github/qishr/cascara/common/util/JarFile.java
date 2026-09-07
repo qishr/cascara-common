@@ -56,11 +56,11 @@ public class JarFile extends ArchiveFile {
     private String moduleName = null;
 
     public static JarFile load(Path jarPath) throws LocalizableIOException {
-        return new JarFile(jarPath);
+        return new JarFile(jarPath, false);
     }
 
-    private JarFile(Path jarPath) throws LocalizableIOException {
-        super(jarPath);
+    private JarFile(Path jarPath, boolean create) throws LocalizableIOException {
+        super(jarPath, create);
         String jarManifest = new String(extractFile("META-INF/MANIFEST.MF"));
         manifestProperties = JarManifest.parse(jarManifest);
     }
@@ -136,8 +136,8 @@ public class JarFile extends ArchiveFile {
     private String getPomPropertiesPath() {
         final String mavenDirectory = "META-INF/maven/";
         try {
-            List<FileInfo> files = listFiles(mavenDirectory);
-            for (FileInfo info : files) {
+            List<EntryInfo> files = listFiles(mavenDirectory);
+            for (EntryInfo info : files) {
                 if (info.getPath().endsWith("pom.properties")) {
                     return mavenDirectory + info.getPath();
                 }
@@ -193,14 +193,14 @@ public class JarFile extends ArchiveFile {
     }
 
     private void discoverClasses() {
-        List<FileInfo> allFiles;
+        List<EntryInfo> allFiles;
         try {
             allFiles = listFiles();
         } catch (LocalizableIOException e) {
             return;
         }
         classNames = new HashSet<>();
-        for (FileInfo fileInfo : allFiles) {
+        for (EntryInfo fileInfo : allFiles) {
             String entryName = fileInfo.getPath();
             // if (fileInfo.getPath().endsWith(".class")) {
             if (entryName.endsWith(".class")) {
@@ -223,8 +223,8 @@ public class JarFile extends ArchiveFile {
     private void discoverPackages() {
         packageNames = new HashSet<>();
         try {
-            List<FileInfo> files = listFiles("");
-            for (FileInfo info : files) {
+            List<EntryInfo> files = listFiles("");
+            for (EntryInfo info : files) {
                 String packageName = JarFile.getPackageName(info);
                 if (packageName != null && !packageNames.contains(packageName)) {
                     packageNames.add(packageName);
@@ -235,7 +235,7 @@ public class JarFile extends ArchiveFile {
         }
     }
 
-    public static String getClassName(FileInfo fileInfo) {
+    public static String getClassName(EntryInfo fileInfo) {
         String filePath = fileInfo.getPath();
         if (filePath.endsWith(".class")) {
             int slash = filePath.lastIndexOf("/");
@@ -244,7 +244,7 @@ public class JarFile extends ArchiveFile {
         return null;
     }
 
-    public static String getPackageName(FileInfo fileInfo) {
+    public static String getPackageName(EntryInfo fileInfo) {
         String filePath = fileInfo.getPath();
         if (filePath.endsWith(".class")) {
             int slash = filePath.lastIndexOf("/");

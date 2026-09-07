@@ -40,9 +40,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.data.reference.ReferenceTabularData;
-import io.github.qishr.cascara.common.data.reference.ReferenceTreeData;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
+import io.github.qishr.cascara.common.reference.ReferenceTabularData;
+import io.github.qishr.cascara.common.reference.ReferenceTreeData;
 
 public class TreeTests {
     @Test
@@ -60,7 +60,7 @@ public class TreeTests {
         row1.put("name2", "val2");
         b1leaf1.setValue(List.of(row1));
 
-        Tree<ReferenceTreeData,List<TabularData>> tree = new Tree<>();
+        TextualTree<ReferenceTreeData,List<TabularData>> tree = new TextualTree<>();
         tree.setRoot(root);
         tree.setRenderValues(true);
 

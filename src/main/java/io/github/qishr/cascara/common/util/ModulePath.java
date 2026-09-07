@@ -54,8 +54,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 
+@Experimental
 public class ModulePath {
     private static final String DOT_CLASS = ".class";
     private static final String DOT_JAR = ".jar";

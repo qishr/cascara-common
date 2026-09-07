@@ -35,20 +35,122 @@
 
 package io.github.qishr.cascara.common.util;
 
-import io.github.qishr.cascara.common.lang.annotation.Experimental;
+import java.util.ArrayList;
+import java.util.List;
+
+import io.github.qishr.cascara.common.annotation.Experimental;
 
 @Experimental
 public class StringUtils {
+    public static final String ELLIPSIS = "\u2026";
+
+    public static final String VISIBLE_NULL = "\u2400";
+    public static final String VISIBLE_BELL = "\u2407";
+    public static final String VISIBLE_BACKSPACE = "\u2408";
+    public static final String VISIBLE_TAB = "\u2409";
+    public static final String VISIBLE_LF = "\u240A";
+    public static final String VISIBLE_CR = "\u240D";
+    public static final String VISIBLE_ESCAPE = "\u241B";
+    public static final String VISIBLE_SPACE = "\u2423";
+
+    // Return/Enter symbol: "\u21B5";
+    // Tab synbol: "\u21E5"
+    // Backspace symbol: "\u232B"
+
+    public static final String VISIBLE_DELETE = "\u2421";
+
+    public static final String FILLED_UP_POINTING_TRIANGLE = "\u25B2";
+
+    public static String unescapeUnicode(String s) {
+        StringBuilder out = new StringBuilder(s.length());
+        int i = 0;
+        int len = s.length();
+
+        while (i < len) {
+            char c = s.charAt(i);
+
+            if (c != '\\' || i + 1 >= len) {
+                out.append(c);
+                i++;
+                continue;
+            }
+
+            char esc = s.charAt(i + 1);
+
+            // --- \\uXXXX ---
+            if (esc == 'u' && i + 5 < len) {
+                int code = 0;
+                boolean ok = true;
+                for (int j = i + 2; j < i + 6; j++) {
+                    int d = Character.digit(s.charAt(j), 16);
+                    if (d < 0) { ok = false; break; }
+                    code = (code << 4) | d;
+                }
+                if (ok) {
+                    out.append((char) code);
+                    i += 6;
+                    continue;
+                }
+            }
+
+            // Fallback: keep the backslash literally
+            out.append('\\');
+            i++;
+        }
+        return out.toString();
+    }
+
+    public static String unescapeHex(String s) {
+        StringBuilder out = new StringBuilder(s.length());
+        int i = 0;
+        int len = s.length();
+
+        while (i < len) {
+            char c = s.charAt(i);
+
+            if (c != '\\' || i + 1 >= len) {
+                out.append(c);
+                i++;
+                continue;
+            }
+
+            char esc = s.charAt(i + 1);
+
+            // --- \xXX ---
+            if (esc == 'x' && i + 3 < len) {
+                int d1 = Character.digit(s.charAt(i + 2), 16);
+                int d2 = Character.digit(s.charAt(i + 3), 16);
+                if (d1 >= 0 && d2 >= 0) {
+                    out.append((char) ((d1 << 4) | d2));
+                    i += 4;
+                    continue;
+                }
+            }
+
+            // Fallback: keep the backslash literally
+            out.append('\\');
+            i++;
+        }
+        return out.toString();
+    }
 
     public static String debugString(String string, int pos) {
         return debugString(string, "", pos);
     }
 
     public static String debugString(String string) {
+        return debugString(-1, string);
+    }
+
+    public static String debugString(int limit, String string) {
         if (string == null) return "␀";
         StringBuilder sb = new StringBuilder();
+        int countdown = limit;
         for (int codePoint : string.codePoints().toArray()) {
             sb.append(visibleChar(codePoint));
+            if (--countdown == 0) {
+                break;
+            }
         }
         return sb.toString();
     }
@@ -60,7 +162,8 @@ public class StringUtils {
         for (int i = 0; i < pos; i++) {
             sb.append(' ');
         }
-        sb.append("▲\n");
+        sb.append(FILLED_UP_POINTING_TRIANGLE);
+        sb.append("\n");
         int nameLength = (name == null || name.isBlank()) ? 0 : name.length();
         int nameIndent = pos - nameLength - (nameLength > 0 ? 1 : 0);
         for (int i = 0; i < nameIndent; i++) {
@@ -72,20 +175,28 @@ public class StringUtils {
 
     public static String visibleChar(int c) {
         switch (c) {
+            case '\0':
+                return VISIBLE_NULL;
             case ' ':
-                return "␣";
-            case '\t':
-                return "⇥";
-            case '\r':
-                return "␍";
+                return VISIBLE_SPACE;
+            case '\b':
+                return VISIBLE_BACKSPACE;
+            case 7:
+                return VISIBLE_BELL;
             case '\n':
-                return "↵";
+                return VISIBLE_LF;
+            case '\r':
+                return VISIBLE_CR;
+            case '\t':
+                return VISIBLE_TAB;
+            case 27:
+                return VISIBLE_ESCAPE;
             default:
                 return Character.toString(c);
         }
     }
 
-    public static String kebabCase(String camelCase) {
+    public static String toKebabCase(String camelCase) {
         StringBuilder sb = new StringBuilder();
         int[] codePoints = camelCase.codePoints().toArray();
         for (int i = 0; i < codePoints.length; i++) {
@@ -102,7 +213,7 @@ public class StringUtils {
         return sb.toString();
     }
 
-    public static String pascalCase(String kebabCase) {
+    public static String toPascalCase(String kebabCase) {
         StringBuilder sb = new StringBuilder();
         boolean nextUpper = true; // Start with uppercase
         int[] codePoints = kebabCase.codePoints().toArray();
@@ -122,7 +233,7 @@ public class StringUtils {
         return sb.toString();
     }
 
-    public static String camelCase(String kebabCase) {
+    public static String toCamelCase(String kebabCase) {
         StringBuilder sb = new StringBuilder();
         boolean nextUpper = false;
         int[] codePoints = kebabCase.codePoints().toArray();
@@ -140,5 +251,30 @@ public class StringUtils {
             }
         }
         return sb.toString();
+    }
+
+    public static List<Number> parseNumberList(String numbers) {
+        List<Number> list = new ArrayList<>();
+        String[] items = numbers.split(",");
+        for (int i = 0; i < items.length; i++) {
+            String item = items[i];
+            if (item.contains(".")) {
+                list.add(Double.parseDouble(item.trim()));
+            } else {
+                list.add(Integer.parseInt(item.trim()));
+            }
+        }
+        return list;
+    }
+
+    public static String fromDouble(double d, int fractionalPartLen) {
+        String full = Double.toString(d);
+        int dot = full.indexOf(".");
+        for (int i = dot; i < full.length(); i++) {
+            if (i - dot > fractionalPartLen) {
+                return full.substring(0, i);
+            }
+        }
+        return full;
     }
 }

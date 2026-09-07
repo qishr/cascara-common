@@ -41,9 +41,9 @@ import java.util.Set;
 public interface MapAstNode<K, V extends AstNode, E extends MapEntryAstNode<K,V>> extends AstNode, Iterable<E> {
     int size();
     boolean isEmpty();
-    boolean containsKey(K key);
-    V get(K key);
-    E getEntry(K key);
+    boolean containsKey(Object key);
+    V get(Object key);
+    E getEntry(Object key);
     E getEntry(int i);
     List<E> getEntries();
     Set<E> entrySet();
@@ -62,55 +62,57 @@ public interface MapAstNode<K, V extends AstNode, E extends MapEntryAstNode<K,V>
     // Convenience Methods
     //
 
-    boolean containsKey(String key);
     MapAstNode<K,V,E> put(String key, V value);
     MapAstNode<K,V,E> put(String key, String value);
     MapAstNode<K,V,E> remove(String key);
-    V get(String key);
 
-    MapAstNode<K,V,E> getMap(String key);
-    SequenceAstNode<V> getSequence(String key);
-    ScalarAstNode<V> getScalar(String key);
+    MapAstNode<K,V,E> getMap(Object key);
+    SequenceAstNode<V> getSequence(Object key);
+    ScalarAstNode<V> getScalar(Object key);
 
     /// @return Returns the string value of the map entry, or null if it doesn't exist.
-    default String getString(String key) {
+    default String getString(Object key) {
         V node = get(key);
         return (node instanceof ScalarAstNode scalar) ? scalar.asString() : null;
     }
 
-    default int getInteger(String key, int defaultValue) {
+    default int getInteger(Object key, int defaultValue) {
         V node = get(key);
         return (node instanceof ScalarAstNode scalar) ? scalar.asInteger() : defaultValue;
     }
 
-    default double getDouble(String key, double defaultValue) {
+    default double getDouble(Object key, double defaultValue) {
         V node = get(key);
         return (node instanceof ScalarAstNode scalar) ? scalar.asDouble() : defaultValue;
     }
 
-    default boolean getBoolean(String key, boolean defaultValue) {
+    default boolean getBoolean(Object key, boolean defaultValue) {
         V node = get(key);
         return (node instanceof ScalarAstNode scalar) ? scalar.asBoolean() : defaultValue;
     }
 
-    default int getInteger(String key) {
+    default int getInteger(Object key) {
         return getInteger(key, 0);
     }
 
-    default double getDouble(String key) {
+    default double getDouble(Object key) {
         return getDouble(key, 0);
     }
 
-    default boolean getBoolean(String key) {
+    default boolean getBoolean(Object key) {
         return getBoolean(key, false);
     }
 
-    default String getString(String key, String defaultValue) {
+    default String getString(Object key, String defaultValue) {
         V value = get(key);
         return (value != null) ? value.asString() : defaultValue;
     }
 
-    default String getAttributeOrDefault(String key, String defaultValue) {
+    default String getAttribute(Object key) {
+        return getString(key, null);
+    }
+
+    default String getAttribute(Object key, String defaultValue) {
         return getString(key, defaultValue);
     }
 }
