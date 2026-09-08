@@ -157,4 +157,10 @@ public final class PlainScalarNode extends PlainNode implements ScalarAstNode<Pl
     public PrimitiveType getPrimitiveType() {
         return PrimitiveType.of(value);
     }
+
+    @Override
+    public ScalarAstNode<PlainNode> setPrimitive(Object jvmValue) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setPrimitive'");
+    }
 }

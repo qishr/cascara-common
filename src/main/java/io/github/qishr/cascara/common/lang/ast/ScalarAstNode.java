@@ -54,6 +54,8 @@ public interface ScalarAstNode<T extends AstNode> extends AstNode {
     @Nullable
     Object getPrimitive();
 
+    ScalarAstNode<T> setPrimitive(Object jvmValue);
+
     PrimitiveType getPrimitiveType();
 
     @Nullable

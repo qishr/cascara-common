@@ -79,7 +79,7 @@ public interface Serializer<N extends AstNode> extends Processor {
     /// @throws SerializerException If parsing or mapping fails.
     <C> C fromString(String text, Class<C> jvmType) throws SerializerException;
 
-    <C> C fromText(String text, TypeReference<C> typeRef) throws SerializerException;
+    <C> C fromString(String text, TypeReference<C> typeRef) throws SerializerException;
 
     <C> C fromReader(Reader reader, Class<C> jvmType) throws SerializerException;
 
