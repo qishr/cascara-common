@@ -32,47 +32,26 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.property;
 
-package io.github.qishr.cascara.common.reference;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import io.github.qishr.cascara.common.data.TabularData;
-
-/// A reference implementation of TabularData
-public class ReferenceTabularData implements TabularData {
-
-    private Map<String, Object> valuesMap = new HashMap<>();
-
-    public ReferenceTabularData() {
-        // Nothing to see here
+public class IntegerProperty extends Property<Long> {
+    public IntegerProperty(String name) {
+        super(name);
     }
 
-    @Override
-    public final Object[] getValues() {
-        Object[] r = new Object[valuesMap.size()];
-        int i = 0;
-        for (Object value : valuesMap.values()) {
-            r[i] = value;
-            i++;
-        }
-        return r;
+    public IntegerProperty(String name, Integer value) {
+        super(name, value.longValue());
     }
 
-    @Override
-	public Map<String, Object> getValuesMap() {
-        return valuesMap;
-	}
-
-    public ReferenceTabularData put(String key, String value) {
-        valuesMap.put(key, value);
-        return this;
+    public IntegerProperty(String name, Long value) {
+        super(name, value);
     }
 
-	@Override
-	public Object getValue(String key) {
-        return valuesMap.get(key);
-	}
+    public void setValue(Long v) {
+        super.setValue(v);
+    }
 
+    public void setValue(Integer v) {
+        super.setValue(v.longValue());
+    }
 }

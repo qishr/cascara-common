@@ -32,36 +32,18 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.property;
 
-package io.github.qishr.cascara.common.lang.exception;
-
-import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.LocatableException;
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
-import io.github.qishr.cascara.common.lang.ast.AstNode;
-
-public class SerializerException extends LocatableException {
-    /// Standard constructor for serializer-detected mapping errors.
-    public SerializerException(DiagnosticCode code, Object... details) {
-        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, code, details);
+public class BooleanProperty extends Property<Boolean> {
+    public BooleanProperty(String name) {
+        super(name);
     }
 
-    /// Constructor
-    public SerializerException(AstNode node, Throwable cause, DiagnosticCode code, Object... details) {
-        super(null, node.getStartLine(), node.getStartColumn(), cause, code, details);
+    public BooleanProperty(String name, Boolean value) {
+        super(name, value);
     }
 
-    /// Constructor for I/O or Stream failures.
-    public SerializerException(Throwable cause, DiagnosticCode code, Object... details) {
-        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
+    public void setValue(Boolean v) {
+        super.setValue(v);
     }
-
-    //
-    // With Location
-    //
-
-    public SerializerException(AstNode node, DiagnosticCode code, Object... details) {
-        this(node, null, code, details);
-    }
-
 }

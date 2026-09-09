@@ -35,6 +35,8 @@
 
 package io.github.qishr.cascara.common.lang.plain;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -47,6 +49,6 @@ public class PlainMapNodeTests {
         PlainScalarNode value = new PlainScalarNode("value");
         map.put(key, value);
         Set<PlainMapEntryNode> set = map.entrySet();
-
+        assertNotNull(set);
     }
 }

@@ -39,6 +39,6 @@ import io.github.qishr.cascara.common.annotation.Experimental;
 
 @Experimental
 @FunctionalInterface
-public interface StreamHandler<E extends StreamingEvent> {
+public interface StreamHandler<E extends StreamingEvent<?>> {
     void onEvent(E event);
 }

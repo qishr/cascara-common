@@ -35,8 +35,8 @@
 
 package io.github.qishr.cascara.common.service;
 
+import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.util.ContentType;
-import io.github.qishr.cascara.common.util.Properties;
 
 public class ServiceMetadata {
     private final Class<? extends ServiceProvider> type;

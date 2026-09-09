@@ -33,23 +33,31 @@
 // version.
 
 
-package io.github.qishr.cascara.common.util;
+package io.github.qishr.cascara.common.property;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import io.github.qishr.cascara.common.data.TabularData;
 
-public class Property implements TabularData {
-    Kind kind = Kind.STRING;
+import io.github.qishr.cascara.common.data.TabularData;
+import io.github.qishr.cascara.common.lang.type.PrimitiveType;
+
+public class Property<T> implements TabularData {
+    private static final String TABULAR_NAME_FIELD = "name";
+    private static final String TABULAR_VALUE_FIELD = "value";
+
+    PrimitiveType type = PrimitiveType.ANY;
     String name;
-    String value = null;
+    T value = null;
+
+    public Property() {
+    }
 
     public Property(String k) {
         name = k;
     }
 
-    public Property(String k, String v) {
+    public Property(String k, T v) {
         name = k;
         value = v;
     }
@@ -62,40 +70,27 @@ public class Property implements TabularData {
         name = k;
     }
 
-    public Kind getKind() {
-        return kind;
+    public PrimitiveType getType() {
+        return type;
     }
 
-    public void setKind(Kind kind) {
-        this.kind = kind;
+    public void setType(PrimitiveType kind) {
+        this.type = kind;
     }
 
-    public String getString() {
+    public String asString() {
+        return value == null
+            ? null
+            : value.toString();
+    }
+
+    public T getValue() {
         return value;
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String v) {
+    public void setValue(T v) {
         value = v;
-        kind = Kind.STRING;
-    }
-
-    public void setValue(boolean v) {
-        value = v ? "true" : "false";
-        kind = Kind.BOOLEAN;
-    }
-
-    public void setValue(int v) {
-        value = Long.toString(v);
-        kind = Kind.NUMBER;
-    }
-
-    public void setValue(double v) {
-        value = Double.toString(v);
-        kind = Kind.NUMBER;
+        type = PrimitiveType.of(v);
     }
 
     public double asDouble() {
@@ -103,32 +98,38 @@ public class Property implements TabularData {
     }
 
     public double asDouble(double defaultValue) {
+        if (value instanceof Number n) {
+            return n.doubleValue();
+        }
         try {
-            return Double.parseDouble(value);
+            return Double.parseDouble(asString());
         } catch (NumberFormatException e) {
             return defaultValue;
         }
     }
 
-    public int asInt() {
-        return asInt(-1);
+    public int asInteger() {
+        return asInteger(-1);
     }
 
     public long asLong() {
         return asLong(-1);
     }
 
-    public int asInt(int defaultValue) {
+    public int asInteger(int defaultValue) {
         return (int) asLong(defaultValue);
     }
 
     public long asLong(int defaultValue) {
+        if (value instanceof Number n) {
+            return n.longValue();
+        }
         try {
-            return Long.parseLong(value);
+            return Long.parseLong(asString());
         } catch (NumberFormatException e) {
         }
         try {
-            return Double.valueOf(value).longValue();
+            return Double.valueOf(asString()).longValue();
         } catch (NumberFormatException e) {
         }
         return defaultValue;
@@ -139,22 +140,24 @@ public class Property implements TabularData {
     }
 
     public boolean asBoolean(boolean defaultValue) {
-        if (value == null || value.isBlank()) {
+        if (value instanceof Boolean v) {
+            return v;
+        }
+        String stringValue = asString();
+        if (stringValue == null || stringValue.isBlank()) {
             return defaultValue;
         }
-        return (value.equalsIgnoreCase("true") ||
-             value.equalsIgnoreCase("yes"));
+        return (stringValue.equalsIgnoreCase("true") ||
+        stringValue.equalsIgnoreCase("yes"));
     }
 
     public boolean isEmpty() {
-        return value == null || value.isEmpty();
+        return value == null || asString().isEmpty();
     }
 
-    public enum Kind {
-        STRING,
-        NUMBER,
-        BOOLEAN
-    }
+    //
+    // TabularData Implementation
+    //
 
 	@Override
 	public Object[] getValues() {
@@ -164,18 +167,18 @@ public class Property implements TabularData {
 	@Override
 	public Map<String, Object> getValuesMap() {
         Map<String, Object> map = new HashMap<>();
-        map.put("name", name); // TODO: Make these constants
-        map.put("value", value);
+        map.put(TABULAR_NAME_FIELD, name);
+        map.put(TABULAR_VALUE_FIELD, value);
         return map;
 	}
 
 	@Override
-	public Object get(String key) {
+	public Object getValue(String key) {
         if (key == null) return null;
-        if (key.equals("name")) {
+        if (key.equals(TABULAR_NAME_FIELD)) {
             return this.name;
         }
-        if (key.equals("value")) {
+        if (key.equals(TABULAR_VALUE_FIELD)) {
             return this.value;
         }
         return null;

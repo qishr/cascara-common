@@ -44,14 +44,19 @@ module cascara.common {
     exports io.github.qishr.cascara.common.lang.plain;
     exports io.github.qishr.cascara.common.lang.ast;
     exports io.github.qishr.cascara.common.lang.streaming;
-    exports io.github.qishr.cascara.common.lang.exception;
+    exports io.github.qishr.cascara.common.lang.diagnostic;
     exports io.github.qishr.cascara.common.lang.processor;
     exports io.github.qishr.cascara.common.lang.semantic;
     exports io.github.qishr.cascara.common.lang.token;
     exports io.github.qishr.cascara.common.lang.type;
     exports io.github.qishr.cascara.common.lang.util;
+    exports io.github.qishr.cascara.common.property;
     exports io.github.qishr.cascara.common.semver;
     exports io.github.qishr.cascara.common.service;
+    exports io.github.qishr.cascara.common.trackable;
+    exports io.github.qishr.cascara.common.trackable.diagnostic;
+    exports io.github.qishr.cascara.common.trackable.property;
+    exports io.github.qishr.cascara.common.trackable.tracker;
     exports io.github.qishr.cascara.common.util;
 
     opens io.github.qishr.cascara.common.util;

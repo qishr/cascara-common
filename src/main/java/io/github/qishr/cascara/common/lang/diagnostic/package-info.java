@@ -33,46 +33,4 @@
 // version.
 
 
-package io.github.qishr.cascara.common.reference;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import io.github.qishr.cascara.common.data.TabularData;
-
-/// A reference implementation of TabularData
-public class ReferenceTabularData implements TabularData {
-
-    private Map<String, Object> valuesMap = new HashMap<>();
-
-    public ReferenceTabularData() {
-        // Nothing to see here
-    }
-
-    @Override
-    public final Object[] getValues() {
-        Object[] r = new Object[valuesMap.size()];
-        int i = 0;
-        for (Object value : valuesMap.values()) {
-            r[i] = value;
-            i++;
-        }
-        return r;
-    }
-
-    @Override
-	public Map<String, Object> getValuesMap() {
-        return valuesMap;
-	}
-
-    public ReferenceTabularData put(String key, String value) {
-        valuesMap.put(key, value);
-        return this;
-    }
-
-	@Override
-	public Object getValue(String key) {
-        return valuesMap.get(key);
-	}
-
-}
+package io.github.qishr.cascara.common.lang.diagnostic;

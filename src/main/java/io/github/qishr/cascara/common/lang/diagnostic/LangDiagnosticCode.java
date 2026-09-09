@@ -33,7 +33,9 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic.code;
+package io.github.qishr.cascara.common.lang.diagnostic;
+
+import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 
 public enum LangDiagnosticCode implements DiagnosticCode {
     EXPECTED_STREAM_START("LANG-101", "Expected stream start."),

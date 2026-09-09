@@ -32,22 +32,14 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.trackable;
 
-package io.github.qishr.cascara.common.lang.exception;
+import java.util.Map;
 
-import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.diagnostic.AbstractLocalizableException;
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
-
-@Experimental
-public class JsonPointerException extends AbstractLocalizableException {
-
-	public JsonPointerException(DiagnosticCode code, Object... details) {
-		super(code, details);
-	}
-
-	public JsonPointerException(Throwable cause, DiagnosticCode code, Object... details) {
-		super(cause, code, details);
-	}
-
+public interface TrackableTabularData {
+    Map<String,Object> getValuesMap() ;
+    Object[] getValues() ;
+    Trackable[] getTrackables();
+    Map<String,Trackable> getTrackablesMap();
+    Trackable getTrackable(String key);
 }

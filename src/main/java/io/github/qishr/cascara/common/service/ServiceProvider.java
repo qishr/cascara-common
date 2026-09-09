@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.service;
 
-import io.github.qishr.cascara.common.util.Properties;
+import io.github.qishr.cascara.common.property.Properties;
 
 public interface ServiceProvider {
     Properties getServiceProperties();

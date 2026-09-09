@@ -32,47 +32,25 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.trackable.tracker;
 
-package io.github.qishr.cascara.common.reference;
+public final class ArrayChangeTracker<E> {
+    public enum Type { ADD, REMOVE, SET, CLEAR }
 
-import java.util.HashMap;
-import java.util.Map;
+    private final Type type;
+    private final int index;
+    private final E oldValue;
+    private final E newValue;
 
-import io.github.qishr.cascara.common.data.TabularData;
-
-/// A reference implementation of TabularData
-public class ReferenceTabularData implements TabularData {
-
-    private Map<String, Object> valuesMap = new HashMap<>();
-
-    public ReferenceTabularData() {
-        // Nothing to see here
+    public ArrayChangeTracker(Type type, int index, E oldValue, E newValue) {
+        this.type = type;
+        this.index = index;
+        this.oldValue = oldValue;
+        this.newValue = newValue;
     }
 
-    @Override
-    public final Object[] getValues() {
-        Object[] r = new Object[valuesMap.size()];
-        int i = 0;
-        for (Object value : valuesMap.values()) {
-            r[i] = value;
-            i++;
-        }
-        return r;
-    }
-
-    @Override
-	public Map<String, Object> getValuesMap() {
-        return valuesMap;
-	}
-
-    public ReferenceTabularData put(String key, String value) {
-        valuesMap.put(key, value);
-        return this;
-    }
-
-	@Override
-	public Object getValue(String key) {
-        return valuesMap.get(key);
-	}
-
+    public Type getType() { return type; }
+    public int getIndex() { return index; }
+    public E getOldValue() { return oldValue; }
+    public E getNewValue() { return newValue; }
 }

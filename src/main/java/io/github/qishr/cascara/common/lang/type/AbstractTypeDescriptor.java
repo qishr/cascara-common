@@ -36,7 +36,7 @@
 package io.github.qishr.cascara.common.lang.type;
 
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
-import io.github.qishr.cascara.common.util.Properties;
+import io.github.qishr.cascara.common.property.Properties;
 
 public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
     public static final String KEYWORD_TYPE = "type";

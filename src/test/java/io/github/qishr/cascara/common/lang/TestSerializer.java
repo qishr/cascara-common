@@ -40,7 +40,7 @@ import java.io.Reader;
 import java.io.Writer;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.lang.exception.SerializerException;
+import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.plain.PlainMapEntryNode;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
@@ -111,7 +111,7 @@ public class TestSerializer extends AbstractSerializer<TestSerializer,PlainNode,
         return null;
     }
 
-    public <C> C fromText(String text, TypeReference<C> typeRef) {
+    public <C> C fromString(String text, TypeReference<C> typeRef) {
         return null;
     }
 

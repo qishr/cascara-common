@@ -43,13 +43,13 @@ public abstract class LocatableException extends LocalizableRuntimeException {
     private final int line;
     private final int column;
     private URI uri;
-    private final String message; // TODO
+    // private final String message; // TODO
     private final String rawMessage;
 
     /// Standard Constructor
     public LocatableException(URI uri, int line, int column, Throwable cause, DiagnosticCode code, Object... details) {
         super(cause, code, details);
-        this.message = messageWithLocation(code.getMessage(), line, uri);
+        // this.message = messageWithLocation(code.getMessage(), line, uri);
         this.rawMessage = code.getMessage();
         this.line = line;
         this.column = column;
@@ -66,13 +66,13 @@ public abstract class LocatableException extends LocalizableRuntimeException {
         this(uri, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
     }
 
-    private static String messageWithLocation(String message, int line, URI uri) {
-        if (uri == null) {
-            return String.format("%s at line %d", message, line);
-        } else {
-            return String.format("%s at %s:%d", message, uri.toString(), line);
-        }
-    }
+    // private static String messageWithLocation(String message, int line, URI uri) {
+    //     if (uri == null) {
+    //         return String.format("%s at line %d", message, line);
+    //     } else {
+    //         return String.format("%s at %s:%d", message, uri.toString(), line);
+    //     }
+    // }
 
     public int getLine() { return line; }
     public int getColumn() { return column; }

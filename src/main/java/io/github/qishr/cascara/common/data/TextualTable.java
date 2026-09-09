@@ -112,7 +112,7 @@ public class TextualTable {
         String[] strings = new String[columns.size()];
         for (int i = 0; i < columns.size(); i++) {
             String columnName = columns.get(i).getHeaderText();
-            Object value = row.get(columnName);
+            Object value = row.getValue(columnName);
             strings[i] = value == null ? "" : value.toString();
         }
         return strings;

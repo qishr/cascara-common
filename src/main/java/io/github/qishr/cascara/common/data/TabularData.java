@@ -41,5 +41,5 @@ import java.util.Map;
 public interface TabularData {
     Object[] getValues();
     Map<String,Object> getValuesMap();
-    Object get(String key);
+    Object getValue(String key);
 }

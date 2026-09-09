@@ -37,11 +37,10 @@ package io.github.qishr.cascara.common.lang.util;
 
 import java.io.InputStream;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
-import io.github.qishr.cascara.common.util.Properties;
+import io.github.qishr.cascara.common.property.Properties;
 
 @Experimental
 public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSequence {
@@ -55,7 +54,7 @@ public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSeq
     private int windowStartOffset = 0;
     private int windowStartLine = 1;
     private int windowStartColumn = 1;
-    private byte[] raw;
+    // private byte[] raw;
     private char previous;
 
     public SourceStringBuffer() {
@@ -72,7 +71,7 @@ public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSeq
 
     public SourceStringBuffer open(String source) {
         this.source = source != null ? source : "";
-        this.raw = this.source.getBytes(StandardCharsets.UTF_8);
+        // this.raw = this.source.getBytes(StandardCharsets.UTF_8);
         return this;
     }
 

@@ -32,47 +32,21 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.trackable.property;
 
-package io.github.qishr.cascara.common.reference;
+import io.github.qishr.cascara.common.annotation.Experimental;
 
-import java.util.HashMap;
-import java.util.Map;
+@Experimental
+public class TrackableStringProperty extends TrackableProperty<String> {
+    public TrackableStringProperty() {
 
-import io.github.qishr.cascara.common.data.TabularData;
-
-/// A reference implementation of TabularData
-public class ReferenceTabularData implements TabularData {
-
-    private Map<String, Object> valuesMap = new HashMap<>();
-
-    public ReferenceTabularData() {
-        // Nothing to see here
     }
 
-    @Override
-    public final Object[] getValues() {
-        Object[] r = new Object[valuesMap.size()];
-        int i = 0;
-        for (Object value : valuesMap.values()) {
-            r[i] = value;
-            i++;
-        }
-        return r;
+    public TrackableStringProperty(Object owner, String name, String value) {
+        super(owner, name, value);
     }
 
-    @Override
-	public Map<String, Object> getValuesMap() {
-        return valuesMap;
-	}
-
-    public ReferenceTabularData put(String key, String value) {
-        valuesMap.put(key, value);
-        return this;
+    public void setValue(String v) {
+        super.setValue(v);
     }
-
-	@Override
-	public Object getValue(String key) {
-        return valuesMap.get(key);
-	}
-
 }

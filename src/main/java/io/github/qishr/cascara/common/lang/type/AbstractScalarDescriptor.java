@@ -36,8 +36,8 @@
 package io.github.qishr.cascara.common.lang.type;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.diagnostic.code.LangDiagnosticCode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
+import io.github.qishr.cascara.common.lang.diagnostic.LangDiagnosticCode;
 
 public abstract class AbstractScalarDescriptor<T> extends AbstractTypeDescriptor<T> implements ScalarDescriptor<T> {
     public static final String KEYWORD_FORMAT = "format";

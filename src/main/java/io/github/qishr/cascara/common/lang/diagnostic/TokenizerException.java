@@ -33,46 +33,21 @@
 // version.
 
 
-package io.github.qishr.cascara.common.reference;
+package io.github.qishr.cascara.common.lang.diagnostic;
 
-import java.util.HashMap;
-import java.util.Map;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.LocatableException;
+import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 
-import io.github.qishr.cascara.common.data.TabularData;
+public class TokenizerException extends LocatableException {
 
-/// A reference implementation of TabularData
-public class ReferenceTabularData implements TabularData {
-
-    private Map<String, Object> valuesMap = new HashMap<>();
-
-    public ReferenceTabularData() {
-        // Nothing to see here
+    /// Standard constructor for tokenizer-detected logic errors.
+    public TokenizerException(int line, int column, DiagnosticCode code, Object... details) {
+        super(null, line, column, code, details);
     }
 
-    @Override
-    public final Object[] getValues() {
-        Object[] r = new Object[valuesMap.size()];
-        int i = 0;
-        for (Object value : valuesMap.values()) {
-            r[i] = value;
-            i++;
-        }
-        return r;
+    /// Constructor for I/O or Stream failures.
+    public TokenizerException(Throwable cause, DiagnosticCode code, Object... details) {
+        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
     }
-
-    @Override
-	public Map<String, Object> getValuesMap() {
-        return valuesMap;
-	}
-
-    public ReferenceTabularData put(String key, String value) {
-        valuesMap.put(key, value);
-        return this;
-    }
-
-	@Override
-	public Object getValue(String key) {
-        return valuesMap.get(key);
-	}
-
 }

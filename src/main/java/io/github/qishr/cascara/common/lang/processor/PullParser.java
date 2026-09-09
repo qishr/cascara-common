@@ -36,7 +36,7 @@
 package io.github.qishr.cascara.common.lang.processor;
 
 import io.github.qishr.cascara.common.annotation.Beta;
-import io.github.qishr.cascara.common.lang.exception.ParserException;
+import io.github.qishr.cascara.common.lang.diagnostic.ParserException;
 import io.github.qishr.cascara.common.lang.streaming.StreamingEvent;
 
 import java.lang.AutoCloseable;

@@ -38,8 +38,8 @@ package io.github.qishr.cascara.common.service;
 import java.util.function.Predicate;
 
 import io.github.qishr.cascara.common.annotation.Beta;
+import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.util.ContentType;
-import io.github.qishr.cascara.common.util.Properties;
 
 public class CapabilityQueries {
 

@@ -37,7 +37,7 @@ package io.github.qishr.cascara.common.lang.type;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
-import io.github.qishr.cascara.common.lang.exception.SerializerException;
+import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 
 public interface TypeSerializer<T> extends TypeDescriptor<T> {
     /// Transforms a concrete Java object into its structural AST representation.

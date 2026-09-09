@@ -32,29 +32,31 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.trackable;
 
-package io.github.qishr.cascara.common.util;
+import java.util.ArrayList;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import io.github.qishr.cascara.common.trackable.tracker.InvalidationTracker;
 
-import org.junit.jupiter.api.Test;
+public abstract class AbstractTrackable implements Trackable {
+    private final List<InvalidationTracker> listeners = new ArrayList<>();
 
-public class PropertiesTests {
-
-    @Test
-    void test_string() {
-        Properties properties = new Properties();
-        properties.set("key", "value");
-        assertEquals("value", properties.getString("key"));
-    }
-
-    public class TestObject {
-        private String value = "";
-        public TestObject(String v) {
-            value = v;
-        }
-        public String getValue() {
-            return value;
+    protected void invalidate() {
+        for (InvalidationTracker listener : listeners) {
+            listener.invalidated(this);
         }
     }
+
+    @Override
+    public void addTracker(InvalidationTracker listener) {
+        if (listeners.contains(listener)) return;
+        listeners.add(listener);
+    }
+
+    @Override
+    public void removeTracker(InvalidationTracker listener) {
+        listeners.remove(listener);
+    }
+
 }

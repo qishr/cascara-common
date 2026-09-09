@@ -77,7 +77,7 @@ public class SimpleTreeNode implements TreeData<SimpleTreeNode,List<TabularData>
 	}
 
 	@Override
-	public Object get(String key) {
+	public Object getValue(String key) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("Unimplemented method 'get'");
 	}

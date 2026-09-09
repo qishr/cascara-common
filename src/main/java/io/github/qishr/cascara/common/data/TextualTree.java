@@ -41,8 +41,8 @@ import java.util.List;
 
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
-import io.github.qishr.cascara.common.util.Properties;
-import io.github.qishr.cascara.common.util.Property;
+import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.property.Property;
 
 public class TextualTree<T extends TreeData<T,V>,V> {
     private static final String NL = "\n";
@@ -100,7 +100,7 @@ public class TextualTree<T extends TreeData<T,V>,V> {
                 System.err.println("[Tree] Unhandled list type: " + firstElement.getClass().getSimpleName());
             }
         } else if (value instanceof Properties properties) {
-            List<Property> rows = properties.asList();
+            List<Property<?>> rows = properties.asList();
             int columnCount = 2;
             renderTable(writer, columnCount, rows, indent);
         } else {

@@ -32,29 +32,11 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.trackable.tracker;
 
-package io.github.qishr.cascara.common.util;
+import io.github.qishr.cascara.common.trackable.TrackableArray;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import org.junit.jupiter.api.Test;
-
-public class PropertyTests {
-
-    @Test
-    void test_stringValue() {
-        Property property = new Property("key");
-        property.setValue("value");
-
-        assertEquals("value", property.getString());
-    }
-
-    @Test
-    void test_booleanValue() {
-        Property property = new Property("key");
-        property.setValue(true);
-
-        assertEquals(true, property.asBoolean());
-    }
-
+@FunctionalInterface
+public interface ArrayTracker<E> {
+    void onChanged(TrackableArray<E> array, ArrayChangeTracker<E> change);
 }

@@ -32,22 +32,18 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.property;
 
-package io.github.qishr.cascara.common.lang.exception;
-
-import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.LocatableException;
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
-
-public class TokenizerException extends LocatableException {
-
-    /// Standard constructor for tokenizer-detected logic errors.
-    public TokenizerException(int line, int column, DiagnosticCode code, Object... details) {
-        super(null, line, column, code, details);
+public class NumberProperty extends Property<Double> {
+    public NumberProperty(String name) {
+        super(name);
     }
 
-    /// Constructor for I/O or Stream failures.
-    public TokenizerException(Throwable cause, DiagnosticCode code, Object... details) {
-        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
+    public NumberProperty(String name, Double value) {
+        super(name, value);
+    }
+
+    public void setValue(Double v) {
+        super.setValue(v);
     }
 }

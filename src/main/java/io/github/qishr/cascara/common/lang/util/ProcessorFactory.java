@@ -87,14 +87,14 @@ public class ProcessorFactory extends AbstractServiceProviderFactory {
         );
     }
 
-    public PullParser createPullParser(String contentType) throws ServiceException {
+    public PullParser<?> createPullParser(String contentType) throws ServiceException {
         return createServiceProvider(
             PullParser.class,
             CapabilityQueries.hasExactValue(CONTENT_TYPE, contentType)
         );
     }
 
-    public PullParser createPullParser(ContentType contentType) throws ServiceException {
+    public PullParser<?> createPullParser(ContentType contentType) throws ServiceException {
         return createServiceProvider(
             PullParser.class,
             CapabilityQueries.supportsContentType(contentType)

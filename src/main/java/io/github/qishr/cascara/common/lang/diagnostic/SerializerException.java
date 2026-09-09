@@ -33,46 +33,35 @@
 // version.
 
 
-package io.github.qishr.cascara.common.reference;
+package io.github.qishr.cascara.common.lang.diagnostic;
 
-import java.util.HashMap;
-import java.util.Map;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.LocatableException;
+import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.lang.ast.AstNode;
 
-import io.github.qishr.cascara.common.data.TabularData;
-
-/// A reference implementation of TabularData
-public class ReferenceTabularData implements TabularData {
-
-    private Map<String, Object> valuesMap = new HashMap<>();
-
-    public ReferenceTabularData() {
-        // Nothing to see here
+public class SerializerException extends LocatableException {
+    /// Standard constructor for serializer-detected mapping errors.
+    public SerializerException(DiagnosticCode code, Object... details) {
+        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, code, details);
     }
 
-    @Override
-    public final Object[] getValues() {
-        Object[] r = new Object[valuesMap.size()];
-        int i = 0;
-        for (Object value : valuesMap.values()) {
-            r[i] = value;
-            i++;
-        }
-        return r;
+    /// Constructor
+    public SerializerException(AstNode node, Throwable cause, DiagnosticCode code, Object... details) {
+        super(null, node.getStartLine(), node.getStartColumn(), cause, code, details);
     }
 
-    @Override
-	public Map<String, Object> getValuesMap() {
-        return valuesMap;
-	}
-
-    public ReferenceTabularData put(String key, String value) {
-        valuesMap.put(key, value);
-        return this;
+    /// Constructor for I/O or Stream failures.
+    public SerializerException(Throwable cause, DiagnosticCode code, Object... details) {
+        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
     }
 
-	@Override
-	public Object getValue(String key) {
-        return valuesMap.get(key);
-	}
+    //
+    // With Location
+    //
+
+    public SerializerException(AstNode node, DiagnosticCode code, Object... details) {
+        this(node, null, code, details);
+    }
 
 }

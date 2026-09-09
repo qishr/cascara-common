@@ -33,46 +33,28 @@
 // version.
 
 
-package io.github.qishr.cascara.common.reference;
+package io.github.qishr.cascara.common.property;
 
-import java.util.HashMap;
-import java.util.Map;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.github.qishr.cascara.common.data.TabularData;
+import org.junit.jupiter.api.Test;
 
-/// A reference implementation of TabularData
-public class ReferenceTabularData implements TabularData {
+public class PropertiesTests {
 
-    private Map<String, Object> valuesMap = new HashMap<>();
-
-    public ReferenceTabularData() {
-        // Nothing to see here
+    @Test
+    void test_string() {
+        Properties properties = new Properties();
+        properties.set("key", "value");
+        assertEquals("value", properties.getString("key"));
     }
 
-    @Override
-    public final Object[] getValues() {
-        Object[] r = new Object[valuesMap.size()];
-        int i = 0;
-        for (Object value : valuesMap.values()) {
-            r[i] = value;
-            i++;
+    public class TestObject {
+        private String value = "";
+        public TestObject(String v) {
+            value = v;
         }
-        return r;
+        public String getValue() {
+            return value;
+        }
     }
-
-    @Override
-	public Map<String, Object> getValuesMap() {
-        return valuesMap;
-	}
-
-    public ReferenceTabularData put(String key, String value) {
-        valuesMap.put(key, value);
-        return this;
-    }
-
-	@Override
-	public Object getValue(String key) {
-        return valuesMap.get(key);
-	}
-
 }
