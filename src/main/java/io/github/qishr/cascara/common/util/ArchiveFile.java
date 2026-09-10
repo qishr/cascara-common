@@ -53,7 +53,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-// import java.util.zip.*;
+import java.util.function.BiConsumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -63,24 +63,34 @@ import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 
 public class ArchiveFile implements AutoCloseable {
     protected Path archivePath = null;
-    // private FileSystem fileSystem;
     private boolean create;
 
-    public static ArchiveFile load(Path archivePath) throws LocalizableIOException {
-        if (!Files.exists(archivePath)) {
-            throw new LocalizableIOException(FileDiagnosticCode.FILE_NOT_FOUND, archivePath);
-        }
+    public static ArchiveFile open(Path archivePath) throws LocalizableIOException {
         return new ArchiveFile(archivePath, false);
     }
 
     public static ArchiveFile create(Path archivePath) throws LocalizableIOException {
-        // TODO: If it exists, remove and re-create
         return new ArchiveFile(archivePath, true);
     }
 
     protected ArchiveFile(Path archivePath, boolean create) throws LocalizableIOException {
-        if (!create) {
-            // TODO: Exception if it doesn't exist
+        // If it exists and it's not a directory, remove and re-create
+        if (create) {
+            if (Files.exists(archivePath)) {
+                if (Files.isDirectory(archivePath)) {
+                    throw new LocalizableIOException(FileDiagnosticCode.IS_DIRECTORY, archivePath);
+                } else {
+                    try {
+                        Files.delete(archivePath);
+                    } catch (IOException e) {
+                        throw new LocalizableIOException(e, FileDiagnosticCode.DELETE_ERROR, archivePath);
+                    }
+                }
+            }
+        } else {
+            if (!Files.exists(archivePath)) {
+                throw new LocalizableIOException(FileDiagnosticCode.FILE_NOT_FOUND, archivePath);
+            }
         }
         this.archivePath = archivePath;
         this.create = create;
@@ -123,7 +133,7 @@ public class ArchiveFile implements AutoCloseable {
     //
 
     public InputStream getInputStream(String filePath) {
-        byte[] byteArray = this.extractFile(filePath);
+        byte[] byteArray = extractFile(filePath);
         return new ByteArrayInputStream(byteArray);
     }
 
@@ -167,6 +177,15 @@ public class ArchiveFile implements AutoCloseable {
     }
 
     public void addDirectory(Path sourcePath, String entryName) throws LocalizableIOException {
+        // TODO: This pattern needs a less boilerplatey way of implementing
+        List<LocalizableIOException> exceptions = new ArrayList<>();
+        walk(sourcePath, entryName, exceptions, (source, entryPath) -> addFileInternalNoException(source, entryPath, exceptions));
+        if (!exceptions.isEmpty()) {
+            throw exceptions.getFirst();
+        }
+    }
+
+    protected void walk(Path sourcePath, String entryName, List<LocalizableIOException> exceptions, BiConsumer<Path,Path> run) throws LocalizableIOException {
         List<Path> directoryListing;
         try {
             directoryListing = Files.walk(sourcePath)
@@ -188,7 +207,7 @@ public class ArchiveFile implements AutoCloseable {
                 String internalFilePath = entryPrefix + "/" + relative.toString().toString()
                     .replace(File.separatorChar, '/');
                 Path entryPath = fileSystem.getPath(internalFilePath);
-                addFileInternal(file, entryPath);
+                run.accept(file, entryPath);
             }
         } catch (IOException e) {
             throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
@@ -196,7 +215,7 @@ public class ArchiveFile implements AutoCloseable {
     }
 
     public void addFile(Path sourcePath, String entryName) throws LocalizableIOException{
-        System.out.println("addFile: sourcePath=" + sourcePath + ", entryName=" + entryName);
+        // System.out.println("addFile: sourcePath=" + sourcePath + ", entryName=" + entryName);
         try (FileSystem fileSystem = getFileSystem()) {
             addFileInternal(sourcePath, fileSystem.getPath(entryName));
         } catch (IOException e) {
@@ -205,7 +224,7 @@ public class ArchiveFile implements AutoCloseable {
     }
 
     public void addFile(String content, String entryName) throws LocalizableIOException {
-        System.out.println("addFile: " + content + "\nentryName=" + entryName);
+        // System.out.println("addFile: " + content + "\nentryName=" + entryName);
         try (FileSystem fileSystem = getFileSystem()) {
             addFileInternal(content, fileSystem.getPath(entryName));
         } catch (IOException e) {
@@ -243,6 +262,14 @@ public class ArchiveFile implements AutoCloseable {
     }
 
     private void addFileInternal(Path sourcePath, Path entryPath) throws LocalizableIOException{
+        List<LocalizableIOException> exceptions = new ArrayList<>();
+        addFileInternalNoException(sourcePath, entryPath, exceptions);
+        if (!exceptions.isEmpty()) {
+            throw exceptions.getFirst();
+        }
+    }
+
+    private void addFileInternalNoException(Path sourcePath, Path entryPath, List<LocalizableIOException> exceptions) {
         try (FileInputStream in = new FileInputStream(sourcePath.toFile())) {
             byte[] buf = new byte[1024];
             int len;
@@ -254,9 +281,9 @@ public class ArchiveFile implements AutoCloseable {
                 in.close();
             }
         } catch (FileNotFoundException e) {
-            throw new LocalizableIOException(e, FileDiagnosticCode.FILE_NOT_FOUND, sourcePath);
+            exceptions.add(new LocalizableIOException(e, FileDiagnosticCode.FILE_NOT_FOUND, sourcePath));
         } catch (IOException e) {
-            throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+            exceptions.add(new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage()));
         }
     }
 

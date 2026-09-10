@@ -38,9 +38,12 @@ package io.github.qishr.cascara.common.diagnostic.code;
 public enum FileDiagnosticCode implements DiagnosticCode {
     FILE_NOT_FOUND("FILE-101", "File not found: {0}"),
     ACCESS_DENIED("FILE-102", "Access denied"),
+    IS_DIRECTORY("FILE-103", "{0} is a directory"),
+
     DISK_FULL("FILE-201", "Disk Full"),
     READ_ERROR("FILE-202", "Error reaing file {0}"),
-    WRITE_ERROR("FILE-203", "Error writing file {0}");
+    WRITE_ERROR("FILE-203", "Error writing file {0}"),
+    DELETE_ERROR("FILE-204", "Error deleting file {0}");
 
     private final String code;
     private final String message;

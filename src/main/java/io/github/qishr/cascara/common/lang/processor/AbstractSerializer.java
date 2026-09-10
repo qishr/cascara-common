@@ -638,9 +638,11 @@ public abstract class AbstractSerializer<
             Object key;
             if (entry.getKey() instanceof ScalarAstNode scalarKey) {
                 key = deserializeScalar(scalarKey, keyType);
+            } else if (entry.getKey() instanceof String string) {
+                key = string;
             } else {
                 // TODO: Implement this...
-                throw new SerializerException(node, GenericDiagnosticCode.ERROR, "Non-scalar key not implemented");
+                throw new SerializerException(node, GenericDiagnosticCode.ERROR, "Non-scalar key not implemented: " + entry.getKey());
             }
 
             Object val = deserializeField(entry.getValue(), field, valType);
