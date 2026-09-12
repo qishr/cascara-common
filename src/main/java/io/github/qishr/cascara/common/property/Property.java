@@ -46,9 +46,9 @@ public class Property<T> implements TabularData {
     private static final String TABULAR_NAME_FIELD = "name";
     private static final String TABULAR_VALUE_FIELD = "value";
 
-    PrimitiveType type = PrimitiveType.ANY;
-    String name;
-    T value = null;
+    private PrimitiveType primitiveType = PrimitiveType.ANY;
+    private String name;
+    private T value = null;
 
     public Property() {
     }
@@ -70,18 +70,12 @@ public class Property<T> implements TabularData {
         name = k;
     }
 
-    public PrimitiveType getType() {
-        return type;
+    public PrimitiveType getPrimitiveType() {
+        return primitiveType;
     }
 
-    public void setType(PrimitiveType kind) {
-        this.type = kind;
-    }
-
-    public String asString() {
-        return value == null
-            ? null
-            : value.toString();
+    public void setPrimitiveType(PrimitiveType kind) {
+        this.primitiveType = kind;
     }
 
     public T getValue() {
@@ -90,7 +84,13 @@ public class Property<T> implements TabularData {
 
     public void setValue(T v) {
         value = v;
-        type = PrimitiveType.of(v);
+        primitiveType = PrimitiveType.of(v);
+    }
+
+    public String asString() {
+        return value == null
+            ? null
+            : value.toString();
     }
 
     public double asDouble() {

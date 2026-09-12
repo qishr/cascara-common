@@ -46,13 +46,8 @@ import io.github.qishr.cascara.common.trackable.tracker.InvalidationTracker;
 @Experimental
 public class TrackableProperty<T> extends Property<T> implements Trackable {
     private Object owner;
-    private String name;
-    private T value;
-
-    private PrimitiveType primitiveType;
     private String mediaType;
     private boolean isDeclaredProperty;
-
     private final List<InvalidationTracker> listeners = new ArrayList<>();
 
     private InvalidationTracker listener = new InvalidationTracker() {
@@ -69,19 +64,17 @@ public class TrackableProperty<T> extends Property<T> implements Trackable {
         this(null, name, null);
     }
 
-    // TODO: The 2-parameter constructor should be name/value to match Property.
-    public TrackableProperty(Object owner, String name) {
-        this(owner, name, null);
+    public TrackableProperty(String name, T value) {
+        super(name, value);
     }
 
     public TrackableProperty(Object owner, String name, T value) {
+        super(name, value);
         this.owner = owner;
-        this.name = name;
-        this.value = value;
     }
 
-    public TrackableProperty(PrimitiveType schemaType, String mediaType, boolean isDeclaredProperty) {
-        this.primitiveType = schemaType;
+    public TrackableProperty(PrimitiveType primitiveType, String mediaType, boolean isDeclaredProperty) {
+        super.setPrimitiveType(primitiveType);
         this.mediaType = mediaType;
         this.isDeclaredProperty = isDeclaredProperty;
     }
@@ -92,14 +85,6 @@ public class TrackableProperty<T> extends Property<T> implements Trackable {
 
     public void setOwner(Object o) {
         owner = o;
-    }
-
-    public PrimitiveType getPrimitiveType() {
-        return primitiveType;
-    }
-
-    public void setPrimitiveType(PrimitiveType type) {
-        primitiveType = type;
     }
 
     public String getMediaType() {
@@ -118,14 +103,10 @@ public class TrackableProperty<T> extends Property<T> implements Trackable {
         isDeclaredProperty = b;
     }
 
-    // TODO: remove generics from this class. rename base get to getValue
-    public T getValue() {
-        return value;
-    }
-
+    @Override
     public void setValue(T v) {
-        T oldValue = value;
-        value = v;
+        T oldValue = super.getValue();
+        super.setValue(v);
 
         if (oldValue instanceof Trackable t) {
             t.removeTracker(listener);
@@ -154,12 +135,9 @@ public class TrackableProperty<T> extends Property<T> implements Trackable {
         }
     }
 
-    public String getName() {
-        return name;
-    }
-
     public void setName(String s) {
-        name = s;
+        super.setName(s);
+        // name = s;
         invalidate();
     }
 
@@ -183,6 +161,4 @@ public class TrackableProperty<T> extends Property<T> implements Trackable {
     public void removeTracker(InvalidationTracker listener) {
         listeners.remove(listener);
     }
-
-
 }
