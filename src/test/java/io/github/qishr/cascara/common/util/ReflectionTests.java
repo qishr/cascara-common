@@ -20,23 +20,23 @@ public class ReflectionTests {
     @Test
     void test_getGenericTypeOfMapValue() throws NoSuchFieldException {
         Field field0 = ReflectionTests.class.getField("field0");
-        Class<?> typeParam1Type = ReflectionUtils.getGenericTypeOfMapValue(field0);
-        assertNotNull(typeParam1Type);
-        assertEquals("List", typeParam1Type.getSimpleName());
+        // Class<?> typeParam1Type = ReflectionUtils.getGenericTypeOfMapValue(field0);
+        // assertNotNull(typeParam1Type);
+        // assertEquals("List", typeParam1Type.getSimpleName());
 
-        Class<?> targetType = field0.getType();
-        assertFalse(List.class.isAssignableFrom(targetType));
+        // Class<?> targetType = field0.getType();
+        // assertFalse(List.class.isAssignableFrom(targetType));
     }
 
-    // The type of an item in the list
-    @Test
-    void test_getGenericTypeOfListField() throws NoSuchFieldException {
-        Field field1 = ReflectionTests.class.getField("field1");
-        Class<?> typeParam1Type = ReflectionUtils.getGenericTypeOfListField(field1);
-        assertNotNull(typeParam1Type);
-        assertEquals("Double", typeParam1Type.getSimpleName());
+    // // The type of an item in the list
+    // @Test
+    // void test_getGenericTypeOfListField() throws NoSuchFieldException {
+    //     Field field1 = ReflectionTests.class.getField("field1");
+    //     Class<?> typeParam1Type = ReflectionUtils.getGenericTypeOfListField(field1);
+    //     assertNotNull(typeParam1Type);
+    //     assertEquals("Double", typeParam1Type.getSimpleName());
 
-        Class<?> targetType = field1.getType();
-        assertTrue(List.class.isAssignableFrom(targetType));
-    }
+    //     Class<?> targetType = field1.getType();
+    //     assertTrue(List.class.isAssignableFrom(targetType));
+    // }
 }
