@@ -37,9 +37,12 @@ package io.github.qishr.cascara.common.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,21 +79,83 @@ public class ReflectionUtils {
         return getGenericType(field, 1);
     }
 
+
     private static Class<?> getGenericType(Field field, int index) {
         Type genericType = field.getGenericType();
+        System.out.println("DEBUG: field="+field.getDeclaringClass().getCanonicalName() + "." + field.getName());
+
         if (genericType instanceof ParameterizedType pt) {
             Type[] actualTypeArguments = pt.getActualTypeArguments();
             if (actualTypeArguments.length > index) {
                 Type typeArg = actualTypeArguments[index];
-                if (typeArg instanceof Class<?>) {
-                    return (Class<?>) typeArg;
+                System.out.println("DEBUG: typeArg="+typeArg);
+
+                // Case 1: Simple class type
+                if (typeArg instanceof Class<?> cls) {
+                    System.out.println("DEBUG: cls");
+                    return cls;
+                }
+
+                // Case 2: Parameterized type → return raw type
+                if (typeArg instanceof ParameterizedType pType) {
+                    System.out.println("DEBUG: pType");
+                    Type raw = pType.getRawType();
+                    System.out.println("DEBUG: raw=" + raw);
+                    if (raw instanceof Class<?> rawClass) {
+                        return rawClass;
+                    }
+                }
+
+                // Case 3: Type variable → return upper bound raw type
+                if (typeArg instanceof TypeVariable<?> tv) {
+                    System.out.println("DEBUG: tv");
+                    Type[] bounds = tv.getBounds();
+                    if (bounds.length > 0 && bounds[0] instanceof Class<?> boundClass) {
+                        return boundClass;
+                    }
+                }
+
+                // Case 4: Wildcard → return upper bound raw type
+                if (typeArg instanceof WildcardType wt) {
+                    System.out.println("DEBUG: vt");
+                    Type[] bounds = wt.getUpperBounds();
+                    if (bounds.length > 0 && bounds[0] instanceof Class<?> boundClass) {
+                        return boundClass;
+                    }
+                }
+
+                // Case 5: Generic array → return raw component type array class
+                if (typeArg instanceof GenericArrayType ga) {
+                    System.out.println("DEBUG: ga");
+                    Type comp = ga.getGenericComponentType();
+                    if (comp instanceof Class<?> compClass) {
+                        return java.lang.reflect.Array.newInstance(compClass, 0).getClass();
+                    }
                 }
             }
         }
 
-        // TODO: This looks very tied in to serializers...
+        // 2026-08-30 - TODO: This looks very tied in to serializers...
+        // 2026-09-16 - This should probably throw an exception instead of this fallback
         return String.class; // Fallback to String if type cannot be determined
     }
+
+    // private static Class<?> getGenericType(Field field, int index) {
+    //     Type genericType = field.getGenericType();
+    //     if (genericType instanceof ParameterizedType pt) {
+    //         Type[] actualTypeArguments = pt.getActualTypeArguments();
+    //         if (actualTypeArguments.length > index) {
+    //             Type typeArg = actualTypeArguments[index];
+    //             if (typeArg instanceof Class<?>) {
+    //                 return (Class<?>) typeArg;
+    //             }
+    //         }
+    //     }
+
+    //     // 2026-08-30 - TODO: This looks very tied in to serializers...
+    //     // 2026-09-16 - This should probably throw an exception instead of this fallback
+    //     return String.class; // Fallback to String if type cannot be determined
+    // }
 
     @Nullable
     public static String getTestName() {

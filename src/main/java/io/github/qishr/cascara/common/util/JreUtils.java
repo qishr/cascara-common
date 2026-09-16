@@ -47,7 +47,7 @@ import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 
 public class JreUtils {
     public static String getResourceAsString(Class<?> clazz, String path) throws IOException {
-        InputStream inputStream = clazz.getResourceAsStream(path);
+        InputStream inputStream = getResourceAsStream(clazz, path);
         InputStreamReader streamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         String content;
 

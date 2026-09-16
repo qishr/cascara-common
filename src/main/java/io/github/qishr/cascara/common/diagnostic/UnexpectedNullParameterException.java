@@ -42,7 +42,7 @@ import io.github.qishr.cascara.common.util.ReflectionUtils;
 public class UnexpectedNullParameterException extends LocalizableRuntimeException {
 
     public UnexpectedNullParameterException(String paramName) {
-        super(GenericDiagnosticCode.UNEXPECTED_NULL_PARAMETER, paramName, buildMethoDetails(paramName));
+        super(GenericDiagnosticCode.UNEXPECTED_NULL_PARAMETER, buildMethoDetails(paramName));
     }
 
     // TODO: Consistency with UnimplementedMethodException
@@ -51,8 +51,8 @@ public class UnexpectedNullParameterException extends LocalizableRuntimeExceptio
         String className = caller.getL().getName();
         String methodName = caller.getR();
         Object[] details = new Object[2];
-        details[0] = paramName;
-        details[1] = className + "." + methodName;
+        details[0] = className + "." + methodName;
+        details[1] = paramName;
         return details;
     }
 }

@@ -72,7 +72,7 @@ public class ReferenceTabularData implements TabularData {
     }
 
 	@Override
-	public Object getProperty(String key) {
+	public Object getValue(String key) {
         return valuesMap.get(key);
 	}
 

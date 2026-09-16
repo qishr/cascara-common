@@ -47,7 +47,7 @@ public enum LangDiagnosticCode implements DiagnosticCode {
     // Serializer
     FAILED_TO_MAP_TYPE("LANG-401", "Failed to map {0} to YAML AST: {1}"),
     FAILED_TO_MAP_AST("LANG-402", "Failed to map YAML AST to {0}: {1}"),
-    EXPECTED_MAP_STRUCTURE("LANG-303", "Expected a map structure for class {0}"),
+    EXPECTED_MAP_STRUCTURE("LANG-303", "Expected a map structure for {0}"),
     FAILED_SERIALIZE("LANG-304", "Failed to serialize: {0}"),
     FAILED_DESERIALIZE("LANG-305", "Failed to deserialize: {0}: {1}."),
     WRONG_FORMAT("LANG-306", "Data {0} does not conform to format {1}"),
