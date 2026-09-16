@@ -35,19 +35,24 @@
 
 package io.github.qishr.cascara.common.lang;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import io.github.qishr.cascara.common.diagnostic.StandardReporter;
+import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
 
 public class SerializerTest {
     @Test
-    void test() {
+    void test_simpleTypeReference() {
 
         PlainScalarNode s1 = new PlainScalarNode("one");
         PlainScalarNode s2 = new PlainScalarNode("two");
@@ -61,6 +66,34 @@ public class SerializerTest {
         List<String> list = serializer.fromAst(swq, new TypeReference<List<String>>() {});
 
         assertNotNull(list);
+    }
+
+    @Test
+    void test_nestedGenerics() {
+        PlainMapNode map = new PlainMapNode()
+            .put("contributes", new PlainMapNode()
+                .put("themes", new PlainSequenceNode()
+                    .add(
+                        new PlainScalarNode(0.1)
+                    )
+                )
+            );
+
+        TestSerializer serializer = new TestSerializer();
+        serializer.setReporter(new StandardReporter());
+
+        PackageJsonFile pjf = serializer.fromAst(map, PackageJsonFile.class);
+
+        assertNotNull(pjf);
+        List<Double> themes =  pjf.contributes.get("themes");
+
+        assertNotNull(themes);
+        assertEquals(0.1, themes.getFirst());
+    }
+
+    public static class PackageJsonFile {
+        public  Map<String,List<Double>> contributes = new HashMap<>();
+        public  String s;
     }
 
 }
