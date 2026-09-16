@@ -135,7 +135,7 @@ public class Property<T> implements TabularData {
         return (int) asLong(defaultValue);
     }
 
-    public long asLong(int defaultValue) {
+    public long asLong(long defaultValue) {
         if (value instanceof Number n) {
             return n.longValue();
         }
@@ -198,4 +198,10 @@ public class Property<T> implements TabularData {
         }
         return null;
 	}
+
+    // @Override
+    // public Object getProperty(String key) {
+    //     // TODO Auto-generated method stub
+    //     throw new UnsupportedOperationException("Unimplemented method 'getValue'");
+    // }
 }

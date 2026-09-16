@@ -88,7 +88,7 @@ public class ReferenceTreeData implements TreeData<ReferenceTreeData,List<Tabula
 	}
 
 	@Override
-	public Object getValue(String key) {
+	public Object getProperty(String key) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("Unimplemented method 'get'");
 	}

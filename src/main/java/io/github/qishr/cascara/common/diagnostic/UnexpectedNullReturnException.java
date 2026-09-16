@@ -33,52 +33,26 @@
 // version.
 
 
-package io.github.qishr.cascara.common.reference;
+package io.github.qishr.cascara.common.diagnostic;
 
-import java.util.HashMap;
-import java.util.Map;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.util.Pair;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 
-import io.github.qishr.cascara.common.data.TabularData;
-import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+public class UnexpectedNullReturnException extends LocalizableRuntimeException {
 
-/// A reference implementation of TabularData
-public class ReferenceTabularData implements TabularData {
-
-    private Map<String, Object> valuesMap = new HashMap<>();
-
-    public ReferenceTabularData() {
-        // Nothing to see here
+    public UnexpectedNullReturnException(String instanceName, String instanceMethod) {
+        super(GenericDiagnosticCode.UNEXPECTED_NULL_RETURN, instanceName, buildMethoDetails(instanceName, instanceMethod));
     }
 
-    @Override
-    public final Object[] getValues() {
-        Object[] r = new Object[valuesMap.size()];
-        int i = 0;
-        for (Object value : valuesMap.values()) {
-            r[i] = value;
-            i++;
-        }
-        return r;
+    // TODO: Consistency with UnimplementedMethodException
+    private static Object[] buildMethoDetails(String instanceName, String instanceMethod) {
+        // Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
+        // String className = caller.getL().getName();
+        // String methodName = caller.getR();
+        Object[] details = new Object[2];
+        details[0] = instanceName;
+        details[1] = instanceMethod;
+        return details;
     }
-
-    @Override
-	public Map<String, Object> getValuesMap() {
-        return valuesMap;
-	}
-
-    public ReferenceTabularData put(String key, String value) {
-        valuesMap.put(key, value);
-        return this;
-    }
-
-	@Override
-	public Object getProperty(String key) {
-        return valuesMap.get(key);
-	}
-
-    @Override
-    public String getString(String key) {
-        throw new UnimplementedMethodException();
-    }
-
 }
