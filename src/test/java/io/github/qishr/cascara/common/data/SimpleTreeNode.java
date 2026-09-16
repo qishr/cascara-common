@@ -39,6 +39,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+
 public class SimpleTreeNode implements TreeData<SimpleTreeNode,List<TabularData>> {
 
     private String name;
@@ -94,6 +96,11 @@ public class SimpleTreeNode implements TreeData<SimpleTreeNode,List<TabularData>
 
 	public Object[] getValues() {
 		return values.toArray();
+	}
+
+	@Override
+	public String getString(String key) {
+		throw new UnimplementedMethodException();
 	}
 
 }

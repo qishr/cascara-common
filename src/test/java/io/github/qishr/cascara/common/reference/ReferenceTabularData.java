@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.github.qishr.cascara.common.data.TabularData;
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 
 /// A reference implementation of TabularData
 public class ReferenceTabularData implements TabularData {
@@ -74,5 +75,10 @@ public class ReferenceTabularData implements TabularData {
 	public Object getValue(String key) {
         return valuesMap.get(key);
 	}
+
+    @Override
+    public String getString(String key) {
+        throw new UnimplementedMethodException();
+    }
 
 }

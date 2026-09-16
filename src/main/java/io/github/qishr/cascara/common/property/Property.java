@@ -87,6 +87,21 @@ public class Property<T> implements TabularData {
         primitiveType = PrimitiveType.of(v);
     }
 
+    @Override
+    public String getString(String name) {
+        if (name == null) {
+            return null;
+        } else if (name.equals("name")) {
+            return name;
+        } else if (name.equals("value")) {
+            return value == null
+                ? null
+                : String.valueOf(value);
+        } else {
+            return null;
+        }
+    }
+
     public String asString() {
         return value == null
             ? null

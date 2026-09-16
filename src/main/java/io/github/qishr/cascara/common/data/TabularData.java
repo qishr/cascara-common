@@ -42,4 +42,5 @@ public interface TabularData {
     Object[] getValues();
     Map<String,Object> getValuesMap();
     Object getValue(String key);
+    String getString(String key);
 }

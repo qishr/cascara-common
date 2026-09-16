@@ -41,6 +41,7 @@ import java.util.Map;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.data.TreeData;
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 
 @Experimental
@@ -97,17 +98,19 @@ public class AstTreeData implements TreeData<AstTreeData,AstNode> {
 
 	@Override
 	public Map<String, Object> getValuesMap() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'getValuesMap'");
+		throw new UnimplementedMethodException();
 	}
 
 	@Override
 	public Object getValue(String key) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'get'");
+		throw new UnimplementedMethodException();
 	}
 
 	@Override
+	public String getString(String key) {
+		throw new UnimplementedMethodException();
+	}
+
 	public AstNode getPayload() {
         return payload;
 	}

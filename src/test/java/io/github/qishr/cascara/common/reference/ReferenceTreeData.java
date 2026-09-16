@@ -41,6 +41,7 @@ import java.util.Map;
 
 import io.github.qishr.cascara.common.data.TabularData;
 import io.github.qishr.cascara.common.data.TreeData;
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 
 /// A reference implementation of TreeData
 public class ReferenceTreeData implements TreeData<ReferenceTreeData,List<TabularData>> {
@@ -101,4 +102,9 @@ public class ReferenceTreeData implements TreeData<ReferenceTreeData,List<Tabula
         value = data;
         return this;
     }
+
+	@Override
+	public String getString(String key) {
+		throw new UnimplementedMethodException();
+	}
 }
