@@ -36,8 +36,11 @@
 package io.github.qishr.cascara.common.lang;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +48,12 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.StandardReporter;
+import io.github.qishr.cascara.common.lang.ast.AstNode;
+import io.github.qishr.cascara.common.lang.ast.MapAstNode;
+import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
+import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
+import io.github.qishr.cascara.common.lang.plain.PlainNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
@@ -67,13 +75,13 @@ public class SerializerTests extends SerializerTestBase {
         assertNotNull(list);
     }
 
-    public static class PackageJsonFile {
+    public static class SimpleNestedObjects {
         public  Map<String,List<Double>> contributes = new HashMap<>();
         public  String s;
     }
 
     @Test
-    void test_nestedGenerics() {
+    void test_fromAst_nestedGenerics() {
         PlainMapNode map = new PlainMapNode()
             .put("contributes", new PlainMapNode()
                 .put("themes", new PlainSequenceNode()
@@ -83,12 +91,79 @@ public class SerializerTests extends SerializerTestBase {
                 )
             );
 
-        PackageJsonFile pjf = serializer.fromAst(map, PackageJsonFile.class);
+        SimpleNestedObjects sno = serializer.fromAst(map, SimpleNestedObjects.class);
 
-        assertNotNull(pjf);
-        List<Double> themes =  pjf.contributes.get("themes");
+        assertNotNull(sno);
+        List<Double> themes =  sno.contributes.get("themes");
 
         assertNotNull(themes);
         assertEquals(0.1, themes.getFirst());
+    }
+
+    public static sealed class Contribution {
+    }
+
+    public static final class ThemeContribution extends Contribution {
+        public String name;
+    }
+
+    public static class PackageJsonFile {
+        public  Map<String,List<Contribution>> contributes = new HashMap<>();
+        public  String s;
+    }
+
+    @Test
+    void test_fromAst_nestedGenerics2() {
+        PlainMapNode map = new PlainMapNode()
+            .put("contributes", new PlainMapNode()
+                .put("themes", new PlainSequenceNode()
+                    .add(new PlainMapNode()
+                        .put("name", "TestName")
+                    )
+                )
+            );
+
+        PackageJsonFile pjf = serializer.fromAst(map, PackageJsonFile.class);
+
+        assertNotNull(pjf);
+        List<Contribution> themes =  pjf.contributes.get("themes");
+
+        assertNotNull(themes);
+        assertFalse(themes.isEmpty());
+
+        Contribution c = themes.getFirst();
+        assertNotNull(c);
+
+        ThemeContribution t = (ThemeContribution) c;
+
+        assertEquals("TestName", t.name);
+    }
+
+    @Test
+    void test_toAst_nestedGenerics2() {
+        ThemeContribution tc = new ThemeContribution();
+        tc.name = "TestName";
+        List<Contribution> contribs = new ArrayList<>();
+        contribs.add(tc);
+        PackageJsonFile pjf = new PackageJsonFile();
+        pjf.contributes.put("themes", contribs);
+
+        AstNode rootNode = serializer.toAst(pjf);
+        assertInstanceOf(MapAstNode.class, rootNode);
+        MapAstNode rootMap = (MapAstNode) rootNode;
+
+        AstNode contribsNode = rootMap.get("contributes");
+        MapAstNode contribsMap = (MapAstNode) contribsNode;
+        SequenceAstNode seq = (SequenceAstNode) contribsMap.get("themes");
+        assertFalse(seq.isEmpty());
+
+        // TODO: SequenceAstNode does not have getMap() ?
+        MapAstNode theme = (MapAstNode) seq.getFirst();
+        assertNotNull(theme);
+
+        ScalarAstNode nameNode = theme.getScalar("name");
+        assertNotNull(nameNode);
+        assertEquals("TestName", nameNode.asString());
+
     }
 }
