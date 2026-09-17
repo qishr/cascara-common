@@ -44,6 +44,8 @@ import io.github.qishr.cascara.common.lang.token.Token;
 
 public class NoOpReporter implements Reporter {
 
+    private static final NoOpReportWriter WRITER = new NoOpReportWriter();
+
     public NoOpReporter(Consumer<String> writer) {
     }
 
@@ -91,7 +93,7 @@ public class NoOpReporter implements Reporter {
     }
 
     public ReportWriter getWriter(Diagnostic.Level level) {
-        return null;
+        return WRITER;
     }
 
     //

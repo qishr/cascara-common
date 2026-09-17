@@ -40,8 +40,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.data.TabularData;
+import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.diagnostic.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.util.Duplicable;
 
 public class Properties implements TabularData, Duplicable<Properties> {
@@ -49,7 +54,7 @@ public class Properties implements TabularData, Duplicable<Properties> {
     Map<String,Property<?>> propertiesMap = new HashMap<>();
 
     public boolean containsKey(String k) {
-        return null != getValue(k);
+        return null != getProperty(k);
     }
 
     @Override
@@ -61,22 +66,59 @@ public class Properties implements TabularData, Duplicable<Properties> {
         return propertiesList;
     }
 
-    public Property<?> getValue(String name) {
-        List<Property<?>> copy = new ArrayList<>(propertiesList);
-        for (Property<?> prop : copy) {
-            if (prop.getName() == null) {
-                System.out.println("shoud not be null");
-            } else {
-                if (prop.getName().equals(name)) {
-                    return prop;
-                }
+    @Nullable
+    public <T> Property<T> getProperty(String name) {
+        if (name == null) {
+            throw new UnexpectedNullParameterException("name");
+        }
+
+        List<Property<?>> snapshot = new ArrayList<>(propertiesList);
+
+        for (Property<?> prop : snapshot) {
+            String propName = prop.getName();
+            if (propName == null) {
+                throw new UnexpectedNullReturnException("prop", "getName");
+            }
+            if (propName.equals(name)) {
+                @SuppressWarnings("unchecked")
+                Property<T> typed = (Property<T>) prop;
+                return typed;
             }
         }
+
         return null;
     }
 
+    public Object getValue(String name) {
+        return get(name);
+    }
+
+    @Nullable
+    public <T> T get(String name) {
+        if (name == null) {
+            throw new UnexpectedNullParameterException("name");
+        }
+
+        List<Property<?>> snapshot = new ArrayList<>(propertiesList);
+
+        for (Property<?> prop : snapshot) {
+            String propName = prop.getName();
+            if (propName == null) {
+                throw new UnexpectedNullReturnException("prop", "getName");
+            }
+            if (propName.equals(name)) {
+                @SuppressWarnings("unchecked")
+                T value = (T) prop.getValue();
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
     public String getString(String name) {
-        Property<?> property = getValue(name);
+        Property<?> property = getProperty(name);
         if (property == null) {
             return null;
         }
@@ -84,7 +126,7 @@ public class Properties implements TabularData, Duplicable<Properties> {
     }
 
     public String getString(String name, String defaultValue) {
-        Property<?> property = getValue(name);
+        Property<?> property = getProperty(name);
         if (property == null) {
             return defaultValue;
         }
@@ -92,15 +134,15 @@ public class Properties implements TabularData, Duplicable<Properties> {
     }
 
     public int getInt(String name, int defaultValue) {
-        Property<?> property = getValue(name);
+        Property<?> property = getProperty(name);
         if (property == null) {
             return defaultValue;
         }
         return property.asInteger(defaultValue);
     }
 
-    public long getLong(String name, int defaultValue) {
-        Property<?> property = getValue(name);
+    public long getLong(String name, long defaultValue) {
+        Property<?> property = getProperty(name);
         if (property == null) {
             return defaultValue;
         }
@@ -108,15 +150,25 @@ public class Properties implements TabularData, Duplicable<Properties> {
     }
 
     public double getDouble(String name, double defaultValue) {
-        Property<?> property = getValue(name);
+        Property<?> property = getProperty(name);
         if (property == null) {
             return defaultValue;
         }
         return property.asDouble(defaultValue);
     }
 
+    /// For consistency with JSONSchema
+    public double getNumber(String name, double defaultValue) {
+        return getDouble(name, defaultValue);
+    }
+
+    /// For consistency with JSONSchema
+    public long getInteger(String name, long defaultValue) {
+        return getLong(name, defaultValue);
+    }
+
     public boolean getBoolean(String name, boolean defaultValue) {
-        Property<?> property = getValue(name);
+        Property<?> property = getProperty(name);
         if (property == null) {
             return defaultValue;
         }
@@ -125,7 +177,7 @@ public class Properties implements TabularData, Duplicable<Properties> {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public Properties set(String name, Object value) {
-        Property prop = getValue(name);
+        Property prop = getProperty(name);
         if (prop == null) {
             prop = new Property<>(name);
             add(prop);
@@ -136,7 +188,7 @@ public class Properties implements TabularData, Duplicable<Properties> {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public Properties set(String k, double v) {
-        Property prop = getValue(k);
+        Property prop = getProperty(k);
         if (prop == null) {
             prop = new Property(k);
             add(prop);
@@ -147,7 +199,7 @@ public class Properties implements TabularData, Duplicable<Properties> {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public Properties set(String k, int v) {
-        Property prop = getValue(k);
+        Property prop = getProperty(k);
         if (prop == null) {
             prop = new Property(k);
             add(prop);
@@ -158,7 +210,7 @@ public class Properties implements TabularData, Duplicable<Properties> {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public Properties set(String k, boolean v) {
-        Property prop = getValue(k);
+        Property prop = getProperty(k);
         if (prop == null) {
             prop = new Property(k);
             add(prop);
@@ -175,7 +227,7 @@ public class Properties implements TabularData, Duplicable<Properties> {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void add(Property<?> property) {
-        Property existing = getValue(property.getName());
+        Property existing = getProperty(property.getName());
         if (existing != null) {
             existing.setValue(property.getValue());
         } else {

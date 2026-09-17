@@ -32,7 +32,6 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 module cascara.common {
     uses io.github.qishr.cascara.common.service.ServiceProvider;
 
@@ -59,7 +58,12 @@ module cascara.common {
     exports io.github.qishr.cascara.common.trackable.tracker;
     exports io.github.qishr.cascara.common.util;
 
-    opens io.github.qishr.cascara.common.util;
+    opens io.github.qishr.cascara.common.data;       // For tests
+    opens io.github.qishr.cascara.common.diagnostic; // For tests
+    opens io.github.qishr.cascara.common.lang.plain; // For tests
+    opens io.github.qishr.cascara.common.property;   // For tests
+    opens io.github.qishr.cascara.common.trackable;  // For tests
+    opens io.github.qishr.cascara.common.util;       // For tests
 
     provides io.github.qishr.cascara.common.service.ServiceProvider
         with io.github.qishr.cascara.common.lang.type.ByteArrayDescriptor,

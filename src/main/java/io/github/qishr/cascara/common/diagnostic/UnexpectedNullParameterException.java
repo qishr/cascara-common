@@ -33,34 +33,26 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang;
+package io.github.qishr.cascara.common.diagnostic;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.util.Pair;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 
-import java.util.List;
+public class UnexpectedNullParameterException extends LocalizableRuntimeException {
 
-import org.junit.jupiter.api.Test;
-
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
-import io.github.qishr.cascara.common.lang.type.TypeReference;
-
-public class SerializerTest {
-    @Test
-    void test() {
-
-        PlainScalarNode s1 = new PlainScalarNode("one");
-        PlainScalarNode s2 = new PlainScalarNode("two");
-
-        PlainSequenceNode swq = new PlainSequenceNode()
-            .add(s1)
-            .add(s2);
-
-        TestSerializer serializer = new TestSerializer();
-
-        List<String> list = serializer.fromAst(swq, new TypeReference<List<String>>() {});
-
-        assertNotNull(list);
+    public UnexpectedNullParameterException(String paramName) {
+        super(GenericDiagnosticCode.UNEXPECTED_NULL_PARAMETER, buildMethoDetails(paramName));
     }
 
+    // TODO: Consistency with UnimplementedMethodException
+    private static Object[] buildMethoDetails(String paramName) {
+        Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
+        String className = caller.getL().getName();
+        String methodName = caller.getR();
+        Object[] details = new Object[2];
+        details[0] = className + "." + methodName;
+        details[1] = paramName;
+        return details;
+    }
 }

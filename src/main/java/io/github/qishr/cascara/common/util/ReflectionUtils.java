@@ -36,60 +36,158 @@
 package io.github.qishr.cascara.common.util;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 
 public class ReflectionUtils {
 
-    @Nullable
-    public static Class<?> getGenericTypeOfListField(Field field) {
-        // Check if the field is a List type
-        if (List.class.isAssignableFrom(field.getType())) {
-            // Get the generic type of the field
-            Type genericFieldType = field.getGenericType();
-            // Check if it is a ParameterizedType
-            if (genericFieldType instanceof ParameterizedType) {
-                ParameterizedType parameterizedType = (ParameterizedType) genericFieldType;
-                // Get the actual type arguments
-                Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-                if (actualTypeArguments.length > 0) {
-                    // Return the raw class of the first actual type argument
-                    return (Class<?>) actualTypeArguments[0];
-                }
-            }
-        }
-        // Return null if it's not a List or doesn't have a generic type
-        return null;
-    }
-
-    public static Class<?> getGenericTypeOfMapKey(Field field) {
-        return getGenericType(field, 0);
-    }
-
-    public static Class<?> getGenericTypeOfMapValue(Field field) {
-        return getGenericType(field, 1);
-    }
-
-    private static Class<?> getGenericType(Field field, int index) {
-        Type genericType = field.getGenericType();
-        if (genericType instanceof ParameterizedType pt) {
-            Type[] actualTypeArguments = pt.getActualTypeArguments();
-            if (actualTypeArguments.length > index) {
-                Type typeArg = actualTypeArguments[index];
-                if (typeArg instanceof Class<?>) {
-                    return (Class<?>) typeArg;
-                }
-            }
+    public static boolean isInstance(Object thisInstance, Type thatType) {
+        if (thisInstance == null || thatType == null) {
+            return false;
         }
 
-        // TODO: This looks very tied in to serializers...
-        return String.class; // Fallback to String if type cannot be determined
+        // Case 1: Simple class
+        if (thatType instanceof Class<?> cls) {
+            return cls.isInstance(thisInstance);
+        }
+
+        // Case 2: Parameterized type → check raw type
+        if (thatType instanceof ParameterizedType pt) {
+            Type raw = pt.getRawType();
+            if (raw instanceof Class<?> rawClass) {
+                return rawClass.isInstance(thisInstance);
+            }
+            return false;
+        }
+
+        // Case 3: Type variable → check upper bound
+        if (thatType instanceof TypeVariable<?> tv) {
+            for (Type bound : tv.getBounds()) {
+                if (isInstance(thisInstance, bound)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Case 4: Wildcard → check upper bounds
+        if (thatType instanceof WildcardType wt) {
+            for (Type bound : wt.getUpperBounds()) {
+                if (isInstance(thisInstance, bound)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Case 5: Generic array → check component type
+        if (thatType instanceof GenericArrayType ga) {
+            Type comp = ga.getGenericComponentType();
+            if (thisInstance.getClass().isArray()) {
+                Class<?> compClass = thisInstance.getClass().getComponentType();
+                return canAssign(compClass, getRawClass(comp));
+            }
+            return false;
+        }
+
+        return false;
+    }
+
+
+    public static boolean canAssign(Type fromThis, Class<?> toThat) {
+        if (fromThis == null || toThat == null) {
+            return false;
+        }
+
+        // Case 1: Simple class
+        if (fromThis instanceof Class<?> cls) {
+            return toThat.isAssignableFrom(cls);
+        }
+
+        // Case 2: Parameterized type → check raw type
+        if (fromThis instanceof ParameterizedType pt) {
+            Type raw = pt.getRawType();
+            if (raw instanceof Class<?> rawClass) {
+                return toThat.isAssignableFrom(rawClass);
+            }
+            return false;
+        }
+
+        // Case 3: Type variable → check upper bounds
+        if (fromThis instanceof TypeVariable<?> tv) {
+            for (Type bound : tv.getBounds()) {
+                if (canAssign(bound, toThat)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Case 4: Wildcard → check upper bounds
+        if (fromThis instanceof WildcardType wt) {
+            for (Type bound : wt.getUpperBounds()) {
+                if (canAssign(bound, toThat)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Case 5: Generic array → check component type
+        if (fromThis instanceof GenericArrayType ga) {
+            Type comp = ga.getGenericComponentType();
+            Class<?> rawComp = getRawClass(comp);
+            Class<?> arrayClass = java.lang.reflect.Array.newInstance(rawComp, 0).getClass();
+            return toThat.isAssignableFrom(arrayClass);
+        }
+
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <C> C getRawClass(Type jvmType) {
+        if (jvmType instanceof Class<?> cls) {
+            return (C)cls;
+        }
+        if (jvmType instanceof ParameterizedType pt) {
+            Type raw = pt.getRawType();
+            if (raw instanceof Class<?> rawClass) {
+                return (C)rawClass;
+            }
+        }
+        if (jvmType instanceof TypeVariable<?> tv) {
+            Type[] bounds = tv.getBounds();
+            if (bounds.length > 0) {
+                return getRawClass(bounds[0]);
+            }
+        }
+        if (jvmType instanceof WildcardType wt) {
+            Type[] bounds = wt.getUpperBounds();
+            if (bounds.length > 0) {
+                return getRawClass(bounds[0]);
+            }
+        }
+        if (jvmType instanceof GenericArrayType ga) {
+            Class<?> comp = getRawClass(ga.getGenericComponentType());
+            return (C) java.lang.reflect.Array.newInstance(comp, 0).getClass();
+        }
+
+        throw new SerializerException(GenericDiagnosticCode.ERROR, "Failed to classify type: " + jvmType);
+    }
+
+    public static String getTypeName(Type jvmType) {
+        Class<?> jvmClass = getRawClass(jvmType);
+        return jvmClass.getName();
     }
 
     @Nullable

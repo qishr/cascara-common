@@ -53,14 +53,14 @@ import io.github.qishr.cascara.common.lang.type.TypeReference;
 import io.github.qishr.cascara.common.lang.util.LanguageOptions;
 import io.github.qishr.cascara.common.util.ContentType;
 
-public class TestSerializer extends AbstractSerializer<TestSerializer,PlainNode,PlainScalarNode,PlainSequenceNode,PlainMapNode,PlainMapEntryNode,PlainNode> {
+public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,PlainScalarNode,PlainSequenceNode,PlainMapNode,PlainMapEntryNode,PlainNode> {
 
-    public TestSerializer() {
+    public SerializerImpl() {
         super("", new PlainNodeFactory(), null);
     }
 
     @Override
-    protected TestSerializer self() {
+    protected SerializerImpl self() {
         return this;
     }
 
@@ -76,20 +76,20 @@ public class TestSerializer extends AbstractSerializer<TestSerializer,PlainNode,
 
     /// {@inheritDoc}
     @Override
-    public TestSerializer setReporter(Reporter reporter) {
+    public SerializerImpl setReporter(Reporter reporter) {
         this.reporter = reporter;
         return this;
     }
 
     /// {@inheritDoc}
     @Override
-    public TestSerializer setOptions(LanguageOptions<?> options) {
+    public SerializerImpl setOptions(LanguageOptions<?> options) {
         return this;
     }
 
     /// {@inheritDoc}
     @Override
-    public TestSerializer setParser(AstParser<PlainNode,?,?> parser) {
+    public SerializerImpl setParser(AstParser<PlainNode,?,?> parser) {
         return this;
     }
 

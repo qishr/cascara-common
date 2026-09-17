@@ -39,6 +39,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+
 public class AbstractServiceProviderFactory {
     private final ServiceProviderLayer layer;
     private Map<String,Map<Predicate<ServiceMetadata>,ServiceMetadata>> cache = new HashMap<>();
@@ -51,6 +54,7 @@ public class AbstractServiceProviderFactory {
         this.layer = layer == null ? ServiceProviderLayer.getRootLayer() : layer;
     }
 
+    @Nullable
     protected <T extends ServiceProvider> T createServiceProvider(Class<T> serviceType, Predicate<ServiceMetadata> capabilityPredicate) {
         String serviceName = serviceType.getName();
 
@@ -68,6 +72,9 @@ public class AbstractServiceProviderFactory {
                 serviceType,
                 capabilityPredicate
             );
+            if (provider == null) {
+                return null;
+            }
             providerMap.put(capabilityPredicate, provider);
         }
 

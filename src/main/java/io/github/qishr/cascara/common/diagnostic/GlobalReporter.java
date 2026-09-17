@@ -154,22 +154,12 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         return this == globalInstance ? stackTraceEnabled : globalInstance.isStackTraceEnabled();
     }
 
-    // @Override
-    // protected void writeString(Diagnostic diagnostic) {
-    //     writeString (
-    //         diagnostic.getCause(),
-    //         diagnostic.getLevel(),
-    //         formatString(diagnostic)
-    //     );
-    // }
-
     @Override
     protected String formatMessage(Diagnostic diagnostic, String message, int messageLine, boolean useColoring) {
         if (diagnostic.getUri() == null) {
             if (diagnostic.getLine() > 0) {
                 return String.format(
-                    "[%5s] [%s] [%s] %s at line %d\n",
-                    diagnostic.getLevel(),
+                    "[%s] [%s] %s at line %d\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
                     diagnostic.getSource(),
                     diagnostic.getMessage(),
@@ -177,8 +167,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 );
             } else {
                 return String.format(
-                    "[%5s] [%s] [%s] %s\n",
-                    diagnostic.getLevel(),
+                    "[%s] [%s] %s\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
                     diagnostic.getSource(),
                     diagnostic.getMessage()
@@ -187,8 +176,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         } else {
             if (diagnostic.getLine() > 0) {
                 return String.format(
-                    "[%5s] [%s] [%s] %s at %s:%d\n",
-                    diagnostic.getLevel(),
+                    "[%s] [%s] %s at %s:%d\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
                     diagnostic.getSource(),
                     diagnostic.getMessage(),
@@ -197,8 +185,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 );
             } else {
                 return String.format(
-                    "[%5s] [%s] [%s] %s in file %s\n",
-                    diagnostic.getLevel(),
+                    "[%s] [%s] %s in file %s\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
                     diagnostic.getSource(),
                     diagnostic.getMessage(),

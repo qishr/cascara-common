@@ -1,3 +1,14 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic"
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.test.config": {
+        "modulePaths": ["${workspaceFolder}/build/modulepath"],
+        "module": "cascara.common",
+        // "vmArgs": [
+        //     "--module-path",
+        //     "${workspaceFolder}/build/modulepath",
+        // ],
+        // "java.project.referencedLibraries": [
+        //     "${workspaceFolder}/build/modulepath/*.jar"
+        // ]
+    },
 }
