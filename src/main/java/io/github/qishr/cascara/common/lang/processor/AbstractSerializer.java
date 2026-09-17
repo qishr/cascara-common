@@ -70,7 +70,6 @@ import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.LangDiagnosticCode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.type.ScalarDescriptor;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
@@ -215,8 +214,6 @@ public abstract class AbstractSerializer<
                 continue;
             }
 
-            // if (field.isAnnotationPresent(DataIgnore.class)) continue;
-
             int fieldModifiers = field.getModifiers();
             if (Modifier.isStatic(fieldModifiers)) {
                 continue;
@@ -250,9 +247,7 @@ public abstract class AbstractSerializer<
                     ? field.getAnnotation(DataField.class).key() : field.getName();
                 if (keyName == null || keyName.isEmpty()) keyName = field.getName();
 
-                // N keyNode = castToNode(astFactory.createScalarKeyNode(keyName));
                 K keyNode = astFactory.createKey(keyName);
-
                 N valueNode = serialize(value);
                 objectMap.put(keyNode, valueNode);
             }
@@ -308,11 +303,7 @@ public abstract class AbstractSerializer<
             if (entry.getKey() == null) continue;
 
             K keyNode = astFactory.createKey(entry.getKey());
-
-            // TODO: Should this be literal null instead of empty string?
-            // Surely JSON treats them differently.
             N valueNode = (entry.getValue() == null)
-                // ? castToNode(astFactory.createScalarNode(""))
                 ? castToNode(astFactory.createScalarNode(null))
                 : serialize(entry.getValue());
 
@@ -441,8 +432,6 @@ public abstract class AbstractSerializer<
         }
 
         // 7. node is a collection, but the targetType didn't match at stage #2
-        // TODO: When does this happen?
-        // Is it only if deserialize was called with Object.class as its second param?
         if (targetType == Object.class) {
             reporter.debug("#7: targetType is Object");
             // TODO: What if node is mapNode but targetType is not a map?
@@ -469,10 +458,6 @@ public abstract class AbstractSerializer<
         // Likely cause of arriving here is that the target type either:
         //   - Is a POJO
         //   - Is in a package that's not opened to cascara.lang.yaml
-
-        // TODO: Is it possible to reach here for a POJO?
-        // How do we test for this?
-        // What targetType makes it to here?
 
         // The POJO path...
         reporter.debug("Calling POJO Path from deserializeType");
@@ -537,8 +522,6 @@ public abstract class AbstractSerializer<
                 warnInaccessible(jvmType, field, e);
                 continue;
             }
-
-            // if (field.isAnnotationPresent(DataIgnore.class)) continue;
 
             // Determine the key for this field
             String key = field.getName();
