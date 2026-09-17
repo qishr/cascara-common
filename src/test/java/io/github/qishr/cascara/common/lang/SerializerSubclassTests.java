@@ -43,7 +43,6 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
 
 public class SerializerSubclassTests extends SerializerTestBase {
 
@@ -66,23 +65,20 @@ public class SerializerSubclassTests extends SerializerTestBase {
         public TestClass1() {}
     }
 
+    // polymorphic deserialization
     @Test
     void test_subclassDeserialization() {
         PlainMapNode map0 = new PlainMapNode()
             .put("v", new PlainMapNode()
-                .put("field0", new PlainSequenceNode()
-                    .add(
-                        new PlainScalarNode("foo")
-                    )
+                .put("field0",
+                    new PlainScalarNode("foo")
                 )
             );
 
         PlainMapNode map1 = new PlainMapNode()
             .put("v", new PlainMapNode()
-                .put("field1", new PlainSequenceNode()
-                    .add(
-                        new PlainScalarNode("bar")
-                    )
+                .put("field1",
+                    new PlainScalarNode("bar")
                 )
             );
 
@@ -97,7 +93,7 @@ public class SerializerSubclassTests extends SerializerTestBase {
         ContainerTestClass c1 = serializer.fromAst(map1, ContainerTestClass.class);
         assertNotNull(c1);
         assertNotNull(c1.v);
-        assertInstanceOf(TestClass0.class, c1.v);
+        assertInstanceOf(TestClass1.class, c1.v);
         TestClass1 tc1 = (TestClass1) c1.v;
         assertEquals("bar", tc1.field1);
     }

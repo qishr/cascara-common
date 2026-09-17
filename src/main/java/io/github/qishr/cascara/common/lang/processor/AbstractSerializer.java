@@ -70,6 +70,7 @@ import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.LangDiagnosticCode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
+import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.type.ScalarDescriptor;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
@@ -205,7 +206,7 @@ public abstract class AbstractSerializer<
         Class<?> jvmType = jvmInstance.getClass();
         M objectMap = astFactory.createMapNode();
 
-        for (Field field : getAllFields(jvmType)) {
+        for (Field field : getAllSerializableFields(jvmType)) {
             // Try to make the field accessible. If this fails, continue to the next field.
             try {
                 field.setAccessible(true);
@@ -214,7 +215,7 @@ public abstract class AbstractSerializer<
                 continue;
             }
 
-            if (field.isAnnotationPresent(DataIgnore.class)) continue;
+            // if (field.isAnnotationPresent(DataIgnore.class)) continue;
 
             int fieldModifiers = field.getModifiers();
             if (Modifier.isStatic(fieldModifiers)) {
@@ -353,7 +354,7 @@ public abstract class AbstractSerializer<
             return (C) new ArrayList<>();
         }
 
-        C jvmInstance = newTypeInstance(jvmType, node);
+        C jvmInstance = newTypeInstance(node, jvmType);
         return deserializeObject(node, jvmInstance);
     }
 
@@ -410,8 +411,12 @@ public abstract class AbstractSerializer<
                 return deserializeScalarWithDescriptor(scalar, descriptor);
             }
 
-            // Without a TypeDescriptor to do the conversion, we
-            // cannot put a scalar value into a non-scalar targetType
+            // Without a TypeDescriptor to do the conversion, the only
+            // non-scalar targetType we can put a scalar value in is Object.
+            if (targetType == Object.class) {
+                return deserializeScalar(scalar, targetType);
+            }
+
             throw new SerializerException(
                 node,
                 LangDiagnosticCode.FAILED_DESERIALIZE_SCALAR_TO_NON_SCALAR,
@@ -474,17 +479,6 @@ public abstract class AbstractSerializer<
         return deserialize(node, targetType);
     }
 
-    private Object deserializeScalarWithDescriptor(ScalarAstNode scalar, ScalarDescriptor descriptor) {
-        Object val = scalar.getPrimitive();
-        String stringValue = val != null ? val.toString() : "";
-        try {
-            Object object = descriptor.toJvmType(stringValue);
-            return object;
-        } catch (Exception e) {
-            throw new SerializerException(scalar, e, LangDiagnosticCode.FAILED_TO_MAP_TYPE, descriptor.getJvmType().getName(), e.getMessage());
-        }
-    }
-
     private Object deserializeParameterized(AstNode node, ParameterizedType pt) throws SerializerException {
         Type raw = pt.getRawType();
         Type[] args = pt.getActualTypeArguments();
@@ -535,7 +529,7 @@ public abstract class AbstractSerializer<
         }
 
         // 3. Process Declared Fields
-        for (Field field : getAllFields(jvmType)) {
+        for (Field field : getAllSerializableFields(jvmType)) {
             // Try to make the field accessible. If this fails, continue to the next field.
             try {
                 field.setAccessible(true);
@@ -544,7 +538,7 @@ public abstract class AbstractSerializer<
                 continue;
             }
 
-            if (field.isAnnotationPresent(DataIgnore.class)) continue;
+            // if (field.isAnnotationPresent(DataIgnore.class)) continue;
 
             // Determine the key for this field
             String key = field.getName();
@@ -689,18 +683,96 @@ public abstract class AbstractSerializer<
         throw new SerializerException(scalar, LangDiagnosticCode.UNSUPPORTED_TYPE, ReflectionUtils.getTypeName(targetType));
     }
 
+    private Object deserializeScalarWithDescriptor(ScalarAstNode scalar, ScalarDescriptor descriptor) {
+        Object val = scalar.getPrimitive();
+        String stringValue = val != null ? val.toString() : "";
+        try {
+            Object object = descriptor.toJvmType(stringValue);
+            return object;
+        } catch (Exception e) {
+            throw new SerializerException(scalar, e, LangDiagnosticCode.FAILED_TO_MAP_TYPE, descriptor.getJvmType().getName(), e.getMessage());
+        }
+    }
+
     //
     // Deserialization Helpers
     //
 
-    private <C> C newTypeInstance(Type jvmType, AstNode origin) throws SerializerException {
-        Class<C> jvmClass;
+    private Set<String> getSerializableFieldNames(Class<?> jvmClass) {
+        List<Field> fields = getAllSerializableFields(jvmClass);
+        Set<String> names = new HashSet<>();
+        for (Field f : fields) {
+            names.add(f.getName());
+        }
+        return names;
+    }
+
+    private int intersectionSize(Set<String> a, Set<String> b) {
+        int count = 0;
+        for (String k : a) {
+            if (b.contains(k)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private <C> Class<? extends C> resolvePolymorphicTarget(AstNode node, Class<C> baseClass) {
+
+        // TODO: This will fail for an abstract class
+        // If not sealed, just use the declared type
+        if (!baseClass.isSealed()) {
+            return baseClass;
+        }
+
+        Class<?>[] permitted = baseClass.getPermittedSubclasses();
+        if (permitted == null || permitted.length == 0) {
+            return baseClass;
+        }
+
+        // If node is not a map, sealed subclasses don’t help much; use base
+        if (!(node instanceof MapAstNode mapAstNode)) {
+            return baseClass;
+        }
+
+        @SuppressWarnings("unchecked")
+        M map = (M) mapAstNode;
+
+        Set<String> keys = map.keyStringSet();
+
+        Class<? extends C> best = baseClass;
+        int bestScore = -1;
+
+        for (Class<?> candidateRaw : permitted) {
+            @SuppressWarnings("unchecked")
+            Class<? extends C> candidate = (Class<? extends C>) candidateRaw;
+
+            Set<String> candidateFields = getSerializableFieldNames(candidate);
+            int score = intersectionSize(keys, candidateFields);
+
+            if (score > bestScore) {
+                bestScore = score;
+                best = candidate;
+            }
+        }
+
+        // If no subclass matches better than the base, keep the base
+        return best;
+    }
+
+    // TODO:
+    //   - Subclasses of abstract superclass (SerializerSubclassOfAbstractClassTests)
+    //   - Subclasses of non-sealed superclass (SerializerSubclassTests)
+    private <C> C newTypeInstance(AstNode node, Type jvmType) throws SerializerException {
         try {
-            jvmClass = ReflectionUtils.getRawClass(jvmType);
-            C jvmInstance = jvmClass.getConstructor().newInstance();
+            Class<C> baseClass = ReflectionUtils.getRawClass(jvmType);
+
+            Class<? extends C> targetClass = resolvePolymorphicTarget(node, baseClass);
+
+            C jvmInstance = targetClass.getConstructor().newInstance();
             return jvmInstance;
         } catch (NoSuchMethodException e) {
-            throw new SerializerException(origin, e, LangDiagnosticCode.NO_SUCH_CONSTRUCTOR, ReflectionUtils.getTypeName(jvmType));
+            throw new SerializerException(node, e, LangDiagnosticCode.NO_SUCH_CONSTRUCTOR, ReflectionUtils.getTypeName(jvmType));
         } catch (Exception e) {
             throw error(e, ReflectionUtils.getTypeName(jvmType));
         }
@@ -873,7 +945,7 @@ public abstract class AbstractSerializer<
     //
 
     /// Retrieves all declared fields for a class and all its superclasses (excluding Object).
-    protected List<Field> getAllFields(Class<?> jvmType) {
+    protected List<Field> getAllSerializableFields(Class<?> jvmType) {
         List<Field> fields = new ArrayList<>();
 
         // Start with the current class and move up the hierarchy
@@ -883,7 +955,9 @@ public abstract class AbstractSerializer<
         while (currentClass != null && currentClass != Object.class) {
             // Add all fields declared in the current class (but not its superclasses)
             for (Field field : currentClass.getDeclaredFields()) {
-                fields.add(field);
+                if (!field.isAnnotationPresent(DataIgnore.class)) {
+                    fields.add(field);
+                }
             }
             // Move up to the superclass for the next iteration
             currentClass = currentClass.getSuperclass();

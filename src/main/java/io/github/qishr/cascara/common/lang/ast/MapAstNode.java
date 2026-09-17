@@ -35,6 +35,7 @@
 
 package io.github.qishr.cascara.common.lang.ast;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -52,6 +53,14 @@ public interface MapAstNode<K, V extends AstNode, E extends MapEntryAstNode<K,V>
     MapAstNode<K,V,E> remove(K key);
 
     List<V> values();
+
+    default Set<String> keyStringSet() {
+        Set<String> keyStrings = new HashSet<>();
+        for (E entry : entrySet()) {
+            keyStrings.add(entry.getKeyString());
+        }
+        return keyStrings;
+    }
 
     @Override
     default List<E> getChildren() {
