@@ -46,16 +46,18 @@ public enum LangDiagnosticCode implements DiagnosticCode {
 
     // Serializer
     FAILED_TO_MAP_TYPE("LANG-401", "Failed to map {0} to YAML AST: {1}"),
-    FAILED_TO_MAP_AST("LANG-402", "Failed to map YAML AST to {0}: {1}"),
+    FAILED_TO_MAP_AST("LANG-402", "Failed to map AST to {0}: {1}"),
     EXPECTED_MAP_STRUCTURE("LANG-303", "Expected a map structure for {0}"),
     FAILED_SERIALIZE("LANG-304", "Failed to serialize: {0}"),
     FAILED_DESERIALIZE("LANG-305", "Failed to deserialize: {0}: {1}."),
     WRONG_FORMAT("LANG-306", "Data {0} does not conform to format {1}"),
     INCOMPATIBLE_TYPES("LANG-307", "Incompatible types: Cannot map {0} to Java type {1}"),
     FAILED_DESERIALIZE_SCALAR("LANG-308", "Failed to deserialize scalar to {0}: {1}"),
-    UNSUPPORTED_TYPE("LANG-309", "Unsupported field type: {0}"),
-    EXPECTED_SEQUENCE("LANG-310", "Expected a sequence for field: {0}"),
-    FIELD_NOT_ACCESSIBLE_REASON("LANG-311", "Field {0} is not accessible: {1}"),
+    FAILED_DESERIALIZE_SCALAR_TO_NON_SCALAR("LANG-309", "Failed to deserialize scalar to non-scalar type {0}"),
+    UNSUPPORTED_TYPE("LANG-310", "Unsupported field type: {0}"),
+    EXPECTED_SEQUENCE("LANG-311", "Expected a sequence for field: {0}"),
+    EXPECTED_SCALAR("LANG-312", "Expected a scalar for field: {0}"),
+    FIELD_NOT_ACCESSIBLE_REASON("LANG-313", "Field {0} is not accessible: {1}"),
 
     // JRE Exceptions
     CLASS_NOT_SERIALIZABLE("LANG-402", "Class {0} is not serializable"),
