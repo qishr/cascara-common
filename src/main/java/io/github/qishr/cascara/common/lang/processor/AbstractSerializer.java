@@ -330,89 +330,6 @@ public abstract class AbstractSerializer<
         return (C) deserializeWithType(node, typeRef.getType());
     }
 
-    private Object deserializeWithType(AstNode node, Type type) throws SerializerException {
-        if (node == null || (node instanceof ScalarAstNode s && s.getPrimitive() == null)) {
-            return null;
-        }
-
-        // Class<?>: decide between scalar vs POJO
-        if (type instanceof Class<?> cls) {
-
-            // scalar types must NOT go through POJO deserialization
-            if (isScalarType(cls)) {
-                if (node instanceof ScalarAstNode scalar) {
-                    return deserializeScalar(scalar, cls);
-                }
-                throw new SerializerException(node, LangDiagnosticCode.EXPECTED_SEQUENCE,
-                    node.getClass().getSimpleName(), cls.getSimpleName());
-            }
-
-            // non‑scalar class → existing POJO path
-            return deserialize(node, cls);
-        }
-
-        if (type instanceof Class<?> cls) {
-            // existing Class‑based path
-            return deserialize(node, cls);
-        }
-
-        if (type instanceof ParameterizedType pt) {
-            return deserializeParameterized(node, pt);
-        }
-
-        // Wildcards / type variables: fall back to upper bound or Object
-        if (type instanceof java.lang.reflect.WildcardType wt) {
-            Type[] upper = wt.getUpperBounds();
-            return deserializeWithType(node, upper.length > 0 ? upper[0] : Object.class);
-        }
-
-        if (type instanceof java.lang.reflect.TypeVariable<?> tv) {
-            Type[] bounds = tv.getBounds();
-            return deserializeWithType(node, bounds.length > 0 ? bounds[0] : Object.class);
-        }
-
-        return deserializeField(node, Object.class);
-    }
-
-    private Object deserializeParameterized(AstNode node, ParameterizedType pt) throws SerializerException {
-        Type raw = pt.getRawType();
-        Type[] args = pt.getActualTypeArguments();
-
-        if (!(raw instanceof Class<?> rawClass)) {
-            return deserializeField(node, Object.class);
-        }
-
-        // Collections
-        if (Collection.class.isAssignableFrom(rawClass)) {
-            Type itemType = args.length > 0 ? args[0] : Object.class;
-            Collection<Object> coll = newCollectionInstance(rawClass);
-            if (node instanceof SequenceAstNode<?> seq) {
-                populateCollectionGeneric(seq, coll, itemType);
-            }
-            return coll;
-        }
-
-        // Maps
-        if (Map.class.isAssignableFrom(rawClass)) {
-            Type keyType   = args.length > 0 ? args[0] : Object.class;
-            Type valueType = args.length > 1 ? args[1] : Object.class;
-            Map<Object,Object> map = newMapInstance(rawClass);
-            if (node instanceof MapAstNode<?,?,?> m) {
-                populateMapGeneric(m, map, keyType, valueType);
-            }
-            return map;
-        }
-
-        // Parameterized POJO: e.g. Box<T>
-        Object instance;
-        try {
-            instance = ((Class<?>) raw).getConstructor().newInstance();
-        } catch (Exception e) {
-            throw error(e, raw.toString());
-        }
-        return deserializeObject(node, instance);
-    }
-
     /// Converts an AST structure back into a Java object of the specified type.
     @SuppressWarnings("unchecked")
     protected <C> C deserialize(AstNode node, Type jvmType) throws SerializerException {
@@ -440,64 +357,52 @@ public abstract class AbstractSerializer<
         return deserializeObject(node, jvmInstance);
     }
 
-    @SuppressWarnings("unchecked")
-    private <C> C deserializeObject(AstNode node, C jvmInstance) {
-        Class<?> jvmType = jvmInstance.getClass();
-        Set<String> claimedKeys = new HashSet<>();
-
-        // 2. We now check against the generic MapAstNode interface
-        if (!(node instanceof MapAstNode mapNode)) {
-            throw new SerializerException(node, LangDiagnosticCode.EXPECTED_MAP_STRUCTURE, jvmInstance.getClass()); //jvmType.getName());
+    private Object deserializeWithType(AstNode node, Type type) throws SerializerException {
+        if (node == null || (node instanceof ScalarAstNode s && s.getPrimitive() == null)) {
+            return null;
         }
 
-        // 3. Process Declared Fields
-        for (Field field : getAllFields(jvmType)) {
-            // Try to make the field accessible. If this fails, continue to the next field.
-            try {
-                field.setAccessible(true);
-            } catch (InaccessibleObjectException e) {
-                warnInaccessible(jvmType, field, e);
-                continue;
-            }
+        // Class<?>: decide between scalar vs POJO
+        if (type instanceof Class<?> cls) {
 
-            if (field.isAnnotationPresent(DataIgnore.class)) continue;
-
-            // Determine the key for this field
-            String key = field.getName();
-            if (field.isAnnotationPresent(DataField.class)) {
-                String annotatedKey = field.getAnnotation(DataField.class).key();
-                if (annotatedKey != null && !annotatedKey.isEmpty()) {
-                    key = annotatedKey;
+            // scalar types must NOT go through POJO deserialization
+            if (isScalarType(cls)) {
+                if (node instanceof ScalarAstNode scalar) {
+                    return deserializeScalar(scalar, cls);
                 }
+                throw new SerializerException(node, LangDiagnosticCode.EXPECTED_SEQUENCE,
+                    node.getClass().getSimpleName(), cls.getSimpleName());
             }
 
-            claimedKeys.add(key);
-
-            // Use the new generic 'get' method
-            AstNode valueNode = mapNode.get(key);
-
-            if (valueNode != null) {
-                // We pass field.getType() so it knows this is a List, a String, etc.
-                Object convertedValue = deserializeField(valueNode, field.getGenericType());
-                if (convertedValue != null) {
-                    try {
-                        field.set(jvmInstance, convertedValue);
-                    } catch (Exception e) {
-                        throw error(e, field.getName());
-                    }
-                }
-            }
+            // non‑scalar class → POJO path
+            return deserialize(node, cls);
         }
 
-        // 4. Handle dynamic properties via @YamlAnySetter
-        processAnySetter(jvmInstance, (M)node, claimedKeys, jvmType);
+        // if (type instanceof Class<?> cls) {
+        //     // existing Class‑based path
+        //     return deserialize(node, cls);
+        // }
 
-        return jvmInstance;
+        if (type instanceof ParameterizedType pt) {
+            return deserializeParameterized(node, pt);
+        }
+
+        // Wildcards / type variables: fall back to upper bound or Object
+        if (type instanceof java.lang.reflect.WildcardType wt) {
+            Type[] upper = wt.getUpperBounds();
+            return deserializeWithType(node, upper.length > 0 ? upper[0] : Object.class);
+        }
+
+        if (type instanceof java.lang.reflect.TypeVariable<?> tv) {
+            Type[] bounds = tv.getBounds();
+            return deserializeWithType(node, bounds.length > 0 ? bounds[0] : Object.class);
+        }
+
+        return deserializeField(node, Object.class);
     }
 
     /// Dispatches a node to the correct deserialization logic.
     /// @param node The AST node to convert.
-    /// @param field The field being populated (can be null for nested elements).
     /// @param targetType The class type to convert to.
     /// Dispatches a node to the correct deserialization logic based on target type.
     private Object deserializeField(AstNode node, Type targetType) {
@@ -560,6 +465,100 @@ public abstract class AbstractSerializer<
         // throw new SerializerException(node, LangDiagnosticCode.INCOMPATIBLE_TYPES,
         //     node.getClass().getSimpleName(), targetType.getSimpleName()
         // );
+    }
+
+    private Object deserializeParameterized(AstNode node, ParameterizedType pt) throws SerializerException {
+        Type raw = pt.getRawType();
+        Type[] args = pt.getActualTypeArguments();
+
+        if (!(raw instanceof Class<?> rawClass)) {
+            return deserializeField(node, Object.class);
+        }
+
+        // Collections
+        if (Collection.class.isAssignableFrom(rawClass)) {
+            Type itemType = args.length > 0 ? args[0] : Object.class;
+            Collection<Object> coll = newCollectionInstance(rawClass);
+            if (node instanceof SequenceAstNode<?> seq) {
+                populateCollectionGeneric(seq, coll, itemType);
+            }
+            return coll;
+        }
+
+        // Maps
+        if (Map.class.isAssignableFrom(rawClass)) {
+            Type keyType   = args.length > 0 ? args[0] : Object.class;
+            Type valueType = args.length > 1 ? args[1] : Object.class;
+            Map<Object,Object> map = newMapInstance(rawClass);
+            if (node instanceof MapAstNode<?,?,?> m) {
+                populateMapGeneric(m, map, keyType, valueType);
+            }
+            return map;
+        }
+
+        // Parameterized POJO: e.g. Box<T>
+        Object instance;
+        try {
+            instance = ((Class<?>) raw).getConstructor().newInstance();
+        } catch (Exception e) {
+            throw error(e, raw.toString());
+        }
+        return deserializeObject(node, instance);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <C> C deserializeObject(AstNode node, C jvmInstance) {
+        Class<?> jvmType = jvmInstance.getClass();
+        Set<String> claimedKeys = new HashSet<>();
+
+        // 2. We now check against the generic MapAstNode interface
+        if (!(node instanceof MapAstNode mapNode)) {
+            throw new SerializerException(node, LangDiagnosticCode.EXPECTED_MAP_STRUCTURE, jvmInstance.getClass()); //jvmType.getName());
+        }
+
+        // 3. Process Declared Fields
+        for (Field field : getAllFields(jvmType)) {
+            // Try to make the field accessible. If this fails, continue to the next field.
+            try {
+                field.setAccessible(true);
+            } catch (InaccessibleObjectException e) {
+                warnInaccessible(jvmType, field, e);
+                continue;
+            }
+
+            if (field.isAnnotationPresent(DataIgnore.class)) continue;
+
+            // Determine the key for this field
+            String key = field.getName();
+            if (field.isAnnotationPresent(DataField.class)) {
+                String annotatedKey = field.getAnnotation(DataField.class).key();
+                if (annotatedKey != null && !annotatedKey.isEmpty()) {
+                    key = annotatedKey;
+                }
+            }
+
+            claimedKeys.add(key);
+
+            // Use the new generic 'get' method
+            AstNode valueNode = mapNode.get(key);
+
+            if (valueNode != null) {
+                // We pass field.getType() so it knows this is a List, a String, etc.
+                Object convertedValue = deserializeField(valueNode, field.getGenericType());
+                if (convertedValue != null) {
+                    try {
+                        field.set(jvmInstance, convertedValue);
+                    } catch (Exception e) {
+                        throw error(e, field.getName());
+                    }
+                }
+            }
+        }
+
+        // 4. Handle dynamic properties via @YamlAnySetter
+        processAnySetter(jvmInstance, (M)node, claimedKeys, jvmType);
+
+        return jvmInstance;
     }
 
     private List<?> deserializeList(AstNode node, Type targetType) {

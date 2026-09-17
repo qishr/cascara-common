@@ -36,64 +36,69 @@
 package io.github.qishr.cascara.common.lang;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.diagnostic.StandardReporter;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
-import io.github.qishr.cascara.common.lang.type.TypeReference;
 
-public class SerializerTest {
-    @Test
-    void test_simpleTypeReference() {
+public class SerializerSubclassOfAbstractClassTests extends SerializerTestBase {
 
-        PlainScalarNode s1 = new PlainScalarNode("one");
-        PlainScalarNode s2 = new PlainScalarNode("two");
+    public static class ContainerTestClass {
+        public BaseTestClass v;
+        public ContainerTestClass() {}
+    }
 
-        PlainSequenceNode swq = new PlainSequenceNode()
-            .add(s1)
-            .add(s2);
+    public static abstract class BaseTestClass {
+        protected BaseTestClass() {}
+    }
 
-        TestSerializer serializer = new TestSerializer();
+    public static class TestClass0 extends BaseTestClass {
+        public String field0;
+        public TestClass0() {}
+    }
 
-        List<String> list = serializer.fromAst(swq, new TypeReference<List<String>>() {});
-
-        assertNotNull(list);
+    public static class TestClass1 extends BaseTestClass {
+        public String field1;
+        public TestClass1() {}
     }
 
     @Test
-    void test_nestedGenerics() {
-        PlainMapNode map = new PlainMapNode()
-            .put("contributes", new PlainMapNode()
-                .put("themes", new PlainSequenceNode()
+    void test_subclassDeserialization() {
+        PlainMapNode map0 = new PlainMapNode()
+            .put("v", new PlainMapNode()
+                .put("field0", new PlainSequenceNode()
                     .add(
-                        new PlainScalarNode(0.1)
+                        new PlainScalarNode("foo")
                     )
                 )
             );
 
-        TestSerializer serializer = new TestSerializer();
-        serializer.setReporter(new StandardReporter());
+        PlainMapNode map1 = new PlainMapNode()
+            .put("v", new PlainMapNode()
+                .put("field1", new PlainSequenceNode()
+                    .add(
+                        new PlainScalarNode("bar")
+                    )
+                )
+            );
 
-        PackageJsonFile pjf = serializer.fromAst(map, PackageJsonFile.class);
 
-        assertNotNull(pjf);
-        List<Double> themes =  pjf.contributes.get("themes");
+        ContainerTestClass c0 = serializer.fromAst(map0, ContainerTestClass.class);
+        assertNotNull(c0);
+        assertNotNull(c0.v);
+        assertInstanceOf(TestClass0.class, c0.v);
+        TestClass0 tc0 = (TestClass0) c0.v;
+        assertEquals("foo", tc0.field0);
 
-        assertNotNull(themes);
-        assertEquals(0.1, themes.getFirst());
+        ContainerTestClass c1 = serializer.fromAst(map1, ContainerTestClass.class);
+        assertNotNull(c1);
+        assertNotNull(c1.v);
+        assertInstanceOf(TestClass0.class, c1.v);
+        TestClass1 tc1 = (TestClass1) c1.v;
+        assertEquals("bar", tc1.field1);
     }
-
-    public static class PackageJsonFile {
-        public  Map<String,List<Double>> contributes = new HashMap<>();
-        public  String s;
-    }
-
 }
