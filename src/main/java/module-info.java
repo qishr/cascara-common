@@ -75,4 +75,5 @@ module cascara.common {
              io.github.qishr.cascara.common.lang.type.UuidTypeDescriptor,
              io.github.qishr.cascara.common.lang.util.SourceStringBuffer,
              io.github.qishr.cascara.common.lang.util.SourceInputStreamBuffer;
+    requires java.management;
 }

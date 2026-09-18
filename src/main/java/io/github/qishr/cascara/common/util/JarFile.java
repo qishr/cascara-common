@@ -56,7 +56,7 @@ public class JarFile extends ArchiveFile {
     private Set<String> classNames = null;
     private String moduleName = null;
 
-    public static JarFile load(Path jarPath) throws LocalizableIOException {
+    public static JarFile open(Path jarPath) throws LocalizableIOException {
         return new JarFile(jarPath, false);
     }
 

@@ -79,6 +79,7 @@ import io.github.qishr.cascara.common.lang.util.LanguageOptions;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceProviderFactory;
+import io.github.qishr.cascara.common.util.ClassHierarchy;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public abstract class AbstractSerializer<
@@ -702,18 +703,7 @@ public abstract class AbstractSerializer<
 
     private <C> Class<? extends C> resolvePolymorphicTarget(AstNode node, Class<C> baseClass) {
 
-        // TODO: This will fail for an abstract class
-        // If not sealed, just use the declared type
-        if (!baseClass.isSealed()) {
-            return baseClass;
-        }
-
-        Class<?>[] permitted = baseClass.getPermittedSubclasses();
-        if (permitted == null || permitted.length == 0) {
-            return baseClass;
-        }
-
-        // If node is not a map, sealed subclasses don’t help much; use base
+        // If node is not a map, subclass inference is meaningless
         if (!(node instanceof MapAstNode mapAstNode)) {
             return baseClass;
         }
@@ -723,23 +713,34 @@ public abstract class AbstractSerializer<
 
         Set<String> keys = map.keyStringSet();
 
+        // Get subclass names from your global hierarchy
+        List<String> subclassNames = ClassHierarchy.getSubclasses(baseClass.getName());
+        if (subclassNames == null || subclassNames.isEmpty()) {
+            return baseClass;
+        }
+
         Class<? extends C> best = baseClass;
         int bestScore = -1;
 
-        for (Class<?> candidateRaw : permitted) {
-            @SuppressWarnings("unchecked")
-            Class<? extends C> candidate = (Class<? extends C>) candidateRaw;
+        for (String subclassName : subclassNames) {
+            try {
+                Class<?> raw = Class.forName(subclassName, false, baseClass.getClassLoader());
+                @SuppressWarnings("unchecked")
+                Class<? extends C> candidate = (Class<? extends C>) raw;
 
-            Set<String> candidateFields = getSerializableFieldNames(candidate);
-            int score = intersectionSize(keys, candidateFields);
+                Set<String> candidateFields = getSerializableFieldNames(candidate);
+                int score = intersectionSize(keys, candidateFields);
 
-            if (score > bestScore) {
-                bestScore = score;
-                best = candidate;
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = candidate;
+                }
+
+            } catch (ClassNotFoundException ignored) {
+                // Skip classes not loadable in this context
             }
         }
 
-        // If no subclass matches better than the base, keep the base
         return best;
     }
 
@@ -750,6 +751,7 @@ public abstract class AbstractSerializer<
         try {
             Class<C> baseClass = ReflectionUtils.getRawClass(jvmType);
 
+            // Class<? extends C> targetClass = old_resolvePolymorphicTarget(node, baseClass);
             Class<? extends C> targetClass = resolvePolymorphicTarget(node, baseClass);
 
             C jvmInstance = targetClass.getConstructor().newInstance();

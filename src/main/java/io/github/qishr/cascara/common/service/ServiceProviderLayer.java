@@ -55,13 +55,13 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.diagnostic.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
+import io.github.qishr.cascara.common.util.ClassHierarchy;
 import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ModulePath;
@@ -336,6 +336,7 @@ public class ServiceProviderLayer {
                 return;
             }
         }
+        ClassHierarchy.invalidate();
     }
 
     @SuppressWarnings({ "rawtypes" })
@@ -383,7 +384,7 @@ public class ServiceProviderLayer {
         String moduleName;
 
         try {
-            JarFile jar = JarFile.load(jarPath);
+            JarFile jar = JarFile.open(jarPath);
             moduleName = jar.getModuleName();
         } catch (LocalizableIOException e) {
             throw new ServiceException(e, ServiceDiagnosticCode.FAILED_TO_READ_JAR, jarPath, e.getMessage());
@@ -414,6 +415,7 @@ public class ServiceProviderLayer {
         moduleLayer = parent.defineModulesWithManyLoaders(cf, ClassLoader.getSystemClassLoader());
 
         enumerateProviders();
+        ClassHierarchy.invalidate();
     }
 
     //

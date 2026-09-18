@@ -41,6 +41,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
+import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.code.FileDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
@@ -68,6 +69,7 @@ public class JreUtils {
     /// Returns an `InputStream` for a JRE resource.
     /// @return The `InputStream` returned by `Class.getResourceAsStream`.
     /// @throws LocalizableIOException an exception detailing why the resource was inaccessible.
+    @Nullable
     public static InputStream getResourceAsStream(Class<?> clazz, String path) throws LocalizableIOException {
         InputStream is = clazz.getResourceAsStream(path);
 
@@ -134,6 +136,7 @@ public class JreUtils {
         return ph.parent().orElse(null);
     }
 
+    @Nullable
     private static String[] parentProcessArgs() {
         ProcessHandle parent = parentProcess();
         if (parent == null) {
@@ -175,5 +178,28 @@ public class JreUtils {
             }
         }
         return false;
+    }
+
+    public static Module getUnnamedModule() {
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+        return cl.getUnnamedModule();
+    }
+
+    @Nullable
+    public static Module getModule(String moduleName) {
+        if (moduleName == null || moduleName.isEmpty()) {
+            return getUnnamedModule();
+        }
+        for (Module module : ModuleLayer.boot().modules()) {
+            if (module.getName().equals(moduleName)) {
+                return module;
+            }
+        }
+        return null;
+    }
+
+    public static ClassLoader getEffectiveClassLoader() {
+        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+        return tccl != null ? tccl : ClassLoader.getSystemClassLoader();
     }
 }

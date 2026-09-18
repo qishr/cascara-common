@@ -32,13 +32,13 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.util;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.lang.module.ModuleDescriptor;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -66,19 +66,28 @@ public class ModulePath {
     Set<String> moduleNames = new HashSet<>();
     Set<String> classNames = new HashSet<>();
     Map<String, String> classToModule = new HashMap<>();
+    Map<String, Set<String>> moduleToClasses = new HashMap<>();
     Map<String, ModuleDescriptor> descriptors = new HashMap<>();
     Map<String, Path> moduleToPath = new HashMap<>();
-
-    protected ModulePath() {
-        // Nothing to see here
-    }
 
     public ModulePath(String modulePath) {
         loadModulePath(modulePath);
     }
 
+    public ModulePath() {
+        // 1. Load standard module path entries
+        loadModulePath(System.getProperty("jdk.module.path"));
+
+        // 2. Load patched test module directories from JVM args
+        loadPatchedModules();
+    }
+
     public Set<String> getModules() {
         return moduleNames;
+    }
+
+    public Set<String> getClasses() {
+        return classNames;
     }
 
     public ModuleDescriptor getDescriptor(String moduleName) {
@@ -93,6 +102,10 @@ public class ModulePath {
         return classToModule.get(className);
     }
 
+    public Set<String> getClasses(String moduleName) {
+        return moduleToClasses.get(moduleName);
+    }
+
     public boolean containsModule(String moduleName) {
         return moduleNames.contains(moduleName);
     }
@@ -102,81 +115,161 @@ public class ModulePath {
     }
 
     //
+    // Private Methods
     //
-    //
+
+    private void loadPatchedModules() {
+        List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
+        for (int i = 0; i < inputArgs.size(); i++) {
+            String arg = inputArgs.get(i);
+            String patchValue = null;
+
+            if (arg.startsWith("--patch-module=")) {
+                patchValue = arg.substring("--patch-module=".length());
+            } else if (arg.equals("--patch-module") && i + 1 < inputArgs.size()) {
+                patchValue = inputArgs.get(++i);
+            }
+
+            if (patchValue != null) {
+                parsePatchModuleOption(patchValue);
+            }
+        }
+    }
+
+    private void parsePatchModuleOption(String option) {
+        // Format: <module-name>=<path1>(:<path2>)*
+        int equalsIdx = option.indexOf('=');
+        if (equalsIdx == -1) return;
+
+        String moduleName = option.substring(0, equalsIdx);
+        String pathsString = option.substring(equalsIdx + 1);
+
+        String[] paths = pathsString.split(File.pathSeparator);
+        for (String pathStr : paths) {
+            Path path = Paths.get(pathStr);
+            if (Files.exists(path) && Files.isDirectory(path)) {
+                // Scan test directory and append classes to target module
+                scanPatchedDirectory(path, moduleName);
+            }
+        }
+    }
+
+    private void scanPatchedDirectory(Path directory, String targetModuleName) {
+        Set<String> discovered = new HashSet<>();
+        try (URLClassLoader classLoader = new URLClassLoader(new URL[]{ directory.toUri().toURL() })) {
+            try (Stream<Path> classFiles = Files.walk(directory)) {
+                for (Path classFile : classFiles.toList()) {
+                    if (classFile.toString().endsWith(DOT_CLASS)) {
+                        scanClassFile(directory.toFile(), classFile.toFile(), classLoader, targetModuleName, discovered);
+                    }
+                }
+            }
+        } catch (IOException ignored) {}
+
+        for (String className : discovered) {
+            addClassToModule(className, targetModuleName);
+        }
+    }
 
     private void loadModulePath(String modulePath) {
         moduleNames = new java.util.HashSet<>();
         classToModule = new HashMap<>();
+        moduleToClasses = new HashMap<>();
         List<String> modulePathList = List.of();
         if (modulePath != null) {
-            String[] pathList = modulePath.split(":");
+            String[] pathList = modulePath.split(File.pathSeparator);
             modulePathList = Arrays.asList(pathList);
         }
-
-        classToModule = new HashMap<>();
         for (String modulePathString : modulePathList) {
-            File file = Paths.get(modulePathString).toFile();
+            Path path = Paths.get(modulePathString);
             String moduleName = "";
-            classNames = new java.util.HashSet<>();
-            if (file.isDirectory()) {
-                moduleName = processDirectory(file, moduleName);
-            } else if (file.toString().toLowerCase().endsWith(DOT_JAR)) {
-                moduleName = processJar(file, moduleName);
+            // classNames = new HashSet<>();
+            if (path.toFile().isDirectory()) {
+                moduleName = scanDirectory(path, moduleName);
+            } else if (path.toString().toLowerCase().endsWith(DOT_JAR)) {
+                moduleName = scanJar(path, moduleName);
             }
             moduleNames.add(moduleName);
         }
     }
 
-    private String processJar(File file, String moduleName) {
+    private String scanJar(Path path, String moduleName) {
         try{
-            JarFile jar = JarFile.load(file.toPath());
+            JarFile jar = JarFile.open(path);
+            String jarModuleName = jar.getModuleName();
             Set<String> classNames = jar.getClassNames();
             if (classNames == null) {
                 return null;
             }
             for (String className : classNames) {
-                classNames.add(className);
+                addClassToModule(className, jarModuleName);
             }
-            String jarModuleName = jar.getModuleName();
             if (jarModuleName == null) {
                 return moduleName;
             }
-            moduleToPath.put(jarModuleName, file.toPath());
+            moduleToPath.put(jarModuleName, path);
             return jarModuleName;
         } catch(LocalizableIOException e) {
-
+            // Ignore it
         }
         return null;
     }
 
-    private String processDirectory(File directory, String moduleName) {
+    private void addClassToModule(String className, String moduleName) {
+        if (moduleName == null) {
+            moduleName = ""; // UNNAMED modules
+        }
+        classToModule.put(className, moduleName);
+        Set<String> moduleClasses = moduleToClasses.get(moduleName);
+        if (moduleClasses == null) {
+            moduleClasses = new HashSet<>();
+            moduleToClasses.put(moduleName, moduleClasses);
+        }
+        moduleClasses.add(className);
+        classNames.add(className);
+    }
+
+    private String scanDirectory(Path directory, String moduleName) {
         try {
-            URL url = URL.of(directory.toURI(), null);
+            URL url = URL.of(directory.toUri(), null);
             URL[] urls = new URL[] {url};
-            processDirectoryUrl(directory, urls, moduleName);
+            scanDirectoryUrl(directory, urls, moduleName);
         }catch(MalformedURLException e) {
-            // Nothing to do here
+            // Ignore it
         }
         return moduleName;
     }
 
-    public String processDirectoryUrl(File directory, URL[] urls, String moduleName) {
+    private String scanDirectoryUrl(Path directory, URL[] urls, String moduleName) {
+        Set<String> discovered = new HashSet<>();
         try (URLClassLoader classLoader = new URLClassLoader(urls)) {
-            try(Stream<Path> classFiles = Files.walk(directory.toPath())) {
+            try(Stream<Path> classFiles = Files.walk(directory)) {
                 for (Path classFile : classFiles.toList()) {
                     if (classFile.toString().endsWith(DOT_CLASS)) {
-                        moduleName = processClassFile(directory, classFile.toFile(), classLoader, moduleName);
+                        moduleName = scanClassFile(directory.toFile(), classFile.toFile(), classLoader, moduleName, discovered);
                     }
+                }
+                for (String className : discovered) {
+                    addClassToModule(className, moduleName);
+                }
+            }
+            try(Stream<Path> jarFiles = Files.walk(directory)) {
+                for (Path jarFile : jarFiles.toList()) {
+                    if (jarFile.toString().endsWith(DOT_JAR)) {
+                        moduleName = scanJar(jarFile, moduleName);
+                    }
+                }
+                for (String className : discovered) {
+                    addClassToModule(className, moduleName);
                 }
             }
         } catch (IOException e) {
-            // ctx.error(null, "Error reading classes in directory: " + directory.getAbsolutePath());
+            // Ignore it
         }
         return moduleName;
     }
 
-    public String processClassFile(File directory, File file, URLClassLoader classLoader, String moduleName) throws LocalizableIOException {
+    private String scanClassFile(File directory, File file, URLClassLoader classLoader, String moduleName, Set<String> discovered) throws LocalizableIOException {
         Path filePath = file.toPath();
         String className = "";
         String relativePath = "";
@@ -191,9 +284,8 @@ public class ModulePath {
                 moduleToPath.put(moduleName, filePath.getParent());
             } else {
                 Class<?> clazz = classLoader.loadClass(className);
-                classNames.add(clazz.getName());
                 for (Class<?> declaredClass : clazz.getDeclaredClasses()) {
-                    classNames.add(declaredClass.getName());
+                    discovered.add(declaredClass.getName());
                 }
             }
         } catch (java.lang.NoClassDefFoundError e) {
@@ -202,42 +294,5 @@ public class ModulePath {
             // ctx.error(null, "Failed to read class file: " + file);
         }
         return moduleName;
-    }
-
-    // SonarQube thinks this is extracting the JAR file.
-    // It's only reading the list of contents and extracting enough to get the module descriptor.
-    /// Processes a JAR file to extract module and package information relevant for sibling module linking.
-    /// @param jarFile The file path to the JAR file.
-    /// @throws LocalizableIOException if an error occurs while processing the JAR.
-    @java.lang.SuppressWarnings("squid:S5042")
-    String processJarFile(JarFile jarFile, String moduleName) throws LocalizableIOException{
-        String newModuleName = "Unnamed Module";
-        if (jarFile.getModuleName() != null) {
-            newModuleName = jarFile.getModuleName();
-        }
-        classNames.addAll(jarFile.getClassNames());
-
-        // // Iterate over all entries in the JAR
-        // for (Enumeration<JarEntry> entries = jarFile.entries(); entries.hasMoreElements();) {
-        //     JarEntry entry = entries.nextElement();
-        //     String entryName = entry.getName();
-
-        //     // Process module-info.class
-        //     if (entryName.equals("module-info.class")) {
-        //         InputStream is = jarFile.getInputStream(entry);
-        //         ModuleDescriptor descriptor = ModuleDescriptor.read(is);
-        //         newModuleName = descriptor.name();
-        //     }
-
-        //     // Process other class files
-        //     else if (entryName.endsWith(DOT_CLASS)) {
-        //         String className = entryName
-        //             .replace("/", ".")
-        //             .replace("\\", ".")
-        //             .substring(0, entryName.length() - 6); // Remove DOT_CLASS
-        //         classNames.add(className);
-        //     }
-        // }
-        return newModuleName;
     }
 }

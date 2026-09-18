@@ -54,6 +54,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         JreUtils.isRunningInTerminal() ||
         JreUtils.isRunningViaEclipse() ||
         JreUtils.isRunningViaGradle()
+        // TODO: A JDK21 way of telling if output is being redirected
     );
 
     protected static final String[] levelColors = new String[7];
