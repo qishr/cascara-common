@@ -744,16 +744,10 @@ public abstract class AbstractSerializer<
         return best;
     }
 
-    // TODO:
-    //   - Subclasses of abstract superclass (SerializerSubclassOfAbstractClassTests)
-    //   - Subclasses of non-sealed superclass (SerializerSubclassTests)
     private <C> C newTypeInstance(AstNode node, Type jvmType) throws SerializerException {
         try {
             Class<C> baseClass = ReflectionUtils.getRawClass(jvmType);
-
-            // Class<? extends C> targetClass = old_resolvePolymorphicTarget(node, baseClass);
             Class<? extends C> targetClass = resolvePolymorphicTarget(node, baseClass);
-
             C jvmInstance = targetClass.getConstructor().newInstance();
             return jvmInstance;
         } catch (NoSuchMethodException e) {

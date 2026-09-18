@@ -44,7 +44,7 @@ import org.junit.jupiter.api.Test;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 
-public class SerializerSubclassTests extends SerializerTestBase {
+public class SerializerNonSealedPolymorphicHierarchyTests extends SerializerTestBase {
 
     public static class ContainerTestClass {
         public BaseTestClass v;

@@ -1,7 +1,6 @@
 package io.github.qishr.cascara.common.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
@@ -21,10 +20,6 @@ public class ClassHierarchySubclassOfAbstractClassTests extends ClassHierarchyTe
     @Test
     void test_subclassDeserialization() {
         List<String> subclasses = ClassHierarchy.getSubclasses(TestBase.class.getName());
-
-        // outputHierarchy(ClassHierarchy.getAll());
-        // outputClasses(ClassHierarchy.getAll());
-
         assertNotNull(subclasses);
         assertEquals(1, subclasses.size());
     }
