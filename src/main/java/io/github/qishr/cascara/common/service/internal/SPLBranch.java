@@ -56,6 +56,7 @@ import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.service.ContentTypeProvider;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
@@ -65,9 +66,11 @@ import io.github.qishr.cascara.common.service.ServiceProviderLayer;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
+import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ClassHierarchy;
 import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.JarFile;
+import io.github.qishr.cascara.common.util.JarManifest;
 import io.github.qishr.cascara.common.util.ModulePath;
 
 public class SPLBranch implements ServiceProviderLayer {
@@ -322,16 +325,25 @@ public class SPLBranch implements ServiceProviderLayer {
     @Override
     public void registerJar(Path jarPath) {
         String moduleName;
-
-        try {
-            JarFile jar = JarFile.open(jarPath);
+        JarManifest manifest;
+        try (JarFile jar = JarFile.open(jarPath)) {
             moduleName = jar.getModuleName();
-        } catch (LocalizableIOException e) {
+            if (moduleName == null || moduleName.isEmpty()) {
+                throw new ServiceException(ServiceDiagnosticCode.NON_MODULAR_JAR, jarPath);
+            }
+            manifest = jar.getManifest();
+        } catch (Exception e) {
             throw new ServiceException(e, ServiceDiagnosticCode.FAILED_TO_READ_JAR, jarPath, e.getMessage());
         }
 
-        if (moduleName == null || moduleName.isEmpty()) {
-            throw new ServiceException(ServiceDiagnosticCode.NON_MODULAR_JAR, jarPath);
+        SemVer minVersion = new SemVer(manifest.getString("Min-Cascara-Version", "0.0.0"));
+        SemVer cascaraVersion = Cascara.getVersion();
+
+        if (cascaraVersion.isLowerThan(minVersion)) {
+            throw new ServiceException(
+                ServiceDiagnosticCode.INCOMPATIBLE_MODULE_VERSION,
+                moduleName, minVersion, cascaraVersion
+            );
         }
 
         getReporter().debug("Discovering providers in \"%s\"", jarPath);

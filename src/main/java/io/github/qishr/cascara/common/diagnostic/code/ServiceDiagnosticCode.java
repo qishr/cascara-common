@@ -47,8 +47,9 @@ public enum ServiceDiagnosticCode implements DiagnosticCode {
     FAILED_TO_LOAD_CLASS("SPL-304", "Failed to instantiate class {0}. {1}."),
     FAILED_TO_READ_JAR("SPL-305", "Failed to read Jar \"{0}\". {1}."),
     NON_MODULAR_JAR("SPL-306", "Jar \"{0}\" does not contain a module."),
-    NO_PROVIDER_REGISTERED("SPL-307", "No {0} providers registered."),
-    NO_PROVIDER_REGISTERED_FOR("SPL-301", "No {0} providers registered for {1}.");
+    INCOMPATIBLE_MODULE_VERSION("SPL-307", "Module \"{0}\" requires Cascara >= {1}, but active version is {2}"),
+    NO_PROVIDER_REGISTERED("SPL-308", "No {0} providers registered."),
+    NO_PROVIDER_REGISTERED_FOR("SPL-309", "No {0} providers registered for {1}.");
 
     private final String code;
     private final String message;

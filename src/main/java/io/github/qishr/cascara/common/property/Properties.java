@@ -296,6 +296,10 @@ public class Properties implements TabularData, Duplicable<Properties> {
         return sb.toString();
     }
 
+    public static Properties parse(String text) {
+        return PropertyParser.parse(text);
+    }
+
     public static Properties load(Path path) throws LocalizableIOException {
         if (Files.isRegularFile(path)) {
             try {

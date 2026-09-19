@@ -50,7 +50,7 @@ import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.property.Properties;
 
 public class JarFile extends ArchiveFile {
-    private Properties manifestProperties = new Properties();
+    private JarManifest manifest;
     private Properties mavenProperties;
     private Set<String> packageNames = null;
     private Set<String> classNames = null;
@@ -63,15 +63,15 @@ public class JarFile extends ArchiveFile {
     private JarFile(Path jarPath, boolean create) throws LocalizableIOException {
         super(jarPath, create);
         String jarManifest = new String(extractFile("META-INF/MANIFEST.MF"));
-        manifestProperties = JarManifest.parse(jarManifest);
+        manifest = JarManifest.parse(jarManifest);
     }
 
     public Path getPath() {
         return archivePath;
     }
 
-    public Properties getManifestProperties() {
-        return manifestProperties;
+    public JarManifest getManifest() {
+        return manifest;
     }
 
     // public List<List<String>> getServices() {
@@ -102,7 +102,7 @@ public class JarFile extends ArchiveFile {
             moduleName = getJpmsModuleName();
         }
         if (moduleName == null) {
-            String automaticModuleName = manifestProperties.getString("Automatic-Module-Name");
+            String automaticModuleName = manifest.getString("Automatic-Module-Name");
             if (automaticModuleName != null && !automaticModuleName.isBlank()) {
                 moduleName = automaticModuleName;
             }
@@ -126,6 +126,10 @@ public class JarFile extends ArchiveFile {
         }
         return classNames;
     }
+
+    //
+    // Private MEthods
+    //
 
     private void extractMavenInfo() {
         mavenProperties = new Properties();

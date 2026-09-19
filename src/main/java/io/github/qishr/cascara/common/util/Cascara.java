@@ -24,15 +24,14 @@ public class Cascara {
     private String homeEnvVar;
     private Path homePath;
 
-    private static Cascara instance() {
-        if (INSTANCE == null) {
-            INSTANCE = new Cascara();
+    public static SemVer getVersion() {
+        JarManifest manifest;
+        try {
+            manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
+        } catch (IOException e) {
+            return new SemVer("0.0.0");
         }
-        return INSTANCE;
-    }
-
-    private Cascara() {
-        homePath = Paths.get(getHome());
+        return new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
     }
 
     public static String getHomeEnvVar() {
@@ -94,7 +93,7 @@ public class Cascara {
         String highestVersionString = null;
         SemVer highest = new SemVer("0.0.0");
         for (String versionString : installedVersions) {
-            SemVer version = new SemVer(toSemVerString(versionString));
+            SemVer version = toSemVer(versionString);
             if (version.isGreaterThan(highest)) {
                 highest = version;
                 highestVersionString = versionString;
@@ -103,11 +102,7 @@ public class Cascara {
         return highestVersionString;
     }
 
-    //
-    // Private Helpers
-    //
-
-    private static String toSemVerString(String version) {
+    public static SemVer toSemVer(String version) {
         if (version == null || version.isBlank()) {
             throw new UnexpectedNullParameterException("version");
         }
@@ -118,12 +113,27 @@ public class Cascara {
             }
         }
         if (dots == 2) {
-            return version;
+            return new SemVer(version);
         }
         if (dots == 1) {
-            return version + ".0";
+            return new SemVer(version + ".0");
         }
-        return version + ".0.0";
+        return new SemVer(version + ".0.0");
+    }
+
+    //
+    // Private Helpers
+    //
+
+    private Cascara() {
+        homePath = Paths.get(getHome());
+    }
+
+    private static Cascara instance() {
+        if (INSTANCE == null) {
+            INSTANCE = new Cascara();
+        }
+        return INSTANCE;
     }
 
     private static Path getSharedPath() {
@@ -136,7 +146,7 @@ public class Cascara {
         }
         String name = file.getName();
         try {
-            new SemVer(toSemVerString(name));
+            toSemVer(name);
             return true;
         } catch (SemVerException e) {
             return false;
