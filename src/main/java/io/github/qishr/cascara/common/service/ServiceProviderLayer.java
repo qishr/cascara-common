@@ -35,6 +35,8 @@
 
 package io.github.qishr.cascara.common.service;
 
+import static java.util.Locale.caseFoldLanguageTag;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
@@ -86,8 +88,6 @@ public interface ServiceProviderLayer {
         }
     }
 
-    // TODO: Rules for deciing which implementation of a service is used
-
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T> T loadDefault(Class<T> serviceType) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
@@ -97,10 +97,25 @@ public interface ServiceProviderLayer {
         if (providers.isEmpty()) {
             throw new ServiceException(ServiceDiagnosticCode.NO_PROVIDER_REGISTERED, serviceType.getSimpleName());
         }
-        ServiceMetadata serviceMeta = providers.getFirst();
-        Class<T> clazz = (Class<T>) serviceMeta.getType();
-
         SPLRoot root = (SPLRoot) getRoot();
+
+        String preferredProviderName = root.getPreferredProviderClassName(serviceType);
+        ServiceMetadata serviceMeta = null;
+
+        if (preferredProviderName != null) {
+            for(ServiceMetadata candidate : providers) {
+                if (candidate.getTypeName().equals(preferredProviderName)) {
+                    serviceMeta = candidate;
+                    break;
+                }
+            }
+        }
+
+        if (serviceMeta == null) {
+            serviceMeta = providers.getFirst();
+        }
+
+        Class<T> clazz = (Class<T>) serviceMeta.getType();
 
         if (serviceMeta.isSingleton()) {
             return root.getOrCreateSingleton(
