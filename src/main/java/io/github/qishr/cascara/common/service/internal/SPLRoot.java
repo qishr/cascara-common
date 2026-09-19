@@ -34,21 +34,100 @@
 
 package io.github.qishr.cascara.common.service.internal;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
+import io.github.qishr.cascara.common.annotation.SingletonInitializer;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
+import io.github.qishr.cascara.common.service.ServiceException;
+import io.github.qishr.cascara.common.service.ServiceMetadata;
+import io.github.qishr.cascara.common.service.ServiceProviderLayer;
 import io.github.qishr.cascara.common.service.ServiceProviderRoot;
 import io.github.qishr.cascara.common.trackable.TrackableArray;
 import io.github.qishr.cascara.common.util.ContentType;
+import io.github.qishr.cascara.common.util.ContentTypeResolver;
 
 public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
-    Set<ContentType> contentTypes = new HashSet<>();
-    TrackableArray<String> userModules = new TrackableArray<>();
+    // Set<ContentType> contentTypes = new HashSet<>();
+    static TrackableArray<String> userModules = new TrackableArray<>();
+    private final Map<ServiceMetadata, Object> singletonCache = new ConcurrentHashMap<>();
 
-    private SPLRoot() {}
+    private SPLRoot() {
+        isBooting = true;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getOrCreateSingleton(ServiceMetadata meta, Supplier<T> factory) {
+        // Fast-path read (no locking)
+        Object existing = singletonCache.get(meta);
+        if (existing != null) {
+            return (T) existing;
+        }
+
+        // Synchronize on the metadata instance to initialize atomically per service
+        synchronized (meta) {
+            existing = singletonCache.get(meta);
+            if (existing != null) {
+                return (T) existing;
+            }
+
+            T instance = factory.get();
+            initializeSingleton(instance);
+            singletonCache.put(meta, instance);
+            return instance;
+        }
+    }
+
+    public static void initializeSingleton(Object instance) {
+        if (instance == null) return;
+        Class<?> clazz = instance.getClass();
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(SingletonInitializer.class)) {
+                if (method.getParameterCount() > 0) {
+                    throw new ServiceException(
+                        ServiceDiagnosticCode.INVALID_SINGLETON_INITIALIZER,
+                        clazz.getName() + "." + method.getName(), "Method must take zero arguments"
+                    );
+                }
+                try {
+                    method.setAccessible(true);
+                    method.invoke(instance);
+                } catch (InvocationTargetException e) {
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    throw new ServiceException(
+                        cause,
+                        DiagnosticCode.forException(cause),
+                        clazz.getSimpleName() + "." + method.getName()
+                    );
+                } catch (Exception e) {
+                    throw new ServiceException(
+                        e,
+                        DiagnosticCode.forException(e),
+                        clazz.getSimpleName() + "." + method.getName()
+                    );
+                }
+                break;
+            }
+        }
+    }
+
+    public void removeSingleton(ServiceMetadata meta) {
+        singletonCache.remove(meta);
+    }
+
+    public void clearSingletons() {
+        singletonCache.clear();
+    }
+
+
+
 
     /// Retrieves the root Service Provider Layer.
     /// On the initial call, the root layer will be configured.
@@ -68,6 +147,7 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
             rootLayer = new SPLRoot();
             rootLayer.name = "root";
             rootLayer.setReporter(reporter);
+            contentTypes = new HashSet<>();
             ModuleLayer boot = ModuleLayer.boot();
             boot.modules().forEach((module) -> {
                 final String moduleName = module.getName();
@@ -83,6 +163,16 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
             // Fallback: classic ServiceLoader scanning for classpath/unnamed-module usage,
             // and to pick up any providers using META-INF/services even when modular.
             rootLayer.registerViaServiceLoader();
+
+            rootLayer.isBooting = false;
+
+            contentTypeStore = ServiceProviderLayer.loadDefault(ContentTypeResolver.class);
+            // TODO: use addAll
+            if (contentTypeStore != null) {
+                for (ContentType contentType : contentTypes) {
+                    contentTypeStore.add(contentType);
+                }
+            }
         }
         return rootLayer;
     }

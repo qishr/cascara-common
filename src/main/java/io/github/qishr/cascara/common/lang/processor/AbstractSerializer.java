@@ -80,6 +80,7 @@ import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceProviderFactory;
 import io.github.qishr.cascara.common.util.ClassHierarchy;
+import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public abstract class AbstractSerializer<
@@ -255,7 +256,7 @@ public abstract class AbstractSerializer<
         }
 
         // 2. Process dynamic settings (@YamlAnyGetter)
-        for (Method method : getAllMethods(jvmType)) { //.getDeclaredMethods()) {
+        for (Method method : JreUtils.getAllMethods(jvmType)) { //.getDeclaredMethods()) {
             if (method.isAnnotationPresent(AnyGetter.class)) {
                 // Try to make the method accessible. If this fails, continue to the next field.
                 try {
@@ -861,7 +862,7 @@ public abstract class AbstractSerializer<
     }
 
     private void processAnySetter(Object instance, M rootMap, Set<String> claimedKeys, Class<?> jvmType) {
-        for (Method method : getAllMethods(jvmType)) {
+        for (Method method : JreUtils.getAllMethods(jvmType)) {
             if (method.isAnnotationPresent(AnySetter.class)) {
                 // Try to make the method accessible. If this fails, continue to the next field.
                 try {
@@ -942,18 +943,6 @@ public abstract class AbstractSerializer<
             currentClass = currentClass.getSuperclass();
         }
         return fields;
-    }
-
-    protected List<Method> getAllMethods(Class<?> jvmType) {
-        List<Method> methods = new ArrayList<>();
-        Class<?> current = jvmType;
-        while (current != null && current != Object.class) {
-            for (Method m : current.getDeclaredMethods()) {
-                methods.add(m);
-            }
-            current = current.getSuperclass();
-        }
-        return methods;
     }
 
     @SuppressWarnings("unchecked")
@@ -1044,39 +1033,45 @@ public abstract class AbstractSerializer<
     //
 
     protected SerializerException error(Throwable t, Object... details) {
-        if (t instanceof InstantiationException e) {
-            return new SerializerException(e, LangDiagnosticCode.INSTANTIATION_EXCEPTION, details);
-        }
-        // InaccessibleObjectException - if Java language access checks cannot be suppressed.
-        else if (t instanceof InaccessibleObjectException e) {
-            return new SerializerException(e, LangDiagnosticCode.FIELD_NOT_ACCESSIBLE, details);
-        }
-        // IllegalAccessException - if this Method object is enforcing Java language access control and the underlying method is inaccessible.
-        else if (t instanceof IllegalAccessException e) {
-            return new SerializerException(e, LangDiagnosticCode.FIELD_NOT_ACCESSIBLE, details);
-        }
-        // IllegalArgumentException - if the method is an instance method and the specified object argument is not an instance of the class or interface declaring the underlying method (or of a subclass or implementor thereof); if the number of actual and formal parameters differ; if an unwrapping conversion for primitive arguments fails; or if, after possible unwrapping, a parameter value cannot be converted to the corresponding formal parameter type by a method invocation conversion.
-        else if (t instanceof IllegalArgumentException e) {
-            return new SerializerException(e, LangDiagnosticCode.ILLEGAL_ARGUMENT_EXCEPTION, details);
-        }
-        // InvocationTargetException - if the underlying method throws an exception.
-        else if (t instanceof InvocationTargetException e) {
-            return new SerializerException(e, LangDiagnosticCode.INVOCATION_TARGET_EXCEPTION, details);
-        }
-        else if (t instanceof NoSuchMethodException e) {
-            return new SerializerException(e, LangDiagnosticCode.NO_SUCH_METHOD, details);
-        }
-        // ExceptionInInitializerError - if the initialization provoked by this method fails.
-        else if (t instanceof ExceptionInInitializerError e) {
-            return new SerializerException(e, LangDiagnosticCode.EXCEPTION_IN_INITIALIZER, details);
-        }
-        // NullPointerException - if the specified object is null and the method is an instance method.
-        else if (t instanceof NullPointerException e) {
-            return new SerializerException(e, GenericDiagnosticCode.NPE, details);
-        }
-        else {
+        DiagnosticCode d = DiagnosticCode.forException(t);
+        if (d == null) {
             return new SerializerException(t, GenericDiagnosticCode.ERROR, t.getMessage());
+        } else {
+            return new SerializerException(d, details);
         }
+        // if (t instanceof InstantiationException e) {
+        //     return new SerializerException(e, LangDiagnosticCode.INSTANTIATION_EXCEPTION, details);
+        // }
+        // // InaccessibleObjectException - if Java language access checks cannot be suppressed.
+        // else if (t instanceof InaccessibleObjectException e) {
+        //     return new SerializerException(e, LangDiagnosticCode.FIELD_NOT_ACCESSIBLE, details);
+        // }
+        // // IllegalAccessException - if this Method object is enforcing Java language access control and the underlying method is inaccessible.
+        // else if (t instanceof IllegalAccessException e) {
+        //     return new SerializerException(e, LangDiagnosticCode.FIELD_NOT_ACCESSIBLE, details);
+        // }
+        // // IllegalArgumentException - if the method is an instance method and the specified object argument is not an instance of the class or interface declaring the underlying method (or of a subclass or implementor thereof); if the number of actual and formal parameters differ; if an unwrapping conversion for primitive arguments fails; or if, after possible unwrapping, a parameter value cannot be converted to the corresponding formal parameter type by a method invocation conversion.
+        // else if (t instanceof IllegalArgumentException e) {
+        //     return new SerializerException(e, LangDiagnosticCode.ILLEGAL_ARGUMENT_EXCEPTION, details);
+        // }
+        // // InvocationTargetException - if the underlying method throws an exception.
+        // else if (t instanceof InvocationTargetException e) {
+        //     return new SerializerException(e, LangDiagnosticCode.INVOCATION_TARGET_EXCEPTION, details);
+        // }
+        // else if (t instanceof NoSuchMethodException e) {
+        //     return new SerializerException(e, LangDiagnosticCode.NO_SUCH_METHOD, details);
+        // }
+        // // ExceptionInInitializerError - if the initialization provoked by this method fails.
+        // else if (t instanceof ExceptionInInitializerError e) {
+        //     return new SerializerException(e, LangDiagnosticCode.EXCEPTION_IN_INITIALIZER, details);
+        // }
+        // // NullPointerException - if the specified object is null and the method is an instance method.
+        // else if (t instanceof NullPointerException e) {
+        //     return new SerializerException(e, GenericDiagnosticCode.NPE, details);
+        // }
+        // else {
+        //     return new SerializerException(t, GenericDiagnosticCode.ERROR, t.getMessage());
+        // }
     }
 
     protected void warn(DiagnosticCode code, Object... details) {

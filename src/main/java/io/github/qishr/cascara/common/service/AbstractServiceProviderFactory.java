@@ -54,6 +54,11 @@ public class AbstractServiceProviderFactory {
     }
 
     @Nullable
+    protected <T extends ServiceProvider> T createServiceProvider(Class<T> serviceType) {
+        return createServiceProvider(serviceType, null);
+    }
+
+    @Nullable
     protected <T extends ServiceProvider> T createServiceProvider(Class<T> serviceType, Predicate<ServiceMetadata> capabilityPredicate) {
         String serviceName = serviceType.getName();
 
@@ -64,7 +69,7 @@ public class AbstractServiceProviderFactory {
         }
 
         ServiceMetadata provider;
-        if (providerMap.containsKey(capabilityPredicate)) {
+        if (capabilityPredicate != null && providerMap.containsKey(capabilityPredicate)) {
             provider = providerMap.get(capabilityPredicate);
         } else {
             provider = layer.findProvider(
@@ -74,7 +79,9 @@ public class AbstractServiceProviderFactory {
             if (provider == null) {
                 return null;
             }
-            providerMap.put(capabilityPredicate, provider);
+            if (capabilityPredicate != null) {
+                providerMap.put(capabilityPredicate, provider);
+            }
         }
 
         if (provider == null) return null;

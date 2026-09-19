@@ -39,6 +39,7 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleFinder;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,24 +62,28 @@ import io.github.qishr.cascara.common.service.ContentTypeProvider;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;
-import io.github.qishr.cascara.common.service.ServiceProviderRoot;
 import io.github.qishr.cascara.common.service.ServiceProviderLayer;
+import io.github.qishr.cascara.common.annotation.SingletonInitializer;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
-import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ClassHierarchy;
 import io.github.qishr.cascara.common.util.ContentType;
+import io.github.qishr.cascara.common.util.ContentTypeResolver;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarManifest;
+import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.ModulePath;
 
 public class SPLBranch implements ServiceProviderLayer {
     protected static SPLRoot rootLayer;
+    protected static ContentTypeResolver contentTypeStore;
+    protected static Set<ContentType> contentTypes;
 
     protected Reporter reporter;
 
     protected boolean ownsReporter = false;
+    protected boolean isBooting = false;
 
     protected String name;
     protected boolean isPublic;
@@ -99,7 +104,7 @@ public class SPLBranch implements ServiceProviderLayer {
     protected SPLBranch() { }
 
     public Set<ContentType> getContentTypes() {
-        return rootLayer.contentTypes;
+        return contentTypes;
     }
 
     //
@@ -429,10 +434,18 @@ public class SPLBranch implements ServiceProviderLayer {
                 ContentType contentType = null;
                 if (instance instanceof ContentTypeProvider ctp) {
                     contentType = ctp.getContentType();
-                    rootLayer.contentTypes.add(contentType);
+                    contentTypes.add(contentType);
                 }
 
-                ServiceMetadata provider = new ServiceMetadata(providerClass, getProviderProperties(instance, jarPath), contentType);
+                boolean isSingleton = false;
+                List<Method> methods = JreUtils.getAllMethods(providerClass);
+                for (Method method : methods) {
+                    if (method.isAnnotationPresent(SingletonInitializer.class)) {
+                        isSingleton = true;
+                    }
+                }
+
+                ServiceMetadata provider = new ServiceMetadata(providerClass, getProviderProperties(instance, jarPath), contentType, isSingleton);
 
                 orderedProviders.add(provider);
                 providersByFqcn.put(providerClass.getName(), provider);
@@ -453,6 +466,10 @@ public class SPLBranch implements ServiceProviderLayer {
                 if (contentType == null) {
                     getReporter().debug("  Registered " + providerClass.getName());
                 } else {
+                    if (!isBooting && contentTypeStore != null) {
+                        contentTypeStore.add(contentType);
+                    }
+                    contentTypes.add(contentType);
                     getReporter().debug("  Registered " + providerClass.getName() + " with content types:");
                     for (String type : contentType.getMimeTypes()) {
                         getReporter().debug("    " + type);

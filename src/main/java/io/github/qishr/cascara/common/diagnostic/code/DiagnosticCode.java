@@ -35,7 +35,48 @@
 
 package io.github.qishr.cascara.common.diagnostic.code;
 
+import java.lang.reflect.InaccessibleObjectException;
+import java.lang.reflect.InvocationTargetException;
+
+import io.github.qishr.cascara.common.lang.diagnostic.LangDiagnosticCode;
+
 public interface DiagnosticCode {
     String getCode();
     String getMessage();
+
+    static DiagnosticCode forException(Throwable t) {
+        if (t instanceof InstantiationException) {
+            return LangDiagnosticCode.INSTANTIATION_EXCEPTION;
+        }
+        // InaccessibleObjectException - if Java language access checks cannot be suppressed.
+        else if (t instanceof InaccessibleObjectException) {
+            return LangDiagnosticCode.FIELD_NOT_ACCESSIBLE;
+        }
+        // IllegalAccessException - if this Method object is enforcing Java language access control and the underlying method is inaccessible.
+        else if (t instanceof IllegalAccessException) {
+            return LangDiagnosticCode.FIELD_NOT_ACCESSIBLE;
+        }
+        // IllegalArgumentException - if the method is an instance method and the specified object argument is not an instance of the class or interface declaring the underlying method (or of a subclass or implementor thereof); if the number of actual and formal parameters differ; if an unwrapping conversion for primitive arguments fails; or if, after possible unwrapping, a parameter value cannot be converted to the corresponding formal parameter type by a method invocation conversion.
+        else if (t instanceof IllegalArgumentException) {
+            return LangDiagnosticCode.ILLEGAL_ARGUMENT_EXCEPTION;
+        }
+        // InvocationTargetException - if the underlying method throws an exception.
+        else if (t instanceof InvocationTargetException) {
+            return LangDiagnosticCode.INVOCATION_TARGET_EXCEPTION;
+        }
+        else if (t instanceof NoSuchMethodException) {
+            return LangDiagnosticCode.NO_SUCH_METHOD;
+        }
+        // ExceptionInInitializerError - if the initialization provoked by this method fails.
+        else if (t instanceof ExceptionInInitializerError) {
+            return LangDiagnosticCode.EXCEPTION_IN_INITIALIZER;
+        }
+        // NullPointerException - if the specified object is null and the method is an instance method.
+        else if (t instanceof NullPointerException) {
+            return GenericDiagnosticCode.NPE;
+        }
+        else {
+            return null;
+        }
+    }
 }

@@ -43,20 +43,30 @@ public class ServiceMetadata {
     private Class<?> capabilityType;
     private final Properties properties;
     private final ContentType contentType;
+    private final boolean isSingleton;
 
     public ServiceMetadata(Class<? extends ServiceProvider> type, Properties properties) {
-        this(type, properties, null);
+        this(type, properties, null, false);
     }
 
-    public ServiceMetadata(Class<? extends ServiceProvider> type, Properties properties, ContentType contentType) {
+    public ServiceMetadata(Class<? extends ServiceProvider> type, Properties properties, boolean isSingleton) {
+        this(type, properties, null, isSingleton);
+    }
+
+    public ServiceMetadata(Class<? extends ServiceProvider> type, Properties properties, ContentType contentType, boolean isSingleton) {
         this.type = type;
         this.properties = properties;
         this.contentType = contentType;
+        this.isSingleton = isSingleton;
         String capTypeString = properties.getString("javaType");
         try {
             capabilityType = capTypeString == null ? null : Class.forName(capTypeString);
         } catch (Exception e) {
         }
+    }
+
+    public boolean isSingleton() {
+        return isSingleton;
     }
 
     public boolean getBooleanCapability(String capName) {

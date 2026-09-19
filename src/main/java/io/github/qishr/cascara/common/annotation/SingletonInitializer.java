@@ -32,15 +32,14 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.annotation;
 
-package io.github.qishr.cascara.common.util;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.util.List;
-
-import io.github.qishr.cascara.common.service.SingletonProvider;
-
-public interface ContentTypeResolver extends SingletonProvider {
-    ContentType resolve(String type);
-    void add(ContentType contentType);
-    void addAll(List<? extends ContentType> contentTypes);
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface SingletonInitializer {
 }

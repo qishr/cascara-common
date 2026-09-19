@@ -49,7 +49,9 @@ public enum ServiceDiagnosticCode implements DiagnosticCode {
     NON_MODULAR_JAR("SPL-306", "Jar \"{0}\" does not contain a module."),
     INCOMPATIBLE_MODULE_VERSION("SPL-307", "Module \"{0}\" requires Cascara >= {1}, but active version is {2}"),
     NO_PROVIDER_REGISTERED("SPL-308", "No {0} providers registered."),
-    NO_PROVIDER_REGISTERED_FOR("SPL-309", "No {0} providers registered for {1}.");
+    NO_PROVIDER_REGISTERED_FOR("SPL-309", "No {0} providers registered for {1}."),
+    NO_SINGLETON_METHOD("SPL-310", "Class {0} has no singleton method."),
+    INVALID_SINGLETON_INITIALIZER("SPL-311", "Invalid singleton initializer {0}: {1}");
 
     private final String code;
     private final String message;

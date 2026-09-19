@@ -39,6 +39,7 @@ import io.github.qishr.cascara.common.lang.processor.AstParser;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
 import io.github.qishr.cascara.common.lang.util.SourceBuffer;
 import io.github.qishr.cascara.common.lang.util.SourceBufferOptions;
+import io.github.qishr.cascara.common.util.ContentTypeResolver;
 
 @Beta
 public class ServiceProviderFactory extends AbstractServiceProviderFactory {
@@ -72,5 +73,9 @@ public class ServiceProviderFactory extends AbstractServiceProviderFactory {
                 CapabilityQueries.supportsJvmType(jvmType)
             )
         );
+    }
+
+    public ContentTypeResolver createContentTypeResolver() throws ServiceException {
+        return createServiceProvider(ContentTypeResolver.class);
     }
 }

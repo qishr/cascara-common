@@ -39,7 +39,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
@@ -203,5 +206,17 @@ public class JreUtils {
     public static ClassLoader getEffectiveClassLoader() {
         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         return tccl != null ? tccl : ClassLoader.getSystemClassLoader();
+    }
+
+    public static List<Method> getAllMethods(Class<?> jvmType) {
+        List<Method> methods = new ArrayList<>();
+        Class<?> current = jvmType;
+        while (current != null && current != Object.class) {
+            for (Method m : current.getDeclaredMethods()) {
+                methods.add(m);
+            }
+            current = current.getSuperclass();
+        }
+        return methods;
     }
 }

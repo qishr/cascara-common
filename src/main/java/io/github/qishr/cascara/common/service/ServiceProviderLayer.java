@@ -68,7 +68,7 @@ public interface ServiceProviderLayer {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T loadProvider(Class<T> providerClass) {
+    static <T> T loadProvider(Class<T> providerClass) {
         if (!ServiceProvider.class.isAssignableFrom(providerClass)) {
             throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, providerClass);
         }
@@ -86,18 +86,29 @@ public interface ServiceProviderLayer {
         }
     }
 
-    // TODO: Don't just pick the first one, pick one that's declared in a Cascara module
+    // TODO: Rules for deciing which implementation of a service is used
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T> T loadDefault(Class<T> serviceType) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
             throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, serviceType);
         }
-        List<ServiceMetadata> providers = getRoot().findAllProviders((Class)serviceType);
+        List<ServiceMetadata> providers = getRoot().findAllProviders((Class) serviceType);
         if (providers.isEmpty()) {
             throw new ServiceException(ServiceDiagnosticCode.NO_PROVIDER_REGISTERED, serviceType.getSimpleName());
         }
-        ServiceMetadata meta = providers.getFirst();
-        Class<T> clazz = (Class<T> )meta.getType();
+        ServiceMetadata serviceMeta = providers.getFirst();
+        Class<T> clazz = (Class<T>) serviceMeta.getType();
+
+        SPLRoot root = (SPLRoot) getRoot();
+
+        if (serviceMeta.isSingleton()) {
+            return root.getOrCreateSingleton(
+                serviceMeta,
+                () -> ServiceProviderLayer.loadProvider(clazz)
+            );
+        }
+
         return ServiceProviderLayer.loadProvider(clazz);
     }
 
