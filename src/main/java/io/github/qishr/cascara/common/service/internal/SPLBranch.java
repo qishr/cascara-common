@@ -60,7 +60,7 @@ import io.github.qishr.cascara.common.service.ContentTypeProvider;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;
-import io.github.qishr.cascara.common.service.ServiceProviderKernel;
+import io.github.qishr.cascara.common.service.ServiceProviderRoot;
 import io.github.qishr.cascara.common.service.ServiceProviderLayer;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
@@ -70,8 +70,8 @@ import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ModulePath;
 
-public class ServiceProviderBranch implements ServiceProviderLayer {
-    protected static ServiceProviderRoot rootLayer;
+public class SPLBranch implements ServiceProviderLayer {
+    protected static SPLRoot rootLayer;
 
     protected Reporter reporter;
 
@@ -81,11 +81,11 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
     protected boolean isPublic;
     protected ModulePath modulePath;
     protected ModuleLayer moduleLayer;
-    protected ServiceProviderBranch parent;
+    protected SPLBranch parent;
 
     protected List<Path> jarPaths = new ArrayList<>();
-    protected List<ServiceProviderBranch> children = new ArrayList<>();
-    protected Map<String,ServiceProviderBranch> namedChildren = new HashMap<>();
+    protected List<SPLBranch> children = new ArrayList<>();
+    protected Map<String,SPLBranch> namedChildren = new HashMap<>();
 
     protected List<ServiceMetadata> orderedProviders = new ArrayList<>();
 
@@ -93,11 +93,7 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
     protected Map<String,ServiceMetadata> servicesByFqcn = new HashMap<>();
     protected Map<Class<ServiceProvider>, Set<ServiceMetadata>> providersByServiceType = new HashMap<>();
 
-    protected ServiceProviderBranch() { }
-
-    protected static ServiceProviderKernel getRootLayer() {
-        return ServiceProviderRoot.instance();
-    }
+    protected SPLBranch() { }
 
     public Set<ContentType> getContentTypes() {
         return rootLayer.contentTypes;
@@ -108,42 +104,48 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
     //
 
     /// Returns a list of all known service types.
+    @Override
     public Set<Class<ServiceProvider>> findServiceTypes() {
         Set<Class<ServiceProvider>> found = new HashSet<>();
         found.addAll(getServiceTypes());
-        for (ServiceProviderBranch layer : children) {
+        for (SPLBranch layer : children) {
             found.addAll(layer.findServiceTypes());
         }
         return found;
     }
 
+    @Override
     public Set<ServiceMetadata> findServices() {
         Set<ServiceMetadata> found = new HashSet<>();
         found.addAll(getServices());
-        for (ServiceProviderBranch layer : children) {
+        for (SPLBranch layer : children) {
             found.addAll(layer.findServices());
         }
         return found;
     }
 
     /// Retrieves metadata of the nearest known provider of the specified service type.
+    @Override
     public ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType) {
         List<ServiceMetadata> all = internalFindAllProviders(serviceType, null, null);
         return all.isEmpty() ? null : all.getFirst();
     }
 
     /// Retrieves metadata of the nearest known provider whose capabilities satisfy the given predicate.
+    @Override
     public ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate) {
         List<ServiceMetadata> all = internalFindAllProviders(serviceType, capabilityPredicate, null);
         return all.isEmpty() ? null : all.getFirst();
     }
 
     /// Retrieves metadata of all known providers of the specified service type.
+    @Override
     public List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType) {
         return internalFindAllProviders(serviceType, null, null);
     }
 
     /// Retrieves metadata of all known providers whose capabilities satisfy the given predicate.
+    @Override
     public List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate) {
         return internalFindAllProviders(serviceType, capabilityPredicate, null);
     }
@@ -152,30 +154,41 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
     // This Layer
     //
 
+    @Override
     public String getName() { return name; }
 
+    @Override
     public ServiceProviderLayer getParent() { return parent; }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Override
     public Collection<ServiceProviderLayer> getChildren() {
         return (Collection) children;
     }
 
+    @Override
     public ServiceProviderLayer getChild(String name) { return namedChildren.get(name); }
 
+    @Override
     public boolean hasChild(String name) { return namedChildren.containsKey(name); }
 
+    @Override
     public boolean hasProvider(String name) { return providersByFqcn.containsKey(name); }
 
+    @Override
     public Collection<ServiceMetadata> getProvidersByFqcn() { return providersByFqcn.values(); }
 
+    @Override
     public Path getModulePath(String name) { return modulePath.getPathForModule(name); }
 
+    @Override
     public boolean isPublic() { return isPublic; }
 
+    @Override
     public void setPublic(boolean v) { isPublic = v; }
 
     /// Sets the reporter for communicating mapping warnings or errors in this layer.
+    @Override
     public ServiceProviderLayer setReporter(Reporter reporter) {
         if (reporter == null) {
             reporter = new NoOpReporter();
@@ -187,16 +200,19 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
     }
 
     /// Retrieves metadata of the specified provider if it exists in this layer.
+    @Override
     public ServiceMetadata getProvider(String providerName) {
         return providersByFqcn.get(providerName);
     }
 
     /// Retrieves metadata of providers of the specified service type in this layer.
+    @Override
     public Collection<ServiceMetadata> getProviders() {
         return providersByFqcn.values();
     }
 
     /// Retrieves metadata of providers of the specified service type in this layer.
+    @Override
     public List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType) {
         List<ServiceMetadata> found = new ArrayList<>();
         if (providersByServiceType.get(serviceType) != null) {
@@ -211,6 +227,7 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
     }
 
     /// Retrieves metadata of providers in this layer whose capabilities satisfy the given predicate.
+    @Override
     public List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate) {
         List<ServiceMetadata> found = new ArrayList<>();
         if (providersByServiceType.get(serviceType) != null) {
@@ -230,12 +247,14 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
     // Registration
     //
 
-    public ServiceProviderBranch create() {
+    @Override
+    public SPLBranch create() {
         return create(null);
     }
 
-    public ServiceProviderBranch create(String name) {
-        ServiceProviderBranch layer = new ServiceProviderBranch();
+    @Override
+    public SPLBranch create(String name) {
+        SPLBranch layer = new SPLBranch();
         layer.parent = this;
         children.add(layer);
         if (name != null) {
@@ -245,8 +264,9 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
         return layer;
     }
 
+    @Override
     public void remove(String layerName) {
-        for (ServiceProviderBranch layer : children) {
+        for (SPLBranch layer : children) {
             if (layer.getName().equals(layerName)) {
                 children.remove(layer);
                 namedChildren.remove(layerName);
@@ -257,6 +277,7 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
     }
 
     @SuppressWarnings({ "rawtypes" })
+    @Override
     public void registerModule(Module module) {
         String moduleName = module.getName();
         if (moduleName.startsWith("java.") ||
@@ -289,6 +310,7 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
         }
     }
 
+    @Override
     public void registerClass(Class<?> type) {
         if (type == null || !ServiceProvider.class.isAssignableFrom(type)) {
             return;
@@ -297,6 +319,7 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
         registerProvider(instance, null);
     }
 
+    @Override
     public void registerJar(Path jarPath) {
         String moduleName;
 
@@ -519,7 +542,7 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
         return strings;
     }
 
-    private List<ServiceMetadata> internalFindAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate, ServiceProviderBranch previous) {
+    private List<ServiceMetadata> internalFindAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate, SPLBranch previous) {
         String startLayer = (name == null ? "unnamed layer" : "layer " + name);
         getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
         List<ServiceMetadata> found = new ArrayList<>();
@@ -542,7 +565,7 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
 
         if (parent == null) {
             // Branch out from root. `previous` is used to avoid going down the branch we just came from
-            for (ServiceProviderBranch layer : children) {
+            for (SPLBranch layer : children) {
                 if (layer != previous && layer.isPublic) {
                     found.addAll(layer.findProvidersInBranches(serviceType, capabilityPredicate, 0));
                 }
@@ -576,7 +599,7 @@ public class ServiceProviderBranch implements ServiceProviderLayer {
             }
         }
 
-        for (ServiceProviderBranch layer : children) {
+        for (SPLBranch layer : children) {
             if (layer.isPublic) {
                 found.addAll(layer.findProvidersInBranches(serviceType, capabilityPredicate, depth + 1));
             }

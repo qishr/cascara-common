@@ -40,32 +40,32 @@ import java.util.Set;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
-import io.github.qishr.cascara.common.service.ServiceProviderKernel;
+import io.github.qishr.cascara.common.service.ServiceProviderRoot;
 import io.github.qishr.cascara.common.trackable.TrackableArray;
 import io.github.qishr.cascara.common.util.ContentType;
 
-public class ServiceProviderRoot extends ServiceProviderBranch implements ServiceProviderKernel {
+public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
     Set<ContentType> contentTypes = new HashSet<>();
     TrackableArray<String> userModules = new TrackableArray<>();
 
-    private ServiceProviderRoot() {}
+    private SPLRoot() {}
 
     /// Retrieves the root Service Provider Layer.
     /// On the initial call, the root layer will be configured.
-    public static ServiceProviderKernel instance() {
+    public static ServiceProviderRoot instance() {
         return instance(null);
     }
 
     /// Retrieves the root Service Provider Layer.
     /// On the initial call, the root layer will be configured with a specified Reporter.
     /// This reporter is used for non-fatal error and warning reporting.
-    public static ServiceProviderKernel instance(Reporter reporter) {
+    public static ServiceProviderRoot instance(Reporter reporter) {
         if (reporter == null) {
             reporter = new NoOpReporter();
         }
         if (rootLayer == null) {
             final Reporter bootReporter = reporter;
-            rootLayer = new ServiceProviderRoot();
+            rootLayer = new SPLRoot();
             rootLayer.name = "root";
             rootLayer.setReporter(reporter);
             ModuleLayer boot = ModuleLayer.boot();

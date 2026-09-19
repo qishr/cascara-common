@@ -38,7 +38,7 @@ import java.util.Set;
 
 import io.github.qishr.cascara.common.util.ContentType;
 
-public interface ServiceProviderKernel extends ServiceProviderLayer {
+public interface ServiceProviderRoot extends ServiceProviderLayer {
 
     Set<ContentType> getContentTypes();
 

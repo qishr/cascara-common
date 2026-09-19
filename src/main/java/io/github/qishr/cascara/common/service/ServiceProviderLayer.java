@@ -45,22 +45,18 @@ import java.util.function.Predicate;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
-import io.github.qishr.cascara.common.service.internal.ServiceProviderRoot;
+import io.github.qishr.cascara.common.service.internal.SPLRoot;
 
 public interface ServiceProviderLayer {
     /// Retrieves the root Service Provider Layer.
     /// On the initial call, the root layer will be configured with a specified Reporter.
     /// This reporter is used for non-fatal error and warning reporting.
-    public static ServiceProviderKernel getRootLayer(Reporter reporter) {
-        return ServiceProviderRoot.instance(reporter);
+    public static ServiceProviderRoot getRoot(Reporter reporter) {
+        return SPLRoot.instance(reporter);
     }
 
-    //
-    // TODO: getKernel rather than getRootLayer?
-    //
-
-    public static ServiceProviderKernel getRootLayer() {
-        return ServiceProviderRoot.instance();
+    public static ServiceProviderRoot getRoot() {
+        return SPLRoot.instance();
     }
 
     public static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
@@ -96,7 +92,7 @@ public interface ServiceProviderLayer {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
             throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, serviceType);
         }
-        List<ServiceMetadata> providers = getRootLayer().findAllProviders((Class)serviceType);
+        List<ServiceMetadata> providers = getRoot().findAllProviders((Class)serviceType);
         if (providers.isEmpty()) {
             throw new ServiceException(ServiceDiagnosticCode.NO_PROVIDER_REGISTERED, serviceType.getSimpleName());
         }

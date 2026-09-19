@@ -49,7 +49,7 @@ public class ServiceTest {
     @Test
     void t1() {
         Reporter reporter = new StandardReporter().setLevel(Level.DEBUG);
-        ServiceProviderLayer root = ServiceProviderLayer.getRootLayer(reporter);
+        ServiceProviderLayer root = ServiceProviderLayer.getRoot(reporter);
         ServiceProviderLayer layer = root.create("jar-test");
         Path jarPath = Path.of("/Users/sandy/.cascara/extensions/cascara-module-conceptmap-0.1.0.jar");
 

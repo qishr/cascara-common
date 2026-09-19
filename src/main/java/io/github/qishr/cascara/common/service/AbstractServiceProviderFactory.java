@@ -50,7 +50,7 @@ public class AbstractServiceProviderFactory {
     }
 
     public AbstractServiceProviderFactory(ServiceProviderLayer layer) {
-        this.layer = layer == null ? ServiceProviderLayer.getRootLayer() : layer;
+        this.layer = layer == null ? ServiceProviderLayer.getRoot() : layer;
     }
 
     @Nullable
