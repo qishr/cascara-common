@@ -34,43 +34,12 @@
 
 package io.github.qishr.cascara.common.service;
 
-import io.github.qishr.cascara.common.annotation.Beta;
-import io.github.qishr.cascara.common.lang.processor.AstParser;
-import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
-import io.github.qishr.cascara.common.lang.util.SourceBuffer;
-import io.github.qishr.cascara.common.lang.util.SourceBufferOptions;
+import java.util.Set;
 
-@Beta
-public class ServiceProviderFactory extends AbstractServiceProviderFactory {
+import io.github.qishr.cascara.common.util.ContentType;
 
-    public ServiceProviderFactory() {
-        super();
-    }
+public interface ServiceProviderKernel extends ServiceProviderLayer {
 
-    public ServiceProviderFactory(ServiceProviderLayer layer) {
-        super(layer);
-    }
+    Set<ContentType> getContentTypes();
 
-    public SourceBuffer createSourceBuffer(SourceBufferOptions options) throws ServiceException {
-        return createServiceProvider(
-            SourceBuffer.class,
-            CapabilityQueries.hasExactValue("supportsSimd", options.supportsSimd())
-        );
-    }
-
-    public AstParser<?,?,?> createParser(String contentType) throws ServiceException {
-        return createServiceProvider(
-            AstParser.class,
-            CapabilityQueries.hasExactValue("contentType", contentType)
-        );
-    }
-
-    public TypeDescriptor<?> createTypeDescriptor(Class<?> jvmType) throws ServiceException {
-        return createServiceProvider(
-            TypeDescriptor.class,
-            CapabilityQueries.allOf(
-                CapabilityQueries.supportsJvmType(jvmType)
-            )
-        );
-    }
 }

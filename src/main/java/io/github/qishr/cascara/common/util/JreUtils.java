@@ -47,7 +47,7 @@ import io.github.qishr.cascara.common.diagnostic.code.FileDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 
 public class JreUtils {
-    public static String getResourceAsString(Class<?> clazz, String path) throws IOException {
+    public static String getResourceAsString(Class<?> clazz, String path) throws LocalizableIOException {
         InputStream inputStream = getResourceAsStream(clazz, path);
         InputStreamReader streamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         String content;
@@ -62,6 +62,8 @@ public class JreUtils {
             }
 
             content = result.toString();
+        } catch (IOException e) {
+            throw new LocalizableIOException(e, FileDiagnosticCode.READ_ERROR, path);
         }
         return content;
     }

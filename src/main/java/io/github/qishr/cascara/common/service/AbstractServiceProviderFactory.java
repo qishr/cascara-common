@@ -40,7 +40,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 
 public class AbstractServiceProviderFactory {
     private final ServiceProviderLayer layer;

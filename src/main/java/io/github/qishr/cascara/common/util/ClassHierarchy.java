@@ -186,7 +186,9 @@ public class ClassHierarchy {
         for (String className : classNames) {
             try {
                 Class<?> jvmClass = loadClassSafely(className);
-                if (jvmClass == null) continue;
+                if (jvmClass == null) {
+                    continue;
+                }
 
                 List<Class<?>> ancestry = new ArrayList<>();
                 collectAncestry(jvmClass, ancestry);

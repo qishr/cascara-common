@@ -35,18 +35,23 @@
 
 package io.github.qishr.cascara.common.property;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.data.TabularData;
-import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.diagnostic.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.code.FileDiagnosticCode;
 import io.github.qishr.cascara.common.util.Duplicable;
 
 public class Properties implements TabularData, Duplicable<Properties> {
@@ -289,5 +294,53 @@ public class Properties implements TabularData, Duplicable<Properties> {
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    public static Properties load(Path path) throws LocalizableIOException {
+        if (Files.isRegularFile(path)) {
+            try {
+                String content = Files.readString(path, StandardCharsets.UTF_8);
+                return PropertyParser.parse(content);
+            } catch (IOException e) {
+                throw new LocalizableIOException(FileDiagnosticCode.READ_ERROR, path);
+            }
+        } else {
+            throw new LocalizableIOException(FileDiagnosticCode.FILE_NOT_FOUND, path);
+        }
+    }
+
+    public static class PropertyParser {
+        public static Properties parse(String content) {
+            Properties properties = new Properties();
+
+            for (String line : content.split("\\R")) {
+                line = line.trim();
+
+                // Skip blank lines and comments
+                if (line.isEmpty() || line.startsWith("#") || line.startsWith("!")) {
+                    continue;
+                }
+
+                // Find either '=' or ':'
+                int separator = line.indexOf('=');
+                int colon = line.indexOf(':');
+
+                if (separator == -1 || (colon != -1 && colon < separator)) {
+                    separator = colon;
+                }
+
+                if (separator == -1) {
+                    // Treat a line without a separator as a key with an empty value
+                    properties.set(line, "");
+                } else {
+                    String key = line.substring(0, separator).trim();
+                    String value = line.substring(separator + 1).trim();
+
+                    properties.set(key, value);
+                }
+            }
+
+            return properties;
+        }
     }
 }
