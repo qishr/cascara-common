@@ -978,10 +978,16 @@ public abstract class AbstractSerializer<
         return null;
     }
 
+    private Set<String> classesWithNoTypeDescriptors = new HashSet<>();
+
     @Nullable
     protected TypeDescriptor<?> getTypeDescriptor(Class<?> jvmType) {
         if (jvmType == null) {
             throw new UnexpectedNullParameterException("jvmType");
+        }
+
+        if (classesWithNoTypeDescriptors.contains(jvmType.getName())) {
+            return null;
         }
 
         // 1. First check if one has been registered locally
@@ -992,10 +998,12 @@ public abstract class AbstractSerializer<
         // 2. Use service provider layer to get one
         TypeDescriptor<?> descriptor = providerFactory.createTypeDescriptor(jvmType);
         if (descriptor == null) {
+            classesWithNoTypeDescriptors.add(jvmType.getName());
             reporter.debug("No type desciptor for " + jvmType.getName());
             return null;
         }
         typeDescriptors.put(jvmType, descriptor);
+
         return descriptor;
     }
 
@@ -1039,39 +1047,6 @@ public abstract class AbstractSerializer<
         } else {
             return new SerializerException(d, details);
         }
-        // if (t instanceof InstantiationException e) {
-        //     return new SerializerException(e, LangDiagnosticCode.INSTANTIATION_EXCEPTION, details);
-        // }
-        // // InaccessibleObjectException - if Java language access checks cannot be suppressed.
-        // else if (t instanceof InaccessibleObjectException e) {
-        //     return new SerializerException(e, LangDiagnosticCode.FIELD_NOT_ACCESSIBLE, details);
-        // }
-        // // IllegalAccessException - if this Method object is enforcing Java language access control and the underlying method is inaccessible.
-        // else if (t instanceof IllegalAccessException e) {
-        //     return new SerializerException(e, LangDiagnosticCode.FIELD_NOT_ACCESSIBLE, details);
-        // }
-        // // IllegalArgumentException - if the method is an instance method and the specified object argument is not an instance of the class or interface declaring the underlying method (or of a subclass or implementor thereof); if the number of actual and formal parameters differ; if an unwrapping conversion for primitive arguments fails; or if, after possible unwrapping, a parameter value cannot be converted to the corresponding formal parameter type by a method invocation conversion.
-        // else if (t instanceof IllegalArgumentException e) {
-        //     return new SerializerException(e, LangDiagnosticCode.ILLEGAL_ARGUMENT_EXCEPTION, details);
-        // }
-        // // InvocationTargetException - if the underlying method throws an exception.
-        // else if (t instanceof InvocationTargetException e) {
-        //     return new SerializerException(e, LangDiagnosticCode.INVOCATION_TARGET_EXCEPTION, details);
-        // }
-        // else if (t instanceof NoSuchMethodException e) {
-        //     return new SerializerException(e, LangDiagnosticCode.NO_SUCH_METHOD, details);
-        // }
-        // // ExceptionInInitializerError - if the initialization provoked by this method fails.
-        // else if (t instanceof ExceptionInInitializerError e) {
-        //     return new SerializerException(e, LangDiagnosticCode.EXCEPTION_IN_INITIALIZER, details);
-        // }
-        // // NullPointerException - if the specified object is null and the method is an instance method.
-        // else if (t instanceof NullPointerException e) {
-        //     return new SerializerException(e, GenericDiagnosticCode.NPE, details);
-        // }
-        // else {
-        //     return new SerializerException(t, GenericDiagnosticCode.ERROR, t.getMessage());
-        // }
     }
 
     protected void warn(DiagnosticCode code, Object... details) {
