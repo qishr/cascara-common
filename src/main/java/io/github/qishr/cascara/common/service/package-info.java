@@ -33,5 +33,42 @@
 // version.
 
 
-/// Cascara Service Provider Layer
+/// Cascara Service Provider Layer (SPL)
+///
+/// Method names
+///
+/// Methods in the [ServiceProviderLayer] and [ServiceProviderRoot] interfaces
+/// are split into categories:
+///
+/// **Find**
+///
+/// The *find* methods returning a single `ServiceMetadata` search
+/// for a suitably matching service provider.
+/// They start at the layer they're called from, search all layers up to the root layer,
+/// then search branch layers. The first matching provider is returned.
+///
+/// - `ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType)`
+/// - `ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate)`
+///
+/// The *find* methods returning a collection of `ServiceMetadata` search in the same pattern
+/// as mentioned above, but return every provider that matches.
+///
+/// - `Set<Class<ServiceProvider>> findServiceTypes()`
+/// - `Set<ServiceMetadata> findServices()`
+/// - `List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType)`
+/// - `List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate)`
+///
+/// **Load**
+///
+/// These static methods return an instance of a serive provider.
+///
+/// - `<T> loadProvider(Class<T> serviceType, ServiceMetadata metadata)`
+/// - `<T> loadDefault(Class<T> serviceType)`
+///
+/// **Instantiate**
+///
+/// A convenience method for instantiating provider classes.
+///
+/// - `instantiateProvider(Class<T> providerClass)`
+///
 package io.github.qishr.cascara.common.service;

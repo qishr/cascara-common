@@ -56,14 +56,19 @@ public class Cascara {
         instance().homePath = path;
     }
 
+    /// The path of the content types registry file.
     public static Path getContentTypesPath() {
         return getSharedPath().resolve(CONTENT_TYPES);
     }
 
+    /// The path of the schema store irectory.
     public static Path getSchemasPath() {
         return getSharedPath().resolve(SCHEMAS);
     }
 
+    /// The path of the properties file containing definitions of default or preferred service providers
+    /// If this file is empty, or if a service is not listed in it, when a provider is requested the
+    /// first  matching provider will be returned by SPL.
     public static Path getSplPropertiesPath() {
         return getActiveVersionPath().resolve(SPL_PREFS);
     }

@@ -35,8 +35,6 @@
 
 package io.github.qishr.cascara.common.service;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -45,85 +43,33 @@ import java.util.function.Predicate;
 
 import io.github.qishr.cascara.common.data.TreeNode;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.service.internal.SPLRoot;
+import io.github.qishr.cascara.common.service.internal.SPLUtils;
 
 public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
     /// Retrieves the root Service Provider Layer.
     /// On the initial call, the root layer will be configured with a specified Reporter.
     /// This reporter is used for non-fatal error and warning reporting.
-    public static ServiceProviderRoot getRoot(Reporter reporter) {
+    static ServiceProviderRoot getRoot(Reporter reporter) {
         return SPLRoot.instance(reporter);
     }
 
-    public static ServiceProviderRoot getRoot() {
+    static ServiceProviderRoot getRoot() {
         return SPLRoot.instance();
     }
 
-    public static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
-        if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
-            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, serviceType);
-        }
-        Class<? extends ServiceProvider> clazz = metadata.getType();
-        return serviceType.cast(ServiceProviderLayer.loadProvider(clazz));
+    static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
+        return SPLUtils.loadProvider(serviceType, metadata);
     }
 
-    @SuppressWarnings("unchecked")
-    static <T> T loadProvider(Class<T> providerClass) {
-        if (!ServiceProvider.class.isAssignableFrom(providerClass)) {
-            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, providerClass);
-        }
-        try {
-            Constructor<?> constructor = providerClass.getDeclaredConstructor();
-            if (constructor == null) {
-                throw new ServiceException(ServiceDiagnosticCode.NOARGS_CONSTRUCTOR_REQUIRED, providerClass.getName());
-            } else {
-                ServiceProvider instance = (ServiceProvider) constructor.newInstance();
-                return (T)instance;
-            }
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-                | NoSuchMethodException e) {
-            throw new ServiceException(e, ServiceDiagnosticCode.FAILED_TO_INSTANTIATE_CLASS, providerClass.getName(), e.getMessage());
-        }
+    static <T> T loadDefault(Class<T> serviceType) {
+        return SPLUtils.loadDefault(serviceType);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static <T> T loadDefault(Class<T> serviceType) {
-        if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
-            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, serviceType);
-        }
-        List<ServiceMetadata> providers = getRoot().findAllProviders((Class) serviceType);
-        if (providers.isEmpty()) {
-            throw new ServiceException(ServiceDiagnosticCode.NO_PROVIDER_REGISTERED, serviceType.getSimpleName());
-        }
-        SPLRoot root = (SPLRoot) getRoot();
-
-        String preferredProviderName = root.getPreferredProviderClassName(serviceType);
-        ServiceMetadata serviceMeta = null;
-
-        if (preferredProviderName != null) {
-            for(ServiceMetadata candidate : providers) {
-                if (candidate.getTypeName().equals(preferredProviderName)) {
-                    serviceMeta = candidate;
-                    break;
-                }
-            }
-        }
-
-        if (serviceMeta == null) {
-            serviceMeta = providers.getFirst();
-        }
-
-        Class<T> clazz = (Class<T>) serviceMeta.getType();
-
-        if (serviceMeta.isSingleton()) {
-            return root.getOrCreateSingleton(
-                serviceMeta,
-                () -> ServiceProviderLayer.loadProvider(clazz)
-            );
-        }
-
-        return ServiceProviderLayer.loadProvider(clazz);
+    /// Instantiates a service provider
+    /// @param providerClass The class of the provider to instantiate.
+    static <T> T instantiateProvider(Class<T> providerClass) {
+        return SPLUtils.instantiateProvider(providerClass);
     }
 
     ServiceProviderLayer setReporter(Reporter reporter);
@@ -157,6 +103,7 @@ public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
     ServiceProviderLayer create(String name);
 
     void remove(String layerName);
+
     void registerModule(Module module);
     void registerClass(Class<?> type);
     void registerJar(Path jarPath);

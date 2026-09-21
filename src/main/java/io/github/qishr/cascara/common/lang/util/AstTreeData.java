@@ -85,7 +85,7 @@ public class AstTreeData implements TreeData<AstTreeData,AstNode> {
         return parent;
 	}
 
-	@Override
+	// @Override
 	public void setParent(AstTreeData parent) {
         this.parent = parent;
 	}

@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -65,6 +66,7 @@ import io.github.qishr.cascara.common.util.ContentTypeResolver;
 public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
     private static final Properties EMPTY_PROPERTIES = new Properties();
 
+    final Set<String> bootProviders = new HashSet<>();
     private final TrackableArray<ServiceMetadata> userProviders = new TrackableArray<>();
     private final Map<ServiceMetadata, Object> singletonCache = new ConcurrentHashMap<>();
     private FileWatcher propsFileWatcher;

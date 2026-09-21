@@ -668,7 +668,7 @@ public abstract class AbstractSerializer<
         throw new SerializerException(scalar, LangDiagnosticCode.UNSUPPORTED_TYPE, ReflectionUtils.getTypeName(targetType));
     }
 
-    private Object deserializeScalarWithDescriptor(ScalarAstNode scalar, ScalarDescriptor descriptor) {
+    private Object deserializeScalarWithDescriptor(ScalarAstNode<?> scalar, ScalarDescriptor<?> descriptor) {
         Object val = scalar.getPrimitive();
         String stringValue = val != null ? val.toString() : "";
         try {

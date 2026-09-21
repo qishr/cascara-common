@@ -169,7 +169,6 @@ public class SPLBranch implements ServiceProviderLayer {
     @Override
     public ServiceProviderLayer getParent() { return parent; }
 
-    // @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public List<ServiceProviderLayer> getChildren() {
         return children.stream().map(layer -> {
@@ -326,8 +325,14 @@ public class SPLBranch implements ServiceProviderLayer {
         if (type == null || !ServiceProvider.class.isAssignableFrom(type)) {
             return;
         }
-        ServiceProvider instance = (ServiceProvider) ServiceProviderLayer.loadProvider(type);
-        registerProvider(instance, null);
+        String providerFqcn = type.getName();
+        if (!isRegisteres(providerFqcn)) {
+            ServiceProvider instance = (ServiceProvider) ServiceProviderLayer.instantiateProvider(type);
+            registerProvider(instance, null);
+            if (isBooting) {
+                rootLayer.bootProviders.add(providerFqcn);
+            }
+        }
     }
 
     @Override
@@ -405,24 +410,30 @@ public class SPLBranch implements ServiceProviderLayer {
 
     /// Use SPI to find the service implementations inside this layer
     private void enumerateProviders() {
-        providersByFqcn.clear();
-        providersByServiceType.clear();
+        // providersByFqcn.clear();
+        // providersByServiceType.clear();
         var loader = ServiceLoader.load(moduleLayer, ServiceProvider.class);
         loader.forEach(provider -> {
-            String moduleName = provider.getClass().getModule().getName();
-            Path jarPath = modulePath.getPathForModule(moduleName);
-            try {
-                registerProvider(provider, jarPath);
-            } catch (Exception e) {
-                registrationError("Failed to query module " + moduleName + ".", null, e);
-            } catch(AbstractMethodError e) {
-                registrationError("Incompatible module.", jarPath, e);
-            } catch (NoClassDefFoundError e) {
-                registrationError("Incompatible module.", jarPath, e);
-            } catch (ServiceConfigurationError e) {
-                registrationError("Incompatible module.", jarPath, e);
+            if (!isRegisteres(provider.getClass().getName())) {
+                String moduleName = provider.getClass().getModule().getName();
+                Path jarPath = modulePath.getPathForModule(moduleName);
+                try {
+                    registerProvider(provider, jarPath);
+                } catch (Exception e) {
+                    registrationError("Failed to query module " + moduleName + ".", null, e);
+                } catch(AbstractMethodError e) {
+                    registrationError("Incompatible module.", jarPath, e);
+                } catch (NoClassDefFoundError e) {
+                    registrationError("Incompatible module.", jarPath, e);
+                } catch (ServiceConfigurationError e) {
+                    registrationError("Incompatible module.", jarPath, e);
+                }
             }
         });
+    }
+
+    private boolean isRegisteres(String providerFqcn) {
+        return rootLayer.bootProviders.contains(providerFqcn) || providersByFqcn.containsKey(providerFqcn);
     }
 
     private void registerProvider(ServiceProvider instance, Path jarPath) {
