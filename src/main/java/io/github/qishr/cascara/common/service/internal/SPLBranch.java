@@ -326,6 +326,9 @@ public class SPLBranch implements ServiceProviderLayer {
         Class<?> providerClass = provider.getType();
         String providerFqcn = providerClass.getName();
 
+        //
+        rootLayer.removeSingleton(provider);
+
         // Remove from FQCN lookup
         providersByFqcn.remove(providerFqcn);
 

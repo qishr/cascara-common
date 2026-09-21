@@ -68,7 +68,7 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
 
     final Set<String> bootProviders = new HashSet<>();
     private final TrackableArray<ServiceMetadata> userProviders = new TrackableArray<>();
-    private final Map<ServiceMetadata, Object> singletonCache = new ConcurrentHashMap<>();
+    private final Map<String, Object> singletonCache = new ConcurrentHashMap<>();
 
     private ContentTypeResolver contentTypeStore;
     private Set<ContentType> contentTypes;
@@ -154,21 +154,26 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
     @SuppressWarnings("unchecked")
     public <T> T getOrCreateSingleton(ServiceMetadata meta, Supplier<T> factory) {
         // Fast-path read (no locking)
-        Object existing = singletonCache.get(meta);
+        String singletonClassName = meta.getTypeName();
+        reporter.debug("getOrCreateSingleton: " + singletonClassName);
+        Object existing = singletonCache.get(singletonClassName);
         if (existing != null) {
+            reporter.debug("getOrCreateSingleton: returning existing");
             return (T) existing;
         }
 
         // Synchronize on the metadata instance to initialize atomically per service
         synchronized (meta) {
-            existing = singletonCache.get(meta);
+            existing = singletonCache.get(singletonClassName);
             if (existing != null) {
+                reporter.debug("getOrCreateSingleton: returning existing");
                 return (T) existing;
             }
 
             T instance = factory.get();
             initializeSingleton(instance);
-            singletonCache.put(meta, instance);
+            singletonCache.put(singletonClassName, instance);
+            reporter.debug("getOrCreateSingleton: returning new");
             return instance;
         }
     }
@@ -206,9 +211,8 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
         }
     }
 
-    // TODO: This isn't called yet
     public void removeSingleton(ServiceMetadata meta) {
-        singletonCache.remove(meta);
+        singletonCache.remove(meta.getTypeName());
     }
 
     // TODO: This isn't called yet
