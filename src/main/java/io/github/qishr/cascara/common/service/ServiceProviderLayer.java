@@ -35,8 +35,6 @@
 
 package io.github.qishr.cascara.common.service;
 
-import static java.util.Locale.caseFoldLanguageTag;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
@@ -45,11 +43,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import io.github.qishr.cascara.common.data.TreeNode;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.service.internal.SPLRoot;
 
-public interface ServiceProviderLayer {
+public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
     /// Retrieves the root Service Provider Layer.
     /// On the initial call, the root layer will be configured with a specified Reporter.
     /// This reporter is used for non-fatal error and warning reporting.
@@ -134,7 +133,7 @@ public interface ServiceProviderLayer {
     void setPublic(boolean v);
 
     ServiceProviderLayer getParent();
-    Collection<ServiceProviderLayer> getChildren();
+    List<ServiceProviderLayer> getChildren();
     ServiceProviderLayer getChild(String name);
     boolean hasChild(String name);
 

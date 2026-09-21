@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.property.Properties;
 
@@ -107,9 +108,9 @@ public class JarFile extends ArchiveFile {
                 moduleName = automaticModuleName;
             }
         }
-        if (moduleName == null) {
-            determineModuleName();
-        }
+        // if (moduleName == null) {
+        //     determineModuleName();
+        // }
         return moduleName;
     }
 
@@ -134,8 +135,11 @@ public class JarFile extends ArchiveFile {
     private void extractMavenInfo() {
         mavenProperties = new Properties();
         String mavenPropertiesPath = getPomPropertiesPath();
-        String mavenPropertiesString = new String(extractFile(mavenPropertiesPath));
-        parseProperties(mavenPropertiesString, mavenProperties);
+        try {
+            String mavenPropertiesString = new String(extractFile(mavenPropertiesPath));
+            parseProperties(mavenPropertiesString, mavenProperties);
+        } catch (LocalizableIOException e) {
+        }
     }
 
     private String getPomPropertiesPath() {
@@ -167,7 +171,8 @@ public class JarFile extends ArchiveFile {
         }
     }
 
-    private void determineModuleName() {
+    @Experimental
+    public String guessoduleName() {
         String[] fileNameSegments = getPath().getFileName().toString().split("-");
         StringBuilder sb = new StringBuilder();
         for (String segment : fileNameSegments) {
@@ -183,14 +188,12 @@ public class JarFile extends ArchiveFile {
                 }
             }
         }
-        moduleName = sb.toString();
+        return sb.toString();
     }
 
     private String getJpmsModuleName() {
-        InputStream is = getInputStream("module-info.class");
-        ModuleDescriptor descriptor;
-        try {
-            descriptor = ModuleDescriptor.read(is);
+        try (InputStream is = getInputStream("module-info.class")) {
+            ModuleDescriptor descriptor = ModuleDescriptor.read(is);
             return descriptor.name();
         } catch (IOException | InvalidModuleDescriptorException e) {
             return null;
@@ -207,15 +210,10 @@ public class JarFile extends ArchiveFile {
         classNames = new HashSet<>();
         for (EntryInfo fileInfo : allFiles) {
             String entryName = fileInfo.getPath();
-            // if (fileInfo.getPath().endsWith(".class")) {
             if (entryName.endsWith(".class")) {
-                // if (checkClassFile(jarFile, entry)) {
-                // }
-
                 if (entryName.endsWith("module-info.class")) {
                     continue;
                 }
-
                 String className = entryName
                     .replace("/", ".")
                     .replace("\\", ".")
@@ -260,18 +258,4 @@ public class JarFile extends ArchiveFile {
         }
         return null;
     }
-
-    // private static boolean checkClassFile(JarFile jarFile, JarEntry jarEntry) {
-    //     String arch = System.getProperty("os.arch");
-    //     System.out.println("JVM Architecture: " + arch);
-    //     try {
-    //         InputStream is = jarFile.getInputStream(jarEntry);
-    //         // System.out.println();
-    //         return true;
-    //     } catch (Exception e) {
-    //         System.out.println(e.getMessage());
-    //         e.printStackTrace();
-    //     }
-    //     return false;
-    // }
 }

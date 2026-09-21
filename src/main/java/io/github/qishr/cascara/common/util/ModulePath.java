@@ -69,8 +69,14 @@ public class ModulePath {
     Map<String, Set<String>> moduleToClasses = new HashMap<>();
     Map<String, ModuleDescriptor> descriptors = new HashMap<>();
     Map<String, Path> moduleToPath = new HashMap<>();
+    Path virtualReferencePath;
 
     public ModulePath(String modulePath) {
+        loadModulePath(modulePath);
+    }
+
+    public ModulePath(String modulePath, Path virtualReferencePath) {
+        this.virtualReferencePath = virtualReferencePath;
         loadModulePath(modulePath);
     }
 
@@ -160,7 +166,7 @@ public class ModulePath {
             try (Stream<Path> classFiles = Files.walk(directory)) {
                 for (Path classFile : classFiles.toList()) {
                     if (classFile.toString().endsWith(DOT_CLASS)) {
-                        scanClassFile(directory.toFile(), classFile.toFile(), classLoader, targetModuleName, discovered);
+                        scanClassFile(directory, classFile, classLoader, targetModuleName, discovered);
                     }
                 }
             }
@@ -172,24 +178,40 @@ public class ModulePath {
     }
 
     private void loadModulePath(String modulePath) {
-        moduleNames = new java.util.HashSet<>();
+        moduleNames = new HashSet<>();
         classToModule = new HashMap<>();
         moduleToClasses = new HashMap<>();
-        List<String> modulePathList = List.of();
-        if (modulePath != null) {
-            String[] pathList = modulePath.split(File.pathSeparator);
-            modulePathList = Arrays.asList(pathList);
+
+        if (modulePath == null || modulePath.isBlank()) {
+            return;
         }
-        for (String modulePathString : modulePathList) {
-            Path path = Paths.get(modulePathString);
+
+        // Support both system path separator and ':'
+        String regexDelimiter = File.pathSeparator.equals(":") ? ":" : "[:" + File.pathSeparator + "]";
+        String[] pathList = modulePath.split(regexDelimiter);
+
+        for (String modulePathString : pathList) {
+            if (modulePathString.isBlank()) continue;
+
+            // Parse path using virtual file system if provided, otherwise default OS file system
+            Path path = (virtualReferencePath != null)
+                    ? virtualReferencePath.getFileSystem().getPath(modulePathString)
+                    : Path.of(modulePathString);
+
+            if (!Files.exists(path)) {
+                continue;
+            }
+
             String moduleName = "";
-            // classNames = new HashSet<>();
-            if (path.toFile().isDirectory()) {
+            if (Files.isDirectory(path)) {
                 moduleName = scanDirectory(path, moduleName);
             } else if (path.toString().toLowerCase().endsWith(DOT_JAR)) {
                 moduleName = scanJar(path, moduleName);
             }
-            moduleNames.add(moduleName);
+
+            if (moduleName != null && !moduleName.isEmpty()) {
+                moduleNames.add(moduleName);
+            }
         }
     }
 
@@ -211,8 +233,8 @@ public class ModulePath {
             return jarModuleName;
         } catch(LocalizableIOException e) {
             // Ignore it
+            return null;
         }
-        return null;
     }
 
     private void addClassToModule(String className, String moduleName) {
@@ -246,7 +268,7 @@ public class ModulePath {
             try(Stream<Path> classFiles = Files.walk(directory)) {
                 for (Path classFile : classFiles.toList()) {
                     if (classFile.toString().endsWith(DOT_CLASS)) {
-                        moduleName = scanClassFile(directory.toFile(), classFile.toFile(), classLoader, moduleName, discovered);
+                        moduleName = scanClassFile(directory, classFile, classLoader, moduleName, discovered);
                     }
                 }
                 for (String className : discovered) {
@@ -269,19 +291,20 @@ public class ModulePath {
         return moduleName;
     }
 
-    private String scanClassFile(File directory, File file, URLClassLoader classLoader, String moduleName, Set<String> discovered) throws LocalizableIOException {
-        Path filePath = file.toPath();
+    private String scanClassFile(Path directory, Path file, URLClassLoader classLoader, String moduleName, Set<String> discovered) throws LocalizableIOException {
         String className = "";
         String relativePath = "";
         try {
-            relativePath = directory.toURI().relativize(file.toURI()).getPath();
+            relativePath = directory.toUri().relativize(file.toUri()).getPath();
             className = relativePath.replace(File.separatorChar, '.').replace(DOT_CLASS, "");
             if (className.equals(MODULE_INFO)) {
-                InputStream is = new FileInputStream(file);
-                ModuleDescriptor descriptor = ModuleDescriptor.read(is);
+                ModuleDescriptor descriptor;
+                try (InputStream is = Files.newInputStream(file)) {
+                    descriptor = ModuleDescriptor.read(is);
+                }
                 moduleName = descriptor.name();
                 descriptors.put(moduleName, descriptor);
-                moduleToPath.put(moduleName, filePath.getParent());
+                moduleToPath.put(moduleName, file.getParent());
             } else {
                 Class<?> clazz = classLoader.loadClass(className);
                 for (Class<?> declaredClass : clazz.getDeclaredClasses()) {

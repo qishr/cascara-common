@@ -42,7 +42,7 @@ import io.github.qishr.cascara.common.diagnostic.Reporter;
 
 public class LocalDateTimeTypeDescriptor extends AbstractScalarDescriptor<LocalDateTime> {
     public LocalDateTimeTypeDescriptor() {
-        super(LocalDateTime.class, "string");
+        super(LocalDateTime.class, PrimitiveType.STRING);
     }
 
     @Override

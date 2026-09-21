@@ -37,9 +37,9 @@ package io.github.qishr.cascara.common.util;
 
 import java.util.List;
 
-import io.github.qishr.cascara.common.service.SingletonProvider;
+import io.github.qishr.cascara.common.service.ServiceProvider;
 
-public interface ContentTypeResolver extends SingletonProvider {
+public interface ContentTypeResolver extends ServiceProvider {
     ContentType resolve(String type);
     void add(ContentType contentType);
     void addAll(List<? extends ContentType> contentTypes);

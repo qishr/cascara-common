@@ -33,35 +33,8 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.filewatcher;
 
-import java.net.URI;
+public enum FileChangeType { CREATED, MODIFIED, DELETED }
 
-import io.github.qishr.cascara.common.diagnostic.Reporter;
 
-public class UriTypeDescriptor extends AbstractScalarDescriptor<URI> {
-    public UriTypeDescriptor() {
-        super(URI.class, PrimitiveType.STRING, "uri");
-    }
-
-    @Override
-    public URI toJvmType(String text) {
-        return URI.create(text);
-    }
-
-    @Override
-    public Object toPrimitive(URI jvmInstance) {
-        return jvmInstance.toString();
-    }
-
-    @Override
-    public boolean validate(String text, Reporter collector) {
-        try {
-            URI.create(text);
-            return true;
-        } catch (IllegalArgumentException | NullPointerException e) {
-            formatError(text, collector);
-            return false;
-        }
-    }
-}

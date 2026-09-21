@@ -54,6 +54,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.property.Properties;
@@ -168,10 +169,12 @@ public class SPLBranch implements ServiceProviderLayer {
     @Override
     public ServiceProviderLayer getParent() { return parent; }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    // @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public Collection<ServiceProviderLayer> getChildren() {
-        return (Collection) children;
+    public List<ServiceProviderLayer> getChildren() {
+        return children.stream().map(layer -> {
+            return (ServiceProviderLayer)layer;
+        }).toList();
     }
 
     @Override
@@ -297,7 +300,7 @@ public class SPLBranch implements ServiceProviderLayer {
             return;
         }
 
-        getReporter().trace("Checking " + moduleName);
+        getReporter().trace("Checking " + moduleName); // TODO: Version check
         ClassLoader classLoader = module.getClassLoader();
         ModuleDescriptor desc = module.getDescriptor();
         Set<Provides> services = desc.provides();
@@ -354,11 +357,13 @@ public class SPLBranch implements ServiceProviderLayer {
         getReporter().debug("Discovering providers in \"%s\"", jarPath);
 
         jarPaths.add(jarPath);
-        String paths = String.join(":", getJarStrings());
-        modulePath = new ModulePath(paths);
+        String paths = String.join(":", getJarPathStrings());
+
+        modulePath = new ModulePath(paths, jarPath);
 
         // 1. Create a finder for modules in this layer
-        ModuleFinder finder = ModuleFinder.of(getJarPaths());
+        Path[] jarPathsArray = getJarPaths();
+        ModuleFinder finder = ModuleFinder.of(jarPathsArray);
 
         // 2. Resolve the module(s) found against the current boot layer
         Set<String> roots = finder.findAll().stream()
@@ -435,6 +440,10 @@ public class SPLBranch implements ServiceProviderLayer {
                 if (instance instanceof ContentTypeProvider ctp) {
                     contentType = ctp.getContentType();
                     contentTypes.add(contentType);
+
+                    if (!isBooting && contentTypeStore != null) {
+                        contentTypeStore.add(contentType);
+                    }
                 }
 
                 boolean isSingleton = false;
@@ -466,15 +475,13 @@ public class SPLBranch implements ServiceProviderLayer {
                 if (contentType == null) {
                     getReporter().debug("  Registered " + providerClass.getName());
                 } else {
-                    if (!isBooting && contentTypeStore != null) {
-                        contentTypeStore.add(contentType);
-                    }
-                    contentTypes.add(contentType);
                     getReporter().debug("  Registered " + providerClass.getName() + " with content types:");
                     for (String type : contentType.getMimeTypes()) {
                         getReporter().debug("    " + type);
                     }
                 }
+
+                rootLayer.getUserProviders().add(provider);
             }
         } catch(AbstractMethodError e) {
             registrationError("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e);
@@ -563,7 +570,7 @@ public class SPLBranch implements ServiceProviderLayer {
         return jarPaths.toArray(new Path[]{});
     }
 
-    private String[] getJarStrings() {
+    private String[] getJarPathStrings() {
         String[] strings = new String[jarPaths.size()];
         for (int i = 0; i < jarPaths.size(); i++) {
             strings[i] = jarPaths.get(i).toString();
@@ -664,5 +671,9 @@ public class SPLBranch implements ServiceProviderLayer {
         } else {
             reporter.error(e, code, details);
         }
+    }
+
+    public void setParent(ServiceProviderLayer parent) {
+        throw new UnimplementedMethodException();
     }
 }

@@ -43,7 +43,7 @@ import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 
 public class ByteArrayDescriptor extends AbstractScalarDescriptor<byte[]> {
     public ByteArrayDescriptor() {
-        super(byte[].class, "string", null, "base64");
+        super(byte[].class, PrimitiveType.STRING, null, "base64");
     }
 
     @Override

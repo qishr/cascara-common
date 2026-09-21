@@ -45,14 +45,14 @@ public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
     protected Properties properties = new Properties();
 
     private Class<T> jvmType;
-    private String schemaType;
+    private PrimitiveType schemaType;
 
-    protected AbstractTypeDescriptor(Class<T> jvmType, String schemaType) {
+    protected AbstractTypeDescriptor(Class<T> jvmType, PrimitiveType schemaType) {
         this.jvmType = jvmType;
         this.schemaType = schemaType;
         properties.set(JVM_TYPE, jvmType.getName());
-        if (schemaType != null && !schemaType.isEmpty()) {
-            properties.set(KEYWORD_TYPE, schemaType);
+        if (schemaType != null) {
+            properties.set(KEYWORD_TYPE, schemaType.asString());
         }
     }
 
@@ -67,13 +67,13 @@ public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
     }
 
     @Override
-    public String getSchemaType() {
+    public PrimitiveType getSchemaType() {
         return schemaType;
     }
 
     @Override
     public void populateSchema(MapAstNode<?,?,?> node) {
         // Automatically inject the type property every JSON Schema definition requires.
-        node.put(KEYWORD_TYPE, getSchemaType());
+        node.put(KEYWORD_TYPE, getSchemaType().asString());
     }
 }

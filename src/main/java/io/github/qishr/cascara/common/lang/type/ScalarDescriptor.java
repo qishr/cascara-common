@@ -54,7 +54,7 @@ public interface ScalarDescriptor<T> extends TypeDescriptor<T> {
     @Override
     default void populateSchema(MapAstNode<?,?,?> node) {
         // Automatically inject the core properties every scalar might declare.
-        node.put("type", getSchemaType());
+        node.put("type", getSchemaType().asString());
 
         String format = getFormat();
         if (format != null && !format.isEmpty()) {

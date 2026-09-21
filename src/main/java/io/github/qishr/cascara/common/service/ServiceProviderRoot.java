@@ -36,10 +36,12 @@ package io.github.qishr.cascara.common.service;
 
 import java.util.Set;
 
+import io.github.qishr.cascara.common.trackable.TrackableArray;
 import io.github.qishr.cascara.common.util.ContentType;
 
 public interface ServiceProviderRoot extends ServiceProviderLayer {
 
     Set<ContentType> getContentTypes();
+    TrackableArray<ServiceMetadata> getUserProviders();
 
 }

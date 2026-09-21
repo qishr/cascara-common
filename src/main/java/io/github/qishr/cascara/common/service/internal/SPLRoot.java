@@ -35,14 +35,12 @@
 package io.github.qishr.cascara.common.service.internal;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -51,7 +49,9 @@ import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.code.FileDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
+import io.github.qishr.cascara.common.filewatcher.FileWatcher;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
@@ -63,29 +63,75 @@ import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.ContentTypeResolver;
 
 public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
-    // Set<ContentType> contentTypes = new HashSet<>();
-    static TrackableArray<String> userModules = new TrackableArray<>();
+    private static final Properties EMPTY_PROPERTIES = new Properties();
+
+    private final TrackableArray<ServiceMetadata> userProviders = new TrackableArray<>();
     private final Map<ServiceMetadata, Object> singletonCache = new ConcurrentHashMap<>();
-    private Properties preferredProviders;
+    private FileWatcher propsFileWatcher;
+    private Properties properties;
 
-    private SPLRoot() {
+    private SPLRoot(Reporter reporter) {
         isBooting = true;
-    }
+        rootLayer = this;
+        name = "root";
+        contentTypes = new HashSet<>();
+        setReporter(reporter);
+        loadPreferences();
 
-    public void loadPreferences(Path homeDirectory) {
-        Path propsFile = homeDirectory.resolve("spl-prefs.properties");
-        if (Files.exists(propsFile)) {
+        ModuleLayer boot = ModuleLayer.boot();
+        boot.modules().forEach((module) -> {
+            final String moduleName = module.getName();
             try {
-                preferredProviders = Properties.load(propsFile);
-            } catch (LocalizableIOException e) {
+                reporter.trace("Found module " + moduleName);
+                registerModule(module);
+            } catch (Exception e) {
+                bootError(e,
+                    ServiceDiagnosticCode.FAILED_TO_REGISTER_MODULE,
+                    moduleName);
             }
+        });
+
+        // Fallback: classic ServiceLoader scanning for classpath/unnamed-module usage,
+        // and to pick up any providers using META-INF/services even when modular.
+        registerViaServiceLoader();
+
+        isBooting = false;
+
+        try {
+            // TODO: Make sure ContentTypeStore in common.io is a perfect neo-singleton
+            contentTypeStore = ServiceProviderLayer.loadDefault(ContentTypeResolver.class);
+            // TODO: use addAll
+            if (contentTypeStore != null) {
+                for (ContentType contentType : contentTypes) {
+                    contentTypeStore.add(contentType);
+                }
+            }
+        } catch (ServiceException e) {
+            // Ignore
         }
     }
 
+    /// Retrieves the root Service Provider Layer.
+    /// On the initial call, the root layer will be configured.
+    public static ServiceProviderRoot instance() {
+        return instance(null);
+    }
+
+    /// Retrieves the root Service Provider Layer.
+    /// On the initial call, the root layer will be configured with a specified Reporter.
+    /// This reporter is used for non-fatal error and warning reporting.
+    public static ServiceProviderRoot instance(Reporter reporter) {
+        if (reporter == null) {
+            reporter = new NoOpReporter();
+        }
+        if (rootLayer == null) {
+            rootLayer = new SPLRoot(reporter);
+        }
+        return rootLayer;
+    }
+
     public String getPreferredProviderClassName(Class<?> serviceType) {
-        return preferredProviders == null
-            ? null
-            : preferredProviders.getString(serviceType.getName());
+        return getProperties().getString(serviceType.getName());
     }
 
     @SuppressWarnings("unchecked")
@@ -151,55 +197,51 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
         singletonCache.clear();
     }
 
-
-
-
-    /// Retrieves the root Service Provider Layer.
-    /// On the initial call, the root layer will be configured.
-    public static ServiceProviderRoot instance() {
-        return instance(null);
+    public TrackableArray<ServiceMetadata> getUserProviders() {
+        return userProviders;
     }
 
-    /// Retrieves the root Service Provider Layer.
-    /// On the initial call, the root layer will be configured with a specified Reporter.
-    /// This reporter is used for non-fatal error and warning reporting.
-    public static ServiceProviderRoot instance(Reporter reporter) {
-        if (reporter == null) {
-            reporter = new NoOpReporter();
-        }
-        if (rootLayer == null) {
-            final Reporter bootReporter = reporter;
-            rootLayer = new SPLRoot();
-            rootLayer.name = "root";
-            rootLayer.setReporter(reporter);
-            rootLayer.loadPreferences(Cascara.getActiveVersionPath());
-            contentTypes = new HashSet<>();
-            ModuleLayer boot = ModuleLayer.boot();
-            boot.modules().forEach((module) -> {
-                final String moduleName = module.getName();
+    public Properties getProperties() {
+        Path propsFile = Cascara.getSplPropertiesPath();
+
+        if (!Cascara.isFileTimeSupported()) {
+            if (Files.exists(propsFile)) {
                 try {
-                    bootReporter.trace("Found module " + moduleName);
-                    rootLayer.registerModule(module);
-                } catch (Exception e) {
-                    bootError(e,
-                        ServiceDiagnosticCode.FAILED_TO_REGISTER_MODULE,
-                        moduleName);
-                }
-            });
-            // Fallback: classic ServiceLoader scanning for classpath/unnamed-module usage,
-            // and to pick up any providers using META-INF/services even when modular.
-            rootLayer.registerViaServiceLoader();
-
-            rootLayer.isBooting = false;
-
-            contentTypeStore = ServiceProviderLayer.loadDefault(ContentTypeResolver.class);
-            // TODO: use addAll
-            if (contentTypeStore != null) {
-                for (ContentType contentType : contentTypes) {
-                    contentTypeStore.add(contentType);
+                    properties = Properties.load(propsFile);
+                } catch (LocalizableIOException e) {
+                    // Ignore and fall through to EMPTY_PROPERTIES
                 }
             }
         }
-        return rootLayer;
+
+        return properties == null ? EMPTY_PROPERTIES : properties;
+    }
+
+    private void loadPreferences() {
+        Path propsFile = Cascara.getSplPropertiesPath();
+
+        if (Cascara.isFileTimeSupported()) {
+            if (!Files.exists(propsFile)) {
+                try {
+                    Files.createFile(propsFile);
+                } catch (IOException e) {
+                    reporter.error(e, FileDiagnosticCode.WRITE_ERROR, propsFile);
+                    return;
+                }
+            }
+
+            propsFileWatcher = new FileWatcher();
+            try {
+                propsFileWatcher.watchFile(propsFile, () -> {
+                    try {
+                        properties = Properties.load(propsFile);
+                    } catch (LocalizableIOException e) {}
+                });
+            } catch (IOException e) {}
+
+            try {
+                properties = Properties.load(propsFile);
+            } catch (LocalizableIOException e) {}
+        }
     }
 }

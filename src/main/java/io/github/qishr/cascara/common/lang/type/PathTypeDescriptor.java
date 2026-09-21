@@ -42,7 +42,7 @@ import io.github.qishr.cascara.common.diagnostic.Reporter;
 
 public class PathTypeDescriptor extends AbstractScalarDescriptor<Path> {
     public PathTypeDescriptor() {
-        super(Path.class, "string", "path");
+        super(Path.class, PrimitiveType.STRING, "path");
     }
 
     @Override

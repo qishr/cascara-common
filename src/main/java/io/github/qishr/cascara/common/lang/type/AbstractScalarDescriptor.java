@@ -46,15 +46,15 @@ public abstract class AbstractScalarDescriptor<T> extends AbstractTypeDescriptor
     private final String format;
     private final String contentEncoding;
 
-    protected AbstractScalarDescriptor(Class<T> jvmType, String schemaType) {
+    protected AbstractScalarDescriptor(Class<T> jvmType, PrimitiveType schemaType) {
         this(jvmType, schemaType, null, null);
     }
 
-    protected AbstractScalarDescriptor(Class<T> jvmType, String schemaType, String format) {
+    protected AbstractScalarDescriptor(Class<T> jvmType, PrimitiveType schemaType, String format) {
         this(jvmType, schemaType, format, null);
     }
 
-    protected AbstractScalarDescriptor(Class<T> jvmType, String schemaType, String format, String contentEncoding) {
+    protected AbstractScalarDescriptor(Class<T> jvmType, PrimitiveType schemaType, String format, String contentEncoding) {
         super(jvmType, schemaType);
 
         this.format = format;

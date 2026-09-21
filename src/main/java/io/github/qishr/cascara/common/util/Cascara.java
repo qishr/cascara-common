@@ -2,12 +2,14 @@ package io.github.qishr.cascara.common.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.property.Properties;
@@ -16,13 +18,19 @@ import io.github.qishr.cascara.common.semver.SemVerException;
 
 public class Cascara {
     private static Cascara INSTANCE;
-    private static String ACTIVE_VERSION = "active-version";
-    private static String CASCARA_PROPERTIES = "cascara.properties";
-    private static String CONTENT_TYPES = "content-types.yaml";
-    private static String SCHEMAS = "schemas";
+    private static final String ACTIVE_VERSION = "active-version";
+    private static final String CASCARA_PROPERTIES = "cascara.properties";
+    private static final String CONTENT_TYPES = "content-types.yaml";
+    private static final String SCHEMAS = "schemas";
+    private static final String SPL_PREFS = "spl.properties";
+    private static final String MODULEPATH = "modulepath";
 
     private String homeEnvVar;
     private Path homePath;
+
+    public static boolean isFileTimeSupported() {
+        return !getHomePath().toUri().getScheme().equals("jar");
+    }
 
     public static SemVer getVersion() {
         JarManifest manifest;
@@ -42,29 +50,46 @@ public class Cascara {
         return instance().homePath;
     }
 
+    @Experimental
+    public static void setHomePath(Path path) {
+        instance().homeEnvVar = null;
+        instance().homePath = path;
+    }
+
     public static Path getContentTypesPath() {
-        Path activeVersionPath = getActiveVersionPath();
-        return activeVersionPath.resolve(CONTENT_TYPES);
+        return getSharedPath().resolve(CONTENT_TYPES);
     }
 
     public static Path getSchemasPath() {
-        Path activeVersionPath = getActiveVersionPath();
-        return activeVersionPath.resolve(SCHEMAS);
+        return getSharedPath().resolve(SCHEMAS);
+    }
+
+    public static Path getSplPropertiesPath() {
+        return getActiveVersionPath().resolve(SPL_PREFS);
+    }
+
+    public static Path getModulePath() {
+        return getActiveVersionPath().resolve(MODULEPATH);
     }
 
     public static List<String> getInstalledVersions() {
         List<String> versions = new ArrayList<>();
-        File[] files = getHomePath().toFile().listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (isVersionDirectory(file)) {
-                    versions.add(file.getName());
+        Path homePath = getHomePath();
+
+        if (Files.isDirectory(homePath)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(homePath)) {
+                for (Path entry : stream) {
+                    if (isVersionDirectory(entry)) {
+                        versions.add(entry.getFileName().toString());
+                    }
                 }
+            } catch (IOException e) {
+                // Return empty list or log depending on error handling policy
             }
         }
+
         return versions;
     }
-
     @Nullable
     public static Path getActiveVersionPath() {
         String version = getActiveVersionString();
@@ -140,11 +165,11 @@ public class Cascara {
         return getHomePath().resolve("shared");
     }
 
-    private static boolean isVersionDirectory(File file) {
-        if (!file.isDirectory()) {
+    private static boolean isVersionDirectory(Path file) {
+        if (!Files.isDirectory(file)) {
             return false;
         }
-        String name = file.getName();
+        String name = file.getFileName().toString();
         try {
             toSemVer(name);
             return true;
@@ -153,6 +178,7 @@ public class Cascara {
         }
     }
 
+    @Nullable
     private String getHome() {
         String home = tryGetHome("CASCARA_HOME");
         if (home == null) {
@@ -165,6 +191,7 @@ public class Cascara {
         return home;
     }
 
+    @Nullable
     private String tryGetHome(String envVar) {
         String home = System.getenv(envVar);
         if (home != null) {

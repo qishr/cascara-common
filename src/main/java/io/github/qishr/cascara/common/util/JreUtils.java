@@ -185,6 +185,11 @@ public class JreUtils {
         return false;
     }
 
+    public static boolean isJpmsEnabled() {
+        Module m = JreUtils.class.getModule();
+        return m != null && m.getName() != null && !m.getName().isEmpty();
+    }
+
     public static Module getUnnamedModule() {
         ClassLoader cl = ClassLoader.getSystemClassLoader();
         return cl.getUnnamedModule();

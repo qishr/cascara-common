@@ -57,7 +57,7 @@ import io.github.qishr.cascara.common.annotation.Nullable;
 
 @Experimental
 public class ClassHierarchy {
-    private static Map<String, Set<String>> hierarchy = new HashMap<>();
+    private static final Map<String, Set<String>> hierarchy = new HashMap<>();
 
     private ClassHierarchy() {}
 
@@ -151,13 +151,13 @@ public class ClassHierarchy {
         if (classpath != null) {
             String[] paths = classpath.split(File.pathSeparator);
             for (String path : paths) {
-                File file = new File(path);
-                if (!file.exists()) continue;
+                Path file = Path.of(path);
+                if (!Files.exists(file)) continue;
 
                 try {
-                    if (file.isDirectory()) {
+                    if (Files.isDirectory(file)) {
                         scanDirectory(file, "", classNames);
-                    } else if (file.getName().endsWith(".jar")) {
+                    } else if (file.getFileName().endsWith(".jar")) {
                         scanJarFile(file, classNames);
                     }
                 } catch (Exception ignored) {
@@ -172,10 +172,9 @@ public class ClassHierarchy {
             while (roots.hasMoreElements()) {
                 URL root = roots.nextElement();
                 if ("file".equals(root.getProtocol())) {
-                    Path dirPath = Paths.get(root.toURI());
-                    File dir = dirPath.toFile();
-                    if (dir.exists() && dir.isDirectory()) {
-                        scanDirectory(dir, "", classNames);
+                    Path dirPath = Path.of(root.toURI());
+                    if (Files.isDirectory(dirPath)) {
+                        scanDirectory(dirPath, "", classNames);
                     }
                 }
             }
@@ -201,27 +200,50 @@ public class ClassHierarchy {
         }
     }
 
-    private static void scanDirectory(File fileOrDir, String currentPrefix, Set<String> classNames) {
-        File[] files = fileOrDir.listFiles();
-        if (files == null) return;
+    // private static void scanDirectory(File fileOrDir, String currentPrefix, Set<String> classNames) {
+    //     File[] files = fileOrDir.listFiles();
+    //     if (files == null) return;
 
-        for (File file : files) {
-            if (file.isDirectory()) {
-                // Keep building package prefix with dots
-                String nextPrefix = currentPrefix.isEmpty() ? file.getName() : currentPrefix + "." + file.getName();
-                scanDirectory(file, nextPrefix, classNames);
-            } else if (file.getName().endsWith(".class")) {
-                String rawName = file.getName().substring(0, file.getName().length() - 6);
+    //     for (File file : files) {
+    //         if (file.isDirectory()) {
+    //             // Keep building package prefix with dots
+    //             String nextPrefix = currentPrefix.isEmpty() ? file.getName() : currentPrefix + "." + file.getName();
+    //             scanDirectory(file, nextPrefix, classNames);
+    //         } else if (file.getName().endsWith(".class")) {
+    //             String rawName = file.getName().substring(0, file.getName().length() - 6);
 
-                // If top-level file in package directory contains $, preserve binary name format (Outer$Inner)
-                String fullName = currentPrefix.isEmpty() ? rawName : currentPrefix + "." + rawName;
-                classNames.add(fullName);
+    //             // If top-level file in package directory contains $, preserve binary name format (Outer$Inner)
+    //             String fullName = currentPrefix.isEmpty() ? rawName : currentPrefix + "." + rawName;
+    //             classNames.add(fullName);
+    //         }
+    //     }
+    // }
+    private static void scanDirectory(Path fileOrDir, String currentPrefix, Set<String> classNames) {
+        if (!Files.isDirectory(fileOrDir)) return;
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(fileOrDir)) {
+            for (Path path : stream) {
+                String fileName = path.getFileName().toString();
+
+                if (Files.isDirectory(path)) {
+                    // Keep building package prefix with dots
+                    String nextPrefix = currentPrefix.isEmpty() ? fileName : currentPrefix + "." + fileName;
+                    scanDirectory(path, nextPrefix, classNames);
+                } else if (fileName.endsWith(".class")) {
+                    String rawName = fileName.substring(0, fileName.length() - 6);
+
+                    // If top-level file in package directory contains $, preserve binary name format (Outer$Inner)
+                    String fullName = currentPrefix.isEmpty() ? rawName : currentPrefix + "." + rawName;
+                    classNames.add(fullName);
+                }
             }
+        } catch (IOException ignored) {
+            // Silently ignore unreadable directories
         }
     }
 
-    private static void scanJarFile(File jarFile, Set<String> classNames) throws Exception {
-        try (JarFile jar = JarFile.open(jarFile.toPath())) {
+    private static void scanJarFile(Path jarFile, Set<String> classNames) throws Exception {
+        try (JarFile jar = JarFile.open(jarFile)) {
             classNames.addAll(jar.getClassNames());
         }
     }

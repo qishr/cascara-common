@@ -41,7 +41,7 @@ import io.github.qishr.cascara.common.diagnostic.Reporter;
 
 public class UuidTypeDescriptor extends AbstractScalarDescriptor<UUID> {
     public UuidTypeDescriptor() {
-        super(UUID.class, "string", "uuid");
+        super(UUID.class, PrimitiveType.STRING, "uuid");
     }
 
     @Override

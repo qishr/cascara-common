@@ -42,7 +42,7 @@ import io.github.qishr.cascara.common.diagnostic.Reporter;
 
 public class InstantTypeDescriptor extends AbstractScalarDescriptor<Instant> {
     public InstantTypeDescriptor() {
-        super(Instant.class, "string", "timestamp"); // TODO: is timestamp correct?
+        super(Instant.class, PrimitiveType.STRING, "timestamp"); // TODO: is timestamp correct?
     }
 
     @Override

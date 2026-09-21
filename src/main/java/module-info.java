@@ -40,6 +40,7 @@ module cascara.common {
     exports io.github.qishr.cascara.common.data;
     exports io.github.qishr.cascara.common.diagnostic;
     exports io.github.qishr.cascara.common.diagnostic.code;
+    exports io.github.qishr.cascara.common.filewatcher;
     exports io.github.qishr.cascara.common.lang.plain;
     exports io.github.qishr.cascara.common.lang.ast;
     exports io.github.qishr.cascara.common.lang.streaming;

@@ -42,7 +42,7 @@ import io.github.qishr.cascara.common.diagnostic.Reporter;
 
 public class DateTimeTypeDescriptor extends AbstractScalarDescriptor<ZonedDateTime> {
     public DateTimeTypeDescriptor() {
-        super(ZonedDateTime.class, "string", "date-time");
+        super(ZonedDateTime.class, PrimitiveType.STRING, "date-time");
     }
 
     @Override

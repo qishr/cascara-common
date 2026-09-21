@@ -132,18 +132,18 @@ public class ArchiveFile implements AutoCloseable {
     //
     //
 
-    public InputStream getInputStream(String filePath) {
+    public InputStream getInputStream(String filePath) throws LocalizableIOException {
         byte[] byteArray = extractFile(filePath);
         return new ByteArrayInputStream(byteArray);
     }
 
-    public byte[] extractFile(String filePath) {
+    public byte[] extractFile(String filePath) throws LocalizableIOException {
         return extractFile(archivePath, filePath);
     }
 
-    protected static byte[] extractFile(Path archivePath, String filePath) {
+    protected static byte[] extractFile(Path archivePath, String filePath) throws LocalizableIOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(archivePath.toFile()))) {
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(archivePath))) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
                 if (entry.getName().equals(filePath)) {
@@ -156,8 +156,9 @@ public class ArchiveFile implements AutoCloseable {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            return new byte[0];
+            throw new LocalizableIOException(e, FileDiagnosticCode.READ_ERROR, filePath);
+            // e.printStackTrace();
+            // return new byte[0];
         }
         return new byte[0];
     }
@@ -241,7 +242,7 @@ public class ArchiveFile implements AutoCloseable {
             dirPath = dirPath + "/";
         }
         List<EntryInfo> fileInfoList = new ArrayList<>();
-        try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(archivePath.toFile()))) {
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(archivePath))) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
                 if (dirPath == null) {
@@ -270,7 +271,7 @@ public class ArchiveFile implements AutoCloseable {
     }
 
     private void addFileInternalNoException(Path sourcePath, Path entryPath, List<LocalizableIOException> exceptions) {
-        try (FileInputStream in = new FileInputStream(sourcePath.toFile())) {
+        try (InputStream in = Files.newInputStream(sourcePath)) {
             byte[] buf = new byte[1024];
             int len;
             ensureParentExists(entryPath);
