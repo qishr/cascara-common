@@ -78,12 +78,7 @@ import io.github.qishr.cascara.common.util.ModulePath;
 public class SPLBranch implements ServiceProviderLayer {
     protected static SPLRoot rootLayer;
 
-    // TODO: These belong in the root layer...
-    // protected static ContentTypeResolver contentTypeStore;
-    // protected static Set<ContentType> contentTypes;
-
     protected Reporter reporter;
-
     protected boolean ownsReporter = false;
     protected boolean isBooting = false;
 
@@ -104,10 +99,6 @@ public class SPLBranch implements ServiceProviderLayer {
     protected Map<Class<ServiceProvider>, Set<ServiceMetadata>> providersByServiceType = new HashMap<>();
 
     protected SPLBranch() { }
-
-    // public Set<ContentType> getContentTypes() {
-    //     return contentTypes;
-    // }
 
     /// Sets the reporter for communicating mapping warnings or errors in this layer.
     @Override
@@ -279,17 +270,93 @@ public class SPLBranch implements ServiceProviderLayer {
         return layer;
     }
 
+    // @Override
+    // public void remove(String name) {
+    //     for (SPLBranch layer : children) {
+    //         if (layer.getName().equals(name)) {
+    //             children.remove(layer);
+    //             namedChildren.remove(name);
+
+    //             // TODO: Remove modules and providers (and services with no remaining providers)
+
+    //             // These need updated:
+    //             // - providersByFqcn
+    //             // - providersByServiceType
+    //             // - servicesByFqcn
+    //             // - jarPaths
+
+    //             return;
+    //         }
+    //     }
+    //     ClassHierarchy.invalidate();
+    // }
+
     @Override
-    public void remove(String layerName) {
-        for (SPLBranch layer : children) {
-            if (layer.getName().equals(layerName)) {
-                children.remove(layer);
-                namedChildren.remove(layerName);
-                return;
-            }
+    public void remove(String name) {
+        SPLBranch layerToRemove = namedChildren.get(name);
+        if (layerToRemove == null) {
+            return;
         }
+
+        // 1. Recursively collect all providers from the layer subtree
+        List<ServiceMetadata> providersToRemove = layerToRemove.collectAllProviders();
+
+        // 2. Unregister each provider and clean up empty services
+        for (ServiceMetadata provider : providersToRemove) {
+            unregisterProvider(provider);
+        }
+
+        // 3. Detach layer
+        children.remove(layerToRemove);
+        namedChildren.remove(name);
+
         ClassHierarchy.invalidate();
     }
+
+    /// Recursively gathers providers in this layer and any child sub-layers.
+    public List<ServiceMetadata> collectAllProviders() {
+        List<ServiceMetadata> all = new ArrayList<>(this.getProviders());
+        for (SPLBranch child : children) {
+            all.addAll(child.collectAllProviders());
+        }
+        return all;
+    }
+
+    private void unregisterProvider(ServiceMetadata provider) {
+        Class<?> providerClass = provider.getType();
+        String providerFqcn = providerClass.getName();
+
+        // Remove from FQCN lookup
+        providersByFqcn.remove(providerFqcn);
+
+        // Remove from service-type mappings
+        // (A provider may implement multiple service interfaces or extend service types)
+        List<Class<?>> affectedServiceTypes = new ArrayList<>();
+
+        for (Map.Entry<Class<ServiceProvider>, Set<ServiceMetadata>> entry : providersByServiceType.entrySet()) {
+            Class<?> serviceType = entry.getKey();
+            Set<ServiceMetadata> list = entry.getValue();
+
+            if (list != null && list.remove(provider)) {
+                if (list.isEmpty()) {
+                    affectedServiceTypes.add(serviceType);
+                }
+            }
+        }
+
+        // Clean up empty service entries
+        for (Class<?> serviceType : affectedServiceTypes) {
+            providersByServiceType.remove(serviceType);
+            servicesByFqcn.remove(serviceType.getName());
+        }
+
+        // Unregister from userProviders list to trigger array change listeners
+        rootLayer.getUserProviders().remove(provider);
+    }
+
+    //
+    // Provider Registration in Specific Layer
+    //
 
     @SuppressWarnings({ "rawtypes" })
     @Override
@@ -415,8 +482,6 @@ public class SPLBranch implements ServiceProviderLayer {
 
     /// Use SPI to find the service implementations inside this layer
     private void enumerateProviders() {
-        // providersByFqcn.clear();
-        // providersByServiceType.clear();
         var loader = ServiceLoader.load(moduleLayer, ServiceProvider.class);
         loader.forEach(provider -> {
             if (!isRegisteres(provider.getClass().getName())) {

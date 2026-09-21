@@ -206,14 +206,17 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
         }
     }
 
+    // TODO: This isn't called yet
     public void removeSingleton(ServiceMetadata meta) {
         singletonCache.remove(meta);
     }
 
+    // TODO: This isn't called yet
     public void clearSingletons() {
         singletonCache.clear();
     }
 
+    // TODO: More than just this needs to be trackable
     public TrackableArray<ServiceMetadata> getUserProviders() {
         return userProviders;
     }
