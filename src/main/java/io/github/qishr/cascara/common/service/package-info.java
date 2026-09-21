@@ -40,23 +40,35 @@
 /// Methods in the [ServiceProviderLayer] and [ServiceProviderRoot] interfaces
 /// are split into categories:
 ///
-/// **Find**
+/// **Find in All Layers**
 ///
-/// The *find* methods returning a single `ServiceMetadata` search
-/// for a suitably matching service provider.
+/// The *find* methods return a service provider or list of providers from the
+/// SPL hierarchy.
 /// They start at the layer they're called from, search all layers up to the root layer,
 /// then search branch layers. The first matching provider is returned.
 ///
 /// - `ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType)`
 /// - `ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate)`
-///
-/// The *find* methods returning a collection of `ServiceMetadata` search in the same pattern
-/// as mentioned above, but return every provider that matches.
-///
 /// - `Set<Class<ServiceProvider>> findServiceTypes()`
 /// - `Set<ServiceMetadata> findServices()`
 /// - `List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType)`
 /// - `List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate)`
+///
+/// **Get from Specific Layer**
+///
+/// The *get* methods return a service provider or list of service providers from the current layer.
+///
+/// - `ServiceMetadata getProvider(String providerName)`
+/// - `Collection<ServiceMetadata> getProviders()`
+/// - `Collection<ServiceMetadata> getProvidersByFqcn()`
+/// - `List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType)`
+/// - `List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate)`
+///
+/// - `boolean hasProvider(String name)`
+///
+/// **Layer metadata, hierarchy, creation and deletion**
+///
+/// **Provider Registration in Specific Layer**
 ///
 /// **Load**
 ///

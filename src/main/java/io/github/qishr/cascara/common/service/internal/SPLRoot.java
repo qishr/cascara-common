@@ -69,6 +69,10 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
     final Set<String> bootProviders = new HashSet<>();
     private final TrackableArray<ServiceMetadata> userProviders = new TrackableArray<>();
     private final Map<ServiceMetadata, Object> singletonCache = new ConcurrentHashMap<>();
+
+    private ContentTypeResolver contentTypeStore;
+    private Set<ContentType> contentTypes;
+
     private FileWatcher propsFileWatcher;
     private Properties properties;
 
@@ -130,6 +134,17 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
             rootLayer = new SPLRoot(reporter);
         }
         return rootLayer;
+    }
+
+    public Set<ContentType> getContentTypes() {
+        return contentTypes;
+    }
+
+    public void storeContentType(ContentType contentType) {
+        contentTypes.add(contentType);
+        if (!isBooting && contentTypeStore != null) {
+            contentTypeStore.add(contentType);
+        }
     }
 
     public String getPreferredProviderClassName(Class<?> serviceType) {

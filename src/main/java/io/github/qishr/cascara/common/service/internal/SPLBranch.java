@@ -70,7 +70,6 @@ import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ClassHierarchy;
 import io.github.qishr.cascara.common.util.ContentType;
-import io.github.qishr.cascara.common.util.ContentTypeResolver;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarManifest;
 import io.github.qishr.cascara.common.util.JreUtils;
@@ -78,8 +77,10 @@ import io.github.qishr.cascara.common.util.ModulePath;
 
 public class SPLBranch implements ServiceProviderLayer {
     protected static SPLRoot rootLayer;
-    protected static ContentTypeResolver contentTypeStore;
-    protected static Set<ContentType> contentTypes;
+
+    // TODO: These belong in the root layer...
+    // protected static ContentTypeResolver contentTypeStore;
+    // protected static Set<ContentType> contentTypes;
 
     protected Reporter reporter;
 
@@ -104,12 +105,59 @@ public class SPLBranch implements ServiceProviderLayer {
 
     protected SPLBranch() { }
 
-    public Set<ContentType> getContentTypes() {
-        return contentTypes;
+    // public Set<ContentType> getContentTypes() {
+    //     return contentTypes;
+    // }
+
+    /// Sets the reporter for communicating mapping warnings or errors in this layer.
+    @Override
+    public ServiceProviderLayer setReporter(Reporter reporter) {
+        if (reporter == null) {
+            reporter = new NoOpReporter();
+        } else {
+            this.reporter = reporter;
+            this.ownsReporter = true;
+        }
+        return this;
     }
 
     //
-    // All Layers - TODO: These should be cached
+    // Layer metadata, hierarchy, creation and deletion
+    //
+
+    @Override
+    public String getName() { return name; }
+
+    @Override
+    public Path getModulePath(String name) { return modulePath.getPathForModule(name); }
+
+    @Override
+    public boolean isPublic() { return isPublic; }
+
+    @Override
+    public void setPublic(boolean v) { isPublic = v; }
+
+    @Override
+    public ServiceProviderLayer getParent() { return parent; }
+
+    @Override
+    public List<ServiceProviderLayer> getChildren() {
+        return children.stream().map(layer -> {
+            return (ServiceProviderLayer)layer;
+        }).toList();
+    }
+
+    @Override
+    public ServiceProviderLayer getChild(String name) { return namedChildren.get(name); }
+
+    @Override
+    public boolean hasChild(String name) { return namedChildren.containsKey(name); }
+
+    @Override
+    public Collection<ServiceMetadata> getProvidersByFqcn() { return providersByFqcn.values(); }
+
+    //
+    // Find in All Layers
     //
 
     /// Returns a list of all known service types.
@@ -160,54 +208,11 @@ public class SPLBranch implements ServiceProviderLayer {
     }
 
     //
-    // This Layer
+    // Get from Specific Layer
     //
 
     @Override
-    public String getName() { return name; }
-
-    @Override
-    public ServiceProviderLayer getParent() { return parent; }
-
-    @Override
-    public List<ServiceProviderLayer> getChildren() {
-        return children.stream().map(layer -> {
-            return (ServiceProviderLayer)layer;
-        }).toList();
-    }
-
-    @Override
-    public ServiceProviderLayer getChild(String name) { return namedChildren.get(name); }
-
-    @Override
-    public boolean hasChild(String name) { return namedChildren.containsKey(name); }
-
-    @Override
     public boolean hasProvider(String name) { return providersByFqcn.containsKey(name); }
-
-    @Override
-    public Collection<ServiceMetadata> getProvidersByFqcn() { return providersByFqcn.values(); }
-
-    @Override
-    public Path getModulePath(String name) { return modulePath.getPathForModule(name); }
-
-    @Override
-    public boolean isPublic() { return isPublic; }
-
-    @Override
-    public void setPublic(boolean v) { isPublic = v; }
-
-    /// Sets the reporter for communicating mapping warnings or errors in this layer.
-    @Override
-    public ServiceProviderLayer setReporter(Reporter reporter) {
-        if (reporter == null) {
-            reporter = new NoOpReporter();
-        } else {
-            this.reporter = reporter;
-            this.ownsReporter = true;
-        }
-        return this;
-    }
 
     /// Retrieves metadata of the specified provider if it exists in this layer.
     @Override
@@ -254,7 +259,7 @@ public class SPLBranch implements ServiceProviderLayer {
     }
 
     //
-    // Registration
+    // Provider Registration in Specific Layer
     //
 
     @Override
@@ -450,11 +455,7 @@ public class SPLBranch implements ServiceProviderLayer {
                 ContentType contentType = null;
                 if (instance instanceof ContentTypeProvider ctp) {
                     contentType = ctp.getContentType();
-                    contentTypes.add(contentType);
-
-                    if (!isBooting && contentTypeStore != null) {
-                        contentTypeStore.add(contentType);
-                    }
+                    rootLayer.storeContentType(contentType);
                 }
 
                 boolean isSingleton = false;

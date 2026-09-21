@@ -32,7 +32,6 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.service;
 
 import java.nio.file.Path;
@@ -74,7 +73,12 @@ public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
 
     ServiceProviderLayer setReporter(Reporter reporter);
 
+    //
+    // Layer metadata, hierarchy, creation and deletion
+    //
+
     String getName();
+    Path getModulePath(String name);
     boolean isPublic();
     void setPublic(boolean v);
 
@@ -83,14 +87,13 @@ public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
     ServiceProviderLayer getChild(String name);
     boolean hasChild(String name);
 
-    Path getModulePath(String name);
+    ServiceProviderLayer create();
+    ServiceProviderLayer create(String name);
+    void remove(String name);
 
-    boolean hasProvider(String name);
-    ServiceMetadata getProvider(String providerName);
-    Collection<ServiceMetadata> getProviders();
-    Collection<ServiceMetadata> getProvidersByFqcn();
-    List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType);
-    List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate);
+    //
+    // Find in All Layers
+    //
 
     Set<Class<ServiceProvider>> findServiceTypes();
     Set<ServiceMetadata> findServices();
@@ -99,12 +102,22 @@ public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
     List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType);
     List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate);
 
-    ServiceProviderLayer create();
-    ServiceProviderLayer create(String name);
+    //
+    // Get from Specific Layer
+    //
 
-    void remove(String layerName);
+    ServiceMetadata getProvider(String providerName);
+    Collection<ServiceMetadata> getProviders();
+    Collection<ServiceMetadata> getProvidersByFqcn();
+    List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType);
+    List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate);
+    boolean hasProvider(String name);
+
+    //
+    // Provider Registration in Specific Layer
+    //
 
     void registerModule(Module module);
-    void registerClass(Class<?> type);
+    void registerClass(Class<?> clazz);
     void registerJar(Path jarPath);
 }
