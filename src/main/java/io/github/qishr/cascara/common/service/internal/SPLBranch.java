@@ -32,13 +32,11 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.service.internal;
 
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
-import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -57,6 +55,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.github.qishr.cascara.common.annotation.SingletonInitializer;
+import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
+import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
@@ -70,9 +71,6 @@ import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;
 import io.github.qishr.cascara.common.service.ServiceProviderLayer;
 import io.github.qishr.cascara.common.trackable.TrackableArray;
-import io.github.qishr.cascara.common.annotation.SingletonInitializer;
-import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
-import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ClassHierarchy;
 import io.github.qishr.cascara.common.util.ContentType;
@@ -106,8 +104,8 @@ public class SPLBranch implements ServiceProviderLayer {
 
     private final Map<String, Object> singletonCache = new ConcurrentHashMap<>();
 
-    private Set<SPLBranch> visibleLayers = new HashSet<>();
-    private final TrackableArray<ServiceMetadata> visibleProviders = new TrackableArray<>();
+    Set<SPLBranch> visibleLayers = new HashSet<>();
+    final TrackableArray<ServiceMetadata> visibleProviders = new TrackableArray<>();
     private final TrackableArray<ServiceMetadata> declaredProviders = new TrackableArray<>();
 
     protected SPLBranch() { }
@@ -124,82 +122,12 @@ public class SPLBranch implements ServiceProviderLayer {
         return this;
     }
 
-    // TODO: More than just this needs to be trackable
     public TrackableArray<ServiceMetadata> getDeclaredProviders() {
         return declaredProviders;
     }
 
     public TrackableArray<ServiceMetadata> getVisibleProviders() {
         return visibleProviders;
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T getOrCreateSingleton(ServiceMetadata meta, Supplier<T> factory) {
-        // Fast-path read (no locking)
-        String singletonClassName = meta.getTypeName();
-        // reporter.debug("getOrCreateSingleton: " + singletonClassName);
-        Object existing = singletonCache.get(singletonClassName);
-        if (existing != null) {
-            // reporter.debug("getOrCreateSingleton: returning existing");
-            return (T) existing;
-        }
-
-        // Synchronize on the metadata instance to initialize atomically per service
-        synchronized (meta) {
-            existing = singletonCache.get(singletonClassName);
-            if (existing != null) {
-                // reporter.debug("getOrCreateSingleton: returning existing");
-                return (T) existing;
-            }
-
-            T instance = factory.get();
-            initializeSingleton(instance);
-            singletonCache.put(singletonClassName, instance);
-            // reporter.debug("getOrCreateSingleton: returning new");
-            return instance;
-        }
-    }
-
-    public static void initializeSingleton(Object instance) {
-        if (instance == null) return;
-        Class<?> clazz = instance.getClass();
-        for (Method method : clazz.getDeclaredMethods()) {
-            if (method.isAnnotationPresent(SingletonInitializer.class)) {
-                if (method.getParameterCount() > 0) {
-                    throw new ServiceException(
-                        ServiceDiagnosticCode.INVALID_SINGLETON_INITIALIZER,
-                        clazz.getName() + "." + method.getName(), "Method must take zero arguments"
-                    );
-                }
-                try {
-                    method.setAccessible(true);
-                    method.invoke(instance);
-                } catch (InvocationTargetException e) {
-                    Throwable cause = e.getCause() != null ? e.getCause() : e;
-                    throw new ServiceException(
-                        cause,
-                        DiagnosticCode.forException(cause),
-                        clazz.getSimpleName() + "." + method.getName()
-                    );
-                } catch (Exception e) {
-                    throw new ServiceException(
-                        e,
-                        DiagnosticCode.forException(e),
-                        clazz.getSimpleName() + "." + method.getName()
-                    );
-                }
-                break;
-            }
-        }
-    }
-
-    public void removeSingleton(ServiceMetadata meta) {
-        singletonCache.remove(meta.getTypeName());
-    }
-
-    // TODO: This isn't called yet
-    public void clearSingletons() {
-        singletonCache.clear();
     }
 
     //
@@ -234,8 +162,33 @@ public class SPLBranch implements ServiceProviderLayer {
     @Override
     public boolean hasChild(String name) { return namedChildren.containsKey(name); }
 
-    @Override
-    public Collection<ServiceMetadata> getProvidersByFqcn() { return providersByFqcn.values(); }
+    public Set<SPLBranch> ancestors() {
+        Set<SPLBranch> ancestors = new HashSet<>();
+        SPLBranch ancestor = this.parent;
+        while (ancestor != null) {
+            ancestors.add(ancestor);
+            ancestor = ancestor.parent;
+        }
+        return ancestors;
+    }
+
+    public Set<SPLBranch> publicSiblings() {
+        Set<SPLBranch> siblings = new HashSet<>();
+        if (parent != null) {
+            for (SPLBranch sibling : parent.children) {
+                if (sibling != this && sibling.isPublic) {
+                    siblings.add(sibling);
+                }
+            }
+        }
+        return siblings;
+    }
+
+    public Set<SPLBranch> publicDescendants() {
+        Set<SPLBranch> collected = new HashSet<>();
+        collectPublicDescendants(this, collected);
+        return collected;
+    }
 
     //
     // Find in All Layers
@@ -295,6 +248,9 @@ public class SPLBranch implements ServiceProviderLayer {
     @Override
     public boolean hasProvider(String name) { return providersByFqcn.containsKey(name); }
 
+    @Override
+    public Collection<ServiceMetadata> getProvidersByFqcn() { return providersByFqcn.values(); }
+
     /// Retrieves metadata of the specified provider if it exists in this layer.
     @Override
     public ServiceMetadata getProvider(String providerName) {
@@ -340,6 +296,70 @@ public class SPLBranch implements ServiceProviderLayer {
     }
 
     //
+    // Neo-singletons
+    //
+
+    @SuppressWarnings("unchecked")
+    public <T> T getOrCreateSingleton(ServiceMetadata meta, Supplier<T> factory) {
+        // Fast-path read (no locking)
+        String singletonClassName = meta.getTypeName();
+        Object existing = singletonCache.get(singletonClassName);
+        if (existing != null) {
+            return (T) existing;
+        }
+
+        // Synchronize on the metadata instance to initialize atomically per service
+        synchronized (meta) {
+            existing = singletonCache.get(singletonClassName);
+            if (existing != null) {
+                return (T) existing;
+            }
+
+            T instance = factory.get();
+            initializeSingleton(instance);
+            singletonCache.put(singletonClassName, instance);
+            return instance;
+        }
+    }
+
+    public static void initializeSingleton(Object instance) {
+        if (instance == null) return;
+        Class<?> clazz = instance.getClass();
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(SingletonInitializer.class)) {
+                if (method.getParameterCount() > 0) {
+                    throw new ServiceException(
+                        ServiceDiagnosticCode.INVALID_SINGLETON_INITIALIZER,
+                        clazz.getName() + "." + method.getName(), "Method must take zero arguments"
+                    );
+                }
+                try {
+                    method.setAccessible(true);
+                    method.invoke(instance);
+                } catch (InvocationTargetException e) {
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    throw new ServiceException(
+                        cause,
+                        DiagnosticCode.forException(cause),
+                        clazz.getSimpleName() + "." + method.getName()
+                    );
+                } catch (Exception e) {
+                    throw new ServiceException(
+                        e,
+                        DiagnosticCode.forException(e),
+                        clazz.getSimpleName() + "." + method.getName()
+                    );
+                }
+                break;
+            }
+        }
+    }
+
+    public void removeSingleton(ServiceMetadata meta) {
+        singletonCache.remove(meta.getTypeName());
+    }
+
+    //
     // Provider Registration in Specific Layer
     //
 
@@ -367,7 +387,7 @@ public class SPLBranch implements ServiceProviderLayer {
             layer.name = name;
             namedChildren.put(name, layer);
         }
-        recomputeAllVisibleProviders();
+        SPLUtils.recomputeAllVisibleProviders(rootLayer);
         return layer;
     }
 
@@ -377,66 +397,11 @@ public class SPLBranch implements ServiceProviderLayer {
         if (layerToRemove == null) {
             return;
         }
-
-        // // 1. Recursively collect all providers from the layer subtree
-        // List<ServiceMetadata> providersToRemove = layerToRemove.collectAllProviders();
-
-        // // 2. Unregister each provider and clean up empty services
-        // for (ServiceMetadata provider : providersToRemove) {
-        //     unregisterProvider(provider);
-        // }
-
-        // 3. Detach layer
         children.remove(layerToRemove);
         namedChildren.remove(name);
-        recomputeAllVisibleProviders();
-
+        SPLUtils.recomputeAllVisibleProviders(rootLayer);
         ClassHierarchy.invalidate();
     }
-
-    // /// Recursively gathers providers in this layer and any child sub-layers.
-    // public List<ServiceMetadata> collectAllProviders() {
-    //     List<ServiceMetadata> all = new ArrayList<>(this.getProviders());
-    //     for (SPLBranch child : children) {
-    //         all.addAll(child.collectAllProviders());
-    //     }
-    //     return all;
-    // }
-
-    // private void unregisterProvider(ServiceMetadata provider) {
-    //     Class<?> providerClass = provider.getType();
-    //     String providerFqcn = providerClass.getName();
-
-    //     //
-    //     removeSingleton(provider);
-
-    //     // Remove from FQCN lookup
-    //     providersByFqcn.remove(providerFqcn);
-
-    //     // Remove from service-type mappings
-    //     // (A provider may implement multiple service interfaces or extend service types)
-    //     List<Class<?>> affectedServiceTypes = new ArrayList<>();
-
-    //     for (Map.Entry<Class<ServiceProvider>, Set<ServiceMetadata>> entry : providersByServiceType.entrySet()) {
-    //         Class<?> serviceType = entry.getKey();
-    //         Set<ServiceMetadata> list = entry.getValue();
-
-    //         if (list != null && list.remove(provider)) {
-    //             if (list.isEmpty()) {
-    //                 affectedServiceTypes.add(serviceType);
-    //             }
-    //         }
-    //     }
-
-    //     // Clean up empty service entries
-    //     for (Class<?> serviceType : affectedServiceTypes) {
-    //         providersByServiceType.remove(serviceType);
-    //         servicesByFqcn.remove(serviceType.getName());
-    //     }
-
-    //     // Unregister from userProviders list to trigger array change listeners
-    //     declaredProviders.remove(provider);
-    // }
 
     //
     // Provider Registration in Specific Layer
@@ -446,12 +411,13 @@ public class SPLBranch implements ServiceProviderLayer {
     @Override
     public void registerModule(Module module) {
         String moduleName = module.getName();
+
+        // These modules will never contain a Cascara ServiceProvider
         if (moduleName.startsWith("java.") ||
             moduleName.startsWith("javax.") ||
             moduleName.startsWith("jdk.") ||
             moduleName.startsWith("jfx.") ||
             moduleName.startsWith("javafx.")) {
-            // These modules will never contain a Cascara ServiceProvider
             return;
         }
 
@@ -480,8 +446,7 @@ public class SPLBranch implements ServiceProviderLayer {
                 }
             }
         }
-
-        recomputeAllVisibleProviders();
+        SPLUtils.recomputeAllVisibleProviders(rootLayer);
     }
 
     @Override
@@ -490,16 +455,7 @@ public class SPLBranch implements ServiceProviderLayer {
             return;
         }
         registerClassInternal(type);
-        // String providerFqcn = type.getName();
-        // if (!isRegisteres(providerFqcn)) {
-        //     ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(type);
-        //     registerProvider(instance, null);
-        //     if (isBooting) {
-        //         rootLayer.bootProviders.add(providerFqcn);
-        //     }
-        // }
-
-        recomputeAllVisibleProviders();
+        SPLUtils.recomputeAllVisibleProviders(rootLayer);
     }
 
     @Override
@@ -552,13 +508,22 @@ public class SPLBranch implements ServiceProviderLayer {
         moduleLayer = parent.defineModulesWithManyLoaders(cf, ClassLoader.getSystemClassLoader());
 
         enumerateProviders();
-        recomputeAllVisibleProviders();
+        SPLUtils.recomputeAllVisibleProviders(rootLayer);
         ClassHierarchy.invalidate();
     }
 
     //
     // Private Methods
     //
+
+    private void collectPublicDescendants(SPLBranch layer, Set<SPLBranch> collected) {
+        for (SPLBranch descendant : layer.children) {
+            if (descendant.isPublic) {
+                collected.add(descendant);
+                collectPublicDescendants(descendant, collected);
+            }
+        }
+    }
 
     private void registerClassInternal(Class<?> type) {
         String providerFqcn = type.getName();
@@ -631,7 +596,6 @@ public class SPLBranch implements ServiceProviderLayer {
         getReporter().trace("  Registering %s", instance.getClass().getName());
         try {
             Class<? extends ServiceProvider> providerClass = instance.getClass();
-
             List<Class<ServiceProvider>> interfaceHierarchy = new ArrayList<>();
 
             if (collectCascaraModuleInterfaces(providerClass, interfaceHierarchy)) {
@@ -777,185 +741,6 @@ public class SPLBranch implements ServiceProviderLayer {
     }
 
     //
-    // New Visibility Graph Code
-    //
-
-    public Set<SPLBranch> ancestors() {
-        Set<SPLBranch> ancestors = new HashSet<>();
-        SPLBranch ancestor = this.parent;
-        while (ancestor != null) {
-            ancestors.add(ancestor);
-            ancestor = ancestor.parent;
-        }
-        return ancestors;
-    }
-
-    public Set<SPLBranch> publicSiblings() {
-        Set<SPLBranch> siblings = new HashSet<>();
-        if (parent != null) {
-            for (SPLBranch sibling : parent.children) {
-                if (sibling != this && sibling.isPublic) {
-                    siblings.add(sibling);
-                }
-            }
-        }
-        return siblings;
-    }
-
-    public Set<SPLBranch> publicDescendants() {
-        Set<SPLBranch> collected = new HashSet<>();
-        collectPublicDescendants(this, collected);
-        return collected;
-    }
-
-    private void collectPublicDescendants(SPLBranch layer, Set<SPLBranch> collected) {
-        for (SPLBranch descendant : layer.children) {
-            if (descendant.isPublic) {
-                collected.add(descendant);
-                collectPublicDescendants(descendant, collected);
-            }
-        }
-    }
-
-    // TODO: It's not necessary to pass rootLayer in here
-    private void recomputeAllVisibleProviders() {
-        Set<SPLBranch> allLayers = rootLayer.allLayers();
-
-        // Step 1: compute visibility sets for all layers
-        for (SPLBranch layer : allLayers) {
-            layer.visibleLayers = computeVisibleLayers(layer);
-        }
-
-        // Step 2: merge providers for each layer
-        for (SPLBranch layer : allLayers) {
-            Set<ServiceMetadata> newProviders = mergeDeclaredProviders(layer.visibleLayers);
-            diffAndApply(layer.visibleProviders, newProviders);
-        }
-    }
-
-
-    private Set<SPLBranch> computeVisibleLayers(SPLBranch layer) {
-        Set<SPLBranch> result = new HashSet<>();
-
-        // Always include self
-        result.add(layer);
-
-        Set<SPLBranch> ancestors = layer.ancestors();
-
-        // // Include all ancestors
-        // for each ancestor A of L:
-        //     result.add(A)
-
-        //     // Include all public descendants of ancestor A
-        //     for each descendant D of A:
-        //         if D.isPublic:
-        //             result.add(D)
-
-        for (SPLBranch ancestor : ancestors) {
-            result.add(ancestor);
-            for (SPLBranch descendant : ancestor.publicDescendants()) {
-                result.add(descendant);
-            }
-        }
-
-        // // Include all public siblings of ancestors
-        // for each ancestor A of L:
-        //     for each sibling S of A:
-        //         if S.isPublic:
-        //             result.add(S)
-
-        //             // Include public descendants of sibling S
-        //             for each descendant D of S:
-        //                 if D.isPublic:
-        //                     result.add(D)
-
-        for (SPLBranch ancestor : ancestors) {
-            for (SPLBranch sibling : ancestor.publicSiblings()) {
-                result.add(sibling);
-                for (SPLBranch descendant : sibling.publicDescendants()) {
-                    result.add(descendant);
-                }
-            }
-        }
-
-        // // Remove private branches not containing L
-        // for each layer X in result:
-        //     if X.isPrivate and not isAncestorOrSelf(X, L):
-        //         result.remove(X)
-
-        for (SPLBranch x : result) {
-            if (!x.isPublic() && !(ancestors.contains(x) || x == layer)) {
-                result.remove(x);
-            }
-        }
-
-        return result;
-    }
-
-
-    public Set<ServiceMetadata> mergeDeclaredProviders(Set<SPLBranch> visibleLayers) {
-        Set<ServiceMetadata> merged = new HashSet<>();
-
-        // for each layer V in visibleLayers:
-        //     for each provider P in V.declaredProviders:
-        //         merged.add( (V, P) )  // provider identity includes layer
-
-        for (SPLBranch visible : visibleLayers) {
-            for (ServiceMetadata provider : visible.providersByFqcn.values()) {
-                merged.add(provider);
-            }
-        }
-
-        return merged;
-
-    }
-
-    public void  diffAndApply(TrackableArray<ServiceMetadata> oldArray, Set<ServiceMetadata> newList) {
-        // Compute differences
-        // removed = oldArray - newList
-        // added   = newList - oldArray
-
-        Set<ServiceMetadata> removed = subtract(oldArray, newList);
-        Set<ServiceMetadata> added = subtract(newList, oldArray);
-
-        // Fire REMOVE events
-        // for each provider R in removed:
-        //     oldArray.remove(R)  // TrackableArray fires REMOVE
-
-        for (ServiceMetadata provider : removed) {
-            oldArray.remove(provider);
-        }
-
-        // Fire ADD events
-        // for each provider A in added:
-        //     oldArray.add(A)     // TrackableArray fires ADD
-
-        for (ServiceMetadata provider : added) {
-            oldArray.add(provider);
-        }
-    }
-
-    private Set<ServiceMetadata> subtract(TrackableArray<ServiceMetadata> from, Set<ServiceMetadata> items) {
-        Set<ServiceMetadata> result = new HashSet<>();
-        for (ServiceMetadata item : from) {
-            if (!items.contains(item)) {
-                result.add(item);
-            }
-        }
-        return result;
-    }
-
-    private Set<ServiceMetadata> subtract(Set<ServiceMetadata> from,  TrackableArray<ServiceMetadata> items) {
-        Set<ServiceMetadata> result = new HashSet<>();
-        for (ServiceMetadata item : from) {
-            if (!items.contains(item)) {
-                result.add(item);
-            }
-        }
-        return result;
-    }
-
-    //
     // Old Hierarchy Traversal Code
     //
 
@@ -964,38 +749,11 @@ public class SPLBranch implements ServiceProviderLayer {
         getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
         List<ServiceMetadata> found = new ArrayList<>();
 
-        // if (providersByServiceType.get(serviceType) != null) {
-        //     for (ServiceMetadata provider : orderedProviders) {
-        //         if (serviceType.isAssignableFrom(provider.getType())) {
-        //             if (capabilityPredicate == null) {
-        //                 found.add(provider);
-        //                 reportFinding(provider, 0);
-        //             } else {
-        //                 if (capabilityPredicate.test(provider)) {
-        //                     found.add(provider);
-        //                     reportFinding(provider, 0);
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-
-        // found.addAll(findProvidersInBranches(serviceType, capabilityPredicate, 0));
         addAllToList(findProvidersInBranches(serviceType, capabilityPredicate, 0), found);
-
-        // if (parent == null) {
-        //     // Branch out from root. `previous` is used to avoid going down the branch we just came from
-        //     for (SPLBranch layer : children) {
-        //         if (layer != previous && layer.isPublic) {
-        //             found.addAll(layer.findProvidersInBranches(serviceType, capabilityPredicate, 0));
-        //         }
-        //     }
-        // } else
 
         if (parent != null && parent != previous) {
             // Go towards root
             getReporter().trace("⬆ " + parent.name);
-            // found.addAll(parent.internalFindAllProviders(serviceType, capabilityPredicate, this));
             addAllToList(parent.internalFindAllProviders(serviceType, capabilityPredicate, this), found);
         }
 
@@ -1010,19 +768,15 @@ public class SPLBranch implements ServiceProviderLayer {
             for (ServiceMetadata provider : orderedProviders) {
                 if (serviceType.isAssignableFrom(provider.getType())) {
                     if (!found.contains(provider)) {
-
-
-                    if (capabilityPredicate == null) {
-                        found.add(provider);
-                        reportFinding(provider, depth);
-                    } else {
-                        if (capabilityPredicate.test(provider)) {
+                        if (capabilityPredicate == null) {
                             found.add(provider);
                             reportFinding(provider, depth);
+                        } else {
+                            if (capabilityPredicate.test(provider)) {
+                                found.add(provider);
+                                reportFinding(provider, depth);
+                            }
                         }
-                    }
-
-
                     }
                 }
             }
@@ -1030,7 +784,6 @@ public class SPLBranch implements ServiceProviderLayer {
 
         for (SPLBranch layer : children) {
             if (layer.isPublic) {
-                // found.addAll(layer.findProvidersInBranches(serviceType, capabilityPredicate, depth + 1));
                 addAllToList(layer.findProvidersInBranches(serviceType, capabilityPredicate, depth + 1), found);
             }
         }

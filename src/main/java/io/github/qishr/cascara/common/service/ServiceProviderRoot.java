@@ -36,27 +36,8 @@ package io.github.qishr.cascara.common.service;
 
 import java.util.Set;
 
-import io.github.qishr.cascara.common.service.internal.SPLUtils;
-import io.github.qishr.cascara.common.trackable.TrackableArray;
 import io.github.qishr.cascara.common.util.ContentType;
 
 public interface ServiceProviderRoot extends ServiceProviderLayer {
-
-    // static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
-    //     return SPLUtils.loadProvider(serviceType, metadata);
-    // }
-
-    // static <T> T loadDefault(Class<T> serviceType) {
-    //     return SPLUtils.loadDefault(serviceType);
-    // }
-
-    // /// Instantiates a service provider
-    // /// @param providerClass The class of the provider to instantiate.
-    // static <T> T getInstance(Class<T> providerClass, ServiceMetadata metadata) {
-    //     return SPLUtils.getInstance(providerClass, metadata);
-    // }
-
     Set<ContentType> getContentTypes();
-
-
 }
