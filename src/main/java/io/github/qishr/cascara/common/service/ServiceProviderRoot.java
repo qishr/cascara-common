@@ -42,21 +42,21 @@ import io.github.qishr.cascara.common.util.ContentType;
 
 public interface ServiceProviderRoot extends ServiceProviderLayer {
 
-    static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
-        return SPLUtils.loadProvider(serviceType, metadata);
-    }
+    // static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
+    //     return SPLUtils.loadProvider(serviceType, metadata);
+    // }
 
-    static <T> T loadDefault(Class<T> serviceType) {
-        return SPLUtils.loadDefault(serviceType);
-    }
+    // static <T> T loadDefault(Class<T> serviceType) {
+    //     return SPLUtils.loadDefault(serviceType);
+    // }
 
-    /// Instantiates a service provider
-    /// @param providerClass The class of the provider to instantiate.
-    static <T> T instantiateProvider(Class<T> providerClass) {
-        return SPLUtils.instantiateProvider(providerClass);
-    }
+    // /// Instantiates a service provider
+    // /// @param providerClass The class of the provider to instantiate.
+    // static <T> T getInstance(Class<T> providerClass, ServiceMetadata metadata) {
+    //     return SPLUtils.getInstance(providerClass, metadata);
+    // }
 
     Set<ContentType> getContentTypes();
-    TrackableArray<ServiceMetadata> getUserProviders();
+
 
 }

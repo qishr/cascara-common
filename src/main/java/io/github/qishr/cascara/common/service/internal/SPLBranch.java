@@ -38,7 +38,9 @@ package io.github.qishr.cascara.common.service.internal;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
+import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleFinder;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -50,11 +52,14 @@ import java.util.Map;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.property.Properties;
@@ -64,6 +69,7 @@ import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;
 import io.github.qishr.cascara.common.service.ServiceProviderLayer;
+import io.github.qishr.cascara.common.trackable.TrackableArray;
 import io.github.qishr.cascara.common.annotation.SingletonInitializer;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
@@ -98,6 +104,9 @@ public class SPLBranch implements ServiceProviderLayer {
     protected Map<String,ServiceMetadata> servicesByFqcn = new HashMap<>();
     protected Map<Class<ServiceProvider>, Set<ServiceMetadata>> providersByServiceType = new HashMap<>();
 
+    private final Map<String, Object> singletonCache = new ConcurrentHashMap<>();
+    private final TrackableArray<ServiceMetadata> userProviders = new TrackableArray<>();
+
     protected SPLBranch() { }
 
     /// Sets the reporter for communicating mapping warnings or errors in this layer.
@@ -110,6 +119,80 @@ public class SPLBranch implements ServiceProviderLayer {
             this.ownsReporter = true;
         }
         return this;
+    }
+
+    // TODO: More than just this needs to be trackable
+    public TrackableArray<ServiceMetadata> getUserProviders() {
+        return userProviders;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getOrCreateSingleton(ServiceMetadata meta, Supplier<T> factory) {
+        // Fast-path read (no locking)
+        String singletonClassName = meta.getTypeName();
+        // reporter.debug("getOrCreateSingleton: " + singletonClassName);
+        Object existing = singletonCache.get(singletonClassName);
+        if (existing != null) {
+            // reporter.debug("getOrCreateSingleton: returning existing");
+            return (T) existing;
+        }
+
+        // Synchronize on the metadata instance to initialize atomically per service
+        synchronized (meta) {
+            existing = singletonCache.get(singletonClassName);
+            if (existing != null) {
+                // reporter.debug("getOrCreateSingleton: returning existing");
+                return (T) existing;
+            }
+
+            T instance = factory.get();
+            initializeSingleton(instance);
+            singletonCache.put(singletonClassName, instance);
+            // reporter.debug("getOrCreateSingleton: returning new");
+            return instance;
+        }
+    }
+
+    public static void initializeSingleton(Object instance) {
+        if (instance == null) return;
+        Class<?> clazz = instance.getClass();
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(SingletonInitializer.class)) {
+                if (method.getParameterCount() > 0) {
+                    throw new ServiceException(
+                        ServiceDiagnosticCode.INVALID_SINGLETON_INITIALIZER,
+                        clazz.getName() + "." + method.getName(), "Method must take zero arguments"
+                    );
+                }
+                try {
+                    method.setAccessible(true);
+                    method.invoke(instance);
+                } catch (InvocationTargetException e) {
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    throw new ServiceException(
+                        cause,
+                        DiagnosticCode.forException(cause),
+                        clazz.getSimpleName() + "." + method.getName()
+                    );
+                } catch (Exception e) {
+                    throw new ServiceException(
+                        e,
+                        DiagnosticCode.forException(e),
+                        clazz.getSimpleName() + "." + method.getName()
+                    );
+                }
+                break;
+            }
+        }
+    }
+
+    public void removeSingleton(ServiceMetadata meta) {
+        singletonCache.remove(meta.getTypeName());
+    }
+
+    // TODO: This isn't called yet
+    public void clearSingletons() {
+        singletonCache.clear();
     }
 
     //
@@ -270,27 +353,6 @@ public class SPLBranch implements ServiceProviderLayer {
         return layer;
     }
 
-    // @Override
-    // public void remove(String name) {
-    //     for (SPLBranch layer : children) {
-    //         if (layer.getName().equals(name)) {
-    //             children.remove(layer);
-    //             namedChildren.remove(name);
-
-    //             // TODO: Remove modules and providers (and services with no remaining providers)
-
-    //             // These need updated:
-    //             // - providersByFqcn
-    //             // - providersByServiceType
-    //             // - servicesByFqcn
-    //             // - jarPaths
-
-    //             return;
-    //         }
-    //     }
-    //     ClassHierarchy.invalidate();
-    // }
-
     @Override
     public void remove(String name) {
         SPLBranch layerToRemove = namedChildren.get(name);
@@ -377,6 +439,12 @@ public class SPLBranch implements ServiceProviderLayer {
         getReporter().trace("Checking " + moduleName); // TODO: Version check
         ClassLoader classLoader = module.getClassLoader();
         ModuleDescriptor desc = module.getDescriptor();
+
+        // TODO: Get versions from module's manifest
+        // SemVer moduleBuildCascaraVersion = new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
+        // SemVer moduleMinCascaraVersion = new SemVer(manifest.getString("Min-Cascara-Version", moduleBuildCascaraVersion.toString()));
+        // verifyModuleVersionCompatibility(moduleName, moduleBuildCascaraVersion, moduleMinCascaraVersion);
+
         Set<Provides> services = desc.provides();
 
         if (!services.isEmpty()) {
@@ -402,7 +470,7 @@ public class SPLBranch implements ServiceProviderLayer {
         }
         String providerFqcn = type.getName();
         if (!isRegisteres(providerFqcn)) {
-            ServiceProvider instance = (ServiceProvider) ServiceProviderLayer.instantiateProvider(type);
+            ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(type);
             registerProvider(instance, null);
             if (isBooting) {
                 rootLayer.bootProviders.add(providerFqcn);
@@ -424,13 +492,16 @@ public class SPLBranch implements ServiceProviderLayer {
             throw new ServiceException(e, ServiceDiagnosticCode.FAILED_TO_READ_JAR, jarPath, e.getMessage());
         }
 
-        SemVer minVersion = new SemVer(manifest.getString("Min-Cascara-Version", "0.0.0"));
-        SemVer cascaraVersion = Cascara.getVersion();
+        SemVer moduleBuildCascaraVersion = new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
+        SemVer moduleMinCascaraVersion = new SemVer(manifest.getString("Min-Cascara-Version", moduleBuildCascaraVersion.toString()));
+        verifyModuleVersionCompatibility(moduleName, moduleBuildCascaraVersion, moduleMinCascaraVersion);
 
-        if (cascaraVersion.isLowerThan(minVersion)) {
+        SemVer activeCascaraVersion = Cascara.getVersion();
+        if (activeCascaraVersion.isLowerThan(moduleMinCascaraVersion) ||
+            activeCascaraVersion.getMajor() != moduleBuildCascaraVersion.getMajor()) {
             throw new ServiceException(
                 ServiceDiagnosticCode.INCOMPATIBLE_MODULE_VERSION,
-                moduleName, minVersion, cascaraVersion
+                moduleName, moduleMinCascaraVersion, activeCascaraVersion
             );
         }
 
@@ -463,6 +534,17 @@ public class SPLBranch implements ServiceProviderLayer {
     //
     // Private Methods
     //
+
+    private void verifyModuleVersionCompatibility(String moduleName, SemVer moduleBuildCascaraVersion, SemVer moduleMinCascaraVersion) {
+        SemVer activeCascaraVersion = Cascara.getVersion();
+        if (activeCascaraVersion.isLowerThan(moduleMinCascaraVersion) ||
+            activeCascaraVersion.getMajor() != moduleBuildCascaraVersion.getMajor()) {
+            throw new ServiceException(
+                ServiceDiagnosticCode.INCOMPATIBLE_MODULE_VERSION,
+                moduleName, moduleMinCascaraVersion, activeCascaraVersion
+            );
+        }
+    }
 
     protected void registerViaServiceLoader() {
         try {
@@ -534,14 +616,14 @@ public class SPLBranch implements ServiceProviderLayer {
                     }
                 }
 
-                ServiceMetadata provider = new ServiceMetadata(providerClass, getProviderProperties(instance, jarPath), contentType, isSingleton);
+                ServiceMetadata provider = new ServiceMetadata(this, providerClass, getProviderProperties(instance, jarPath), contentType, isSingleton);
 
                 orderedProviders.add(provider);
                 providersByFqcn.put(providerClass.getName(), provider);
 
                 for (Class<ServiceProvider> serviceInterface : interfaceHierarchy) {
 
-                    ServiceMetadata service = new ServiceMetadata(serviceInterface, getServiceProperties(serviceInterface));
+                    ServiceMetadata service = new ServiceMetadata(this, serviceInterface, getServiceProperties(serviceInterface), null, false);
                     servicesByFqcn.put(serviceInterface.getName(), service);
 
                     Set<ServiceMetadata> providers = providersByServiceType.get(serviceInterface);
@@ -663,30 +745,34 @@ public class SPLBranch implements ServiceProviderLayer {
         getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
         List<ServiceMetadata> found = new ArrayList<>();
 
-        if (providersByServiceType.get(serviceType) != null) {
-            for (ServiceMetadata provider : orderedProviders) {
-                if (serviceType.isAssignableFrom(provider.getType())) {
-                    if (capabilityPredicate == null) {
-                        found.add(provider);
-                        reportFinding(provider, 0);
-                    } else {
-                        if (capabilityPredicate.test(provider)) {
-                            found.add(provider);
-                            reportFinding(provider, 0);
-                        }
-                    }
-                }
-            }
-        }
+        // if (providersByServiceType.get(serviceType) != null) {
+        //     for (ServiceMetadata provider : orderedProviders) {
+        //         if (serviceType.isAssignableFrom(provider.getType())) {
+        //             if (capabilityPredicate == null) {
+        //                 found.add(provider);
+        //                 reportFinding(provider, 0);
+        //             } else {
+        //                 if (capabilityPredicate.test(provider)) {
+        //                     found.add(provider);
+        //                     reportFinding(provider, 0);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
-        if (parent == null) {
-            // Branch out from root. `previous` is used to avoid going down the branch we just came from
-            for (SPLBranch layer : children) {
-                if (layer != previous && layer.isPublic) {
-                    found.addAll(layer.findProvidersInBranches(serviceType, capabilityPredicate, 0));
-                }
-            }
-        } else if (parent != previous) {
+        found.addAll(findProvidersInBranches(serviceType, capabilityPredicate, 0));
+
+        // if (parent == null) {
+        //     // Branch out from root. `previous` is used to avoid going down the branch we just came from
+        //     for (SPLBranch layer : children) {
+        //         if (layer != previous && layer.isPublic) {
+        //             found.addAll(layer.findProvidersInBranches(serviceType, capabilityPredicate, 0));
+        //         }
+        //     }
+        // } else
+
+        if (parent != null && parent != previous) {
             // Go towards root
             getReporter().trace("⬆ " + parent.name);
             found.addAll(parent.internalFindAllProviders(serviceType, capabilityPredicate, this));

@@ -11,21 +11,23 @@ import io.github.qishr.cascara.common.service.ServiceProvider;
 
 public class SPLUtils {
 
+    /// Returns an instance of a specific service provider.
     public static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
             throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, serviceType);
         }
         Class<? extends ServiceProvider> clazz = metadata.getType();
-        return serviceType.cast(instantiateProvider(clazz));
+        return serviceType.cast(getInstance(clazz, metadata));
     }
 
+    /// Returns an instance of a service provider.
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T> T loadDefault(Class<T> serviceType) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
             throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, serviceType);
         }
-        SPLRoot rootLayer = (SPLRoot) SPLRoot.instance();
 
+        SPLRoot rootLayer = (SPLRoot) SPLRoot.instance();
         List<ServiceMetadata> providers = rootLayer.findAllProviders((Class) serviceType);
         if (providers.isEmpty()) {
             throw new ServiceException(ServiceDiagnosticCode.NO_PROVIDER_REGISTERED, serviceType.getSimpleName());
@@ -48,21 +50,33 @@ public class SPLUtils {
         }
 
         Class<T> clazz = (Class<T>) serviceMeta.getType();
+        return getInstance(clazz, serviceMeta);
+    }
 
-        if (serviceMeta.isSingleton()) {
-            return rootLayer.getOrCreateSingleton(
-                serviceMeta,
-                () -> instantiateProvider(clazz)
-            );
+    /// Returns an instantiated service provider.
+    /// If the provider is a neo-singleton, the singleton instance is returned.
+    /// Otherwise, a new instance of the provider is returned.
+    /// @param providerClass The class of the provider to instantiate.
+    public static <T> T getInstance(Class<T> providerClass, ServiceMetadata serviceMeta) {
+        if (!ServiceProvider.class.isAssignableFrom(providerClass)) {
+            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, providerClass);
         }
 
-        return instantiateProvider(clazz);
+        if (serviceMeta.isSingleton()) {
+            SPLBranch layer = (SPLBranch) serviceMeta.getLayer();
+            return layer.getOrCreateSingleton(
+                serviceMeta,
+                () -> instantiate(providerClass)
+            );
+        } else {
+            return instantiate(providerClass);
+        }
     }
 
     /// Instantiates a service provider
     /// @param providerClass The class of the provider to instantiate.
     @SuppressWarnings("unchecked")
-    public static <T> T instantiateProvider(Class<T> providerClass) {
+    public static <T> T instantiate(Class<T> providerClass) {
         if (!ServiceProvider.class.isAssignableFrom(providerClass)) {
             throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, providerClass);
         }

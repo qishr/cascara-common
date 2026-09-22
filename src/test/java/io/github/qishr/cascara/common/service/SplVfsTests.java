@@ -66,7 +66,7 @@ class SplVfsTests {
         assertNotNull(spl);
 
         // Verify SPL works
-        SourceBuffer buf = ServiceProviderRoot.loadDefault(SourceBuffer.class);
+        SourceBuffer buf = ServiceProviderLayer.loadDefault(SourceBuffer.class);
         assertNotNull(buf);
 
         // Verify Service Provider factories work

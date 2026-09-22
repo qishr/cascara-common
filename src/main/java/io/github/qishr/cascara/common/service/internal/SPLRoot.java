@@ -67,8 +67,6 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
     private static final Properties EMPTY_PROPERTIES = new Properties();
 
     final Set<String> bootProviders = new HashSet<>();
-    private final TrackableArray<ServiceMetadata> userProviders = new TrackableArray<>();
-    private final Map<String, Object> singletonCache = new ConcurrentHashMap<>();
 
     private ContentTypeResolver contentTypeStore;
     private Set<ContentType> contentTypes;
@@ -151,79 +149,6 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
         return getProperties().getString(serviceType.getName());
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T getOrCreateSingleton(ServiceMetadata meta, Supplier<T> factory) {
-        // Fast-path read (no locking)
-        String singletonClassName = meta.getTypeName();
-        reporter.debug("getOrCreateSingleton: " + singletonClassName);
-        Object existing = singletonCache.get(singletonClassName);
-        if (existing != null) {
-            reporter.debug("getOrCreateSingleton: returning existing");
-            return (T) existing;
-        }
-
-        // Synchronize on the metadata instance to initialize atomically per service
-        synchronized (meta) {
-            existing = singletonCache.get(singletonClassName);
-            if (existing != null) {
-                reporter.debug("getOrCreateSingleton: returning existing");
-                return (T) existing;
-            }
-
-            T instance = factory.get();
-            initializeSingleton(instance);
-            singletonCache.put(singletonClassName, instance);
-            reporter.debug("getOrCreateSingleton: returning new");
-            return instance;
-        }
-    }
-
-    public static void initializeSingleton(Object instance) {
-        if (instance == null) return;
-        Class<?> clazz = instance.getClass();
-        for (Method method : clazz.getDeclaredMethods()) {
-            if (method.isAnnotationPresent(SingletonInitializer.class)) {
-                if (method.getParameterCount() > 0) {
-                    throw new ServiceException(
-                        ServiceDiagnosticCode.INVALID_SINGLETON_INITIALIZER,
-                        clazz.getName() + "." + method.getName(), "Method must take zero arguments"
-                    );
-                }
-                try {
-                    method.setAccessible(true);
-                    method.invoke(instance);
-                } catch (InvocationTargetException e) {
-                    Throwable cause = e.getCause() != null ? e.getCause() : e;
-                    throw new ServiceException(
-                        cause,
-                        DiagnosticCode.forException(cause),
-                        clazz.getSimpleName() + "." + method.getName()
-                    );
-                } catch (Exception e) {
-                    throw new ServiceException(
-                        e,
-                        DiagnosticCode.forException(e),
-                        clazz.getSimpleName() + "." + method.getName()
-                    );
-                }
-                break;
-            }
-        }
-    }
-
-    public void removeSingleton(ServiceMetadata meta) {
-        singletonCache.remove(meta.getTypeName());
-    }
-
-    // TODO: This isn't called yet
-    public void clearSingletons() {
-        singletonCache.clear();
-    }
-
-    // TODO: More than just this needs to be trackable
-    public TrackableArray<ServiceMetadata> getUserProviders() {
-        return userProviders;
-    }
 
     public Properties getProperties() {
         Path propsFile = Cascara.getSplPropertiesPath();

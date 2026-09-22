@@ -39,21 +39,15 @@ import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.util.ContentType;
 
 public class ServiceMetadata {
+    private final ServiceProviderLayer layer;
     private final Class<? extends ServiceProvider> type;
     private Class<?> capabilityType;
     private final Properties properties;
     private final ContentType contentType;
     private final boolean isSingleton;
 
-    public ServiceMetadata(Class<? extends ServiceProvider> type, Properties properties) {
-        this(type, properties, null, false);
-    }
-
-    public ServiceMetadata(Class<? extends ServiceProvider> type, Properties properties, boolean isSingleton) {
-        this(type, properties, null, isSingleton);
-    }
-
-    public ServiceMetadata(Class<? extends ServiceProvider> type, Properties properties, ContentType contentType, boolean isSingleton) {
+    public ServiceMetadata(ServiceProviderLayer layer, Class<? extends ServiceProvider> type, Properties properties, ContentType contentType, boolean isSingleton) {
+        this.layer = layer;
         this.type = type;
         this.properties = properties;
         this.contentType = contentType;
@@ -63,6 +57,10 @@ public class ServiceMetadata {
             capabilityType = capTypeString == null ? null : Class.forName(capTypeString);
         } catch (Exception e) {
         }
+    }
+
+    public ServiceProviderLayer getLayer() {
+        return layer;
     }
 
     public boolean isSingleton() {

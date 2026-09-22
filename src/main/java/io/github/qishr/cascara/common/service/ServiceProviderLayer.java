@@ -44,6 +44,7 @@ import io.github.qishr.cascara.common.data.TreeNode;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.service.internal.SPLRoot;
 import io.github.qishr.cascara.common.service.internal.SPLUtils;
+import io.github.qishr.cascara.common.trackable.TrackableArray;
 
 public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
     /// Retrieves the root Service Provider Layer.
@@ -67,8 +68,8 @@ public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
 
     /// Instantiates a service provider
     /// @param providerClass The class of the provider to instantiate.
-    static <T> T instantiateProvider(Class<T> providerClass) {
-        return SPLUtils.instantiateProvider(providerClass);
+    static <T> T getInstance(Class<T> providerClass, ServiceMetadata metadata) {
+        return SPLUtils.getInstance(providerClass, metadata);
     }
 
     ServiceProviderLayer setReporter(Reporter reporter);
@@ -79,6 +80,9 @@ public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
 
     String getName();
     Path getModulePath(String name);
+    TrackableArray<ServiceMetadata> getUserProviders();
+
+    // TODO: Remove these
     boolean isPublic();
     void setPublic(boolean v);
 
