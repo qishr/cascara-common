@@ -80,7 +80,8 @@ public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
 
     String getName();
     Path getModulePath(String name);
-    TrackableArray<ServiceMetadata> getUserProviders();
+    TrackableArray<ServiceMetadata> getDeclaredProviders();
+    TrackableArray<ServiceMetadata> getVisibleProviders();
 
     // TODO: Remove these
     boolean isPublic();
@@ -93,6 +94,7 @@ public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
 
     ServiceProviderLayer create();
     ServiceProviderLayer create(String name);
+    ServiceProviderLayer createPrivate(String name);
     void remove(String name);
 
     //

@@ -105,7 +105,10 @@ public class SPLBranch implements ServiceProviderLayer {
     protected Map<Class<ServiceProvider>, Set<ServiceMetadata>> providersByServiceType = new HashMap<>();
 
     private final Map<String, Object> singletonCache = new ConcurrentHashMap<>();
-    private final TrackableArray<ServiceMetadata> userProviders = new TrackableArray<>();
+
+    private Set<SPLBranch> visibleLayers = new HashSet<>();
+    private final TrackableArray<ServiceMetadata> visibleProviders = new TrackableArray<>();
+    private final TrackableArray<ServiceMetadata> declaredProviders = new TrackableArray<>();
 
     protected SPLBranch() { }
 
@@ -122,8 +125,12 @@ public class SPLBranch implements ServiceProviderLayer {
     }
 
     // TODO: More than just this needs to be trackable
-    public TrackableArray<ServiceMetadata> getUserProviders() {
-        return userProviders;
+    public TrackableArray<ServiceMetadata> getDeclaredProviders() {
+        return declaredProviders;
+    }
+
+    public TrackableArray<ServiceMetadata> getVisibleProviders() {
+        return visibleProviders;
     }
 
     @SuppressWarnings("unchecked")
@@ -338,18 +345,29 @@ public class SPLBranch implements ServiceProviderLayer {
 
     @Override
     public SPLBranch create() {
-        return create(null);
+        return createInternal(null, true);
     }
 
     @Override
     public SPLBranch create(String name) {
+        return createInternal(name, true);
+    }
+
+    @Override
+    public SPLBranch createPrivate(String name) {
+        return createInternal(name, false);
+    }
+
+    private SPLBranch createInternal(String name, boolean isPublic) {
         SPLBranch layer = new SPLBranch();
         layer.parent = this;
+        layer.isPublic = isPublic;
         children.add(layer);
         if (name != null) {
             layer.name = name;
             namedChildren.put(name, layer);
         }
+        recomputeAllVisibleProviders();
         return layer;
     }
 
@@ -360,64 +378,65 @@ public class SPLBranch implements ServiceProviderLayer {
             return;
         }
 
-        // 1. Recursively collect all providers from the layer subtree
-        List<ServiceMetadata> providersToRemove = layerToRemove.collectAllProviders();
+        // // 1. Recursively collect all providers from the layer subtree
+        // List<ServiceMetadata> providersToRemove = layerToRemove.collectAllProviders();
 
-        // 2. Unregister each provider and clean up empty services
-        for (ServiceMetadata provider : providersToRemove) {
-            unregisterProvider(provider);
-        }
+        // // 2. Unregister each provider and clean up empty services
+        // for (ServiceMetadata provider : providersToRemove) {
+        //     unregisterProvider(provider);
+        // }
 
         // 3. Detach layer
         children.remove(layerToRemove);
         namedChildren.remove(name);
+        recomputeAllVisibleProviders();
 
         ClassHierarchy.invalidate();
     }
 
-    /// Recursively gathers providers in this layer and any child sub-layers.
-    public List<ServiceMetadata> collectAllProviders() {
-        List<ServiceMetadata> all = new ArrayList<>(this.getProviders());
-        for (SPLBranch child : children) {
-            all.addAll(child.collectAllProviders());
-        }
-        return all;
-    }
+    // /// Recursively gathers providers in this layer and any child sub-layers.
+    // public List<ServiceMetadata> collectAllProviders() {
+    //     List<ServiceMetadata> all = new ArrayList<>(this.getProviders());
+    //     for (SPLBranch child : children) {
+    //         all.addAll(child.collectAllProviders());
+    //     }
+    //     return all;
+    // }
 
-    private void unregisterProvider(ServiceMetadata provider) {
-        Class<?> providerClass = provider.getType();
-        String providerFqcn = providerClass.getName();
+    // private void unregisterProvider(ServiceMetadata provider) {
+    //     Class<?> providerClass = provider.getType();
+    //     String providerFqcn = providerClass.getName();
 
-        //
-        rootLayer.removeSingleton(provider);
+    //     //
+    //     removeSingleton(provider);
 
-        // Remove from FQCN lookup
-        providersByFqcn.remove(providerFqcn);
+    //     // Remove from FQCN lookup
+    //     providersByFqcn.remove(providerFqcn);
 
-        // Remove from service-type mappings
-        // (A provider may implement multiple service interfaces or extend service types)
-        List<Class<?>> affectedServiceTypes = new ArrayList<>();
+    //     // Remove from service-type mappings
+    //     // (A provider may implement multiple service interfaces or extend service types)
+    //     List<Class<?>> affectedServiceTypes = new ArrayList<>();
 
-        for (Map.Entry<Class<ServiceProvider>, Set<ServiceMetadata>> entry : providersByServiceType.entrySet()) {
-            Class<?> serviceType = entry.getKey();
-            Set<ServiceMetadata> list = entry.getValue();
+    //     for (Map.Entry<Class<ServiceProvider>, Set<ServiceMetadata>> entry : providersByServiceType.entrySet()) {
+    //         Class<?> serviceType = entry.getKey();
+    //         Set<ServiceMetadata> list = entry.getValue();
 
-            if (list != null && list.remove(provider)) {
-                if (list.isEmpty()) {
-                    affectedServiceTypes.add(serviceType);
-                }
-            }
-        }
+    //         if (list != null && list.remove(provider)) {
+    //             if (list.isEmpty()) {
+    //                 affectedServiceTypes.add(serviceType);
+    //             }
+    //         }
+    //     }
 
-        // Clean up empty service entries
-        for (Class<?> serviceType : affectedServiceTypes) {
-            providersByServiceType.remove(serviceType);
-            servicesByFqcn.remove(serviceType.getName());
-        }
+    //     // Clean up empty service entries
+    //     for (Class<?> serviceType : affectedServiceTypes) {
+    //         providersByServiceType.remove(serviceType);
+    //         servicesByFqcn.remove(serviceType.getName());
+    //     }
 
-        // Unregister from userProviders list to trigger array change listeners
-        rootLayer.getUserProviders().remove(provider);
-    }
+    //     // Unregister from userProviders list to trigger array change listeners
+    //     declaredProviders.remove(provider);
+    // }
 
     //
     // Provider Registration in Specific Layer
@@ -454,13 +473,15 @@ public class SPLBranch implements ServiceProviderLayer {
                     getReporter().trace("  Attempting to reigster " + providerClassName);
                     try {
                         Class<?> type = classLoader.loadClass(providerClassName);
-                        registerClass((Class)type);
+                        registerClassInternal((Class)type);
                     } catch (ClassNotFoundException | ServiceException e) {
                         getReporter().warn(ServiceDiagnosticCode.FAILED_TO_LOAD_CLASS, providerClassName, e.getMessage());
                     }
                 }
             }
         }
+
+        recomputeAllVisibleProviders();
     }
 
     @Override
@@ -468,14 +489,17 @@ public class SPLBranch implements ServiceProviderLayer {
         if (type == null || !ServiceProvider.class.isAssignableFrom(type)) {
             return;
         }
-        String providerFqcn = type.getName();
-        if (!isRegisteres(providerFqcn)) {
-            ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(type);
-            registerProvider(instance, null);
-            if (isBooting) {
-                rootLayer.bootProviders.add(providerFqcn);
-            }
-        }
+        registerClassInternal(type);
+        // String providerFqcn = type.getName();
+        // if (!isRegisteres(providerFqcn)) {
+        //     ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(type);
+        //     registerProvider(instance, null);
+        //     if (isBooting) {
+        //         rootLayer.bootProviders.add(providerFqcn);
+        //     }
+        // }
+
+        recomputeAllVisibleProviders();
     }
 
     @Override
@@ -528,12 +552,24 @@ public class SPLBranch implements ServiceProviderLayer {
         moduleLayer = parent.defineModulesWithManyLoaders(cf, ClassLoader.getSystemClassLoader());
 
         enumerateProviders();
+        recomputeAllVisibleProviders();
         ClassHierarchy.invalidate();
     }
 
     //
     // Private Methods
     //
+
+    private void registerClassInternal(Class<?> type) {
+        String providerFqcn = type.getName();
+        if (!isRegistered(providerFqcn)) {
+            ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(type);
+            registerProvider(instance, null);
+            if (isBooting) {
+                rootLayer.bootProviders.add(providerFqcn);
+            }
+        }
+    }
 
     private void verifyModuleVersionCompatibility(String moduleName, SemVer moduleBuildCascaraVersion, SemVer moduleMinCascaraVersion) {
         SemVer activeCascaraVersion = Cascara.getVersion();
@@ -569,7 +605,7 @@ public class SPLBranch implements ServiceProviderLayer {
     private void enumerateProviders() {
         var loader = ServiceLoader.load(moduleLayer, ServiceProvider.class);
         loader.forEach(provider -> {
-            if (!isRegisteres(provider.getClass().getName())) {
+            if (!isRegistered(provider.getClass().getName())) {
                 String moduleName = provider.getClass().getModule().getName();
                 Path jarPath = modulePath.getPathForModule(moduleName);
                 try {
@@ -587,7 +623,7 @@ public class SPLBranch implements ServiceProviderLayer {
         });
     }
 
-    private boolean isRegisteres(String providerFqcn) {
+    private boolean isRegistered(String providerFqcn) {
         return rootLayer.bootProviders.contains(providerFqcn) || providersByFqcn.containsKey(providerFqcn);
     }
 
@@ -643,7 +679,7 @@ public class SPLBranch implements ServiceProviderLayer {
                     }
                 }
 
-                rootLayer.getUserProviders().add(provider);
+                declaredProviders.add(provider);
             }
         } catch(AbstractMethodError e) {
             registrationError("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e);
@@ -740,6 +776,189 @@ public class SPLBranch implements ServiceProviderLayer {
         return strings;
     }
 
+    //
+    // New Visibility Graph Code
+    //
+
+    public Set<SPLBranch> ancestors() {
+        Set<SPLBranch> ancestors = new HashSet<>();
+        SPLBranch ancestor = this.parent;
+        while (ancestor != null) {
+            ancestors.add(ancestor);
+            ancestor = ancestor.parent;
+        }
+        return ancestors;
+    }
+
+    public Set<SPLBranch> publicSiblings() {
+        Set<SPLBranch> siblings = new HashSet<>();
+        if (parent != null) {
+            for (SPLBranch sibling : parent.children) {
+                if (sibling != this && sibling.isPublic) {
+                    siblings.add(sibling);
+                }
+            }
+        }
+        return siblings;
+    }
+
+    public Set<SPLBranch> publicDescendants() {
+        Set<SPLBranch> collected = new HashSet<>();
+        collectPublicDescendants(this, collected);
+        return collected;
+    }
+
+    private void collectPublicDescendants(SPLBranch layer, Set<SPLBranch> collected) {
+        for (SPLBranch descendant : layer.children) {
+            if (descendant.isPublic) {
+                collected.add(descendant);
+                collectPublicDescendants(descendant, collected);
+            }
+        }
+    }
+
+    // TODO: It's not necessary to pass rootLayer in here
+    private void recomputeAllVisibleProviders() {
+        Set<SPLBranch> allLayers = rootLayer.allLayers();
+
+        // Step 1: compute visibility sets for all layers
+        for (SPLBranch layer : allLayers) {
+            layer.visibleLayers = computeVisibleLayers(layer);
+        }
+
+        // Step 2: merge providers for each layer
+        for (SPLBranch layer : allLayers) {
+            Set<ServiceMetadata> newProviders = mergeDeclaredProviders(layer.visibleLayers);
+            diffAndApply(layer.visibleProviders, newProviders);
+        }
+    }
+
+
+    private Set<SPLBranch> computeVisibleLayers(SPLBranch layer) {
+        Set<SPLBranch> result = new HashSet<>();
+
+        // Always include self
+        result.add(layer);
+
+        Set<SPLBranch> ancestors = layer.ancestors();
+
+        // // Include all ancestors
+        // for each ancestor A of L:
+        //     result.add(A)
+
+        //     // Include all public descendants of ancestor A
+        //     for each descendant D of A:
+        //         if D.isPublic:
+        //             result.add(D)
+
+        for (SPLBranch ancestor : ancestors) {
+            result.add(ancestor);
+            for (SPLBranch descendant : ancestor.publicDescendants()) {
+                result.add(descendant);
+            }
+        }
+
+        // // Include all public siblings of ancestors
+        // for each ancestor A of L:
+        //     for each sibling S of A:
+        //         if S.isPublic:
+        //             result.add(S)
+
+        //             // Include public descendants of sibling S
+        //             for each descendant D of S:
+        //                 if D.isPublic:
+        //                     result.add(D)
+
+        for (SPLBranch ancestor : ancestors) {
+            for (SPLBranch sibling : ancestor.publicSiblings()) {
+                result.add(sibling);
+                for (SPLBranch descendant : sibling.publicDescendants()) {
+                    result.add(descendant);
+                }
+            }
+        }
+
+        // // Remove private branches not containing L
+        // for each layer X in result:
+        //     if X.isPrivate and not isAncestorOrSelf(X, L):
+        //         result.remove(X)
+
+        for (SPLBranch x : result) {
+            if (!x.isPublic() && !(ancestors.contains(x) || x == layer)) {
+                result.remove(x);
+            }
+        }
+
+        return result;
+    }
+
+
+    public Set<ServiceMetadata> mergeDeclaredProviders(Set<SPLBranch> visibleLayers) {
+        Set<ServiceMetadata> merged = new HashSet<>();
+
+        // for each layer V in visibleLayers:
+        //     for each provider P in V.declaredProviders:
+        //         merged.add( (V, P) )  // provider identity includes layer
+
+        for (SPLBranch visible : visibleLayers) {
+            for (ServiceMetadata provider : visible.providersByFqcn.values()) {
+                merged.add(provider);
+            }
+        }
+
+        return merged;
+
+    }
+
+    public void  diffAndApply(TrackableArray<ServiceMetadata> oldArray, Set<ServiceMetadata> newList) {
+        // Compute differences
+        // removed = oldArray - newList
+        // added   = newList - oldArray
+
+        Set<ServiceMetadata> removed = subtract(oldArray, newList);
+        Set<ServiceMetadata> added = subtract(newList, oldArray);
+
+        // Fire REMOVE events
+        // for each provider R in removed:
+        //     oldArray.remove(R)  // TrackableArray fires REMOVE
+
+        for (ServiceMetadata provider : removed) {
+            oldArray.remove(provider);
+        }
+
+        // Fire ADD events
+        // for each provider A in added:
+        //     oldArray.add(A)     // TrackableArray fires ADD
+
+        for (ServiceMetadata provider : added) {
+            oldArray.add(provider);
+        }
+    }
+
+    private Set<ServiceMetadata> subtract(TrackableArray<ServiceMetadata> from, Set<ServiceMetadata> items) {
+        Set<ServiceMetadata> result = new HashSet<>();
+        for (ServiceMetadata item : from) {
+            if (!items.contains(item)) {
+                result.add(item);
+            }
+        }
+        return result;
+    }
+
+    private Set<ServiceMetadata> subtract(Set<ServiceMetadata> from,  TrackableArray<ServiceMetadata> items) {
+        Set<ServiceMetadata> result = new HashSet<>();
+        for (ServiceMetadata item : from) {
+            if (!items.contains(item)) {
+                result.add(item);
+            }
+        }
+        return result;
+    }
+
+    //
+    // Old Hierarchy Traversal Code
+    //
+
     private List<ServiceMetadata> internalFindAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate, SPLBranch previous) {
         String startLayer = (name == null ? "unnamed layer" : "layer " + name);
         getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
@@ -761,7 +980,8 @@ public class SPLBranch implements ServiceProviderLayer {
         //     }
         // }
 
-        found.addAll(findProvidersInBranches(serviceType, capabilityPredicate, 0));
+        // found.addAll(findProvidersInBranches(serviceType, capabilityPredicate, 0));
+        addAllToList(findProvidersInBranches(serviceType, capabilityPredicate, 0), found);
 
         // if (parent == null) {
         //     // Branch out from root. `previous` is used to avoid going down the branch we just came from
@@ -775,7 +995,8 @@ public class SPLBranch implements ServiceProviderLayer {
         if (parent != null && parent != previous) {
             // Go towards root
             getReporter().trace("⬆ " + parent.name);
-            found.addAll(parent.internalFindAllProviders(serviceType, capabilityPredicate, this));
+            // found.addAll(parent.internalFindAllProviders(serviceType, capabilityPredicate, this));
+            addAllToList(parent.internalFindAllProviders(serviceType, capabilityPredicate, this), found);
         }
 
         return found;
@@ -788,6 +1009,9 @@ public class SPLBranch implements ServiceProviderLayer {
         if (providersByServiceType.get(serviceType) != null) {
             for (ServiceMetadata provider : orderedProviders) {
                 if (serviceType.isAssignableFrom(provider.getType())) {
+                    if (!found.contains(provider)) {
+
+
                     if (capabilityPredicate == null) {
                         found.add(provider);
                         reportFinding(provider, depth);
@@ -797,17 +1021,29 @@ public class SPLBranch implements ServiceProviderLayer {
                             reportFinding(provider, depth);
                         }
                     }
+
+
+                    }
                 }
             }
         }
 
         for (SPLBranch layer : children) {
             if (layer.isPublic) {
-                found.addAll(layer.findProvidersInBranches(serviceType, capabilityPredicate, depth + 1));
+                // found.addAll(layer.findProvidersInBranches(serviceType, capabilityPredicate, depth + 1));
+                addAllToList(layer.findProvidersInBranches(serviceType, capabilityPredicate, depth + 1), found);
             }
         }
 
         return found;
+    }
+
+    private void addAllToList(List<ServiceMetadata> add, List<ServiceMetadata> list) {
+        for (ServiceMetadata item : add) {
+            if (!list.contains(item)) {
+                list.add(item);
+            }
+        }
     }
 
     /// Returns a list of service types in this layer.

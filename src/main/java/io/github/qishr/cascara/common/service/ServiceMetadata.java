@@ -35,6 +35,8 @@
 
 package io.github.qishr.cascara.common.service;
 
+import java.util.Objects;
+
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.util.ContentType;
 
@@ -76,12 +78,10 @@ public class ServiceMetadata {
         return type.getModule().getName();
     }
 
-    // TODO: This should be getProviderTypeName or getProviderClassName
     public String getTypeName() {
         return type.getName();
     }
 
-    // TODO: This should be getProviderType or getProviderClass
     public Class<? extends ServiceProvider> getType() {
         return type;
     }
@@ -115,17 +115,20 @@ public class ServiceMetadata {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ServiceMetadata honesty = (ServiceMetadata) o;
-        return java.util.Objects.equals(type, honesty.type);
+        ServiceMetadata that = (ServiceMetadata) o;
+        return Objects.equals(this.type, that.type) &&
+               Objects.equals(this.layer, that.layer);
     }
 
     @Override
     public int hashCode() {
-        return java.util.Objects.hash(type);
+        return java.util.Objects.hash(type, layer);
     }
 
     @Override
     public String toString() {
-        return type.getSimpleName();
+        return layer.getName() == null
+            ? type.getSimpleName()
+            : layer.getName() + "#" + type.getSimpleName();
     }
 }

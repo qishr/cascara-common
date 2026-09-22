@@ -145,10 +145,22 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
         }
     }
 
+    public Set<SPLBranch> allLayers() {
+        Set<SPLBranch> collected = new HashSet<>();
+        collectLayers(this, collected);
+        return collected;
+    }
+
+    private void collectLayers(SPLBranch layer, Set<SPLBranch> collected) {
+        collected.add(layer);
+        for (SPLBranch descendant : layer.children) {
+            collectLayers(descendant, collected);
+        }
+    }
+
     public String getPreferredProviderClassName(Class<?> serviceType) {
         return getProperties().getString(serviceType.getName());
     }
-
 
     public Properties getProperties() {
         Path propsFile = Cascara.getSplPropertiesPath();
