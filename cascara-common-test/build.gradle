@@ -1,0 +1,35 @@
+plugins {
+    id "io.github.qishr.cascara-meta.java-library" version "0.1.0"
+    id "io.github.qishr.cascara-meta.publish" version "0.1.0"
+}
+
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+}
+
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+
+dependencies {
+    implementation(platform("io.github.qishr:cascara-meta-bom:$cascara_version"))
+
+    // testImplementation("org.junit.jupiter:junit-jupiter-api")
+    implementation("org.junit.jupiter:junit-jupiter-api")
+
+    implementation("org.junit.jupiter:junit-jupiter-engine")
+    // testImplementation 'org.mockito:mockito-core'
+    // testImplementation 'org.mockito:mockito-junit-jupiter'
+    implementation('org.junit.platform:junit-platform-launcher')
+
+    implementation(project(':cascara-common'))
+}
+
+
+tasks.withType(Javadoc).configureEach {
+    options.addStringOption('Xdoclint:-missing', '-quiet')
+}
