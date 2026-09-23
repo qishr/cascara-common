@@ -33,6 +33,8 @@
 // version.
 
 module cascara.common {
+    requires java.management;
+
     uses io.github.qishr.cascara.common.service.ServiceProvider;
 
     exports io.github.qishr.cascara.common.annotation;
@@ -54,7 +56,6 @@ module cascara.common {
     exports io.github.qishr.cascara.common.semver;
     exports io.github.qishr.cascara.common.service;
     exports io.github.qishr.cascara.common.trackable;
-    exports io.github.qishr.cascara.common.trackable.diagnostic;
     exports io.github.qishr.cascara.common.trackable.property;
     exports io.github.qishr.cascara.common.trackable.tracker;
     exports io.github.qishr.cascara.common.util;
@@ -76,5 +77,4 @@ module cascara.common {
              io.github.qishr.cascara.common.lang.type.UuidTypeDescriptor,
              io.github.qishr.cascara.common.lang.util.SourceStringBuffer,
              io.github.qishr.cascara.common.lang.util.SourceInputStreamBuffer;
-    requires java.management;
 }

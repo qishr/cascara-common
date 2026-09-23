@@ -128,7 +128,8 @@ public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,
     }
 
     /// {@inheritDoc}
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public <C> C fromAst(PlainNode astNode, Class<C> jvmType) {
         return (C) deserialize(astNode, jvmType);
     }

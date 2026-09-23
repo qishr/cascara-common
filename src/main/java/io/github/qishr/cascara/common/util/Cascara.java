@@ -2,10 +2,15 @@ package io.github.qishr.cascara.common.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Version;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,10 +38,31 @@ public class Cascara {
     }
 
     public static SemVer getVersion() {
+        CodeSource cs = Cascara.class.getProtectionDomain().getCodeSource();
+        // if (cs != null) {
+        //     try (java.util.jar.JarFile jar = new java.util.jar.JarFile(new File(cs.getLocation().toURI()))) {
+        //         java.util.jar.Manifest mf = jar.getManifest();
+        //         String v = mf.getMainAttributes().getValue("Cascara-Version");
+        //         if (v != null) return new SemVer(v);
+        //     } catch (IOException e) {
+		// 		// TODO Auto-generated catch block
+		// 		e.printStackTrace();
+		// 	} catch (URISyntaxException e) {
+		// 		// TODO Auto-generated catch block
+		// 		e.printStackTrace();
+		// 	}
+        // }
+        // return new SemVer("0.0.0");
+
+
         JarManifest manifest;
         try {
+            // URL url = Cascara.class.getResource("/META-INF/MANIFEST.MF");
+            // System.err.println("Manifest URL: " + url);
+            // System.err.println(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
             manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
         } catch (IOException e) {
+            System.err.println("Failed to parse JarManifest: " + e.getMessage());
             return new SemVer("0.0.0");
         }
         return new SemVer(manifest.getString("Cascara-Version", "0.0.0"));

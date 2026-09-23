@@ -62,10 +62,10 @@ import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
-import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.service.ContentTypeProvider;
+import io.github.qishr.cascara.common.service.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;
@@ -440,7 +440,9 @@ public class SPLBranch implements ServiceProviderLayer {
                     try {
                         Class<?> type = classLoader.loadClass(providerClassName);
                         registerClassInternal((Class)type);
-                    } catch (ClassNotFoundException | ServiceException e) {
+                    } catch (ServiceException e) {
+                        getReporter().trace("Class \"" + providerClassName + "\" is not a Cascara ServiceProvider");
+                    } catch (ClassNotFoundException e) {
                         getReporter().warn(ServiceDiagnosticCode.FAILED_TO_LOAD_CLASS, providerClassName, e.getMessage());
                     }
                 }
@@ -476,15 +478,6 @@ public class SPLBranch implements ServiceProviderLayer {
         SemVer moduleMinCascaraVersion = new SemVer(manifest.getString("Min-Cascara-Version", moduleBuildCascaraVersion.toString()));
         verifyModuleVersionCompatibility(moduleName, moduleBuildCascaraVersion, moduleMinCascaraVersion);
 
-        SemVer activeCascaraVersion = Cascara.getVersion();
-        if (activeCascaraVersion.isLowerThan(moduleMinCascaraVersion) ||
-            activeCascaraVersion.getMajor() != moduleBuildCascaraVersion.getMajor()) {
-            throw new ServiceException(
-                ServiceDiagnosticCode.INCOMPATIBLE_MODULE_VERSION,
-                moduleName, moduleMinCascaraVersion, activeCascaraVersion
-            );
-        }
-
         getReporter().debug("Discovering providers in \"%s\"", jarPath);
 
         jarPaths.add(jarPath);
@@ -506,6 +499,7 @@ public class SPLBranch implements ServiceProviderLayer {
 
         // 3. (re-)create the layer.
         moduleLayer = parent.defineModulesWithManyLoaders(cf, ClassLoader.getSystemClassLoader());
+        // moduleLayer = parent.defineModulesWithOneLoader(cf, ClassLoader.getSystemClassLoader());
 
         enumerateProviders();
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
@@ -538,13 +532,35 @@ public class SPLBranch implements ServiceProviderLayer {
 
     private void verifyModuleVersionCompatibility(String moduleName, SemVer moduleBuildCascaraVersion, SemVer moduleMinCascaraVersion) {
         SemVer activeCascaraVersion = Cascara.getVersion();
-        if (activeCascaraVersion.isLowerThan(moduleMinCascaraVersion) ||
-            activeCascaraVersion.getMajor() != moduleBuildCascaraVersion.getMajor()) {
+
+        boolean hasMinVersion = !"0.0.0".equals(moduleMinCascaraVersion.toString());
+        boolean hasBuildVersion = !"0.0.0".equals(moduleBuildCascaraVersion.toString());
+
+        if (
+            (hasMinVersion && (
+                activeCascaraVersion.isLowerThan(moduleMinCascaraVersion) ||
+                activeCascaraVersion.getMajor() != moduleMinCascaraVersion.getMajor()
+            )) ||
+            (hasBuildVersion && activeCascaraVersion.getMajor() != moduleBuildCascaraVersion.getMajor())
+        ) {
+            System.out.println("activeCascaraVersion: " + activeCascaraVersion);
+            System.out.println("moduleBuildCascaraVersion: " + moduleBuildCascaraVersion);
+            System.out.println("moduleMinCascaraVersion: " + moduleMinCascaraVersion);
             throw new ServiceException(
                 ServiceDiagnosticCode.INCOMPATIBLE_MODULE_VERSION,
                 moduleName, moduleMinCascaraVersion, activeCascaraVersion
             );
         }
+
+        // if ((activeCascaraVersion.isLowerThan(moduleMinCascaraVersion) ||
+        //     activeCascaraVersion.getMajor() != moduleBuildCascaraVersion.getMajor())
+
+        // ) {
+        //     throw new ServiceException(
+        //         ServiceDiagnosticCode.INCOMPATIBLE_MODULE_VERSION,
+        //         moduleName, moduleMinCascaraVersion, activeCascaraVersion
+        //     );
+        // }
     }
 
     protected void registerViaServiceLoader() {
@@ -630,6 +646,13 @@ public class SPLBranch implements ServiceProviderLayer {
                     if (providers == null) {
                         providers = new HashSet<>();
                         providersByServiceType.put(serviceInterface, providers);
+
+
+
+                        // providersByServiceFqcn.put(serviceInterface.getName(), providers);
+
+
+
                     }
                     providers.add(provider);
                 }
@@ -741,7 +764,7 @@ public class SPLBranch implements ServiceProviderLayer {
     }
 
     //
-    // Old Hierarchy Traversal Code
+    // Hierarchy Traversal Code
     //
 
     private List<ServiceMetadata> internalFindAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate, SPLBranch previous) {
@@ -764,7 +787,10 @@ public class SPLBranch implements ServiceProviderLayer {
         List<ServiceMetadata> found = new ArrayList<>();
         getReporter().trace("" + "  ".repeat(depth) + "⬇ " + name);
 
-        if (providersByServiceType.get(serviceType) != null) {
+        Set<ServiceMetadata> byType = providersByServiceType.get(serviceType);
+        // Set<ServiceMetadata> byFqcn = providersByServiceFqcn.get(serviceType.getName());
+
+        if (byType != null) {
             for (ServiceMetadata provider : orderedProviders) {
                 if (serviceType.isAssignableFrom(provider.getType())) {
                     if (!found.contains(provider)) {
@@ -813,8 +839,8 @@ public class SPLBranch implements ServiceProviderLayer {
     //
 
     protected void reportFinding(ServiceMetadata item, int depth) {
-        getReporter().debug("[" + name + "] " + "  ".repeat(depth) + item.getType().getName() +
-            (item.getJarPath() == null ? "" : " from " + item.getJarPath()));
+        getReporter().debug("[provider] " + "layer=\"" + name + "\", class=\"" + item.getType().getName() + "\"" +
+            (item.getJarPath() == null ? "" : ", jar=\"" + item.getJarPath() + "\""));
     }
 
     protected static void bootError(Throwable e, ServiceDiagnosticCode code, Object... details) {

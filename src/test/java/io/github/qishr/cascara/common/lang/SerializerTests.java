@@ -47,13 +47,11 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.diagnostic.StandardReporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
-import io.github.qishr.cascara.common.lang.plain.PlainNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
@@ -150,18 +148,18 @@ public class SerializerTests extends SerializerTestBase {
 
         AstNode rootNode = serializer.toAst(pjf);
         assertInstanceOf(MapAstNode.class, rootNode);
-        MapAstNode rootMap = (MapAstNode) rootNode;
+        MapAstNode<?,?,?> rootMap = (MapAstNode<?,?,?>) rootNode;
 
         AstNode contribsNode = rootMap.get("contributes");
-        MapAstNode contribsMap = (MapAstNode) contribsNode;
-        SequenceAstNode seq = (SequenceAstNode) contribsMap.get("themes");
+        MapAstNode<?,?,?> contribsMap = (MapAstNode<?,?,?>) contribsNode;
+        SequenceAstNode<?> seq = (SequenceAstNode<?>) contribsMap.get("themes");
         assertFalse(seq.isEmpty());
 
         // TODO: SequenceAstNode does not have getMap() ?
-        MapAstNode theme = (MapAstNode) seq.getFirst();
+        MapAstNode<?,?,?> theme = (MapAstNode<?,?,?>) seq.getFirst();
         assertNotNull(theme);
 
-        ScalarAstNode nameNode = theme.getScalar("name");
+        ScalarAstNode<?> nameNode = theme.getScalar("name");
         assertNotNull(nameNode);
         assertEquals("TestName", nameNode.asString());
 

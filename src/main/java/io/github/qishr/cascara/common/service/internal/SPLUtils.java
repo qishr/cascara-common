@@ -40,7 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import io.github.qishr.cascara.common.diagnostic.code.ServiceDiagnosticCode;
+import io.github.qishr.cascara.common.service.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;

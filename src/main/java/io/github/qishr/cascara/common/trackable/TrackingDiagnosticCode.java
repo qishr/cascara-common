@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.trackable.diagnostic;
+package io.github.qishr.cascara.common.trackable;
 
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 
