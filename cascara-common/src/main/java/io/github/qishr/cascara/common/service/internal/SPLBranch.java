@@ -382,27 +382,13 @@ public class SPLBranch implements ServiceProviderLayer {
         return createInternal(name, false);
     }
 
-    private SPLBranch createInternal(String name, boolean isPublic) {
-        SPLBranch layer = new SPLBranch();
-        layer.parent = this;
-        layer.isPublic = isPublic;
-        children.add(layer);
-        if (name != null) {
-            layer.name = name;
-            namedChildren.put(name, layer);
-        }
-        SPLUtils.recomputeAllVisibleProviders(rootLayer);
-        return layer;
-    }
-
     @Override
     public void remove(String name) {
         SPLBranch layerToRemove = namedChildren.get(name);
         if (layerToRemove == null) {
             return;
         }
-        children.remove(layerToRemove);
-        namedChildren.remove(name);
+        removeInternal(layerToRemove);
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
         ClassHierarchy.invalidate();
     }
@@ -452,8 +438,7 @@ public class SPLBranch implements ServiceProviderLayer {
                 }
             }
         }
-
-        modules.add(module.getName());
+        addModuleToMap(module.getName());
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
     }
 
@@ -508,7 +493,7 @@ public class SPLBranch implements ServiceProviderLayer {
         // moduleLayer = parent.defineModulesWithOneLoader(cf, ClassLoader.getSystemClassLoader());
 
         enumerateProviders();
-        modules.add(moduleName);
+        addModuleToMap(moduleName);
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
         ClassHierarchy.invalidate();
     }
@@ -516,6 +501,50 @@ public class SPLBranch implements ServiceProviderLayer {
     //
     // Private Methods
     //
+
+    protected void registerViaServiceLoader() {
+        try {
+            ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
+            for (ServiceProvider provider : loader) {
+                if (!providersByFqcn.containsKey(provider.getClass().getName())) {
+                    registerProvider(provider, null);
+                }
+            }
+        } catch (ServiceConfigurationError e) {
+            bootError(e, ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
+        }
+    }
+
+    private SPLBranch createInternal(String name, boolean isPublic) {
+        SPLBranch layer = new SPLBranch();
+        layer.parent = this;
+        layer.isPublic = isPublic;
+        children.add(layer);
+        if (name != null) {
+            layer.name = name;
+            namedChildren.put(name, layer);
+        }
+        SPLUtils.recomputeAllVisibleProviders(rootLayer);
+        return layer;
+    }
+
+    /// Recursively removes a child layer and all descendant layers.
+    private void removeInternal(SPLBranch layerToRemove) {
+        for (SPLBranch childLayer : layerToRemove.children) {
+            removeInternal(childLayer);
+        }
+        layerToRemove.delete();
+        children.remove(layerToRemove);
+        namedChildren.remove(layerToRemove.getName());
+    }
+
+    /// Removes everything allocated in this layer
+    private void delete() {
+        List<String> modulesCopy = new ArrayList<>(modules);
+        for (String moduleName : modulesCopy) {
+            removeModuleFromMap(moduleName);
+        }
+    }
 
     private void collectPublicDescendants(SPLBranch layer, Set<SPLBranch> collected) {
         for (SPLBranch descendant : layer.children) {
@@ -558,29 +587,33 @@ public class SPLBranch implements ServiceProviderLayer {
                 moduleName, moduleMinCascaraVersion, activeCascaraVersion
             );
         }
-
-        // if ((activeCascaraVersion.isLowerThan(moduleMinCascaraVersion) ||
-        //     activeCascaraVersion.getMajor() != moduleBuildCascaraVersion.getMajor())
-
-        // ) {
-        //     throw new ServiceException(
-        //         ServiceDiagnosticCode.INCOMPATIBLE_MODULE_VERSION,
-        //         moduleName, moduleMinCascaraVersion, activeCascaraVersion
-        //     );
-        // }
     }
 
-    protected void registerViaServiceLoader() {
-        try {
-            ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
-            for (ServiceProvider provider : loader) {
-                if (!providersByFqcn.containsKey(provider.getClass().getName())) {
-                    registerProvider(provider, null);
-                }
-            }
-        } catch (ServiceConfigurationError e) {
-            bootError(e, ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
+    /// Adds a module to the root layer's `moduleToLayers` map and updates
+    // the `modules` `TrackableArray`
+    private void addModuleToMap(String moduleName) {
+        Set<ServiceProviderLayer> layers = rootLayer.moduleToLayers.get(moduleName);
+        if (layers == null) {
+            layers = new HashSet<>();
+            rootLayer.moduleToLayers.put(moduleName, layers);
         }
+        layers.add(this);
+        if (!modules.contains(moduleName)) {
+            modules.add(moduleName);
+        }
+    }
+
+    /// Removes a module from the root layer's `moduleToLayers` map and updates
+    // the `modules` `TrackableArray`
+    private void removeModuleFromMap(String moduleName) {
+        Set<ServiceProviderLayer> layers = rootLayer.moduleToLayers.get(moduleName);
+        if (layers != null) {
+            layers.remove(this);
+            if (layers.isEmpty()) {
+                rootLayer.moduleToLayers.remove(layers);
+            }
+        }
+        modules.remove(moduleName);
     }
 
     /// Returns the Reporter of this layer or the nearest ancetor that has one.

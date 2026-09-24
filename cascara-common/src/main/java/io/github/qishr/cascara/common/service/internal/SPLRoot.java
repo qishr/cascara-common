@@ -37,7 +37,9 @@ package io.github.qishr.cascara.common.service.internal;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
@@ -58,6 +60,8 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
     private static final Properties EMPTY_PROPERTIES = new Properties();
 
     final Set<String> bootProviders = new HashSet<>();
+
+    Map<String,Set<ServiceProviderLayer>> moduleToLayers = new HashMap<>();
 
     private ContentTypeResolver contentTypeStore;
     private Set<ContentType> contentTypes;
