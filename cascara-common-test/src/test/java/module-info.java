@@ -35,6 +35,7 @@
 module cascara.common.test {
     requires cascara.common;
     requires java.management;
+    requires cascara.test.common.junit;
     requires org.junit.jupiter.api;
 
     exports io.github.qishr.cascara.common.test.data;

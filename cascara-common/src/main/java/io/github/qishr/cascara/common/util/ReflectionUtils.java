@@ -257,21 +257,31 @@ public class ReflectionUtils {
 
     @Nullable
     public static Pair<Class<?>,String> getCaller(boolean ignoreQueryingClass) {
+        return getCaller(ignoreQueryingClass, false);
+    }
+
+    @Nullable
+    public static Pair<Class<?>,String> getCaller(boolean ignoreQueryingClass, boolean ignoreQueryingModule) {
         String thisClass = ReflectionUtils.class.getName();
         String queryingClass = null;
+        String queryingModule = null;
         StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
         for (StackTraceElement frame : callStack) {
+            String moduleName = frame.getModuleName();
             String className = frame.getClassName();
             String methodName = frame.getMethodName();
             if (!className.equals("java.lang.Thread") && !className.equals(thisClass)) {
                 if (queryingClass == null) {
                     queryingClass = className;
-                } else if (!ignoreQueryingClass || !className.equals(queryingClass)) {
-                    try {
-                        Class<?> callingClass = Class.forName(className);
-                        return new Pair<>(callingClass, methodName);
-                    } catch (ClassNotFoundException e) {
-                        break;
+                    queryingModule = moduleName;
+                } else if (!ignoreQueryingModule || !moduleName.equals(queryingModule)) {
+                    if (!ignoreQueryingClass || !className.equals(queryingClass)) {
+                        try {
+                            Class<?> callingClass = Class.forName(className);
+                            return new Pair<>(callingClass, methodName);
+                        } catch (ClassNotFoundException e) {
+                            break;
+                        }
                     }
                 }
             }

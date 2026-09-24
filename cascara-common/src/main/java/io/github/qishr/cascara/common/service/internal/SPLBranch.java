@@ -108,6 +108,9 @@ public class SPLBranch implements ServiceProviderLayer {
     final TrackableArray<ServiceMetadata> visibleProviders = new TrackableArray<>();
     private final TrackableArray<ServiceMetadata> declaredProviders = new TrackableArray<>();
 
+    // TODO: Remove modules from list when they're no longer loaded
+    private TrackableArray<String> modules = new TrackableArray<>();
+
     protected SPLBranch() { }
 
     /// Sets the reporter for communicating mapping warnings or errors in this layer.
@@ -122,14 +125,6 @@ public class SPLBranch implements ServiceProviderLayer {
         return this;
     }
 
-    public TrackableArray<ServiceMetadata> getDeclaredProviders() {
-        return declaredProviders;
-    }
-
-    public TrackableArray<ServiceMetadata> getVisibleProviders() {
-        return visibleProviders;
-    }
-
     //
     // Layer metadata, hierarchy, creation and deletion
     //
@@ -140,11 +135,20 @@ public class SPLBranch implements ServiceProviderLayer {
     @Override
     public Path getModulePath(String name) { return modulePath.getPathForModule(name); }
 
-    @Override
-    public boolean isPublic() { return isPublic; }
+    public TrackableArray<String> getModules() {
+        return modules;
+    }
+
+    public TrackableArray<ServiceMetadata> getDeclaredProviders() {
+        return declaredProviders;
+    }
+
+    public TrackableArray<ServiceMetadata> getVisibleProviders() {
+        return visibleProviders;
+    }
 
     @Override
-    public void setPublic(boolean v) { isPublic = v; }
+    public boolean isPublic() { return isPublic; }
 
     @Override
     public ServiceProviderLayer getParent() { return parent; }
@@ -448,6 +452,8 @@ public class SPLBranch implements ServiceProviderLayer {
                 }
             }
         }
+
+        modules.add(module.getName());
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
     }
 
@@ -502,6 +508,7 @@ public class SPLBranch implements ServiceProviderLayer {
         // moduleLayer = parent.defineModulesWithOneLoader(cf, ClassLoader.getSystemClassLoader());
 
         enumerateProviders();
+        modules.add(moduleName);
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
         ClassHierarchy.invalidate();
     }
