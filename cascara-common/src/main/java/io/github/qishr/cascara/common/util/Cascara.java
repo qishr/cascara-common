@@ -2,10 +2,6 @@ package io.github.qishr.cascara.common.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Version;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,6 +34,9 @@ public class Cascara {
     }
 
     public static SemVer getVersion() {
+
+        // TODO: This needs tested in every possible environment configuration
+
         CodeSource cs = Cascara.class.getProtectionDomain().getCodeSource();
         // if (cs != null) {
         //     try (java.util.jar.JarFile jar = new java.util.jar.JarFile(new File(cs.getLocation().toURI()))) {
@@ -177,6 +176,10 @@ public class Cascara {
         return new SemVer(version + ".0.0");
     }
 
+    public static Path getSharedPath() {
+        return getHomePath().resolve("shared");
+    }
+
     //
     // Private Helpers
     //
@@ -190,10 +193,6 @@ public class Cascara {
             INSTANCE = new Cascara();
         }
         return INSTANCE;
-    }
-
-    private static Path getSharedPath() {
-        return getHomePath().resolve("shared");
     }
 
     private static boolean isVersionDirectory(Path file) {

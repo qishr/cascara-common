@@ -31,14 +31,7 @@ tasks.withType(Javadoc).configureEach {
 
 test {
     useJUnitPlatform()
-    // Ensure Gradle passes dependencies via --module-path for JPMS modules
-    // modularity.inferModulePath = true
-    // modularity.inferModulePath = false
-
-    // project.logger.lifecycle("MP: $buildDir/modulepath")
-
     jvmArgs = [
-        // '--module-path', classpath.asPath,
         '--module-path', "$buildDir/modulepath",
         '--add-modules', 'ALL-MODULE-PATH'
     ]

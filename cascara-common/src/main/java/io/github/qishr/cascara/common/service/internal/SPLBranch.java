@@ -340,19 +340,28 @@ public class SPLBranch implements ServiceProviderLayer {
                 try {
                     method.setAccessible(true);
                     method.invoke(instance);
-                } catch (InvocationTargetException e) {
-                    Throwable cause = e.getCause() != null ? e.getCause() : e;
-                    throw new ServiceException(
-                        cause,
-                        DiagnosticCode.forException(cause),
-                        clazz.getSimpleName() + "." + method.getName()
-                    );
+                // } catch (InvocationTargetException e) {
+                //     Throwable cause = e.getCause() != null ? e.getCause() : e;
+                //     throw new ServiceException(
+                //         cause,
+                //         DiagnosticCode.forException(cause),
+                //         clazz.getSimpleName() + "." + method.getName()
+                //     );
                 } catch (Exception e) {
-                    throw new ServiceException(
-                        e,
-                        DiagnosticCode.forException(e),
-                        clazz.getSimpleName() + "." + method.getName()
-                    );
+                    DiagnosticCode code = DiagnosticCode.forException(e);
+                    if (code == null) {
+                        throw new ServiceException(
+                            e,
+                            GenericDiagnosticCode.ERROR,
+                            e.getMessage() + ": " + clazz.getSimpleName() + "." + method.getName()
+                        );
+                    } else {
+                        throw new ServiceException(
+                            e,
+                            code,
+                            clazz.getSimpleName() + "." + method.getName()
+                        );
+                    }
                 }
                 break;
             }

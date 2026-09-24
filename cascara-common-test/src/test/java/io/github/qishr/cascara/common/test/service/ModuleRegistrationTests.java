@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-class SplVfsTests extends SplTestBase {
+class ModuleRegistrationTests extends SplTestBase {
 
     @Test
     void loadsPreferredProviderFromVirtualHome() throws IOException {

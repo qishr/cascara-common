@@ -115,12 +115,12 @@ public class TrackableProperty<T> extends Property<T> implements Trackable {
         if (v instanceof Trackable t) {
             t.addTracker(listener);
         } else {
-            // TODO:
-            System.out.println("Unhandled type: " + (
-                v == null
-                    ? "null"
-                    : v.getClass().getName()
-            ));
+            // TODO: This seems mad. To be removed soon.
+            // System.out.println("Unhandled type: " + (
+            //     v == null
+            //         ? "null"
+            //         : v.getClass().getName()
+            // ));
         }
 
         if (oldValue == null && v == null) {
