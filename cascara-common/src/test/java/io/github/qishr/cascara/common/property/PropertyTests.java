@@ -32,14 +32,29 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-module cascara.common.test {
-    requires java.management;
-    requires cascara.common;
-    requires cascara.test.common.junit;
-    requires test.interfaces;
-    requires org.junit.jupiter.api;
 
-    exports io.github.qishr.cascara.common.test.service;
+package io.github.qishr.cascara.common.property;
 
-    opens io.github.qishr.cascara.common.test.service to org.junit.platform.commons;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
+
+public class PropertyTests {
+
+    @Test
+    void test_stringValue() {
+        StringProperty property = new StringProperty("key");
+        property.setValue("value");
+
+        assertEquals("value", property.asString());
+    }
+
+    @Test
+    void test_booleanValue() {
+        BooleanProperty property = new BooleanProperty("key");
+        property.setValue(true);
+
+        assertEquals(true, property.asBoolean());
+    }
+
 }

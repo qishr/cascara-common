@@ -32,14 +32,38 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-module cascara.common.test {
-    requires java.management;
-    requires cascara.common;
-    requires cascara.test.common.junit;
-    requires test.interfaces;
-    requires org.junit.jupiter.api;
 
-    exports io.github.qishr.cascara.common.test.service;
+package io.github.qishr.cascara.common.data;
 
-    opens io.github.qishr.cascara.common.test.service to org.junit.platform.commons;
+import java.io.PrintWriter;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
+
+public class TreeTests {
+    @Test
+    void t1() throws LocalizableIOException {
+        ReferenceTreeData root = new ReferenceTreeData("root");
+
+        ReferenceTreeData branch1 = new ReferenceTreeData("branch 1");
+        root.getChildren().add(branch1);
+
+        ReferenceTreeData b1leaf1 = new ReferenceTreeData("leaf 1");
+        branch1.getChildren().add(b1leaf1);
+
+        ReferenceTabularData row1 = new ReferenceTabularData();
+        row1.put("name1", "val1");
+        row1.put("name2", "val2");
+        b1leaf1.setValue(List.of(row1));
+
+        TextualTree<ReferenceTreeData,List<TabularData>> tree = new TextualTree<>();
+        tree.setRoot(root);
+        tree.setRenderValues(true);
+
+        PrintWriter writer = new PrintWriter(System.out);
+        tree.render(writer);
+        writer.flush();
+    }
 }

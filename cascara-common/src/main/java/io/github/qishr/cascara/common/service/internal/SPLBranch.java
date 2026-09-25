@@ -38,7 +38,6 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleFinder;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -619,7 +618,7 @@ public class SPLBranch implements ServiceProviderLayer {
         if (layers != null) {
             layers.remove(this);
             if (layers.isEmpty()) {
-                rootLayer.moduleToLayers.remove(layers);
+                rootLayer.moduleToLayers.remove(moduleName);
             }
         }
         modules.remove(moduleName);

@@ -1,7 +1,31 @@
 {
     "java.configuration.updateBuildConfiguration": "automatic",
-    "java.test.config": {
-        "modulePaths": ["${workspaceFolder}/build/cascara-common-test/modulepath"],
-        "module": "cascara.common.test",
-    },
+
+    "java.test.defaultConfig": "tests",
+    "java.test.config": [
+        {
+            "name": "tests",
+            "modulePaths": ["${workspaceFolder}/cascara-common/modulepath"],
+            "module": "cascara.common",
+            "vmArgs": [
+                "--module-path",
+                "${workspaceFolder}/cascara-common/build/modulepath",
+            ],
+            "java.project.referencedLibraries": [
+                "${workspaceFolder}/cascara-common/build/modulepath/*.jar"
+            ]
+        },
+        {
+            "name": "moudlar-tests",
+            "modulePaths": ["${workspaceFolder}/cascara-common-test/modulepath"],
+            "module": "cascara.common.test",
+            "vmArgs": [
+                "--module-path",
+                "${workspaceFolder}/cascara-common-test/build/modulepath",
+            ],
+            "java.project.referencedLibraries": [
+                "${workspaceFolder}/cascara-common-test/build/modulepath/*.jar"
+            ]
+        },
+    ],
 }

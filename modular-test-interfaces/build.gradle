@@ -16,12 +16,7 @@ repositories {
 
 dependencies {
     implementation(platform("io.github.qishr:cascara-meta-bom:$cascara_version"))
-    implementation("org.junit.jupiter:junit-jupiter-api")
-    implementation("org.junit.jupiter:junit-jupiter-engine")
-    implementation('org.junit.platform:junit-platform-launcher')
-    implementation('io.github.qishr:cascara-test-common-junit')
-    implementation(project(':cascara-common'))
-    implementation(project(':modular-test-interfaces'))
+    implementation("io.github.qishr:cascara-common")
 }
 
 

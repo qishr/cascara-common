@@ -32,14 +32,18 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-module cascara.common.test {
-    requires java.management;
-    requires cascara.common;
-    requires cascara.test.common.junit;
-    requires test.interfaces;
-    requires org.junit.jupiter.api;
+package io.github.qishr.cascara.common.lang.processor;
 
-    exports io.github.qishr.cascara.common.test.service;
+import org.junit.jupiter.api.BeforeEach;
 
-    opens io.github.qishr.cascara.common.test.service to org.junit.platform.commons;
+import io.github.qishr.cascara.common.diagnostic.StandardReporter;
+
+public abstract class SerializerTestBase {
+    protected SerializerImpl serializer;
+
+    @BeforeEach
+    void setup() {
+        serializer = new SerializerImpl();
+        serializer.setReporter(new StandardReporter());
+    }
 }

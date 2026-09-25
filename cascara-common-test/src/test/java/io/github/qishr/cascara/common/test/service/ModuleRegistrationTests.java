@@ -1,7 +1,18 @@
 package io.github.qishr.cascara.common.test.service;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
@@ -17,24 +28,8 @@ import io.github.qishr.cascara.common.service.ServiceProviderLayer;
 import io.github.qishr.cascara.common.service.ServiceProviderRoot;
 import io.github.qishr.cascara.common.trackable.tracker.ArrayChangeTracker;
 import io.github.qishr.cascara.common.util.Cascara;
-import io.github.qishr.cascara.test.common.junit.util.VfsTestBase;
-import io.github.qishr.cascara.test.common.junit.service.TestService;
-import io.github.qishr.cascara.test.common.junit.service.DemoSingleton;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import test.interfaces.DemoSingleton;
+import test.interfaces.TestService;
 
 class ModuleRegistrationTests extends SplTestBase {
 
@@ -157,5 +152,4 @@ class ModuleRegistrationTests extends SplTestBase {
         // Reactive ADD event again
         assertEquals(3, changes.size());
     }
-
 }

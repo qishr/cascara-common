@@ -32,14 +32,52 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-module cascara.common.test {
-    requires java.management;
-    requires cascara.common;
-    requires cascara.test.common.junit;
-    requires test.interfaces;
-    requires org.junit.jupiter.api;
 
-    exports io.github.qishr.cascara.common.test.service;
+package io.github.qishr.cascara.common.data;
 
-    opens io.github.qishr.cascara.common.test.service to org.junit.platform.commons;
+import java.util.HashMap;
+import java.util.Map;
+
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+
+/// A reference implementation of TabularData
+public class ReferenceTabularData implements TabularData {
+
+    private Map<String, Object> valuesMap = new HashMap<>();
+
+    public ReferenceTabularData() {
+        // Nothing to see here
+    }
+
+    @Override
+    public final Object[] getValues() {
+        Object[] r = new Object[valuesMap.size()];
+        int i = 0;
+        for (Object value : valuesMap.values()) {
+            r[i] = value;
+            i++;
+        }
+        return r;
+    }
+
+    @Override
+	public Map<String, Object> getValuesMap() {
+        return valuesMap;
+	}
+
+    public ReferenceTabularData put(String key, String value) {
+        valuesMap.put(key, value);
+        return this;
+    }
+
+	@Override
+	public Object getValue(String key) {
+        return valuesMap.get(key);
+	}
+
+    @Override
+    public String getString(String key) {
+        throw new UnimplementedMethodException();
+    }
+
 }

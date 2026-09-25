@@ -10,7 +10,7 @@ import io.github.qishr.cascara.test.common.junit.util.TestModulePackager;
 import io.github.qishr.cascara.test.common.junit.util.VfsTestBase;
 
 public class SplTestBase extends VfsTestBase {
-        protected Path createModuleA() throws IOException {
+    protected Path createModuleA() throws IOException {
         Path providerAJar = Cascara.getModulePath().resolve("provider-a.jar");
 
         // Synthetic Module A with explicit module-info
@@ -21,7 +21,7 @@ public class SplTestBase extends VfsTestBase {
                 "module-info",
                 "module provider.a { " +
                 "    requires cascara.common; " +
-                "    requires cascara.test.common.junit; " +
+                "    requires test.interfaces; " +
                 "    exports com.example.providera; " +
                 "    opens com.example.providera to cascara.common; " +
                 "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
@@ -30,14 +30,14 @@ public class SplTestBase extends VfsTestBase {
 
                 "com.example.providera.ProviderA",
                 "package com.example.providera; " +
-                "import io.github.qishr.cascara.test.common.junit.service.TestService; " +
+                "import test.interfaces.TestService; " +
                 "import io.github.qishr.cascara.common.property.Properties; " +
                 "public class ProviderA implements TestService { " +
                 "    public String getName() { return \"ProviderA\"; } " +
                 "    public Properties getServiceProperties() { return null; } " +
                 "}"
             ),
-            List.of("cascara-common", "cascara-test-common-junit"),
+            List.of("cascara-common", "modular-test-interfaces"),
             "cascara-common-test"
         );
         return providerAJar;
@@ -53,7 +53,7 @@ public class SplTestBase extends VfsTestBase {
                 "module-info",
                 "module provider.b { " +
                 "    requires cascara.common; " +
-                "    requires cascara.test.common.junit; " +
+                "    requires test.interfaces; " +
                 "    exports com.example.providerb; " +
                 "    opens com.example.providerb to cascara.common; " +
                 "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
@@ -62,14 +62,14 @@ public class SplTestBase extends VfsTestBase {
 
                 "com.example.providerb.ProviderB",
                 "package com.example.providerb; " +
-                "import io.github.qishr.cascara.test.common.junit.service.TestService; " +
+                "import test.interfaces.TestService; " +
                 "import io.github.qishr.cascara.common.property.Properties; " +
                 "public class ProviderB implements TestService { " +
                 "    public String getName() { return \"ProviderB\"; } " +
                 "    public Properties getServiceProperties() { return null; } " +
                 "}"
             ),
-            List.of("cascara-common", "cascara-test-common-junit"),
+            List.of("cascara-common", "modular-test-interfaces"),
             "cascara-common-test"
         );
         return providerBJar;
@@ -85,8 +85,7 @@ public class SplTestBase extends VfsTestBase {
                 "module-info",
                 "module singleton.demo { " +
                 "    requires cascara.common; " +
-                // "    requires cascara.test.integration; " +
-                "    requires cascara.test.common.junit; " +
+                "    requires test.interfaces; " +
                 "    exports com.example.singleton; " +
                 "    opens com.example.singleton to cascara.common; " +
                 "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
@@ -96,7 +95,7 @@ public class SplTestBase extends VfsTestBase {
                 "com.example.singleton.DemoSingletonImpl",
                 "package com.example.singleton; " +
                 "import java.util.UUID; " +
-                "import io.github.qishr.cascara.test.common.junit.service.DemoSingleton; " +
+                "import test.interfaces.DemoSingleton; " +
                 "import io.github.qishr.cascara.common.annotation.SingletonInitializer; " +
                 "public final class DemoSingletonImpl implements DemoSingleton { " +
                 "    public static int initCount = 0; " +
@@ -106,7 +105,7 @@ public class SplTestBase extends VfsTestBase {
                 "    public UUID getUuid() { return uuid; } " +
                 "}"
             ),
-            List.of("cascara-common", "cascara-test-common-junit"),
+            List.of("cascara-common", "modular-test-interfaces"),
             "cascara-common-test"
         );
 

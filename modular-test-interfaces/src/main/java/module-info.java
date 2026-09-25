@@ -32,14 +32,9 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-module cascara.common.test {
-    requires java.management;
+module test.interfaces {
     requires cascara.common;
-    requires cascara.test.common.junit;
-    requires test.interfaces;
-    requires org.junit.jupiter.api;
+    exports test.interfaces;
 
-    exports io.github.qishr.cascara.common.test.service;
-
-    opens io.github.qishr.cascara.common.test.service to org.junit.platform.commons;
+    opens test.interfaces to org.junit.platform.commons;
 }

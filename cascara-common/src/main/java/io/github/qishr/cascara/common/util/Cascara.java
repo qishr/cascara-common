@@ -1,12 +1,14 @@
 package io.github.qishr.cascara.common.util;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,38 +35,60 @@ public class Cascara {
         return !getHomePath().toUri().getScheme().equals("jar");
     }
 
+    // public static SemVer getVersion() {
+    //     try {
+    //         JarManifest manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
+    //         return new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
+    //     } catch (IOException e) {
+    //         // System.err.println("Failed to parse JarManifest: " + e.getMessage());
+    //         return new SemVer("0.0.0");
+    //     }
+    // }
+
     public static SemVer getVersion() {
-
-        // TODO: This needs tested in every possible environment configuration
-
-        CodeSource cs = Cascara.class.getProtectionDomain().getCodeSource();
-        // if (cs != null) {
-        //     try (java.util.jar.JarFile jar = new java.util.jar.JarFile(new File(cs.getLocation().toURI()))) {
-        //         java.util.jar.Manifest mf = jar.getManifest();
-        //         String v = mf.getMainAttributes().getValue("Cascara-Version");
-        //         if (v != null) return new SemVer(v);
-        //     } catch (IOException e) {
-		// 		// TODO Auto-generated catch block
-		// 		e.printStackTrace();
-		// 	} catch (URISyntaxException e) {
-		// 		// TODO Auto-generated catch block
-		// 		e.printStackTrace();
-		// 	}
-        // }
-        // return new SemVer("0.0.0");
-
-
-        JarManifest manifest;
         try {
-            // URL url = Cascara.class.getResource("/META-INF/MANIFEST.MF");
-            // System.err.println("Manifest URL: " + url);
-            // System.err.println(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
-            manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
-        } catch (IOException e) {
-            System.err.println("Failed to parse JarManifest: " + e.getMessage());
-            return new SemVer("0.0.0");
+            var codeSource = Cascara.class.getProtectionDomain().getCodeSource();
+            if (codeSource != null && codeSource.getLocation() != null) {
+                URL location = codeSource.getLocation();
+
+                if (location.getPath().endsWith(".jar")) {
+                    // Packaged JAR execution
+                    try (java.util.jar.JarFile jarFile = new java.util.jar.JarFile(new File(location.toURI()))) {
+                        java.util.jar.Manifest manifest = jarFile.getManifest();
+                        if (manifest != null) {
+                            String ver = manifest.getMainAttributes().getValue("Cascara-Version");
+                            if (ver != null && !ver.isBlank()) {
+                                return new SemVer(ver);
+                            }
+                        }
+                    }
+                } else {
+                    // Exploded directory execution (IDEs / Gradle tasks)
+                    File classesDir = new File(location.toURI());
+
+                    // 1. Direct output directory (classes/java/main/META-INF/MANIFEST.MF)
+                    File manifestFile = new File(classesDir, "META-INF/MANIFEST.MF");
+
+                    // 2. Sibling resources output directory (resources/main/META-INF/MANIFEST.MF)
+                    if (!manifestFile.exists() && classesDir.getParentFile() != null) {
+                        manifestFile = new File(classesDir.getParentFile(), "resources/main/META-INF/MANIFEST.MF");
+                    }
+
+                    if (manifestFile.exists()) {
+                        try (InputStream is = new FileInputStream(manifestFile)) {
+                            java.util.jar.Manifest manifest = new java.util.jar.Manifest(is);
+                            String ver = manifest.getMainAttributes().getValue("Cascara-Version");
+                            if (ver != null && !ver.isBlank()) {
+                                return new SemVer(ver);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
         }
-        return new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
+
+        return new SemVer("0.0.0");
     }
 
     public static String getHomeEnvVar() {
@@ -185,7 +209,7 @@ public class Cascara {
     //
 
     private Cascara() {
-        homePath = Paths.get(getHome());
+        homePath = resolvePath(getHome());
     }
 
     private static Cascara instance() {
@@ -193,6 +217,10 @@ public class Cascara {
             INSTANCE = new Cascara();
         }
         return INSTANCE;
+    }
+
+    private static Path resolvePath(String pathString) {
+        return Path.of(pathString);
     }
 
     private static boolean isVersionDirectory(Path file) {

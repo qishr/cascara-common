@@ -22,10 +22,235 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testImplementation 'org.mockito:mockito-core'
     testImplementation 'org.mockito:mockito-junit-jupiter'
-    testRuntimeOnly('org.junit.platform:junit-platform-launcher')
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'io.github.qishr:cascara-test-common-junit'
 }
 
 
 tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:-missing', '-quiet')
+}
+
+
+tasks.named('compileTestJava', JavaCompile) {
+    modularity.inferModulePath = true
+}
+
+
+tasks.named('test', Test) {
+    description = 'Runs tests in a JPMS modular environment.'
+
+    modularity.inferModulePath = true
+
+    useJUnitPlatform {
+        excludeTags 'requires-jar'
+    }
+
+    doFirst {
+        def mainModuleName = 'cascara.common'
+        def mainClassesDir = sourceSets.main.output.classesDirs.asPath
+        def runtimeLibs = configurations.testRuntimeClasspath.asPath
+
+        jvmArgs += [
+            '--module-path', "${mainClassesDir}${File.pathSeparator}${runtimeLibs}",
+            '--add-modules', mainModuleName,
+            '--patch-module', "${mainModuleName}=${sourceSets.test.output.classesDirs.asPath}",
+            '--add-reads', "${mainModuleName}=ALL-UNNAMED",
+
+            '--add-modules', 'cascara.test.common.junit',
+            '--add-reads', 'cascara.common=cascara.test.common.junit',
+
+
+        '--add-modules', 'org.junit.platform.launcher',
+        '--add-reads', 'cascara.common=org.junit.jupiter.api',
+
+
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
+        ]
+    }
+}
+
+
+// // tasks.register('testClasspath', Test) {
+// //     description = 'Runs tests in a non-modular classpath environment.'
+// //     group = 'verification'
+
+// //     dependsOn tasks.named('compileTestJava'), tasks.named('processTestResources')
+
+// //     testClassesDirs = sourceSets.test.output.classesDirs
+// //     classpath = sourceSets.test.runtimeClasspath
+
+// //     useJUnitPlatform {
+// //         excludeTags 'requires-jar'
+// //     }
+
+// //     // Explicitly disable JPMS module path inference
+// //     modularity.inferModulePath = false
+// // }
+
+
+
+// tasks.register('testClasspath', Test) {
+//     description = 'Runs tests in a non-modular classpath environment (exploded classes only).'
+//     group = 'verification'
+
+//     dependsOn tasks.named('compileTestJava'), tasks.named('processTestResources')
+
+//     testClassesDirs = sourceSets.test.output.classesDirs
+
+//     // Use exploded main classes + test outputs + test runtime dependencies (minus compiled JAR outputs)
+//     classpath = files(
+//         sourceSets.main.output.classesDirs,
+//         sourceSets.main.output.resourcesDir,
+//         sourceSets.test.output,
+//         configurations.testRuntimeClasspath - sourceSets.main.output
+//     )
+
+//     useJUnitPlatform {
+//         excludeTags 'requires-jar'
+//     }
+
+//     modularity.inferModulePath = false
+// }
+
+
+
+// // tasks.register('testJarClasspath', Test) {
+// //     description = 'Runs tests against the packaged JAR on a non-modular flat classpath.'
+// //     group = 'verification'
+
+// //     // Depend only on test compilation/resources, avoiding task-graph hooks on :test
+// //     dependsOn tasks.named('compileTestJava'), tasks.named('processTestResources')
+
+// //     testClassesDirs = sourceSets.test.output.classesDirs
+
+// //     // Reference the JAR file lazily without pulling in upstream lifecycle checks
+// //     classpath = files(
+// //         tasks.named('jar').flatMap { it.archiveFile },
+// //         sourceSets.test.output,
+// //         configurations.testRuntimeClasspath - sourceSets.main.output
+// //     )
+
+// //     useJUnitPlatform {
+// //         includeTags 'requires-jar'
+// //         excludeTags 'no-jar'
+// //     }
+
+// //     modularity.inferModulePath = false
+// // }
+
+
+// tasks.register('testJarClasspath', Test) {
+//     description = 'Runs tests against the packaged JAR on a non-modular flat classpath.'
+//     group = 'verification'
+
+//     dependsOn tasks.named('jar'), tasks.named('compileTestJava'), tasks.named('processTestResources')
+
+//     testClassesDirs = sourceSets.test.output.classesDirs
+
+//     classpath = files(
+//         tasks.named('jar').flatMap { it.archiveFile },
+//         sourceSets.test.output,
+//         configurations.testRuntimeClasspath - sourceSets.main.output
+//     )
+
+//     useJUnitPlatform {
+//         includeTags 'requires-jar'
+//     }
+
+//     modularity.inferModulePath = false
+// }
+
+
+
+tasks.register('testClasspath', Test) {
+    description = 'Runs tests in a non-modular classpath environment (exploded classes only).'
+    group = 'verification'
+
+    dependsOn tasks.named('compileTestJava'), tasks.named('processTestResources')
+
+    testClassesDirs = sourceSets.test.output.classesDirs
+
+    // Include exploded outputs, plus external third-party dependencies only
+    classpath = files(
+        sourceSets.main.output.classesDirs,
+        sourceSets.main.output.resourcesDir,
+        sourceSets.test.output,
+        configurations.testRuntimeClasspath.filter { File file ->
+            !file.name.contains("cascara-common")
+        }
+    )
+
+    useJUnitPlatform {
+        excludeTags 'requires-jar'
+    }
+
+    modularity.inferModulePath = false
+}
+
+
+tasks.register('testJarClasspath', Test) {
+    description = 'Runs tests against the packaged JAR on a non-modular flat classpath.'
+    group = 'verification'
+
+    dependsOn tasks.named('jar'), tasks.named('compileTestJava'), tasks.named('processTestResources')
+
+    testClassesDirs = sourceSets.test.output.classesDirs
+
+    // Explicitly use the packaged JAR instead of exploded classes
+    classpath = files(
+        tasks.named('jar').flatMap { it.archiveFile },
+        sourceSets.test.output,
+        configurations.testRuntimeClasspath.filter { File file ->
+            !file.name.contains("cascara-common")
+        }
+    )
+
+    useJUnitPlatform {
+        includeTags 'requires-jar'
+        excludeTags 'no-jar'
+    }
+
+    modularity.inferModulePath = false
+}
+
+
+// Ensure running `gradle check` triggers both test modes
+tasks.named('check') {
+    dependsOn tasks.named('test'), tasks.named('testClasspath'), tasks.named('testJarClasspath')
+}
+
+
+// tasks.named('processResources', ProcessResources) {
+//     inputs.property "version", project.version
+
+//     doLast {
+//         def manifestFile = file("${destinationDir}/META-INF/MANIFEST.MF")
+//         manifestFile.parentFile.mkdirs()
+//         manifestFile.withWriter('UTF-8') { writer ->
+//             writer.write("Manifest-Version: 1.0\r\n")
+//             writer.write("Cascara-Version: ${project.version}\r\n")
+//         }
+//     }
+// }
+
+
+tasks.named('processResources', ProcessResources) {
+    inputs.property "version", project.version
+
+    doLast {
+        def versionText = "Manifest-Version: 1.0\r\nCascara-Version: ${project.cascara_version}\r\n"
+
+        // Write to resources directory
+        def resManifest = file("${destinationDir}/META-INF/MANIFEST.MF")
+        resManifest.parentFile.mkdirs()
+        resManifest.write(versionText, 'UTF-8')
+
+        // Write to compiled classes directories so codeSource location finds it in exploded builds
+        sourceSets.main.output.classesDirs.each { dir ->
+            def classManifest = file("${dir}/META-INF/MANIFEST.MF")
+            classManifest.parentFile.mkdirs()
+            classManifest.write(versionText, 'UTF-8')
+        }
+    }
 }

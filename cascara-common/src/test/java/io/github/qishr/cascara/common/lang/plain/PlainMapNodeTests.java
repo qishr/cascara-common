@@ -32,14 +32,23 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-module cascara.common.test {
-    requires java.management;
-    requires cascara.common;
-    requires cascara.test.common.junit;
-    requires test.interfaces;
-    requires org.junit.jupiter.api;
 
-    exports io.github.qishr.cascara.common.test.service;
+package io.github.qishr.cascara.common.lang.plain;
 
-    opens io.github.qishr.cascara.common.test.service to org.junit.platform.commons;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.util.Set;
+
+import org.junit.jupiter.api.Test;
+
+public class PlainMapNodeTests {
+    @Test
+    void test() {
+        PlainMapNode map = new PlainMapNode();
+        PlainScalarNode key = new PlainScalarNode("key");
+        PlainScalarNode value = new PlainScalarNode("value");
+        map.put(key, value);
+        Set<PlainMapEntryNode> set = map.entrySet();
+        assertNotNull(set);
+    }
 }
