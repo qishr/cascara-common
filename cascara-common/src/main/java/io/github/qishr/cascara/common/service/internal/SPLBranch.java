@@ -34,11 +34,15 @@
 
 package io.github.qishr.cascara.common.service.internal;
 
+import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.Method;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,6 +62,7 @@ import io.github.qishr.cascara.common.annotation.SingletonInitializer;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
@@ -92,7 +97,7 @@ public class SPLBranch implements ServiceProviderLayer {
     protected SPLBranch parent;
 
     protected List<Path> jarPaths = new ArrayList<>();
-    protected List<SPLBranch> children = new ArrayList<>();
+    // protected List<SPLBranch> children = new ArrayList<>();
     protected Map<String,SPLBranch> namedChildren = new HashMap<>();
 
     protected List<ServiceMetadata> orderedProviders = new ArrayList<>();
@@ -153,7 +158,7 @@ public class SPLBranch implements ServiceProviderLayer {
 
     @Override
     public List<ServiceProviderLayer> getChildren() {
-        return children.stream().map(layer -> {
+        return namedChildren.values().stream().map(layer -> {
             return (ServiceProviderLayer)layer;
         }).toList();
     }
@@ -177,7 +182,7 @@ public class SPLBranch implements ServiceProviderLayer {
     public Set<SPLBranch> publicSiblings() {
         Set<SPLBranch> siblings = new HashSet<>();
         if (parent != null) {
-            for (SPLBranch sibling : parent.children) {
+            for (SPLBranch sibling : parent.namedChildren.values()) {
                 if (sibling != this && sibling.isPublic) {
                     siblings.add(sibling);
                 }
@@ -201,7 +206,7 @@ public class SPLBranch implements ServiceProviderLayer {
     public Set<Class<ServiceProvider>> findServiceTypes() {
         Set<Class<ServiceProvider>> found = new HashSet<>();
         found.addAll(getServiceTypes());
-        for (SPLBranch layer : children) {
+        for (SPLBranch layer : namedChildren.values()) {
             found.addAll(layer.findServiceTypes());
         }
         return found;
@@ -211,7 +216,7 @@ public class SPLBranch implements ServiceProviderLayer {
     public Set<ServiceMetadata> findServices() {
         Set<ServiceMetadata> found = new HashSet<>();
         found.addAll(getServices());
-        for (SPLBranch layer : children) {
+        for (SPLBranch layer : namedChildren.values()) {
             found.addAll(layer.findServices());
         }
         return found;
@@ -368,11 +373,6 @@ public class SPLBranch implements ServiceProviderLayer {
     //
 
     @Override
-    public SPLBranch create() {
-        return createInternal(null, true);
-    }
-
-    @Override
     public SPLBranch create(String name) {
         return createInternal(name, true);
     }
@@ -402,8 +402,9 @@ public class SPLBranch implements ServiceProviderLayer {
     public void registerModule(Module module) {
         String moduleName = module.getName();
 
-        // These modules will never contain a Cascara ServiceProvider
-        if (moduleName.startsWith("java.") ||
+        // Skip JDK, System, and JavaFX modules
+        if (moduleName == null ||
+            moduleName.startsWith("java.") ||
             moduleName.startsWith("javax.") ||
             moduleName.startsWith("jdk.") ||
             moduleName.startsWith("jfx.") ||
@@ -420,24 +421,50 @@ public class SPLBranch implements ServiceProviderLayer {
         // SemVer moduleMinCascaraVersion = new SemVer(manifest.getString("Min-Cascara-Version", moduleBuildCascaraVersion.toString()));
         // verifyModuleVersionCompatibility(moduleName, moduleBuildCascaraVersion, moduleMinCascaraVersion);
 
-        Set<Provides> services = desc.provides();
+        if (desc == null) {
+            return;
+        }
 
-        if (!services.isEmpty()) {
+        Set<String> candidateClassNames = new HashSet<>();
+
+        // 1. Collect standard SPI declarations (provides ... with ...)
+        for (Provides service : desc.provides()) {
+            candidateClassNames.addAll(service.providers());
+        }
+
+        // 2. Collect non-SPI candidate classes from exported/opened packages
+        candidateClassNames.addAll(findCandidateProviderClasses(module));
+
+        if (!candidateClassNames.isEmpty()) {
             getReporter().debug("Discovering providers in " + moduleName);
-            for (Provides service : services) {
-                for (String providerClassName : service.providers()) {
-                    getReporter().trace("  Attempting to reigster " + providerClassName);
-                    try {
-                        Class<?> type = classLoader.loadClass(providerClassName);
-                        registerClassInternal((Class)type);
-                    } catch (ServiceException e) {
-                        getReporter().trace("Class \"" + providerClassName + "\" is not a Cascara ServiceProvider");
-                    } catch (ClassNotFoundException e) {
-                        getReporter().warn(ServiceDiagnosticCode.FAILED_TO_LOAD_CLASS, providerClassName, e.getMessage());
+            for (String providerClassName : candidateClassNames) {
+                if (isRegistered(providerClassName)) {
+                    continue;
+                }
+
+                getReporter().trace("  Attempting to register " + providerClassName);
+                try {
+                    Class<?> clazz = classLoader != null
+                        ? classLoader.loadClass(providerClassName)
+                        : Class.forName(module, providerClassName);
+
+                    if (clazz != null
+                            && ServiceProvider.class.isAssignableFrom(clazz)
+                            && !clazz.isInterface()
+                            && !java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
+
+                        registerClassInternal((Class) clazz);
                     }
+                } catch (ServiceException e) {
+                    getReporter().trace("Class \"" + providerClassName + "\" is not a Cascara ServiceProvider");
+                } catch (ClassNotFoundException e) {
+                    getReporter().warn(ServiceDiagnosticCode.FAILED_TO_LOAD_CLASS, providerClassName, e.getMessage());
+                } catch (Exception e) {
+                    getReporter().warn(ServiceDiagnosticCode.FAILED_TO_INSTANTIATE_CLASS, providerClassName, e.getMessage());
                 }
             }
         }
+
         addModuleToMap(module.getName());
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
     }
@@ -515,25 +542,28 @@ public class SPLBranch implements ServiceProviderLayer {
     }
 
     private SPLBranch createInternal(String name, boolean isPublic) {
+        if (name == null) {
+            throw new UnexpectedNullParameterException("name");
+        }
         SPLBranch layer = new SPLBranch();
         layer.parent = this;
         layer.isPublic = isPublic;
-        children.add(layer);
-        if (name != null) {
+        // children.add(layer);
+        // if (name != null) {
             layer.name = name;
             namedChildren.put(name, layer);
-        }
+        // }
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
         return layer;
     }
 
     /// Recursively removes a child layer and all descendant layers.
     private void removeInternal(SPLBranch layerToRemove) {
-        for (SPLBranch childLayer : layerToRemove.children) {
+        for (SPLBranch childLayer : layerToRemove.namedChildren.values()) {
             removeInternal(childLayer);
         }
         layerToRemove.delete();
-        children.remove(layerToRemove);
+        // children.remove(layerToRemove);
         namedChildren.remove(layerToRemove.getName());
     }
 
@@ -546,7 +576,7 @@ public class SPLBranch implements ServiceProviderLayer {
     }
 
     private void collectPublicDescendants(SPLBranch layer, Set<SPLBranch> collected) {
-        for (SPLBranch descendant : layer.children) {
+        for (SPLBranch descendant : layer.namedChildren.values()) {
             if (descendant.isPublic) {
                 collected.add(descendant);
                 collectPublicDescendants(descendant, collected);
@@ -558,7 +588,8 @@ public class SPLBranch implements ServiceProviderLayer {
         String providerFqcn = type.getName();
         if (!isRegistered(providerFqcn)) {
             ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(type);
-            registerProvider(instance, null);
+            Path jarPath = modulePath != null ? modulePath.getPathForModule(type.getModule().getName()) : null;
+            registerProvider(instance, jarPath);
             if (isBooting) {
                 rootLayer.bootProviders.add(providerFqcn);
             }
@@ -621,8 +652,9 @@ public class SPLBranch implements ServiceProviderLayer {
         return parent.getReporter();
     }
 
-    /// Use SPI to find the service implementations inside this layer
+    /// Use SPI and class scanning to find service implementations inside this layer
     private void enumerateProviders() {
+        // 1. Standard SPI discovery via ServiceLoader
         var loader = ServiceLoader.load(moduleLayer, ServiceProvider.class);
         loader.forEach(provider -> {
             if (!isRegistered(provider.getClass().getName())) {
@@ -632,15 +664,117 @@ public class SPLBranch implements ServiceProviderLayer {
                     registerProvider(provider, jarPath);
                 } catch (Exception e) {
                     registrationError("Failed to query module " + moduleName + ".", null, e);
-                } catch(AbstractMethodError e) {
-                    registrationError("Incompatible module.", jarPath, e);
-                } catch (NoClassDefFoundError e) {
-                    registrationError("Incompatible module.", jarPath, e);
-                } catch (ServiceConfigurationError e) {
+                } catch (AbstractMethodError | NoClassDefFoundError | ServiceConfigurationError e) {
                     registrationError("Incompatible module.", jarPath, e);
                 }
             }
         });
+
+        // 2. Non-SPI class scanning across modules in this ModuleLayer
+        for (Module module : moduleLayer.modules()) {
+            String moduleName = module.getName();
+            if (moduleName == null) continue;
+
+            Path jarPath = modulePath.getPathForModule(moduleName);
+            Set<String> candidateClassNames = findCandidateProviderClasses(module);
+
+            for (String className : candidateClassNames) {
+                if (!isRegistered(className)) {
+                    try {
+                        Class<?> clazz = Class.forName(module, className);
+
+                        // MUST verify class is a concrete ServiceProvider implementation
+                        if (clazz != null
+                                && ServiceProvider.class.isAssignableFrom(clazz)
+                                && !clazz.isInterface()
+                                && !java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
+
+                            @SuppressWarnings("unchecked")
+                            Class<? extends ServiceProvider> providerClass = (Class<? extends ServiceProvider>) clazz;
+
+                            ServiceProvider providerInstance = SPLUtils.instantiate(providerClass);
+                            registerProvider(providerInstance, jarPath);
+                        }
+                    } catch (AbstractMethodError | NoClassDefFoundError | ServiceConfigurationError e) {
+                        registrationError("Incompatible module.", jarPath, e);
+                    } catch (Exception e) {
+                        registrationError("Failed to instantiate candidate provider " + className + " in module " + moduleName + ".", jarPath, e);
+                    }
+                }
+            }
+        }
+    }
+
+    private Set<String> findCandidateProviderClasses(Module module) {
+        Set<String> classNames = new HashSet<>();
+        ModuleDescriptor descriptor = module.getDescriptor();
+        if (descriptor == null) {
+            return classNames; // Automatic or unnamed modules
+        }
+
+        // 1. Inspect native SPI declarations in module-info.java (provides ... with ...)
+        for (ModuleDescriptor.Provides provides : descriptor.provides()) {
+            classNames.addAll(provides.providers());
+        }
+
+        // 2. Scan exported and opened packages in the module for candidate classes
+        Set<String> accessiblePackages = new HashSet<>();
+        descriptor.exports().forEach(e -> accessiblePackages.add(e.source()));
+        descriptor.opens().forEach(o -> accessiblePackages.add(o.source()));
+
+        for (String pkg : accessiblePackages) {
+            String resourcePath = pkg.replace('.', '/');
+            try {
+                // Find all .class resources in the exported/opened package
+                var resources = module.getClassLoader().getResources(resourcePath);
+                while (resources.hasMoreElements()) {
+                    var url = resources.nextElement();
+                    if ("jar".equals(url.getProtocol()) || "file".equals(url.getProtocol())) {
+                        scanPackageResources(module, pkg, url, classNames);
+                    }
+                }
+            } catch (IOException ignored) {
+                // Log or report non-fatal reading issues
+            }
+        }
+
+        return classNames;
+    }
+
+    private void scanPackageResources(Module module, String packageName, URL packageUrl, Set<String> classNames) {
+        try {
+            if ("jar".equals(packageUrl.getProtocol())) {
+                JarURLConnection conn = (JarURLConnection) packageUrl.openConnection();
+                try (java.util.jar.JarFile jar = conn.getJarFile()) {
+                    String packagePath = packageName.replace('.', '/') + "/";
+                    jar.stream().forEach(entry -> {
+                        String name = entry.getName();
+                        if (name.startsWith(packagePath) && name.endsWith(".class") && !entry.isDirectory()) {
+                            // Extract class name (e.g. io/github/qishr/SchemaStore.class -> io.github.qishr.SchemaStore)
+                            String className = name.substring(0, name.length() - 6).replace('/', '.');
+                            // Ignore inner classes unless desired
+                            if (!className.contains("$")) {
+                                classNames.add(className);
+                            }
+                        }
+                    });
+                }
+            } else if ("file".equals(packageUrl.getProtocol())) {
+                Path packageDir = Path.of(packageUrl.toURI());
+                if (Files.exists(packageDir)) {
+                    try (var stream = Files.walk(packageDir, 1)) {
+                        stream.filter(p -> p.toString().endsWith(".class"))
+                            .forEach(p -> {
+                                String fileName = p.getFileName().toString();
+                                String simpleName = fileName.substring(0, fileName.length() - 6);
+                                classNames.add(packageName + "." + simpleName);
+                            });
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Skip unreadable entries safely
+        }
     }
 
     private boolean isRegistered(String providerFqcn) {
@@ -847,7 +981,7 @@ public class SPLBranch implements ServiceProviderLayer {
             }
         }
 
-        for (SPLBranch layer : children) {
+        for (SPLBranch layer : namedChildren.values()) {
             if (layer.isPublic) {
                 addAllToList(layer.findProvidersInBranches(serviceType, capabilityPredicate, depth + 1), found);
             }

@@ -36,10 +36,12 @@ package io.github.qishr.cascara.common.service.internal;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.annotation.Priority;
 import io.github.qishr.cascara.common.service.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
@@ -64,30 +66,20 @@ public class SPLUtils {
             throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, serviceType);
         }
 
-        SPLRoot rootLayer = (SPLRoot) SPLRoot.instance();
+        SPLRoot rootLayer = SPLRoot.instance();
         List<ServiceMetadata> providers = rootLayer.findAllProviders((Class) serviceType);
         if (providers.isEmpty()) {
             throw new ServiceException(ServiceDiagnosticCode.NO_PROVIDER_REGISTERED, serviceType.getSimpleName());
         }
 
-        String preferredProviderName = rootLayer.getPreferredProviderClassName(serviceType);
-        ServiceMetadata serviceMeta = null;
+        ServiceMetadata providerMeta = getPreferredMeta(serviceType, providers);
 
-        if (preferredProviderName != null) {
-            for(ServiceMetadata candidate : providers) {
-                if (candidate.getTypeName().equals(preferredProviderName)) {
-                    serviceMeta = candidate;
-                    break;
-                }
-            }
+        if (providerMeta == null) {
+            providerMeta = getDefaultMeta(providers);
         }
 
-        if (serviceMeta == null) {
-            serviceMeta = providers.getFirst();
-        }
-
-        Class<T> clazz = (Class<T>) serviceMeta.getType();
-        return getInstance(clazz, serviceMeta);
+        Class<T> clazz = (Class<T>) providerMeta.getType();
+        return getInstance(clazz, providerMeta);
     }
 
     /// Returns an instantiated service provider.
@@ -122,6 +114,9 @@ public class SPLUtils {
             if (constructor == null) {
                 throw new ServiceException(ServiceDiagnosticCode.NOARGS_CONSTRUCTOR_REQUIRED, providerClass.getName());
             } else {
+                if (!constructor.canAccess(null)) {
+                    constructor.trySetAccessible();
+                }
                 ServiceProvider instance = (ServiceProvider) constructor.newInstance();
                 return (T)instance;
             }
@@ -228,5 +223,35 @@ public class SPLUtils {
             }
         }
         return result;
+    }
+
+    //
+    //
+    //
+
+    private static ServiceMetadata getPreferredMeta(Class<?> serviceType, List<ServiceMetadata> providers) {
+        SPLRoot rootLayer = SPLRoot.instance();
+        ServiceMetadata providerMeta = null;
+        String preferredProviderName = rootLayer.getPreferredProviderClassName(serviceType);
+        if (preferredProviderName != null) {
+            for(ServiceMetadata candidate : providers) {
+                if (candidate.getTypeName().equals(preferredProviderName)) {
+                    providerMeta = candidate;
+                    break;
+                }
+            }
+        }
+        return providerMeta;
+    }
+
+    private static ServiceMetadata getDefaultMeta(List<ServiceMetadata> providers) {
+        return providers.stream()
+            .max(Comparator.comparingInt(SPLUtils::getPriority))
+            .orElseThrow();
+    }
+
+    private static int getPriority(ServiceMetadata providerMeta) {
+        Priority annotation = providerMeta.getType().getAnnotation(Priority.class);
+        return annotation != null ? annotation.value() : 0; // Default priority is 0
     }
 }

@@ -111,14 +111,14 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
 
     /// Retrieves the root Service Provider Layer.
     /// On the initial call, the root layer will be configured.
-    public static ServiceProviderRoot instance() {
+    public static SPLRoot instance() {
         return instance(null);
     }
 
     /// Retrieves the root Service Provider Layer.
     /// On the initial call, the root layer will be configured with a specified Reporter.
     /// This reporter is used for non-fatal error and warning reporting.
-    public static ServiceProviderRoot instance(Reporter reporter) {
+    public static SPLRoot instance(Reporter reporter) {
         if (reporter == null) {
             reporter = new NoOpReporter();
         }
@@ -147,7 +147,7 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
 
     private void collectLayers(SPLBranch layer, Set<SPLBranch> collected) {
         collected.add(layer);
-        for (SPLBranch descendant : layer.children) {
+        for (SPLBranch descendant : layer.namedChildren.values()) {
             collectLayers(descendant, collected);
         }
     }

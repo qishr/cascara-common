@@ -90,7 +90,6 @@ public interface ServiceProviderLayer extends TreeNode<ServiceProviderLayer> {
     ServiceProviderLayer getChild(String name);
     boolean hasChild(String name);
 
-    ServiceProviderLayer create();
     ServiceProviderLayer create(String name);
     ServiceProviderLayer createPrivate(String name);
     void remove(String name);
