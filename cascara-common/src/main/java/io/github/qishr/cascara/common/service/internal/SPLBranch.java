@@ -107,7 +107,6 @@ public class SPLBranch implements ServiceProviderLayer {
     final TrackableArray<ServiceMetadata> visibleProviders = new TrackableArray<>();
     private final TrackableArray<ServiceMetadata> declaredProviders = new TrackableArray<>();
 
-    // TODO: Remove modules from list when they're no longer loaded
     private TrackableArray<String> modules = new TrackableArray<>();
 
     protected SPLBranch() { }
@@ -339,13 +338,6 @@ public class SPLBranch implements ServiceProviderLayer {
                 try {
                     method.setAccessible(true);
                     method.invoke(instance);
-                // } catch (InvocationTargetException e) {
-                //     Throwable cause = e.getCause() != null ? e.getCause() : e;
-                //     throw new ServiceException(
-                //         cause,
-                //         DiagnosticCode.forException(cause),
-                //         clazz.getSimpleName() + "." + method.getName()
-                //     );
                 } catch (Exception e) {
                     DiagnosticCode code = DiagnosticCode.forException(e);
                     if (code == null) {
@@ -498,7 +490,6 @@ public class SPLBranch implements ServiceProviderLayer {
 
         // 3. (re-)create the layer.
         moduleLayer = parent.defineModulesWithManyLoaders(cf, ClassLoader.getSystemClassLoader());
-        // moduleLayer = parent.defineModulesWithOneLoader(cf, ClassLoader.getSystemClassLoader());
 
         enumerateProviders();
         addModuleToMap(moduleName);

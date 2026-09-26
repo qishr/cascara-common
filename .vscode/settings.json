@@ -1,31 +1,25 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic",
-
     "java.test.defaultConfig": "tests",
     "java.test.config": [
         {
             "name": "tests",
             "modulePaths": ["${workspaceFolder}/cascara-common/modulepath"],
             "module": "cascara.common",
-            "vmArgs": [
-                "--module-path",
-                "${workspaceFolder}/cascara-common/build/modulepath",
-            ],
-            "java.project.referencedLibraries": [
-                "${workspaceFolder}/cascara-common/build/modulepath/*.jar"
-            ]
         },
         {
-            "name": "moudlar-tests",
+            "name": "modular-tests",
             "modulePaths": ["${workspaceFolder}/cascara-common-test/modulepath"],
             "module": "cascara.common.test",
-            "vmArgs": [
-                "--module-path",
-                "${workspaceFolder}/cascara-common-test/build/modulepath",
-            ],
-            "java.project.referencedLibraries": [
-                "${workspaceFolder}/cascara-common-test/build/modulepath/*.jar"
-            ]
         },
     ],
+
+    "java.project.referencedLibraries": [
+        "cascara-common/build/classes/java/main"
+      ],
+      "java.configuration.updateBuildConfiguration": "automatic",
+      "java.eclipse.downloadSources": true,
+
+    "java.configuration.detectJpms": false,
+    "java.compile.nullAnalysis.mode": "disabled",
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true",
 }

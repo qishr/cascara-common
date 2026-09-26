@@ -41,6 +41,7 @@ import io.github.qishr.cascara.common.service.ServiceProvider;
 
 public interface ContentTypeResolver extends ServiceProvider {
     ContentType resolve(String type);
+    List<ContentType> getAll();
     void add(ContentType contentType);
     void addAll(List<? extends ContentType> contentTypes);
 }

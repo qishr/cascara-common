@@ -1,5 +1,13 @@
 # Cascara  Common
 
+## Building
+
+### Without Tests or Javadoc
+
+```
+./gradlew clean build -x javadoc -x test -x testClasspath -x testJarClasspath
+```
+
 ## Testing
 
 ### Modular: Class Files in JPMS Environment
