@@ -69,7 +69,9 @@ public class ServiceProviderFactory extends AbstractServiceProviderFactory {
         );
     }
 
-    public ContentTypeResolver createContentTypeResolver() throws ServiceException {
+    // Neo-singletons
+
+    public ContentTypeResolver getContentTypeResolver() throws ServiceException {
         return createServiceProvider(ContentTypeResolver.class);
     }
 }
