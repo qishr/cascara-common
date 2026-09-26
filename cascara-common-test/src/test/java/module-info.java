@@ -34,7 +34,7 @@
 
 module cascara.common.test {
     requires java.management;
-    requires cascara.common;
+    requires transitive cascara.common;
     requires cascara.test.common.junit;
     requires test.interfaces;
     requires org.junit.jupiter.api;

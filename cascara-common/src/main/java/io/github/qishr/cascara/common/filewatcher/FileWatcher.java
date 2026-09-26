@@ -58,7 +58,11 @@ public class FileWatcher {
     private final Map<WatchKey, Set<FileChangeHandler>> keysToHandlers = new ConcurrentHashMap<>();
 
     /// Executor to run the WatchService polling loop in the background
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "SPL-FileWatcher");
+        thread.setDaemon(true); // Allow JVM to exit cleanly
+        return thread;
+    });
 
     /// Flag to control the watcher thread's state
     private final AtomicBoolean running = new AtomicBoolean(true);
@@ -72,7 +76,6 @@ public class FileWatcher {
     };
 
     public FileWatcher() {
-        // watchService = FileSystems.getDefault().newWatchService();
         executor.submit(this::watchLoop);
         allWatchers.add(this);
     }
@@ -84,7 +87,7 @@ public class FileWatcher {
              throw new IllegalArgumentException("Cannot watch root file without a parent directory.");
         }
 
-        WatchService watchService = watchServiceFor(path.getFileSystem());
+        WatchService watchService = getWatchServiceFor(path.getFileSystem());
 
         // 1. Register the directory key
         WatchKey key = directory.register(watchService, WATCH_KINDS);
@@ -99,14 +102,14 @@ public class FileWatcher {
 
     /// Watch a specific directory and run onEvent when any event occurs.
     public void watchDirectory(Path path, Runnable onEvent) throws IOException {
-        WatchService watchService = watchServiceFor(path.getFileSystem());
+        WatchService watchService = getWatchServiceFor(path.getFileSystem());
         WatchKey key = path.register(watchService, WATCH_KINDS);
         keysToCallbacks.computeIfAbsent(key, k -> ConcurrentHashMap.newKeySet()).add(onEvent);
     }
 
     /// Watch a specific directory and receive granular event details via a callback.
     public void watchDirectory(Path path, FileChangeHandler handler) throws IOException {
-        WatchService watchService = watchServiceFor(path.getFileSystem());
+        WatchService watchService = getWatchServiceFor(path.getFileSystem());
         WatchKey key = path.register(watchService, WATCH_KINDS);
         keysToHandlers.computeIfAbsent(key, k -> ConcurrentHashMap.newKeySet()).add(handler);
     }
@@ -228,7 +231,7 @@ public class FileWatcher {
 
     /// Recursively registers a directory and all subdirectories with the WatchService.
     private void registerTree(Path startDir, Runnable onEvent) throws IOException {
-        WatchService watchService = watchServiceFor(startDir.getFileSystem());
+        WatchService watchService = getWatchServiceFor(startDir.getFileSystem());
         Files.walkFileTree(startDir, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -240,7 +243,7 @@ public class FileWatcher {
         });
     }
 
-    private WatchService watchServiceFor(FileSystem fs) {
+    private WatchService getWatchServiceFor(FileSystem fs) {
         return watchServices.computeIfAbsent(fs, key -> {
             try {
                 return fs.newWatchService();

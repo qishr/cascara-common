@@ -254,3 +254,29 @@ tasks.named('processResources', ProcessResources) {
         }
     }
 }
+
+
+// cascara-common/build.gradle
+
+jacocoTestReport {
+    dependsOn tasks.named('test')
+    dependsOn ':cascara-common-test:test' // Ensure tests run first
+
+    // Combine execution data (.exec) from both common and common-test
+    executionData.setFrom(files(
+        "$buildDir/jacoco/test.exec",
+        "${project(':cascara-common-test').buildDir}/jacoco/test.exec"
+    ))
+
+    // Ensure all internal packages (including service.internal) are included
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it, include: [
+            'io/github/qishr/cascara/common/**'
+        ])
+    }))
+
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}

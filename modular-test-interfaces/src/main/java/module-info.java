@@ -36,5 +36,5 @@ module test.interfaces {
     requires cascara.common;
     exports test.interfaces;
 
-    opens test.interfaces to org.junit.platform.commons;
+    opens test.interfaces;
 }
