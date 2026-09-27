@@ -15,65 +15,14 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 
 public class SPLModuleScanner {
 
-    private static Reporter reporter = null;
-
-    public static Reporter getReporter() {
-        return reporter;
-    }
-
-    public static void setReporter(Reporter r) {
-        reporter = r;
-    }
-
-    // private Set<String> findCandidateProviderClasses(Module module) {
-    //     Set<String> classNames = new HashSet<>();
-    //     ModuleDescriptor descriptor = module.getDescriptor();
-    //     if (descriptor == null) {
-    //         getReporter().trace("  No module descriptor");
-    //         return classNames; // Automatic or unnamed modules
-    //     }
-
-    //     // 1. Inspect native SPI declarations in module-info.java (provides ... with ...)
-    //     for (ModuleDescriptor.Provides provides : descriptor.provides()) {
-    //         classNames.addAll(provides.providers());
-    //     }
-
-    //     // 2. Scan exported and opened packages in the module for candidate classes
-    //     Set<String> accessiblePackages = new HashSet<>();
-    //     descriptor.exports().forEach(e -> accessiblePackages.add(e.source()));
-    //     descriptor.opens().forEach(o -> accessiblePackages.add(o.source()));
-
-    //     if (accessiblePackages.isEmpty()) {
-    //         getReporter().trace("  No accessible packages");
-    //     }
-
-    //     for (String pkg : accessiblePackages) {
-    //         getReporter().trace("  Searching package: " + pkg);
-    //         String resourcePath = pkg.replace('.', '/');
-    //         try {
-    //             // Find all .class resources in the exported/opened package
-    //             var resources = module.getClassLoader().getResources(resourcePath);
-    //             while (resources.hasMoreElements()) {
-    //                 var url = resources.nextElement();
-    //                 if ("jar".equals(url.getProtocol()) || "file".equals(url.getProtocol())) {
-    //                     getReporter().trace("    Scanning: " + url);
-    //                     scanPackageResources(module, pkg, url, classNames);
-    //                 } else {
-    //                     getReporter().trace("    Unexpected protocol: " + url);
-    //                 }
-    //             }
-    //         } catch (IOException ignored) {
-    //             // Log or report non-fatal reading issues
-    //             getReporter().trace("    Non-fatal: " + ignored.getMessage());
-    //         }
-    //     }
-
-    //     return classNames;
-    // }
+    private static Reporter reporter = new NoOpReporter();
+    public static Reporter getReporter() { return reporter; }
+    public static void setReporter(Reporter r) { reporter = r; }
 
     public static Set<String> findCandidateProviderClasses(Module module) {
         Set<String> classNames = new HashSet<>();
@@ -141,25 +90,50 @@ public class SPLModuleScanner {
         return classNames;
     }
 
-    // private void scanViaClassLoader(Module module, Set<String> accessiblePackages, Set<String> classNames) {
-    //     ClassLoader cl = module.getClassLoader();
-    //     if (cl == null) return;
+    public static void scanPackageResources(Module module, String packageName, URL packageUrl, Set<String> classNames) {
+        try {
+            if ("jar".equals(packageUrl.getProtocol())) {
+                JarURLConnection conn = (JarURLConnection) packageUrl.openConnection();
+                try (java.util.jar.JarFile jar = conn.getJarFile()) {
+                    String packagePath = packageName.replace('.', '/') + "/";
+                    jar.stream().forEach(entry -> {
+                        String name = entry.getName();
+                        if (name.startsWith(packagePath) && name.endsWith(".class") && !entry.isDirectory()) {
+                            // Extract class name (e.g. io/github/qishr/SchemaStore.class -> io.github.qishr.SchemaStore)
+                            String className = name.substring(0, name.length() - 6).replace('/', '.');
+                            // Ignore inner classes unless desired
+                            if (!className.contains("$")) {
+                                classNames.add(className);
+                            }
+                        }
+                    });
+                }
+            } else if ("file".equals(packageUrl.getProtocol())) {
+                Path packageDir = Path.of(packageUrl.toURI());
+                if (Files.exists(packageDir)) {
+                    try (var stream = Files.list(packageDir)) { // or Files.walk(packageDir, 1)
+                        stream.filter(p -> p.toString().endsWith(".class") && !Files.isDirectory(p))
+                            .forEach(p -> {
+                                String fileName = p.getFileName().toString();
+                                String simpleName = fileName.substring(0, fileName.length() - 6);
+                                if (!simpleName.contains("$")) {
+                                    String fqcn = packageName.isEmpty() ? simpleName : packageName + "." + simpleName;
+                                    getReporter().trace("      Found candidate class: " + fqcn);
+                                    classNames.add(fqcn);
+                                }
+                            });
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Skip unreadable entries safely
+            getReporter().trace("      Unreachable: " + ignored.getMessage());
+        }
+    }
 
-    //     for (String pkg : accessiblePackages) {
-    //         String resourcePath = pkg.replace('.', '/');
-    //         try {
-    //             var resources = cl.getResources(resourcePath);
-    //             while (resources.hasMoreElements()) {
-    //                 URL url = resources.nextElement();
-    //                 if ("jar".equals(url.getProtocol()) || "file".equals(url.getProtocol())) {
-    //                     scanPackageResources(module, pkg, url, classNames);
-    //                 }
-    //             }
-    //         } catch (IOException ignored) {
-    //             getReporter().trace("  Failed scanning package resource: " + pkg);
-    //         }
-    //     }
-    // }
+    //
+    // Private Methods
+    //
 
     private static void scanViaClassLoader(Module module, Set<String> accessiblePackages, Set<String> classNames) {
         ClassLoader cl = module.getClassLoader();
@@ -207,9 +181,80 @@ public class SPLModuleScanner {
             } catch (IOException ignored) {}
         }
     }
+}
 
 
 
+
+
+// private Set<String> findCandidateProviderClasses(Module module) {
+    //     Set<String> classNames = new HashSet<>();
+    //     ModuleDescriptor descriptor = module.getDescriptor();
+    //     if (descriptor == null) {
+    //         getReporter().trace("  No module descriptor");
+    //         return classNames; // Automatic or unnamed modules
+    //     }
+
+    //     // 1. Inspect native SPI declarations in module-info.java (provides ... with ...)
+    //     for (ModuleDescriptor.Provides provides : descriptor.provides()) {
+    //         classNames.addAll(provides.providers());
+    //     }
+
+    //     // 2. Scan exported and opened packages in the module for candidate classes
+    //     Set<String> accessiblePackages = new HashSet<>();
+    //     descriptor.exports().forEach(e -> accessiblePackages.add(e.source()));
+    //     descriptor.opens().forEach(o -> accessiblePackages.add(o.source()));
+
+    //     if (accessiblePackages.isEmpty()) {
+    //         getReporter().trace("  No accessible packages");
+    //     }
+
+    //     for (String pkg : accessiblePackages) {
+    //         getReporter().trace("  Searching package: " + pkg);
+    //         String resourcePath = pkg.replace('.', '/');
+    //         try {
+    //             // Find all .class resources in the exported/opened package
+    //             var resources = module.getClassLoader().getResources(resourcePath);
+    //             while (resources.hasMoreElements()) {
+    //                 var url = resources.nextElement();
+    //                 if ("jar".equals(url.getProtocol()) || "file".equals(url.getProtocol())) {
+    //                     getReporter().trace("    Scanning: " + url);
+    //                     scanPackageResources(module, pkg, url, classNames);
+    //                 } else {
+    //                     getReporter().trace("    Unexpected protocol: " + url);
+    //                 }
+    //             }
+    //         } catch (IOException ignored) {
+    //             // Log or report non-fatal reading issues
+    //             getReporter().trace("    Non-fatal: " + ignored.getMessage());
+    //         }
+    //     }
+
+    //     return classNames;
+    // }
+
+
+
+
+    // private void scanViaClassLoader(Module module, Set<String> accessiblePackages, Set<String> classNames) {
+        //     ClassLoader cl = module.getClassLoader();
+        //     if (cl == null) return;
+
+        //     for (String pkg : accessiblePackages) {
+        //         String resourcePath = pkg.replace('.', '/');
+        //         try {
+        //             var resources = cl.getResources(resourcePath);
+        //             while (resources.hasMoreElements()) {
+        //                 URL url = resources.nextElement();
+        //                 if ("jar".equals(url.getProtocol()) || "file".equals(url.getProtocol())) {
+        //                     scanPackageResources(module, pkg, url, classNames);
+        //                 }
+        //             }
+        //         } catch (IOException ignored) {
+        //             getReporter().trace("  Failed scanning package resource: " + pkg);
+        //         }
+        //     }
+        // }
 
 
 
@@ -289,62 +334,3 @@ public class SPLModuleScanner {
     //         } catch (IOException ignored) {}
     //     }
     // }
-
-    public static void scanPackageResources(Module module, String packageName, URL packageUrl, Set<String> classNames) {
-        try {
-            if ("jar".equals(packageUrl.getProtocol())) {
-                JarURLConnection conn = (JarURLConnection) packageUrl.openConnection();
-                try (java.util.jar.JarFile jar = conn.getJarFile()) {
-                    String packagePath = packageName.replace('.', '/') + "/";
-                    jar.stream().forEach(entry -> {
-                        String name = entry.getName();
-                        if (name.startsWith(packagePath) && name.endsWith(".class") && !entry.isDirectory()) {
-                            // Extract class name (e.g. io/github/qishr/SchemaStore.class -> io.github.qishr.SchemaStore)
-                            String className = name.substring(0, name.length() - 6).replace('/', '.');
-                            // Ignore inner classes unless desired
-                            if (!className.contains("$")) {
-                                classNames.add(className);
-                            }
-                        }
-                    });
-                }
-            // } else if ("file".equals(packageUrl.getProtocol())) {
-            //     Path packageDir = Path.of(packageUrl.toURI());
-            //     if (Files.exists(packageDir)) {
-            //         try (var stream = Files.walk(packageDir, 1)) {
-            //             stream.filter(p -> p.toString().endsWith(".class"))
-            //                 .forEach(p -> {
-            //                     String fileName = p.getFileName().toString();
-            //                     String simpleName = fileName.substring(0, fileName.length() - 6);
-            //                     classNames.add(packageName + "." + simpleName);
-            //                 });
-            //         }
-            //     }
-            // }
-
-            } else if ("file".equals(packageUrl.getProtocol())) {
-                    Path packageDir = Path.of(packageUrl.toURI());
-                    if (Files.exists(packageDir)) {
-                        try (var stream = Files.list(packageDir)) { // or Files.walk(packageDir, 1)
-                            stream.filter(p -> p.toString().endsWith(".class") && !Files.isDirectory(p))
-                                .forEach(p -> {
-                                    String fileName = p.getFileName().toString();
-                                    String simpleName = fileName.substring(0, fileName.length() - 6);
-                                    if (!simpleName.contains("$")) {
-                                        String fqcn = packageName.isEmpty() ? simpleName : packageName + "." + simpleName;
-                                        getReporter().trace("      Found candidate class: " + fqcn);
-                                        classNames.add(fqcn);
-                                    }
-                                });
-                        }
-                    }
-            }
-
-
-        } catch (Exception ignored) {
-            // Skip unreadable entries safely
-            getReporter().trace("      Unreachable: " + ignored.getMessage());
-        }
-    }
-
-}

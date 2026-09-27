@@ -40,6 +40,9 @@ module cascara.common.test {
     requires org.junit.jupiter.api;
 
     exports io.github.qishr.cascara.common.test.service;
-
     opens io.github.qishr.cascara.common.test.service to org.junit.platform.commons;
+
+    exports io.github.qishr.cascara.common.test.spl;
+    opens io.github.qishr.cascara.common.test.spl to org.junit.platform.commons, cascara.common;
+
 }

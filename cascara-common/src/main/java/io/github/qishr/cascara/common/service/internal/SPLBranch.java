@@ -560,13 +560,13 @@ public class SPLBranch implements ServiceProviderLayer {
 
 
 
+
+
     //
     // TODO: Going this route, SchemaResolver an a bunch of other things
     // don't get registered because it's not handling neo-Singletons.
     // Strangely, TypeDescriptors aren't being registered either.
     //
-
-
 
 
     // protected void registerViaServiceLoader() {
@@ -631,12 +631,16 @@ public class SPLBranch implements ServiceProviderLayer {
     private void scanPackageForProviders(ClassLoader cl, Module module, String packageName) {
         getReporter().trace("scanPackageForProviders: " + packageName);
         String resourcePath = packageName.replace('.', '/');
+        SPLModuleScanner.setReporter(getReporter());
         try {
             var resources = cl.getResources(resourcePath);
             while (resources.hasMoreElements()) {
                 URL url = resources.nextElement();
                 Set<String> classNames = new HashSet<>();
+
+
                 SPLModuleScanner.scanPackageResources(module, packageName, url, classNames);
+
 
                 for (String className : classNames) {
                     if (!providersByFqcn.containsKey(className)) {
@@ -674,6 +678,11 @@ public class SPLBranch implements ServiceProviderLayer {
 
 
 
+
+    //
+    //
+    //
+
     private SPLBranch createInternal(String name, boolean isPublic) {
         if (name == null) {
             throw new UnexpectedNullParameterException("name");
@@ -681,11 +690,8 @@ public class SPLBranch implements ServiceProviderLayer {
         SPLBranch layer = new SPLBranch();
         layer.parent = this;
         layer.isPublic = isPublic;
-        // children.add(layer);
-        // if (name != null) {
-            layer.name = name;
-            namedChildren.put(name, layer);
-        // }
+        layer.name = name;
+        namedChildren.put(name, layer);
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
         return layer;
     }
@@ -696,7 +702,6 @@ public class SPLBranch implements ServiceProviderLayer {
             removeInternal(childLayer);
         }
         layerToRemove.delete();
-        // children.remove(layerToRemove);
         namedChildren.remove(layerToRemove.getName());
     }
 
@@ -804,6 +809,7 @@ public class SPLBranch implements ServiceProviderLayer {
         });
 
         // 2. Non-SPI class scanning across modules in this ModuleLayer
+        SPLModuleScanner.setReporter(getReporter());
         for (Module module : moduleLayer.modules()) {
             String moduleName = module.getName();
             if (moduleName == null) continue;
@@ -837,34 +843,6 @@ public class SPLBranch implements ServiceProviderLayer {
             }
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     private boolean isRegistered(String providerFqcn) {
         return rootLayer.bootProviders.contains(providerFqcn) || providersByFqcn.containsKey(providerFqcn);
