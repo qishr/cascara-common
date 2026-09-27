@@ -21,7 +21,7 @@ dependencies {
     implementation('org.junit.platform:junit-platform-launcher')
     implementation('io.github.qishr:cascara-test-common-junit')
     implementation(project(':cascara-common'))
-    implementation(project(':modular-test-interfaces'))
+    implementation(project(':spl-test-interfaces'))
 }
 
 

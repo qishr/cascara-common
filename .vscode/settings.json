@@ -1,25 +1,28 @@
 {
-    "java.test.defaultConfig": "tests",
+    "java.test.defaultConfig": "test",
     "java.test.config": [
         {
-            "name": "tests",
-            "modulePaths": ["${workspaceFolder}/cascara-common/modulepath"],
+            "name": "test",
+            "modulePaths": ["${workspaceFolder}/cascara-common/build/modulepath"],
             "module": "cascara.common",
         },
         {
-            "name": "modular-tests",
-            "modulePaths": ["${workspaceFolder}/cascara-common-test/modulepath"],
-            "module": "cascara.common.test",
+            "name": "spl-test",
+            "modulePaths": ["${workspaceFolder}/spl-test/build/modulepath"],
+            "module": "test.spl",
+            "classPaths": [
+                "${workspaceFolder}/spl-test/build/classes/java/main",
+                "${workspaceFolder}/spl-test/build/resources/main"
+            ]
         },
     ],
 
-    "java.project.referencedLibraries": [
-        "cascara-common/build/classes/java/main"
-      ],
-      "java.configuration.updateBuildConfiguration": "automatic",
-      "java.eclipse.downloadSources": true,
+    // "java.project.referencedLibraries": [
+    //     "cascara-common/build/classes/java/main"
+    // ],
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.eclipse.downloadSources": true,
 
-    "java.configuration.detectJpms": false,
     "java.compile.nullAnalysis.mode": "disabled",
     "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true",
 }

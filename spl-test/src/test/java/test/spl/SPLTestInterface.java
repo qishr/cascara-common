@@ -32,17 +32,10 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-module cascara.common.test {
-    requires java.management;
-    requires transitive cascara.common;
-    requires cascara.test.common.junit;
-    requires test.interfaces;
-    requires org.junit.jupiter.api;
+package test.spl;
 
-    exports io.github.qishr.cascara.common.test.service;
-    opens io.github.qishr.cascara.common.test.service to org.junit.platform.commons;
+import io.github.qishr.cascara.common.service.ServiceProvider;
 
-    exports io.github.qishr.cascara.common.test.spl;
-    opens io.github.qishr.cascara.common.test.spl to org.junit.platform.commons, cascara.common;
+public interface SPLTestInterface extends ServiceProvider {
 
 }

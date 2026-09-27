@@ -39,23 +39,16 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReader;
-import java.lang.module.ModuleReference;
-import java.lang.module.ResolvedModule;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.net.JarURLConnection;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -456,7 +449,7 @@ public class SPLBranch implements ServiceProviderLayer {
         } else {
             getReporter().debug("Discovering providers in " + moduleName);
             for (String providerClassName : candidateClassNames) {
-                getReporter().trace("Checking candiddate: " + providerClassName);
+                // getReporter().trace("Checking candiddate: " + providerClassName);
 
                 if (isRegistered(providerClassName)) {
                     continue;

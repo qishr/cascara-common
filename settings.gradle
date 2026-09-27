@@ -13,5 +13,5 @@ plugins {
 
 
 include 'cascara-common'
-include 'cascara-common-test'
-include 'modular-test-interfaces'
+include 'spl-test'
+include 'spl-test-interfaces'
