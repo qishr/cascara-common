@@ -39,6 +39,10 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
+import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.JarURLConnection;
 import java.net.URL;
@@ -46,10 +50,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -323,8 +329,17 @@ public class SPLBranch implements ServiceProviderLayer {
             }
 
             T instance = factory.get();
-            initializeSingleton(instance);
+
+
+
+            // initializeSingleton(instance);
+            // singletonCache.put(singletonClassName, instance);
+
             singletonCache.put(singletonClassName, instance);
+            initializeSingleton(instance);
+
+
+
             return instance;
         }
     }
@@ -412,7 +427,7 @@ public class SPLBranch implements ServiceProviderLayer {
             return;
         }
 
-        getReporter().trace("Checking " + moduleName); // TODO: Version check
+        getReporter().trace("Checking module: " + moduleName); // TODO: Version check
         ClassLoader classLoader = module.getClassLoader();
         ModuleDescriptor desc = module.getDescriptor();
 
@@ -422,6 +437,7 @@ public class SPLBranch implements ServiceProviderLayer {
         // verifyModuleVersionCompatibility(moduleName, moduleBuildCascaraVersion, moduleMinCascaraVersion);
 
         if (desc == null) {
+            getReporter().trace("No module descriptor");
             return;
         }
 
@@ -435,32 +451,41 @@ public class SPLBranch implements ServiceProviderLayer {
         // 2. Collect non-SPI candidate classes from exported/opened packages
         candidateClassNames.addAll(findCandidateProviderClasses(module));
 
-        if (!candidateClassNames.isEmpty()) {
+        if (candidateClassNames.isEmpty()) {
+            getReporter().trace("No candidate classes");
+        } else {
             getReporter().debug("Discovering providers in " + moduleName);
             for (String providerClassName : candidateClassNames) {
+                getReporter().trace("Checking candiddate: " + providerClassName);
+
                 if (isRegistered(providerClassName)) {
                     continue;
                 }
 
-                getReporter().trace("  Attempting to register " + providerClassName);
+                Class<?> clazz = null;
                 try {
-                    Class<?> clazz = classLoader != null
+                    clazz = classLoader != null
                         ? classLoader.loadClass(providerClassName)
                         : Class.forName(module, providerClassName);
 
-                    if (clazz != null
-                            && ServiceProvider.class.isAssignableFrom(clazz)
-                            && !clazz.isInterface()
-                            && !java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
-
-                        registerClassInternal((Class) clazz);
-                    }
                 } catch (ServiceException e) {
                     getReporter().trace("Class \"" + providerClassName + "\" is not a Cascara ServiceProvider");
+                } catch (NoClassDefFoundError e) {
+                    // TODO: Better exception handling
+                    getReporter().warn(ServiceDiagnosticCode.FAILED_TO_LOAD_CLASS, providerClassName, e.getMessage());
                 } catch (ClassNotFoundException e) {
                     getReporter().warn(ServiceDiagnosticCode.FAILED_TO_LOAD_CLASS, providerClassName, e.getMessage());
                 } catch (Exception e) {
                     getReporter().warn(ServiceDiagnosticCode.FAILED_TO_INSTANTIATE_CLASS, providerClassName, e.getMessage());
+                }
+
+                if (clazz != null
+                        && ServiceProvider.class.isAssignableFrom(clazz)
+                        && !clazz.isInterface()
+                        && !java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
+
+                    getReporter().trace("  Attempting to register " + providerClassName);
+                    registerClassInternal((Class) clazz);
                 }
             }
         }
@@ -528,18 +553,122 @@ public class SPLBranch implements ServiceProviderLayer {
     // Private Methods
     //
 
+
+
+
+    //
+    // TODO: Going this route, SchemaResolver an a bunch of other things
+    // don't get registered because it's not handling neo-Singletons.
+    // Strangely, TypeDescriptors aren't being registered either.
+    //
+
+
+
+
+    // protected void registerViaServiceLoader() {
+
+    //     //
+    //     // TODO: Going this route, SchemaResolver an a bunch of other things
+    //     // don't get registered because it's not handling neo-Singletons.
+    //     // Strangely, TypeDescriptors aren't being registered either.
+    //     //
+
+    //     try {
+    //         ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
+    //         for (ServiceProvider provider : loader) {
+    //             try {
+    //                 if (!providersByFqcn.containsKey(provider.getClass().getName())) {
+    //                     registerProvider(provider, null);
+    //                 }
+    //             } catch (ServiceConfigurationError e) {
+    //                 bootError(e, ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
+    //             }
+    //         }
+    //     } catch (ServiceConfigurationError e) {
+    //         bootError(e, ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
+    //     }
+    // }
+
     protected void registerViaServiceLoader() {
+        // 1. Standard classic SPI fallback via META-INF/services
         try {
             ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
             for (ServiceProvider provider : loader) {
-                if (!providersByFqcn.containsKey(provider.getClass().getName())) {
-                    registerProvider(provider, null);
+                try {
+                    if (!providersByFqcn.containsKey(provider.getClass().getName())) {
+                        registerProvider(provider, null);
+                    }
+                } catch (ServiceConfigurationError e) {
+                    bootWarning(ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
                 }
             }
         } catch (ServiceConfigurationError e) {
             bootError(e, ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
         }
+
+        // 2. Classpath / Unnamed Module scanning fallback
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+        if (cl != null) {
+            scanClasspathProviders(cl);
+        }
     }
+
+    private void scanClasspathProviders(ClassLoader cl) {
+        // Look up packages or classes defined on the system classloader
+        // or inspect the unnamed module if available
+        Module unnamedModule = cl.getUnnamedModule();
+        if (unnamedModule != null) {
+            for (String pkg : unnamedModule.getPackages()) {
+                scanPackageForProviders(cl, unnamedModule, pkg);
+            }
+        }
+    }
+
+    private void scanPackageForProviders(ClassLoader cl, Module module, String packageName) {
+        getReporter().trace("scanPackageForProviders: " + packageName);
+        String resourcePath = packageName.replace('.', '/');
+        try {
+            var resources = cl.getResources(resourcePath);
+            while (resources.hasMoreElements()) {
+                URL url = resources.nextElement();
+                Set<String> classNames = new HashSet<>();
+                scanPackageResources(module, packageName, url, classNames);
+
+                for (String className : classNames) {
+                    if (!providersByFqcn.containsKey(className)) {
+                        try {
+                            Class<?> clazz = Class.forName(className, false, cl);
+                            if (clazz != null
+                                    && ServiceProvider.class.isAssignableFrom(clazz)
+                                    && !clazz.isInterface()
+                                    && !java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
+
+                                @SuppressWarnings("unchecked")
+                                Class<? extends ServiceProvider> providerClass = (Class<? extends ServiceProvider>) clazz;
+
+                                // Instantiate non-public zero-arg constructor (neo-singleton)
+                                Constructor<? extends ServiceProvider> ctor = providerClass.getDeclaredConstructor();
+                                if (!ctor.canAccess(null)) {
+                                    ctor.trySetAccessible();
+                                }
+                                ServiceProvider providerInstance = ctor.newInstance();
+                                registerProvider(providerInstance, null);
+                            }
+                        } catch (Throwable ignored) {
+                            // Skip classes that cannot be initialized on classpath
+                        }
+                    }
+                }
+            }
+        } catch (IOException ignored) {
+            // Fallback reading errors
+        }
+    }
+
+
+
+
+
 
     private SPLBranch createInternal(String name, boolean isPublic) {
         if (name == null) {
@@ -705,41 +834,263 @@ public class SPLBranch implements ServiceProviderLayer {
         }
     }
 
+    // private Set<String> findCandidateProviderClasses(Module module) {
+    //     Set<String> classNames = new HashSet<>();
+    //     ModuleDescriptor descriptor = module.getDescriptor();
+    //     if (descriptor == null) {
+    //         getReporter().trace("  No module descriptor");
+    //         return classNames; // Automatic or unnamed modules
+    //     }
+
+    //     // 1. Inspect native SPI declarations in module-info.java (provides ... with ...)
+    //     for (ModuleDescriptor.Provides provides : descriptor.provides()) {
+    //         classNames.addAll(provides.providers());
+    //     }
+
+    //     // 2. Scan exported and opened packages in the module for candidate classes
+    //     Set<String> accessiblePackages = new HashSet<>();
+    //     descriptor.exports().forEach(e -> accessiblePackages.add(e.source()));
+    //     descriptor.opens().forEach(o -> accessiblePackages.add(o.source()));
+
+    //     if (accessiblePackages.isEmpty()) {
+    //         getReporter().trace("  No accessible packages");
+    //     }
+
+    //     for (String pkg : accessiblePackages) {
+    //         getReporter().trace("  Searching package: " + pkg);
+    //         String resourcePath = pkg.replace('.', '/');
+    //         try {
+    //             // Find all .class resources in the exported/opened package
+    //             var resources = module.getClassLoader().getResources(resourcePath);
+    //             while (resources.hasMoreElements()) {
+    //                 var url = resources.nextElement();
+    //                 if ("jar".equals(url.getProtocol()) || "file".equals(url.getProtocol())) {
+    //                     getReporter().trace("    Scanning: " + url);
+    //                     scanPackageResources(module, pkg, url, classNames);
+    //                 } else {
+    //                     getReporter().trace("    Unexpected protocol: " + url);
+    //                 }
+    //             }
+    //         } catch (IOException ignored) {
+    //             // Log or report non-fatal reading issues
+    //             getReporter().trace("    Non-fatal: " + ignored.getMessage());
+    //         }
+    //     }
+
+    //     return classNames;
+    // }
+
     private Set<String> findCandidateProviderClasses(Module module) {
         Set<String> classNames = new HashSet<>();
         ModuleDescriptor descriptor = module.getDescriptor();
         if (descriptor == null) {
-            return classNames; // Automatic or unnamed modules
+            return classNames;
         }
 
-        // 1. Inspect native SPI declarations in module-info.java (provides ... with ...)
+        // 1. SPI declarations in module-info.java
         for (ModuleDescriptor.Provides provides : descriptor.provides()) {
             classNames.addAll(provides.providers());
         }
 
-        // 2. Scan exported and opened packages in the module for candidate classes
+        // 2. Collect exported and opened packages
         Set<String> accessiblePackages = new HashSet<>();
         descriptor.exports().forEach(e -> accessiblePackages.add(e.source()));
         descriptor.opens().forEach(o -> accessiblePackages.add(o.source()));
 
-        for (String pkg : accessiblePackages) {
-            String resourcePath = pkg.replace('.', '/');
-            try {
-                // Find all .class resources in the exported/opened package
-                var resources = module.getClassLoader().getResources(resourcePath);
-                while (resources.hasMoreElements()) {
-                    var url = resources.nextElement();
-                    if ("jar".equals(url.getProtocol()) || "file".equals(url.getProtocol())) {
-                        scanPackageResources(module, pkg, url, classNames);
-                    }
-                }
-            } catch (IOException ignored) {
-                // Log or report non-fatal reading issues
+        if (accessiblePackages.isEmpty()) {
+            return classNames;
+        }
+
+        // 3. Try native ModuleReader API
+        boolean scannedViaModuleReader = false;
+        try {
+            Optional<ModuleReference> mrefOpt = Optional.empty();
+            if (module.getLayer() != null) {
+                mrefOpt = module.getLayer().configuration().findModule(module.getName())
+                        .map(ResolvedModule::reference);
             }
+            if (mrefOpt.isEmpty()) {
+                mrefOpt = ModuleFinder.ofSystem().find(module.getName());
+            }
+
+            if (mrefOpt.isPresent()) {
+                ModuleReference mref = mrefOpt.get();
+                try (ModuleReader reader = mref.open()) {
+                    reader.list().forEach(resource -> {
+                        if (resource.endsWith(".class") && !resource.equals("module-info.class")) {
+                            int lastSlash = resource.lastIndexOf('/');
+                            String pkg = lastSlash > 0 ? resource.substring(0, lastSlash).replace('/', '.') : "";
+
+                            if (accessiblePackages.contains(pkg)) {
+                                String className = resource.substring(0, resource.length() - 6).replace('/', '.');
+                                if (!className.contains("$")) {
+                                    classNames.add(className);
+                                }
+                            }
+                        }
+                    });
+                    scannedViaModuleReader = true;
+                }
+            }
+        } catch (Throwable t) {
+            getReporter().trace("  ModuleReader unavailable for " + module.getName() + " (" + t.getMessage() + "), falling back to ClassLoader resources.");
+        }
+
+        // 4. Fallback: ClassLoader package scanning (for IDE/Test patching environments)
+        if (!scannedViaModuleReader) {
+            scanViaClassLoader(module, accessiblePackages, classNames);
         }
 
         return classNames;
     }
+
+    // private void scanViaClassLoader(Module module, Set<String> accessiblePackages, Set<String> classNames) {
+    //     ClassLoader cl = module.getClassLoader();
+    //     if (cl == null) return;
+
+    //     for (String pkg : accessiblePackages) {
+    //         String resourcePath = pkg.replace('.', '/');
+    //         try {
+    //             var resources = cl.getResources(resourcePath);
+    //             while (resources.hasMoreElements()) {
+    //                 URL url = resources.nextElement();
+    //                 if ("jar".equals(url.getProtocol()) || "file".equals(url.getProtocol())) {
+    //                     scanPackageResources(module, pkg, url, classNames);
+    //                 }
+    //             }
+    //         } catch (IOException ignored) {
+    //             getReporter().trace("  Failed scanning package resource: " + pkg);
+    //         }
+    //     }
+    // }
+
+    private void scanViaClassLoader(Module module, Set<String> accessiblePackages, Set<String> classNames) {
+    ClassLoader cl = module.getClassLoader();
+    if (cl == null) {
+        cl = ClassLoader.getSystemClassLoader();
+    }
+
+    // Inspect all packages declared on the module
+    Set<String> packagesToScan = new HashSet<>(accessiblePackages);
+    packagesToScan.retainAll(module.getPackages()); // Only scan packages belonging to this module
+
+    for (String pkg : packagesToScan) {
+        String resourcePath = pkg.replace('.', '/');
+        try {
+            var resources = cl.getResources(resourcePath);
+            while (resources.hasMoreElements()) {
+                URL url = resources.nextElement();
+                String protocol = url.getProtocol();
+
+                if ("jar".equals(protocol) || "file".equals(protocol)) {
+                    scanPackageResources(module, pkg, url, classNames);
+                }
+            }
+        } catch (IOException e) {
+            getReporter().trace("  Failed scanning package: " + pkg + " (" + e.getMessage() + ")");
+        }
+    }
+
+    // Fallback if classloader resources returned 0 classes for an IDE-patched module
+    if (classNames.isEmpty()) {
+        scanModuleLocation(module, packagesToScan, classNames);
+    }
+}
+
+private void scanModuleLocation(Module module, Set<String> packagesToScan, Set<String> classNames) {
+    // Locate class output directories from the system/context classloader
+    for (String pkg : packagesToScan) {
+        String resourcePath = pkg.replace('.', '/');
+        try {
+            Enumeration<URL> systemResources = ClassLoader.getSystemResources(resourcePath);
+            while (systemResources.hasMoreElements()) {
+                URL url = systemResources.nextElement();
+                scanPackageResources(module, pkg, url, classNames);
+            }
+        } catch (IOException ignored) {}
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // private Set<String> findCandidateProviderClasses(Module module) {
+    //     Set<String> classNames = new HashSet<>();
+    //     ModuleDescriptor descriptor = module.getDescriptor();
+    //     if (descriptor == null) {
+    //         return classNames;
+    //     }
+
+    //     // 1. SPI declarations
+    //     for (ModuleDescriptor.Provides provides : descriptor.provides()) {
+    //         classNames.addAll(provides.providers());
+    //     }
+
+    //     // 2. Exported & opened packages
+    //     Set<String> accessiblePackages = new HashSet<>();
+    //     descriptor.exports().forEach(e -> accessiblePackages.add(e.source()));
+    //     descriptor.opens().forEach(o -> accessiblePackages.add(o.source()));
+
+    //     // 3. Scan module contents using ModuleReader API
+    //     try {
+    //         Optional<ModuleReference> mrefOpt = ModuleFinder.ofSystem().find(module.getName());
+    //         if (mrefOpt.isEmpty() && module.getLayer() != null) {
+    //             mrefOpt = module.getLayer().configuration().findModule(module.getName())
+    //                     .map(ResolvedModule::reference);
+    //         }
+
+    //         if (mrefOpt.isPresent()) {
+    //             ModuleReference mref = mrefOpt.get();
+    //             try (ModuleReader reader = mref.open()) {
+    //                 reader.list().forEach(resource -> {
+    //                     if (resource.endsWith(".class") && !resource.equals("module-info.class")) {
+    //                         int lastSlash = resource.lastIndexOf('/');
+    //                         String pkg = lastSlash > 0 ? resource.substring(0, lastSlash).replace('/', '.') : "";
+
+    //                         if (accessiblePackages.contains(pkg)) {
+    //                             String className = resource.substring(0, resource.length() - 6).replace('/', '.');
+    //                             if (!className.contains("$")) {
+    //                                 classNames.add(className);
+    //                             }
+    //                         }
+    //                     }
+    //                 });
+    //             }
+    //         } else {
+    //             // Fallback for non-layer runtime setups
+    //             scanViaClassLoader(module, accessiblePackages, classNames);
+    //         }
+    //     } catch (IOException e) {
+    //         getReporter().trace("Failed to read module contents for " + module.getName() + ": " + e.getMessage());
+    //     }
+
+    //     return classNames;
+    // }
+
+    // private void scanViaClassLoader(Module module, Set<String> accessiblePackages, Set<String> classNames) {
+    //     ClassLoader cl = module.getClassLoader();
+    //     if (cl == null) return;
+
+    //     for (String pkg : accessiblePackages) {
+    //         String resourcePath = pkg.replace('.', '/');
+    //         try {
+    //             var resources = cl.getResources(resourcePath);
+    //             while (resources.hasMoreElements()) {
+    //                 URL url = resources.nextElement();
+    //                 scanPackageResources(module, pkg, url, classNames);
+    //             }
+    //         } catch (IOException ignored) {}
+    //     }
+    // }
 
     private void scanPackageResources(Module module, String packageName, URL packageUrl, Set<String> classNames) {
         try {
@@ -759,21 +1110,42 @@ public class SPLBranch implements ServiceProviderLayer {
                         }
                     });
                 }
+            // } else if ("file".equals(packageUrl.getProtocol())) {
+            //     Path packageDir = Path.of(packageUrl.toURI());
+            //     if (Files.exists(packageDir)) {
+            //         try (var stream = Files.walk(packageDir, 1)) {
+            //             stream.filter(p -> p.toString().endsWith(".class"))
+            //                 .forEach(p -> {
+            //                     String fileName = p.getFileName().toString();
+            //                     String simpleName = fileName.substring(0, fileName.length() - 6);
+            //                     classNames.add(packageName + "." + simpleName);
+            //                 });
+            //         }
+            //     }
+            // }
+
             } else if ("file".equals(packageUrl.getProtocol())) {
-                Path packageDir = Path.of(packageUrl.toURI());
-                if (Files.exists(packageDir)) {
-                    try (var stream = Files.walk(packageDir, 1)) {
-                        stream.filter(p -> p.toString().endsWith(".class"))
-                            .forEach(p -> {
-                                String fileName = p.getFileName().toString();
-                                String simpleName = fileName.substring(0, fileName.length() - 6);
-                                classNames.add(packageName + "." + simpleName);
-                            });
+                    Path packageDir = Path.of(packageUrl.toURI());
+                    if (Files.exists(packageDir)) {
+                        try (var stream = Files.list(packageDir)) { // or Files.walk(packageDir, 1)
+                            stream.filter(p -> p.toString().endsWith(".class") && !Files.isDirectory(p))
+                                .forEach(p -> {
+                                    String fileName = p.getFileName().toString();
+                                    String simpleName = fileName.substring(0, fileName.length() - 6);
+                                    if (!simpleName.contains("$")) {
+                                        String fqcn = packageName.isEmpty() ? simpleName : packageName + "." + simpleName;
+                                        getReporter().trace("      Found candidate class: " + fqcn);
+                                        classNames.add(fqcn);
+                                    }
+                                });
+                        }
                     }
-                }
             }
+
+
         } catch (Exception ignored) {
             // Skip unreadable entries safely
+            getReporter().trace("      Unreachable: " + ignored.getMessage());
         }
     }
 
@@ -949,7 +1321,7 @@ public class SPLBranch implements ServiceProviderLayer {
 
         if (parent != null && parent != previous) {
             // Go towards root
-            getReporter().trace("⬆ " + parent.name);
+            // getReporter().trace("⬆ " + parent.name);
             addAllToList(parent.internalFindAllProviders(serviceType, capabilityPredicate, this), found);
         }
 
@@ -958,7 +1330,7 @@ public class SPLBranch implements ServiceProviderLayer {
 
     private List<ServiceMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate, int depth) {
         List<ServiceMetadata> found = new ArrayList<>();
-        getReporter().trace("" + "  ".repeat(depth) + "⬇ " + name);
+        // getReporter().trace("" + "  ".repeat(depth) + "⬇ " + name);
 
         Set<ServiceMetadata> byType = providersByServiceType.get(serviceType);
         // Set<ServiceMetadata> byFqcn = providersByServiceFqcn.get(serviceType.getName());
@@ -1024,6 +1396,17 @@ public class SPLBranch implements ServiceProviderLayer {
             );
         } else {
             reporter.error(e, code, details);
+        }
+    }
+
+    protected static void bootWarning(ServiceDiagnosticCode code, Object... details) {
+        final Reporter reporter = rootLayer.reporter;
+        if (reporter.isSilent()) {
+            System.err.println(
+                DiagnosticLocalizer.DEFAULT.format(code, details)
+            );
+        } else {
+            reporter.warn(code, details);
         }
     }
 

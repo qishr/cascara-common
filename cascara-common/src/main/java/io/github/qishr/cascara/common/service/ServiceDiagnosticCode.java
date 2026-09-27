@@ -42,7 +42,7 @@ public enum ServiceDiagnosticCode implements DiagnosticCode {
     // NOT_A_SERVICE("SPL-102", "{0} is not a Service"),
     NOT_A_SERVICE_PROVIDER("SPL-103", "{0} is not a ServiceProvider"),
 
-    FAILED_TO_REGISTER_MODULE("SPL-201", "Failed to register {0} module"),
+    FAILED_TO_REGISTER_MODULE("SPL-201", "Failed to register {0} module: {1}"),
 
     NOARGS_CONSTRUCTOR_REQUIRED("SPL-301", "Class {0} has no no-args constructor"),
     FAILED_TO_INSTANTIATE_CLASS("SPL-302", "Failed to instantiate class {0}. {1}"),

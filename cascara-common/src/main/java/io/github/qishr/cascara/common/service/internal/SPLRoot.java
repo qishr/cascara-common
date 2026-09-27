@@ -84,9 +84,11 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
                 reporter.trace("Found module " + moduleName);
                 registerModule(module);
             } catch (Exception e) {
-                bootError(e,
+                bootWarning(
                     ServiceDiagnosticCode.FAILED_TO_REGISTER_MODULE,
-                    moduleName);
+                    moduleName,
+                    e.getMessage()
+                );
             }
         });
 

@@ -225,6 +225,15 @@ public class SPLUtils {
         return result;
     }
 
+    public static void dumpStackTrace() {
+        Thread c = Thread.currentThread();
+        String n = c.getName() + "/" + c.threadId() + "/" + c.hashCode();
+        StackTraceElement[] st = c.getStackTrace();
+        for (StackTraceElement el : st) {
+            System.out.println(n + " STACK: " + el.getClassName() + "." + el.getMethodName());
+        }
+    }
+
     //
     //
     //
