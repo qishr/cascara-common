@@ -50,18 +50,17 @@ import io.github.qishr.cascara.common.filewatcher.FileWatcher;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.service.ServiceException;
-import io.github.qishr.cascara.common.service.ServiceProviderLayer;
-import io.github.qishr.cascara.common.service.ServiceProviderRoot;
+import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.ContentTypeResolver;
 
-public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
+public class SPLRoot extends SPLBranch {
     private static final Properties EMPTY_PROPERTIES = new Properties();
 
     final Set<String> bootProviders = new HashSet<>();
 
-    Map<String,Set<ServiceProviderLayer>> moduleToLayers = new HashMap<>();
+    Map<String,Set<SPL>> moduleToLayers = new HashMap<>();
 
     private ContentTypeResolver contentTypeStore;
     private Set<ContentType> contentTypes;
@@ -99,7 +98,7 @@ public class SPLRoot extends SPLBranch implements ServiceProviderRoot {
         isBooting = false;
 
         try {
-            contentTypeStore = ServiceProviderLayer.loadDefault(ContentTypeResolver.class);
+            contentTypeStore = SPL.load(ContentTypeResolver.class);
             // TODO: use addAll
             if (contentTypeStore != null) {
                 for (ContentType contentType : contentTypes) {

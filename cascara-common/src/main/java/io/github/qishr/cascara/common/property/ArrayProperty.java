@@ -32,12 +32,23 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.service;
+package io.github.qishr.cascara.common.property;
 
-import java.util.Set;
+import java.util.List;
 
-import io.github.qishr.cascara.common.util.ContentType;
+import io.github.qishr.cascara.common.annotation.Experimental;
 
-public interface ServiceProviderRoot extends ServiceProviderLayer {
-    Set<ContentType> getContentTypes();
+@Experimental
+public class ArrayProperty extends Property<List<?>> {
+    public ArrayProperty(String name) {
+        super(name);
+    }
+
+    public ArrayProperty(String name, List<?> value) {
+        super(name, value);
+    }
+
+    public void setValue(List<?> v) {
+        super.setValue(v);
+    }
 }

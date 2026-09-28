@@ -57,6 +57,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.annotation.SingletonInitializer;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
@@ -72,7 +73,7 @@ import io.github.qishr.cascara.common.service.ServiceDiagnosticCode;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;
-import io.github.qishr.cascara.common.service.ServiceProviderLayer;
+import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.trackable.TrackableArray;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ClassHierarchy;
@@ -82,7 +83,7 @@ import io.github.qishr.cascara.common.util.JarManifest;
 import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.ModulePath;
 
-public class SPLBranch implements ServiceProviderLayer {
+public class SPLBranch implements SPL {
     protected static SPLRoot rootLayer;
 
     protected Reporter reporter;
@@ -117,14 +118,13 @@ public class SPLBranch implements ServiceProviderLayer {
 
     /// Sets the reporter for communicating mapping warnings or errors in this layer.
     @Override
-    public ServiceProviderLayer setReporter(Reporter reporter) {
+    public void setReporter(Reporter reporter) {
         if (reporter == null) {
             reporter = new NoOpReporter();
         } else {
             this.reporter = reporter;
             this.ownsReporter = true;
         }
-        return this;
     }
 
     //
@@ -134,7 +134,7 @@ public class SPLBranch implements ServiceProviderLayer {
     @Override
     public String getName() { return name; }
 
-    @Override
+    // TODO: Is this needed?
     public Path getModulePath(String name) { return modulePath.getPathForModule(name); }
 
     public TrackableArray<String> getModules() {
@@ -153,17 +153,17 @@ public class SPLBranch implements ServiceProviderLayer {
     public boolean isPublic() { return isPublic; }
 
     @Override
-    public ServiceProviderLayer getParent() { return parent; }
+    public SPL getParent() { return parent; }
 
     @Override
-    public List<ServiceProviderLayer> getChildren() {
+    public List<SPL> getChildren() {
         return namedChildren.values().stream().map(layer -> {
-            return (ServiceProviderLayer)layer;
+            return (SPL)layer;
         }).toList();
     }
 
     @Override
-    public ServiceProviderLayer getChild(String name) { return namedChildren.get(name); }
+    public SPL getChild(String name) { return namedChildren.get(name); }
 
     @Override
     public boolean hasChild(String name) { return namedChildren.containsKey(name); }
@@ -254,19 +254,17 @@ public class SPLBranch implements ServiceProviderLayer {
     @Override
     public boolean hasProvider(String name) { return providersByFqcn.containsKey(name); }
 
-    @Override
-    public Collection<ServiceMetadata> getProvidersByFqcn() { return providersByFqcn.values(); }
-
-    /// Retrieves metadata of the specified provider if it exists in this layer.
+    /// Retrieves metadata of the specified provider if it exists in this layer, otherwise `null` is returne.
+    @Nullable
     @Override
     public ServiceMetadata getProvider(String providerName) {
         return providersByFqcn.get(providerName);
     }
 
-    /// Retrieves metadata of providers of the specified service type in this layer.
+    /// Retrieves metadata of providers in this layer.
     @Override
-    public Collection<ServiceMetadata> getProviders() {
-        return providersByFqcn.values();
+    public List<ServiceMetadata> getProviders() {
+        return providersByFqcn.values().stream().toList();
     }
 
     /// Retrieves metadata of providers of the specified service type in this layer.
@@ -588,20 +586,24 @@ public class SPLBranch implements ServiceProviderLayer {
 
     protected void registerViaServiceLoader() {
         // 1. Standard classic SPI fallback via META-INF/services
-        try {
-            ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
-            for (ServiceProvider provider : loader) {
-                try {
-                    if (!providersByFqcn.containsKey(provider.getClass().getName())) {
-                        registerProvider(provider, null);
-                    }
-                } catch (ServiceConfigurationError e) {
-                    bootWarning(ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
-                }
-            }
-        } catch (ServiceConfigurationError e) {
-            bootError(e, ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
-        }
+        // try {
+
+        //     // TODO: This throws a ServiceConfigurationError for classes
+        //     // with no public constructorm like neo-singletons.
+        //     ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
+
+        //     for (ServiceProvider provider : loader) {
+        //         try {
+        //             if (!providersByFqcn.containsKey(provider.getClass().getName())) {
+        //                 registerProvider(provider, null);
+        //             }
+        //         } catch (ServiceConfigurationError e) {
+        //             bootWarning(ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
+        //         }
+        //     }
+        // } catch (ServiceConfigurationError e) {
+        //     bootError(e, ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
+        // }
 
         // 2. Classpath / Unnamed Module scanning fallback
         ClassLoader cl = ClassLoader.getSystemClassLoader();
@@ -630,11 +632,7 @@ public class SPLBranch implements ServiceProviderLayer {
             while (resources.hasMoreElements()) {
                 URL url = resources.nextElement();
                 Set<String> classNames = new HashSet<>();
-
-
                 SPLModuleScanner.scanPackageResources(module, packageName, url, classNames);
-
-
                 for (String className : classNames) {
                     if (!providersByFqcn.containsKey(className)) {
                         try {
@@ -753,7 +751,7 @@ public class SPLBranch implements ServiceProviderLayer {
     /// Adds a module to the root layer's `moduleToLayers` map and updates
     // the `modules` `TrackableArray`
     private void addModuleToMap(String moduleName) {
-        Set<ServiceProviderLayer> layers = rootLayer.moduleToLayers.get(moduleName);
+        Set<SPL> layers = rootLayer.moduleToLayers.get(moduleName);
         if (layers == null) {
             layers = new HashSet<>();
             rootLayer.moduleToLayers.put(moduleName, layers);
@@ -767,7 +765,7 @@ public class SPLBranch implements ServiceProviderLayer {
     /// Removes a module from the root layer's `moduleToLayers` map and updates
     // the `modules` `TrackableArray`
     private void removeModuleFromMap(String moduleName) {
-        Set<ServiceProviderLayer> layers = rootLayer.moduleToLayers.get(moduleName);
+        Set<SPL> layers = rootLayer.moduleToLayers.get(moduleName);
         if (layers != null) {
             layers.remove(this);
             if (layers.isEmpty()) {
@@ -865,7 +863,8 @@ public class SPLBranch implements ServiceProviderLayer {
                     }
                 }
 
-                ServiceMetadata provider = new ServiceMetadata(this, providerClass, getProviderProperties(instance, jarPath), contentType, isSingleton);
+                Properties providerProperties = getProviderProperties(instance, jarPath);
+                ServiceMetadata provider = new ServiceMetadata(this, providerClass, providerProperties, contentType, isSingleton);
 
                 orderedProviders.add(provider);
                 providersByFqcn.put(providerClass.getName(), provider);
@@ -879,13 +878,6 @@ public class SPLBranch implements ServiceProviderLayer {
                     if (providers == null) {
                         providers = new HashSet<>();
                         providersByServiceType.put(serviceInterface, providers);
-
-
-
-                        // providersByServiceFqcn.put(serviceInterface.getName(), providers);
-
-
-
                     }
                     providers.add(provider);
                 }
@@ -1001,15 +993,13 @@ public class SPLBranch implements ServiceProviderLayer {
     //
 
     private List<ServiceMetadata> internalFindAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate, SPLBranch previous) {
-        String startLayer = (name == null ? "unnamed layer" : "layer " + name);
-        getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
+        getReporter().debug("[finding] layer=\"" + name + "\", service=\"" + serviceType.getSimpleName() + "\"");
         List<ServiceMetadata> found = new ArrayList<>();
 
         addAllToList(findProvidersInBranches(serviceType, capabilityPredicate, 0), found);
 
         if (parent != null && parent != previous) {
             // Go towards root
-            // getReporter().trace("⬆ " + parent.name);
             addAllToList(parent.internalFindAllProviders(serviceType, capabilityPredicate, this), found);
         }
 
@@ -1018,10 +1008,8 @@ public class SPLBranch implements ServiceProviderLayer {
 
     private List<ServiceMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate, int depth) {
         List<ServiceMetadata> found = new ArrayList<>();
-        // getReporter().trace("" + "  ".repeat(depth) + "⬇ " + name);
 
         Set<ServiceMetadata> byType = providersByServiceType.get(serviceType);
-        // Set<ServiceMetadata> byFqcn = providersByServiceFqcn.get(serviceType.getName());
 
         if (byType != null) {
             for (ServiceMetadata provider : orderedProviders) {
@@ -1072,7 +1060,7 @@ public class SPLBranch implements ServiceProviderLayer {
     //
 
     protected void reportFinding(ServiceMetadata item, int depth) {
-        getReporter().debug("[provider] " + "layer=\"" + name + "\", class=\"" + item.getType().getName() + "\"" +
+        getReporter().debug("[found  ] " + "layer=\"" + name + "\", provider=\"" + item.getType().getName() + "\"" +
             (item.getJarPath() == null ? "" : ", jar=\"" + item.getJarPath() + "\""));
     }
 
@@ -1098,7 +1086,7 @@ public class SPLBranch implements ServiceProviderLayer {
         }
     }
 
-    public void setParent(ServiceProviderLayer parent) {
+    public void setParent(SPL parent) {
         throw new UnimplementedMethodException();
     }
 }

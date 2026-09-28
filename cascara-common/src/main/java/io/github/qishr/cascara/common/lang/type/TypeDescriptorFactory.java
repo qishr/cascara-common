@@ -39,7 +39,7 @@ import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.service.AbstractServiceProviderFactory;
 import io.github.qishr.cascara.common.service.CapabilityQueries;
 import io.github.qishr.cascara.common.service.ServiceException;
-import io.github.qishr.cascara.common.service.ServiceProviderLayer;
+import io.github.qishr.cascara.common.service.SPL;
 
 @Beta
 public class TypeDescriptorFactory extends AbstractServiceProviderFactory {
@@ -48,7 +48,7 @@ public class TypeDescriptorFactory extends AbstractServiceProviderFactory {
         super();
     }
 
-    public TypeDescriptorFactory(ServiceProviderLayer layer) {
+    public TypeDescriptorFactory(SPL layer) {
         super(layer);
     }
 

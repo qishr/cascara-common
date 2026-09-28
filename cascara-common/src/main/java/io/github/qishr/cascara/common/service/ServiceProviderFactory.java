@@ -49,7 +49,7 @@ public class ServiceProviderFactory extends AbstractServiceProviderFactory {
         super();
     }
 
-    public ServiceProviderFactory(ServiceProviderLayer layer) {
+    public ServiceProviderFactory(SPL layer) {
         super(layer);
     }
 

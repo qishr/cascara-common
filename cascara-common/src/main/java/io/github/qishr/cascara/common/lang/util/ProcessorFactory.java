@@ -44,7 +44,7 @@ import io.github.qishr.cascara.common.lang.processor.Tokenizer;
 import io.github.qishr.cascara.common.service.AbstractServiceProviderFactory;
 import io.github.qishr.cascara.common.service.CapabilityQueries;
 import io.github.qishr.cascara.common.service.ServiceException;
-import io.github.qishr.cascara.common.service.ServiceProviderLayer;
+import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.ContentType;
 
 @Beta
@@ -55,7 +55,7 @@ public class ProcessorFactory extends AbstractServiceProviderFactory {
         super();
     }
 
-    public ProcessorFactory(ServiceProviderLayer layer) {
+    public ProcessorFactory(SPL layer) {
         super(layer);
     }
 

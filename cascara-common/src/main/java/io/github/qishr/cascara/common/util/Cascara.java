@@ -4,12 +4,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.Nullable;
@@ -29,6 +33,18 @@ public class Cascara {
 
     private String homeEnvVar;
     private Path homePath;
+    private FileSystem vfs;
+
+    private Cascara() {
+        setHomePathInternal(resolvePath(getHome()));
+    }
+
+    private static Cascara instance() {
+        if (INSTANCE == null) {
+            INSTANCE = new Cascara();
+        }
+        return INSTANCE;
+    }
 
     public static boolean isFileTimeSupported() {
         return !getHomePath().toUri().getScheme().equals("jar");
@@ -101,7 +117,7 @@ public class Cascara {
     @Experimental
     public static void setHomePath(Path path) {
         instance().homeEnvVar = null;
-        instance().homePath = path;
+        instance().setHomePathInternal(path);
     }
 
     /// The path of the content types registry file.
@@ -180,7 +196,105 @@ public class Cascara {
         return highestVersionString;
     }
 
-    public static SemVer toSemVer(String version) {
+    public static Path getSharedPath() {
+        return getHomePath().resolve("shared");
+    }
+
+    //
+    // Private path-related methods
+    //
+
+    private void setHomePathInternal(Path path) {
+        if (vfs != null && vfs.isOpen()) {
+            try {
+                vfs.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        Pair<Path,String> zipPaths = splitZipPath(path);
+
+        if (zipPaths == null) {
+            homePath = path;
+        } else {
+            Path zipFile = zipPaths.getL();
+            String entryPath = zipPaths.getR();
+
+            URI uri = URI.create("jar:" + zipFile.toUri());
+            try {
+                vfs = FileSystems.newFileSystem(uri, Map.of("create", "false"));
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            path = vfs.getPath(entryPath);
+            homePath = path;
+        }
+    }
+
+    private static Pair<Path,String> splitZipPath(Path path) {
+        String pathString = path.toString();
+        int bang = pathString.indexOf("!");
+        if (bang == -1) {
+            return null;
+        }
+        String zipFile = pathString.substring(0, bang);
+        String entryPath = pathString.substring(bang + 1);
+
+        if (zipFile.startsWith("jar:")) {
+            zipFile = zipFile.substring(4);
+        }
+
+        return Pair.of(Path.of(zipFile), entryPath);
+    }
+
+    private static Path resolvePath(String pathString) {
+        return Path.of(pathString);
+    }
+
+    @Nullable
+    private String getHome() {
+        String home = getHomeFromEnvVar("CASCARA_HOME");
+        if (home == null) {
+            home = getHomeFromEnvVar("CASC_HOME");
+        }
+        if (home == null) {
+            String userHome = System.getProperty("user.home");
+            home = userHome + File.separator + ".cascara";
+        }
+        return home;
+    }
+
+    @Nullable
+    private String getHomeFromEnvVar(String envVar) {
+        String home = System.getenv(envVar);
+        if (home != null) {
+            homeEnvVar = envVar;
+        }
+        return home;
+    }
+
+    //
+    // Private version-relate methods
+    //
+
+    private static boolean isVersionDirectory(Path file) {
+        if (!Files.isDirectory(file)) {
+            return false;
+        }
+        String name = file.getFileName().toString();
+        try {
+            toSemVer(name);
+            return true;
+        } catch (SemVerException e) {
+            return false;
+        }
+    }
+
+    private static SemVer toSemVer(String version) {
         if (version == null || version.isBlank()) {
             throw new UnexpectedNullParameterException("version");
         }
@@ -197,63 +311,5 @@ public class Cascara {
             return new SemVer(version + ".0");
         }
         return new SemVer(version + ".0.0");
-    }
-
-    public static Path getSharedPath() {
-        return getHomePath().resolve("shared");
-    }
-
-    //
-    // Private Helpers
-    //
-
-    private Cascara() {
-        homePath = resolvePath(getHome());
-    }
-
-    private static Cascara instance() {
-        if (INSTANCE == null) {
-            INSTANCE = new Cascara();
-        }
-        return INSTANCE;
-    }
-
-    private static Path resolvePath(String pathString) {
-        return Path.of(pathString);
-    }
-
-    private static boolean isVersionDirectory(Path file) {
-        if (!Files.isDirectory(file)) {
-            return false;
-        }
-        String name = file.getFileName().toString();
-        try {
-            toSemVer(name);
-            return true;
-        } catch (SemVerException e) {
-            return false;
-        }
-    }
-
-    @Nullable
-    private String getHome() {
-        String home = tryGetHome("CASCARA_HOME");
-        if (home == null) {
-            home = tryGetHome("CASC_HOME");
-        }
-        if (home == null) {
-            String userHome = System.getProperty("user.home");
-            home = userHome + File.separator + ".cascara";
-        }
-        return home;
-    }
-
-    @Nullable
-    private String tryGetHome(String envVar) {
-        String home = System.getenv(envVar);
-        if (home != null) {
-            homeEnvVar = envVar;
-        }
-        return home;
     }
 }

@@ -34,8 +34,7 @@
 
 package test.spl;
 
-import io.github.qishr.cascara.common.service.ServiceProviderLayer;
-import io.github.qishr.cascara.common.service.ServiceProviderRoot;
+import io.github.qishr.cascara.common.service.SPL;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -48,8 +47,8 @@ class ServiceProviderRootSecurityTests {
     @Test
     @DisplayName("ServiceProviderRoot identity is idempotent and immutable")
     void testRootIdentityIsStable() {
-        ServiceProviderRoot root1 = ServiceProviderLayer.getRoot();
-        ServiceProviderRoot root2 = ServiceProviderLayer.getRoot();
+        SPL root1 = SPL.getRoot();
+        SPL root2 = SPL.getRoot();
 
         assertNotNull(root1);
         assertSame(root1, root2, "Repeated getRoot() calls must always return the exact same instance");
@@ -58,7 +57,7 @@ class ServiceProviderRootSecurityTests {
     @Test
     @DisplayName("JPMS prevents external reflection from accessing internal SPLRoot state")
     void testInternalPackageEncapsulation() {
-        ServiceProviderRoot root = ServiceProviderLayer.getRoot();
+        SPL root = SPL.getRoot();
 
         // Attempt to reflectively inspect internal fields of the implementation class
         Class<?> implClass = root.getClass(); // SPLRoot

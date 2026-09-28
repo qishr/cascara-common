@@ -32,29 +32,4 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package test.spl;
-
-import io.github.qishr.cascara.common.service.SPL;
-
-public class SPLTestMain {
-    public static void main(String[] args) {
-        try {
-            SPLTestInterface i = SPL.load(SPLTestInterface.class);
-
-            if (i == null) {
-                System.err.println("Failed to load SPLTestInterface");
-            } else {
-                System.err.println("Loaded SPLTestInterface");
-            }
-
-            // ServiceProviderLayer root = ServiceProviderLayer.getRoot();
-            // root.getProviders().forEach(provider ->
-            //     System.out.println("REGISTERED: " + provider.getTypeName())
-            // );
-        } catch (Throwable t) {
-            System.err.println("SPL_INIT_FAILED: " + t.getMessage());
-            t.printStackTrace(System.err);
-            System.exit(1);
-        }
-    }
-}
+package io.github.qishr.cascara.common.property;

@@ -57,8 +57,7 @@ import io.github.qishr.cascara.common.lang.type.ScalarDescriptor;
 import io.github.qishr.cascara.common.lang.util.SourceBuffer;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProviderFactory;
-import io.github.qishr.cascara.common.service.ServiceProviderLayer;
-import io.github.qishr.cascara.common.service.ServiceProviderRoot;
+import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.trackable.tracker.ArrayChangeTracker;
 import io.github.qishr.cascara.common.util.Cascara;
 import test.interfaces.DemoSingleton;
@@ -77,12 +76,12 @@ class ModuleRegistrationTests extends SplTestBase {
         // Verify SPL reads correctly from NIO Path operations
         Reporter reporter = new StandardReporter();
         //.setLevel(Level.DEBUG);
-        ServiceProviderRoot spl = ServiceProviderLayer.getRoot(reporter);
+        SPL spl = SPL.getRoot(reporter);
         // ServiceProviderRoot root = ServiceProviderLayer.getRoot();
         assertNotNull(spl);
 
         // Verify SPL works
-        SourceBuffer buf = ServiceProviderLayer.loadDefault(SourceBuffer.class);
+        SourceBuffer buf = SPL.load(SourceBuffer.class);
         assertNotNull(buf);
 
         // Verify Service Provider factories work
@@ -96,7 +95,7 @@ class ModuleRegistrationTests extends SplTestBase {
     @Test
     void test_loadingAndUnloading() throws IOException {
         // Create a layer
-        ServiceProviderLayer layer = spl.create("testLayer");
+        SPL layer = spl.create("testLayer");
 
         List<ArrayChangeTracker<ServiceMetadata>> changes = new ArrayList<>();
         spl.getVisibleProviders().addArrayListener((array, change) -> {
@@ -137,7 +136,7 @@ class ModuleRegistrationTests extends SplTestBase {
         spl.getVisibleProviders().addArrayListener((array, change) -> changes.add(change));
 
         // Create a layer
-        ServiceProviderLayer layer = spl.create("singletonLayer");
+        SPL layer = spl.create("singletonLayer");
 
         // Create synthetic module containing DemoSingleton
         Path singletonJar = createSingletonModule();
@@ -148,7 +147,7 @@ class ModuleRegistrationTests extends SplTestBase {
         assertEquals(1, providers.size());
 
         // Verify initializer ran
-        DemoSingleton firstInstance = ServiceProviderLayer.loadDefault(DemoSingleton.class);
+        DemoSingleton firstInstance = SPL.load(DemoSingleton.class);
         assertNotNull(firstInstance);
         assertEquals(1, firstInstance.getInitCount());
 
@@ -172,13 +171,13 @@ class ModuleRegistrationTests extends SplTestBase {
         layer.registerJar(singletonJar);
 
         // New instance should be created
-        DemoSingleton secondInstance = ServiceProviderLayer.loadDefault(DemoSingleton.class);
+        DemoSingleton secondInstance = SPL.load(DemoSingleton.class);
         assertNotNull(secondInstance);
         assertEquals(1, secondInstance.getInitCount());
         assertNotEquals(firstInstance.getUuid(), secondInstance.getUuid());
 
         // Asking for the same neo-singleton again should return the same instance
-        DemoSingleton thirdInstance = ServiceProviderLayer.loadDefault(DemoSingleton.class);
+        DemoSingleton thirdInstance = SPL.load(DemoSingleton.class);
         assertNotNull(thirdInstance);
         assertEquals(1, thirdInstance.getInitCount());
         assertEquals(secondInstance.getUuid(), thirdInstance.getUuid());

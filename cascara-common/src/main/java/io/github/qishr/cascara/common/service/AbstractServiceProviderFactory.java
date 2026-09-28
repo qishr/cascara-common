@@ -42,15 +42,15 @@ import java.util.function.Predicate;
 import io.github.qishr.cascara.common.annotation.Nullable;
 
 public class AbstractServiceProviderFactory {
-    private final ServiceProviderLayer layer;
+    private final SPL layer;
     private Map<String,Map<Predicate<ServiceMetadata>,ServiceMetadata>> cache = new HashMap<>();
 
     public AbstractServiceProviderFactory() {
         this(null);
     }
 
-    public AbstractServiceProviderFactory(ServiceProviderLayer layer) {
-        this.layer = layer == null ? ServiceProviderLayer.getRoot() : layer;
+    public AbstractServiceProviderFactory(SPL layer) {
+        this.layer = layer == null ? SPL.getRoot() : layer;
     }
 
     @Nullable
@@ -86,6 +86,6 @@ public class AbstractServiceProviderFactory {
 
         if (provider == null) return null;
 
-        return ServiceProviderLayer.loadProvider(serviceType, provider);
+        return SPL.load(serviceType, provider);
     }
 }
