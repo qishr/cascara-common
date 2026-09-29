@@ -72,7 +72,7 @@ public enum GenericDiagnosticCode implements DiagnosticCode {
     DIAGNOSTIC_FORMATTING_ERROR("ERROR-406", "Problem encountered while formatting error with code {0}: {1}"),
 
     // Resource Errors
-    NO_RESOURCE_PROVIDER("ERROR-501", "No resource provider");
+    NO_RESOURCE_PROVIDER("ERROR-501", "No resource provider for \"{0}\" URI scheme");
 
 
     private final String code;

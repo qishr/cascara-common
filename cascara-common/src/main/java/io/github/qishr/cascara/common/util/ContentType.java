@@ -39,6 +39,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.DataField;
+import io.github.qishr.cascara.common.annotation.SchemaDefinition;
+import io.github.qishr.cascara.common.annotation.SchemaProperty;
 
 /// A stable, persisted canonical content type used throughout Cascara.
 /// This class represents the authoritative identity of a content type,
@@ -52,18 +54,22 @@ import io.github.qishr.cascara.common.annotation.DataField;
 ///
 /// All editor selection, syntax highlighting, file associations, and
 /// user preferences should reference ContentType.
+@SchemaDefinition
 public class ContentType {
-    @DataField
+
+    public static final String schema = "cascara://core/schema-service/draft/cascara.common.io/content-type/1.0.0";
+
+    @SchemaProperty
     /// Unique ID, used for menu items etc
     protected String canonicalId = "";
 
-    @DataField
+    @SchemaProperty
     protected String name = "";
 
-    @DataField
+    @SchemaProperty
     protected List<String> mimeTypes = new ArrayList<>();
 
-    @DataField
+    @SchemaProperty
     protected List<String> suffixes = new ArrayList<>();
 
     public ContentType() {}

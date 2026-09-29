@@ -57,7 +57,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.github.qishr.cascara.common.annotation.NoAutoRegistration;
 import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.annotation.Priority;
 import io.github.qishr.cascara.common.annotation.SingletonInitializer;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
@@ -225,14 +227,54 @@ public class SPLBranch implements SPL {
     @Override
     public ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType) {
         List<ServiceMetadata> all = internalFindAllProviders(serviceType, null, null);
-        return all.isEmpty() ? null : all.getFirst();
+
+
+        // // TODO: Store priority in ServiceMetadata once...
+        // ServiceMetadata highestPriorityProvider = null;
+        // int highestPriority = -3;
+        // for (ServiceMetadata provider : all) {
+        //     int priority = SPLUtils.getPriority(provider);
+        //     if (priority > highestPriority) {
+        //         highestPriority = priority;
+        //         highestPriorityProvider = provider;
+        //     }
+        // }
+
+        ServiceMetadata highestPriorityProvider = getHighestPriority(all);
+        return highestPriorityProvider;
+
+
+        // // TODO: Use priority
+        // return all.isEmpty() ? null : all.getFirst();
+
+
     }
 
     /// Retrieves metadata of the nearest known provider whose capabilities satisfy the given predicate.
     @Override
     public ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate) {
         List<ServiceMetadata> all = internalFindAllProviders(serviceType, capabilityPredicate, null);
-        return all.isEmpty() ? null : all.getFirst();
+
+
+        // // TODO: Store priority in ServiceMetadata once...
+        // ServiceMetadata highestPriorityProvider = null;
+        // int highestPriority = -3;
+        // for (ServiceMetadata provider : all) {
+        //     int priority = SPLUtils.getPriority(provider);
+        //     if (priority > highestPriority) {
+        //         highestPriority = priority;
+        //         highestPriorityProvider = provider;
+        //     }
+        // }
+
+        ServiceMetadata highestPriorityProvider = getHighestPriority(all);
+        return highestPriorityProvider;
+
+
+        // // TODO: Use priority
+        // return all.isEmpty() ? null : all.getFirst();
+
+
     }
 
     /// Retrieves metadata of all known providers of the specified service type.
@@ -318,19 +360,9 @@ public class SPLBranch implements SPL {
             if (existing != null) {
                 return (T) existing;
             }
-
             T instance = factory.get();
-
-
-
-            // initializeSingleton(instance);
-            // singletonCache.put(singletonClassName, instance);
-
             singletonCache.put(singletonClassName, instance);
             initializeSingleton(instance);
-
-
-
             return instance;
         }
     }
@@ -447,25 +479,20 @@ public class SPLBranch implements SPL {
         } else {
             getReporter().debug("Discovering providers in " + moduleName);
             for (String providerClassName : candidateClassNames) {
-                // getReporter().trace("Checking candiddate: " + providerClassName);
-
                 if (isRegistered(providerClassName)) {
                     continue;
                 }
-
                 Class<?> clazz = null;
                 try {
                     clazz = classLoader != null
                         ? classLoader.loadClass(providerClassName)
                         : Class.forName(module, providerClassName);
-
                 } catch (ServiceException e) {
                     getReporter().trace("Class \"" + providerClassName + "\" is not a Cascara ServiceProvider");
                 } catch (NoClassDefFoundError e) {
-                    // TODO: Better exception handling
-                    getReporter().warn(ServiceDiagnosticCode.FAILED_TO_LOAD_CLASS, providerClassName, e.getMessage());
+                    getReporter().warn(ServiceDiagnosticCode.CLASS_NOT_FOUND, providerClassName);
                 } catch (ClassNotFoundException e) {
-                    getReporter().warn(ServiceDiagnosticCode.FAILED_TO_LOAD_CLASS, providerClassName, e.getMessage());
+                    getReporter().warn(ServiceDiagnosticCode.CLASS_NOT_FOUND, providerClassName);
                 } catch (Exception e) {
                     getReporter().warn(ServiceDiagnosticCode.FAILED_TO_INSTANTIATE_CLASS, providerClassName, e.getMessage());
                 }
@@ -476,7 +503,7 @@ public class SPLBranch implements SPL {
                         && !java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
 
                     getReporter().trace("  Attempting to register " + providerClassName);
-                    registerClassInternal((Class) clazz);
+                    registerClassInternal((Class) clazz, true);
                 }
             }
         }
@@ -490,7 +517,7 @@ public class SPLBranch implements SPL {
         if (type == null || !ServiceProvider.class.isAssignableFrom(type)) {
             return;
         }
-        registerClassInternal(type);
+        registerClassInternal(type, false);
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
     }
 
@@ -548,50 +575,13 @@ public class SPLBranch implements SPL {
     // Private Methods
     //
 
-
-
-
-
-
-    //
-    // TODO: Going this route, SchemaResolver an a bunch of other things
-    // don't get registered because it's not handling neo-Singletons.
-    // Strangely, TypeDescriptors aren't being registered either.
-    //
-
-
-    // protected void registerViaServiceLoader() {
-
-    //     //
-    //     // TODO: Going this route, SchemaResolver an a bunch of other things
-    //     // don't get registered because it's not handling neo-Singletons.
-    //     // Strangely, TypeDescriptors aren't being registered either.
-    //     //
-
-    //     try {
-    //         ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
-    //         for (ServiceProvider provider : loader) {
-    //             try {
-    //                 if (!providersByFqcn.containsKey(provider.getClass().getName())) {
-    //                     registerProvider(provider, null);
-    //                 }
-    //             } catch (ServiceConfigurationError e) {
-    //                 bootError(e, ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
-    //             }
-    //         }
-    //     } catch (ServiceConfigurationError e) {
-    //         bootError(e, ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
-    //     }
-    // }
-
     protected void registerViaServiceLoader() {
+        // TODO: This doesn't work and probably isn't needed anyway...
         // 1. Standard classic SPI fallback via META-INF/services
         // try {
-
         //     // TODO: This throws a ServiceConfigurationError for classes
         //     // with no public constructorm like neo-singletons.
         //     ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
-
         //     for (ServiceProvider provider : loader) {
         //         try {
         //             if (!providersByFqcn.containsKey(provider.getClass().getName())) {
@@ -610,6 +600,19 @@ public class SPLBranch implements SPL {
         if (cl != null) {
             scanClasspathProviders(cl);
         }
+    }
+
+    private ServiceMetadata getHighestPriority(List<ServiceMetadata> all) {
+        ServiceMetadata highestPriorityProvider = null;
+        int highestPriority = -3;
+        for (ServiceMetadata provider : all) {
+            int priority = provider.getPriority();
+            if (priority > highestPriority) {
+                highestPriority = priority;
+                highestPriorityProvider = provider;
+            }
+        }
+        return highestPriorityProvider;
     }
 
     private void scanClasspathProviders(ClassLoader cl) {
@@ -651,7 +654,7 @@ public class SPLBranch implements SPL {
                                     ctor.trySetAccessible();
                                 }
                                 ServiceProvider providerInstance = ctor.newInstance();
-                                registerProvider(providerInstance, null);
+                                registerProvider(providerInstance, null, true);
                             }
                         } catch (Throwable ignored) {
                             // Skip classes that cannot be initialized on classpath
@@ -663,12 +666,6 @@ public class SPLBranch implements SPL {
             // Fallback reading errors
         }
     }
-
-
-
-
-
-
 
     //
     //
@@ -713,12 +710,12 @@ public class SPLBranch implements SPL {
         }
     }
 
-    private void registerClassInternal(Class<?> type) {
+    private void registerClassInternal(Class<?> type, boolean isAutoRegistration) {
         String providerFqcn = type.getName();
         if (!isRegistered(providerFqcn)) {
             ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(type);
             Path jarPath = modulePath != null ? modulePath.getPathForModule(type.getModule().getName()) : null;
-            registerProvider(instance, jarPath);
+            registerProvider(instance, jarPath, isAutoRegistration);
             if (isBooting) {
                 rootLayer.bootProviders.add(providerFqcn);
             }
@@ -790,7 +787,7 @@ public class SPLBranch implements SPL {
                 String moduleName = provider.getClass().getModule().getName();
                 Path jarPath = modulePath.getPathForModule(moduleName);
                 try {
-                    registerProvider(provider, jarPath);
+                    registerProvider(provider, jarPath, true);
                 } catch (Exception e) {
                     registrationError("Failed to query module " + moduleName + ".", null, e);
                 } catch (AbstractMethodError | NoClassDefFoundError | ServiceConfigurationError e) {
@@ -823,7 +820,7 @@ public class SPLBranch implements SPL {
                             Class<? extends ServiceProvider> providerClass = (Class<? extends ServiceProvider>) clazz;
 
                             ServiceProvider providerInstance = SPLUtils.instantiate(providerClass);
-                            registerProvider(providerInstance, jarPath);
+                            registerProvider(providerInstance, jarPath, true);
                         }
                     } catch (AbstractMethodError | NoClassDefFoundError | ServiceConfigurationError e) {
                         registrationError("Incompatible module.", jarPath, e);
@@ -839,16 +836,25 @@ public class SPLBranch implements SPL {
         return rootLayer.bootProviders.contains(providerFqcn) || providersByFqcn.containsKey(providerFqcn);
     }
 
-    private void registerProvider(ServiceProvider instance, Path jarPath) {
-        getReporter().trace("  Registering %s", instance.getClass().getName());
+    private boolean noAutoRegistration(Class<?> clazz) {
+        return clazz.isAnnotationPresent(NoAutoRegistration.class);
+    }
+
+    private void registerProvider(ServiceProvider instance, Path jarPath, boolean isAutoRegistration) {
         try {
             Class<? extends ServiceProvider> providerClass = instance.getClass();
-            List<Class<ServiceProvider>> interfaceHierarchy = new ArrayList<>();
+            if (isAutoRegistration && noAutoRegistration(providerClass)) {
+                getReporter().trace("  Not auto-registering %s", instance.getClass().getName());
+                return;
+            }
 
+            getReporter().trace("  Registering %s", instance.getClass().getName());
+            List<Class<ServiceProvider>> interfaceHierarchy = new ArrayList<>();
             if (collectCascaraModuleInterfaces(providerClass, interfaceHierarchy)) {
 
                 // Experimental:
                 // Store the rich ContentTypes that services support
+                // We probably want services to spply an array/list of content types
                 ContentType contentType = null;
                 if (instance instanceof ContentTypeProvider ctp) {
                     contentType = ctp.getContentType();
@@ -863,15 +869,19 @@ public class SPLBranch implements SPL {
                     }
                 }
 
+
+                Priority annotation = providerClass.getAnnotation(Priority.class);
+                int priority =  annotation != null ? annotation.value() : 0; // Default priority is 0
+
                 Properties providerProperties = getProviderProperties(instance, jarPath);
-                ServiceMetadata provider = new ServiceMetadata(this, providerClass, providerProperties, contentType, isSingleton);
+                ServiceMetadata provider = new ServiceMetadata(this, providerClass, providerProperties, contentType, isSingleton, priority);
 
                 orderedProviders.add(provider);
                 providersByFqcn.put(providerClass.getName(), provider);
 
                 for (Class<ServiceProvider> serviceInterface : interfaceHierarchy) {
 
-                    ServiceMetadata service = new ServiceMetadata(this, serviceInterface, getServiceProperties(serviceInterface), null, false);
+                    ServiceMetadata service = new ServiceMetadata(this, serviceInterface, getServiceProperties(serviceInterface), null, false, 0);
                     servicesByFqcn.put(serviceInterface.getName(), service);
 
                     Set<ServiceMetadata> providers = providersByServiceType.get(serviceInterface);

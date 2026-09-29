@@ -34,18 +34,19 @@
 
 package io.github.qishr.cascara.common.annotation;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
 
+/// Prevents SPL from automatically registering this service provider class during
+/// automatic classpath/modulepath boot scans.
+///
+/// Classes tagged with this annotation must be registered manually via
+/// `SPL.getRoot().registerClass(...)` or direct serializer registration.
+@Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface Priority {
-    public static final int HIGHEST =  2;
-    public static final int HIGH    =  1;
-    public static final int DEFAULT =  0;
-    public static final int LOW     = -1;
-    public static final int LOWEST  = -2;
-    public int value() default Priority.DEFAULT;
+public @interface NoAutoRegistration {
 }

@@ -32,7 +32,6 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.annotation;
 
 import java.lang.annotation.*;

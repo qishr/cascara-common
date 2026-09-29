@@ -47,13 +47,15 @@ public class ServiceMetadata {
     private final Properties properties;
     private final ContentType contentType;
     private final boolean isSingleton;
+    private final int priority;
 
-    public ServiceMetadata(SPL layer, Class<? extends ServiceProvider> type, Properties properties, ContentType contentType, boolean isSingleton) {
+    public ServiceMetadata(SPL layer, Class<? extends ServiceProvider> type, Properties properties, ContentType contentType, boolean isSingleton, int priority) {
         this.layer = layer;
         this.type = type;
         this.properties = properties;
         this.contentType = contentType;
         this.isSingleton = isSingleton;
+        this.priority = priority;
         String capTypeString = properties.getString("javaType");
         try {
             capabilityType = capTypeString == null ? null : Class.forName(capTypeString);
@@ -67,6 +69,10 @@ public class ServiceMetadata {
 
     public boolean isSingleton() {
         return isSingleton;
+    }
+
+    public int getPriority() {
+        return priority;
     }
 
     public boolean getBooleanCapability(String capName) {

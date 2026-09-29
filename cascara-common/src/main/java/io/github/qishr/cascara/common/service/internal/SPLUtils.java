@@ -255,12 +255,7 @@ public class SPLUtils {
 
     private static ServiceMetadata getDefaultMeta(List<ServiceMetadata> providers) {
         return providers.stream()
-            .max(Comparator.comparingInt(SPLUtils::getPriority))
+            .max(Comparator.comparingInt(s -> s.getPriority()))
             .orElseThrow();
-    }
-
-    private static int getPriority(ServiceMetadata providerMeta) {
-        Priority annotation = providerMeta.getType().getAnnotation(Priority.class);
-        return annotation != null ? annotation.value() : 0; // Default priority is 0
     }
 }

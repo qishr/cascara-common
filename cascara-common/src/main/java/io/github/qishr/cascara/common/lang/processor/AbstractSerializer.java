@@ -256,7 +256,7 @@ public abstract class AbstractSerializer<
         }
 
         // 2. Process dynamic settings (@YamlAnyGetter)
-        for (Method method : JreUtils.getAllMethods(jvmType)) { //.getDeclaredMethods()) {
+        for (Method method : JreUtils.getAllMethods(jvmType)) {
             if (method.isAnnotationPresent(AnyGetter.class)) {
                 // Try to make the method accessible. If this fails, continue to the next field.
                 try {
@@ -560,7 +560,7 @@ public abstract class AbstractSerializer<
 
     private List<?> deserializeList(AstNode node, Type targetType) {
         if (node == null) return new ArrayList<>();
-        Type itemIype = getGenericElementTypeFromListType(targetType);
+        Type itemIype = ReflectionUtils.getGenericElementTypeFromListType(targetType);
 
         if (itemIype == null) {
             throw new UnexpectedNullReturnException("ReflectionUtils", "getGenericTypeOfListField");
@@ -597,8 +597,8 @@ public abstract class AbstractSerializer<
         @SuppressWarnings("unchecked")
 		M mapNode = (M)node;
 
-        Type keyType = getGenericKeyTypeFromMapType(targetType);
-        Type valType = getGenericValueTypeFromMapType(targetType);
+        Type keyType = ReflectionUtils.getGenericKeyTypeFromMapType(targetType);
+        Type valType = ReflectionUtils.getGenericValueTypeFromMapType(targetType);
         Map<Object, Object> result = new LinkedHashMap<>();
 
         for (E entry : mapNode.getEntries()) {
@@ -769,39 +769,6 @@ public abstract class AbstractSerializer<
         return new LinkedHashMap<>();
     }
 
-    @Nullable
-    private Type getGenericKeyTypeFromMapType(Type mapType) {
-        if (ReflectionUtils.canAssign(mapType, Map.class)) {
-            return getParameterizedTypeFromCollectionType(mapType, 0);
-        }
-        return null;
-    }
-
-    @Nullable
-    private Type getGenericValueTypeFromMapType(Type mapType) {
-        if (ReflectionUtils.canAssign(mapType, Map.class)) {
-            return getParameterizedTypeFromCollectionType(mapType, 1);
-        }
-        return null;
-    }
-
-    @Nullable
-    private Type getGenericElementTypeFromListType(Type listType) {
-        if (ReflectionUtils.canAssign(listType, List.class)) {
-            return getParameterizedTypeFromCollectionType(listType, 0);
-        }
-        return null;
-    }
-
-    private Type getParameterizedTypeFromCollectionType(Type collectionType, int paramIndex) {
-        if (collectionType instanceof ParameterizedType parameterizedType) {
-            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-            if (actualTypeArguments.length > paramIndex) {
-                return actualTypeArguments[paramIndex];
-            }
-        }
-        return Object.class;
-    }
 
     private void populateCollectionGeneric(SequenceAstNode<?> seqNode,
                                         Collection<Object> collection,
@@ -926,23 +893,7 @@ public abstract class AbstractSerializer<
 
     /// Retrieves all declared fields for a class and all its superclasses (excluding Object).
     protected List<Field> getAllSerializableFields(Class<?> jvmType) {
-        List<Field> fields = new ArrayList<>();
-
-        // Start with the current class and move up the hierarchy
-        Class<?> currentClass = jvmType;
-
-        // Stop when we reach Object.class, as it has no serializable fields we care about
-        while (currentClass != null && currentClass != Object.class) {
-            // Add all fields declared in the current class (but not its superclasses)
-            for (Field field : currentClass.getDeclaredFields()) {
-                if (!field.isAnnotationPresent(DataIgnore.class)) {
-                    fields.add(field);
-                }
-            }
-            // Move up to the superclass for the next iteration
-            currentClass = currentClass.getSuperclass();
-        }
-        return fields;
+        return ReflectionUtils.getAllFields(jvmType, f -> f.isAnnotationPresent(DataIgnore.class));
     }
 
     @SuppressWarnings("unchecked")

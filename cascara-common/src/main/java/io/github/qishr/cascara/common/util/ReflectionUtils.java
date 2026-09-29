@@ -36,6 +36,7 @@
 package io.github.qishr.cascara.common.util;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -43,11 +44,20 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 
+import io.github.qishr.cascara.common.annotation.DataIgnore;
 import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.annotation.SchemaDefinition;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
+import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
+import io.github.qishr.cascara.common.service.ServiceMetadata;
 
 public class ReflectionUtils {
 
@@ -185,6 +195,79 @@ public class ReflectionUtils {
         throw new SerializerException(GenericDiagnosticCode.ERROR, "Failed to classify type: " + jvmType);
     }
 
+    @Nullable
+    public static Type getGenericKeyTypeFromMapType(Type mapType) {
+        if (canAssign(mapType, Map.class)) {
+            return getParameterTypeFromGenericType(mapType, 0);
+        }
+        return null;
+    }
+
+    @Nullable
+    public static Type getGenericValueTypeFromMapType(Type mapType) {
+        if (canAssign(mapType, Map.class)) {
+            return getParameterTypeFromGenericType(mapType, 1);
+        }
+        return null;
+    }
+
+    @Nullable
+    public static Type getGenericElementTypeFromListType(Type listType) {
+        if (canAssign(listType, List.class)) {
+            return getParameterTypeFromGenericType(listType, 0);
+        }
+        return null;
+    }
+
+    public static Type getParameterTypeFromGenericType(Type collectionType, int paramIndex) {
+        if (collectionType instanceof ParameterizedType parameterizedType) {
+            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+            if (actualTypeArguments.length > paramIndex) {
+                return actualTypeArguments[paramIndex];
+            }
+        }
+        return Object.class;
+    }
+
+    public static List<Field> getAllFields(Class<?> clazz) {
+        return getAllFields(clazz, null);
+    }
+
+    public static List<Field> getAllFields(Class<?> clazz, Function<Field,Boolean> excludeFunction) {
+        List<Field> fields = new ArrayList<>();
+        Class<?> currentClass = clazz;
+        while (currentClass != null && currentClass != Object.class) {
+            // Add all fields declared in the current class (but not its superclasses)
+            for (Field field : currentClass.getDeclaredFields()) {
+                if (excludeFunction == null || !excludeFunction.apply(field)) {
+                    fields.add(field);
+                }
+            }
+            // Move up to the superclass for the next iteration
+            currentClass = currentClass.getSuperclass();
+        }
+        return fields;
+    }
+
+    public static Set<Class<?>> getReferencedClasses(Class<?> clazz) {
+        return getReferencedClasses(clazz, (Function<Class<?>,Boolean>)null);
+    }
+
+    public static Set<Class<?>> getReferencedClasses(Class<?> clazz, Set<String> excludeFunction) {
+        if (excludeFunction == null) {
+            return getReferencedClasses(clazz, (Function<Class<?>,Boolean>)null);
+        } else {
+            return getReferencedClasses(clazz, c -> excludeFunction.contains(c.getName()));
+        }
+    }
+
+    public static Set<Class<?>> getReferencedClasses(Class<?> clazz, Function<Class<?>,Boolean> excludeFunction) {
+        Set<Class<?>> visited = new HashSet<>();
+        Set<Class<?>> collected = new HashSet<>();
+        collectReferencedClasses(clazz, excludeFunction, visited, collected);
+        return collected;
+    }
+
     public static String getTypeName(Type jvmType) {
         Class<?> jvmClass = getRawClass(jvmType);
         return jvmClass.getName();
@@ -219,35 +302,6 @@ public class ReflectionUtils {
             }
         }
         return null;
-    }
-
-    private static boolean hasTestAnnotation(Method method) {
-        Annotation[] annotations = method.getDeclaredAnnotations();
-        for (Annotation annotation : annotations) {
-            Class<? extends Annotation> type = annotation.annotationType();
-            String name = type.getName();
-            if (name.startsWith("org.junit.jupiter.api.Test")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static List<Method> getMethodsByName(Class<?> clazz, String name) {
-        List<Method> methods = new ArrayList<>();
-        for (Method method : clazz.getMethods()){
-            if(method.getName().equals(name)){
-                // System.out.println("Possible match : " + method);
-                methods.add(method);
-            }
-        }
-        for (Method method : clazz.getDeclaredMethods()){
-            if(method.getName().equals(name)){
-                // System.out.println("Possible match : " + method);
-                methods.add(method);
-            }
-        }
-        return methods;
     }
 
     @Nullable
@@ -287,6 +341,81 @@ public class ReflectionUtils {
             }
         }
         return null;
+    }
+
+    //
+    // Private Methods
+    //
+
+    private static boolean isExcluded(Type paramType, Function<Class<?>,Boolean> excludeFunction) {
+        Class<?> rawClass = getRawClass(paramType);
+        return excludeFunction != null && excludeFunction.apply(rawClass);
+    }
+
+    private static void collectReferencedClasses(Class<?> clazz, Function<Class<?>,Boolean> excludeFunction, Set<Class<?>> visited, Set<Class<?>> collected) {
+        // PlainMapNode node = new PlainMapNode();
+
+        for (Field field : getAllFields(clazz)) {
+            Type type = field.getGenericType();
+
+            // TODO:
+            // applyTypeAnalysis(field, node);
+            // String analyzedType = node.getString(SchemaKeyword.TYPE.asString());
+            // if (isStandardScalarType(type) ||
+            //     (analyzedType != null && !PrimitiveType.ARRAY.asString().equals(analyzedType) && !PrimitiveType.OBJECT.asString().equals(analyzedType))
+            // ) {
+            //     // It doesn't need a schema
+            //     continue;
+            // }
+
+            if (type instanceof ParameterizedType paramaterizedType) {
+                Type[] paramTypes = paramaterizedType.getActualTypeArguments();
+                for (Type paramType : paramTypes) {
+                    Class<?> rawClass = getRawClass(paramType);
+                    if (!visited.contains(rawClass)) {
+                        if (!isExcluded(paramType, excludeFunction)) {
+                            collected.add(rawClass);
+                        }
+                        visited.add(rawClass);
+                        collectReferencedClasses(rawClass, excludeFunction, visited, collected);
+                    }
+                }
+            } else {
+                Class<?> rawClass = getRawClass(type);
+                if (!isExcluded(type, excludeFunction)) {
+                    collected.add(rawClass);
+                }
+            }
+        }
+    }
+
+    private static boolean hasTestAnnotation(Method method) {
+        Annotation[] annotations = method.getDeclaredAnnotations();
+        for (Annotation annotation : annotations) {
+            Class<? extends Annotation> type = annotation.annotationType();
+            String name = type.getName();
+            if (name.startsWith("org.junit.jupiter.api.Test")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<Method> getMethodsByName(Class<?> clazz, String name) {
+        List<Method> methods = new ArrayList<>();
+        for (Method method : clazz.getMethods()){
+            if(method.getName().equals(name)){
+                // System.out.println("Possible match : " + method);
+                methods.add(method);
+            }
+        }
+        for (Method method : clazz.getDeclaredMethods()){
+            if(method.getName().equals(name)){
+                // System.out.println("Possible match : " + method);
+                methods.add(method);
+            }
+        }
+        return methods;
     }
 }
 
