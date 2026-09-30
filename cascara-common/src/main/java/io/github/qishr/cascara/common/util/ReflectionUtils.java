@@ -44,20 +44,15 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import io.github.qishr.cascara.common.annotation.DataIgnore;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.annotation.SchemaDefinition;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
-import io.github.qishr.cascara.common.service.ServiceMetadata;
 
 public class ReflectionUtils {
 

@@ -38,7 +38,6 @@ package io.github.qishr.cascara.common.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.github.qishr.cascara.common.annotation.DataField;
 import io.github.qishr.cascara.common.annotation.SchemaDefinition;
 import io.github.qishr.cascara.common.annotation.SchemaProperty;
 

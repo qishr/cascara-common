@@ -68,12 +68,11 @@ public class SPLRoot extends SPLBranch {
     private FileWatcher propsFileWatcher;
     private Properties properties;
 
-    private SPLRoot(Reporter reporter) {
+    private SPLRoot() {
         isBooting = true;
         rootLayer = this;
         name = "root";
         contentTypes = new HashSet<>();
-        setReporter(reporter);
         loadPreferences();
 
         ModuleLayer boot = ModuleLayer.boot();
@@ -113,18 +112,8 @@ public class SPLRoot extends SPLBranch {
     /// Retrieves the root Service Provider Layer.
     /// On the initial call, the root layer will be configured.
     public static SPLRoot instance() {
-        return instance(null);
-    }
-
-    /// Retrieves the root Service Provider Layer.
-    /// On the initial call, the root layer will be configured with a specified Reporter.
-    /// This reporter is used for non-fatal error and warning reporting.
-    public static SPLRoot instance(Reporter reporter) {
-        if (reporter == null) {
-            reporter = new NoOpReporter();
-        }
         if (rootLayer == null) {
-            rootLayer = new SPLRoot(reporter);
+            rootLayer = new SPLRoot();
         }
         return rootLayer;
     }

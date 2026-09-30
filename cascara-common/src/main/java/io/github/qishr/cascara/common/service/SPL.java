@@ -47,12 +47,6 @@ import io.github.qishr.cascara.common.trackable.TrackableArray;
 
 public interface SPL extends TreeNode<SPL> {
     /// Retrieves the root Service Provider Layer.
-    /// On the initial call, the root layer will be configured with a specified Reporter.
-    /// This reporter is used for non-fatal error and warning reporting.
-    static SPL getRoot(Reporter reporter) {
-        return SPLRoot.instance(reporter);
-    }
-
     static SPL getRoot() {
         return SPLRoot.instance();
     }
