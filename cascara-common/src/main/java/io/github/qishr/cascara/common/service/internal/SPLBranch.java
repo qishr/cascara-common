@@ -34,14 +34,10 @@
 
 package io.github.qishr.cascara.common.service.internal;
 
-import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleFinder;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,7 +46,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceConfigurationError;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -61,9 +56,7 @@ import io.github.qishr.cascara.common.annotation.NoAutoRegistration;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.annotation.Priority;
 import io.github.qishr.cascara.common.annotation.SingletonInitializer;
-import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
 import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
-import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
@@ -72,22 +65,22 @@ import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.service.ContentTypeProvider;
-import io.github.qishr.cascara.common.service.ServiceMessage;
+import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.service.ServiceException;
+import io.github.qishr.cascara.common.service.ServiceMessage;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;
-import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.trackable.TrackableArray;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ClassHierarchy;
 import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarManifest;
-import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.ModulePath;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public class SPLBranch implements SPL {
-    protected Reporter reporter = GlobalReporter.forClass(SPL.class);
+    protected static final Reporter REPORTER = GlobalReporter.forClass(SPL.class);
 
     protected static SPLRoot rootLayer;
 
@@ -101,7 +94,6 @@ public class SPLBranch implements SPL {
     protected SPLBranch parent;
 
     protected List<Path> jarPaths = new ArrayList<>();
-    // protected List<SPLBranch> children = new ArrayList<>();
     protected Map<String,SPLBranch> namedChildren = new HashMap<>();
 
     protected List<ServiceMetadata> orderedProviders = new ArrayList<>();
@@ -116,20 +108,9 @@ public class SPLBranch implements SPL {
     final TrackableArray<ServiceMetadata> visibleProviders = new TrackableArray<>();
     private final TrackableArray<ServiceMetadata> declaredProviders = new TrackableArray<>();
 
-    private TrackableArray<String> modules = new TrackableArray<>();
+    protected TrackableArray<String> modules = new TrackableArray<>();
 
     protected SPLBranch() { }
-
-    // /// Sets the reporter for communicating mapping warnings or errors in this layer.
-    // @Override
-    // public void setReporter(Reporter reporter) {
-    //     if (reporter == null) {
-    //         reporter = new NoOpReporter();
-    //     } else {
-    //         this.reporter = reporter;
-    //         this.ownsReporter = true;
-    //     }
-    // }
 
     //
     // Layer metadata, hierarchy, creation and deletion
@@ -137,9 +118,6 @@ public class SPLBranch implements SPL {
 
     @Override
     public String getName() { return name; }
-
-    // TODO: Is this needed?
-    public Path getModulePath(String name) { return modulePath.getPathForModule(name); }
 
     public TrackableArray<String> getModules() {
         return modules;
@@ -399,84 +377,6 @@ public class SPLBranch implements SPL {
     // Provider Registration in Specific Layer
     //
 
-    @SuppressWarnings({ "rawtypes" })
-    @Override
-    public void registerModule(Module module) {
-        String moduleName = module.getName();
-
-        // Skip JDK, System, and JavaFX modules
-        if (moduleName == null ||
-            moduleName.startsWith("java.") ||
-            moduleName.startsWith("javax.") ||
-            moduleName.startsWith("jdk.") ||
-            moduleName.startsWith("jfx.") ||
-            moduleName.startsWith("javafx.")) {
-            return;
-        }
-
-        getReporter().trace("Checking module: " + moduleName); // TODO: Version check
-        ClassLoader classLoader = module.getClassLoader();
-        ModuleDescriptor desc = module.getDescriptor();
-
-        // TODO: Get versions from module's manifest
-        // SemVer moduleBuildCascaraVersion = new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
-        // SemVer moduleMinCascaraVersion = new SemVer(manifest.getString("Min-Cascara-Version", moduleBuildCascaraVersion.toString()));
-        // verifyModuleVersionCompatibility(moduleName, moduleBuildCascaraVersion, moduleMinCascaraVersion);
-
-        if (desc == null) {
-            getReporter().trace("No module descriptor");
-            return;
-        }
-
-        Set<String> candidateClassNames = new HashSet<>();
-
-        // 1. Collect standard SPI declarations (provides ... with ...)
-        // TODO: Why?
-        for (Provides service : desc.provides()) {
-            candidateClassNames.addAll(service.providers());
-        }
-
-        // 2. Collect non-SPI candidate classes from exported/opened packages
-        candidateClassNames.addAll(SPLModuleScanner.findCandidateProviderClasses(module));
-
-        if (candidateClassNames.isEmpty()) {
-            getReporter().trace("No candidate classes");
-        } else {
-            getReporter().debug("Discovering providers in " + moduleName);
-            for (String providerClassName : candidateClassNames) {
-                if (isRegistered(providerClassName)) {
-                    continue;
-                }
-                Class<?> clazz = null;
-                try {
-                    clazz = classLoader != null
-                        ? classLoader.loadClass(providerClassName)
-                        : Class.forName(module, providerClassName);
-                } catch (ServiceException e) {
-                    getReporter().trace("Class \"" + providerClassName + "\" is not a Cascara ServiceProvider");
-                } catch (NoClassDefFoundError e) {
-                    getReporter().warn(ServiceMessage.CLASS_NOT_FOUND, providerClassName);
-                } catch (ClassNotFoundException e) {
-                    getReporter().warn(ServiceMessage.CLASS_NOT_FOUND, providerClassName);
-                } catch (Exception e) {
-                    getReporter().warn(ServiceMessage.FAILED_TO_INSTANTIATE_CLASS, providerClassName, e.getMessage());
-                }
-
-                if (clazz != null
-                        && ServiceProvider.class.isAssignableFrom(clazz)
-                        && !clazz.isInterface()
-                        && !java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
-
-                    getReporter().trace("  Attempting to register " + providerClassName);
-                    registerClassInternal((Class) clazz, true);
-                }
-            }
-        }
-
-        addModuleToMap(module.getName());
-        SPLUtils.recomputeAllVisibleProviders(rootLayer);
-    }
-
     @Override
     public void registerClass(Class<?> type) {
         if (type == null || !ServiceProvider.class.isAssignableFrom(type)) {
@@ -490,12 +390,14 @@ public class SPLBranch implements SPL {
     public void registerJar(Path jarPath) {
         String moduleName;
         JarManifest manifest;
+        Set<String> classes;
         try (JarFile jar = JarFile.open(jarPath)) {
             moduleName = jar.getModuleName();
             if (moduleName == null || moduleName.isEmpty()) {
                 throw new ServiceException(ServiceMessage.NON_MODULAR_JAR, jarPath);
             }
             manifest = jar.getManifest();
+            classes = jar.getClassNames();
         } catch (Exception e) {
             throw new ServiceException(e, ServiceMessage.FAILED_TO_READ_JAR, jarPath, e.getMessage());
         }
@@ -504,7 +406,7 @@ public class SPLBranch implements SPL {
         SemVer moduleMinCascaraVersion = new SemVer(manifest.getString("Min-Cascara-Version", moduleBuildCascaraVersion.toString()));
         verifyModuleVersionCompatibility(moduleName, moduleBuildCascaraVersion, moduleMinCascaraVersion);
 
-        getReporter().debug("Discovering providers in \"%s\"", jarPath);
+        REPORTER.debug("Discovering providers in \"%s\"", jarPath);
 
         jarPaths.add(jarPath);
         String paths = String.join(":", getJarPathStrings());
@@ -524,18 +426,15 @@ public class SPLBranch implements SPL {
         Configuration cf = parent.configuration().resolve(finder, ModuleFinder.of(), roots);
 
         // 3. (re-)create the layer.
-        moduleLayer = parent.defineModulesWithManyLoaders(cf, ClassLoader.getSystemClassLoader());
+        ClassLoader loader = ClassLoader.getSystemClassLoader();
+        moduleLayer = parent.defineModulesWithManyLoaders(cf, loader);
 
-
-        // TODO: This is inefficient since we can determine the classes from the JAR file...
-        enumerateProviders();
-
+        scanClasses(classes);
 
         addModuleToMap(moduleName);
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
         ClassHierarchy.invalidate();
     }
-
 
     //
     // Layer Hierarchy
@@ -584,82 +483,59 @@ public class SPLBranch implements SPL {
     // Discovery
     //
 
-    protected void registerViaServiceLoader() {
-        // TODO: This doesn't work and probably isn't needed anyway...
-        // 1. Standard classic SPI fallback via META-INF/services
-        // try {
-        //     // TODO: This throws a ServiceConfigurationError for classes
-        //     // with no public constructorm like neo-singletons.
-        //     ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
-        //     for (ServiceProvider provider : loader) {
-        //         try {
-        //             if (!providersByFqcn.containsKey(provider.getClass().getName())) {
-        //                 registerProvider(provider, null);
-        //             }
-        //         } catch (ServiceConfigurationError e) {
-        //             bootWarning(ServiceDiagnosticMessage.CONFIGURATION_ERROR, e.getMessage());
-        //         }
-        //     }
-        // } catch (ServiceConfigurationError e) {
-        //     bootError(e, ServiceDiagnosticMessage.CONFIGURATION_ERROR, e.getMessage());
-        // }
-
-        // 2. Classpath / Unnamed Module scanning fallback
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-        if (cl != null) {
-            scanClasspathProviders(cl);
-        }
-    }
-
-    private void scanClasspathProviders(ClassLoader cl) {
-        // Look up packages or classes defined on the system classloader
-        // or inspect the unnamed module if available
-        Module unnamedModule = cl.getUnnamedModule();
-        if (unnamedModule != null) {
-            for (String pkg : unnamedModule.getPackages()) {
-                scanPackageForProviders(cl, unnamedModule, pkg);
+    /// Use class scanning to find service implementations inside this layer
+    private void scanClasses(Set<String> candidateClassNames) {
+        for (Module module : moduleLayer.modules()) {
+            String moduleName = module.getName();
+            if (moduleName == null){
+                continue;
             }
+            Path jarPath = modulePath.getPathForModule(moduleName);
+            enumerateProviders(candidateClassNames, module, jarPath, false);
         }
     }
 
-    private void scanPackageForProviders(ClassLoader cl, Module module, String packageName) {
-        getReporter().trace("scanPackageForProviders: " + packageName);
-        String resourcePath = packageName.replace('.', '/');
-        SPLModuleScanner.setReporter(getReporter());
-        try {
-            var resources = cl.getResources(resourcePath);
-            while (resources.hasMoreElements()) {
-                URL url = resources.nextElement();
-                Set<String> classNames = new HashSet<>();
-                SPLModuleScanner.scanPackageResources(module, packageName, url, classNames);
-                for (String className : classNames) {
-                    if (!providersByFqcn.containsKey(className)) {
-                        try {
-                            Class<?> clazz = Class.forName(className, false, cl);
-                            if (clazz != null
-                                    && ServiceProvider.class.isAssignableFrom(clazz)
-                                    && !clazz.isInterface()
-                                    && !java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
+    protected void enumerateProviders(Set<String> candidateClassNames, Module module, Path jarPath, boolean isAutoRegistration) {
+        for (String className : candidateClassNames) {
+            if (!isRegistered(className)) {
+                try {
+                    Class<?> clazz = module == null
+                        ? Class.forName(className, false, ClassLoader.getSystemClassLoader())
+                        : Class.forName(module, className);
 
-                                @SuppressWarnings("unchecked")
-                                Class<? extends ServiceProvider> providerClass = (Class<? extends ServiceProvider>) clazz;
+                    // MUST verify class is a concrete ServiceProvider implementation
+                    if (clazz != null
+                            && ServiceProvider.class.isAssignableFrom(clazz)
+                            && !clazz.isInterface()
+                            && !java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
 
-                                // Instantiate non-public zero-arg constructor (neo-singleton)
-                                Constructor<? extends ServiceProvider> ctor = providerClass.getDeclaredConstructor();
-                                if (!ctor.canAccess(null)) {
-                                    ctor.trySetAccessible();
-                                }
-                                ServiceProvider providerInstance = ctor.newInstance();
-                                registerProvider(providerInstance, null, true);
-                            }
-                        } catch (Throwable ignored) {
-                            // Skip classes that cannot be initialized on classpath
-                        }
+                        @SuppressWarnings("unchecked")
+                        Class<? extends ServiceProvider> providerClass = (Class<? extends ServiceProvider>) clazz;
+
+                        // This throws a ServiceException which is caught below
+                        ServiceProvider providerInstance = SPLUtils.instantiate(providerClass);
+
+                        registerProvider(providerInstance, jarPath, true);
                     }
+                } catch (NoClassDefFoundError e) {
+                    if (isAutoRegistration) {
+                        REPORTER.debug("NoClassDefFoundError: " + className);
+                    } else {
+                        registrationFailure("NoClassDefFoundError: " + className, jarPath, e, isAutoRegistration);
+                    }
+                } catch (ServiceException e) {
+                    if (isAutoRegistration) {
+                        REPORTER.debug("ServiceException while loading class " + className + ": " + e.getMessage());
+                    } else {
+                        registrationFailure("ServiceException while loading class " + className, jarPath, e, isAutoRegistration);
+                    }
+                } catch (AbstractMethodError | ServiceConfigurationError e) {
+                    registrationFailure("Incompatible module.", jarPath, e, isAutoRegistration);
+                } catch (Exception e) {
+                    REPORTER.debug(e.getClass().getName() + " while loading " + className + ": " + e.getMessage());
+                    registrationFailure("Failed to instantiate candidate provider " + className + ".", jarPath, e, true);
                 }
             }
-        } catch (IOException ignored) {
-            // Fallback reading errors
         }
     }
 
@@ -686,62 +562,8 @@ public class SPLBranch implements SPL {
         }
     }
 
-    /// Use SPI and class scanning to find service implementations inside this layer
-    private void enumerateProviders() {
-        // 1. Standard SPI discovery via ServiceLoader
-        var loader = ServiceLoader.load(moduleLayer, ServiceProvider.class);
-        loader.forEach(provider -> {
-            if (!isRegistered(provider.getClass().getName())) {
-                String moduleName = provider.getClass().getModule().getName();
-                Path jarPath = modulePath.getPathForModule(moduleName);
-                try {
-                    registerProvider(provider, jarPath, true);
-                } catch (Exception e) {
-                    registrationError("Failed to query module " + moduleName + ".", null, e);
-                } catch (AbstractMethodError | NoClassDefFoundError | ServiceConfigurationError e) {
-                    registrationError("Incompatible module.", jarPath, e);
-                }
-            }
-        });
-
-        // 2. Non-SPI class scanning across modules in this ModuleLayer
-        SPLModuleScanner.setReporter(getReporter());
-        for (Module module : moduleLayer.modules()) {
-            String moduleName = module.getName();
-            if (moduleName == null) continue;
-
-            Path jarPath = modulePath.getPathForModule(moduleName);
-            Set<String> candidateClassNames = SPLModuleScanner.findCandidateProviderClasses(module);
-
-            for (String className : candidateClassNames) {
-                if (!isRegistered(className)) {
-                    try {
-                        Class<?> clazz = Class.forName(module, className);
-
-                        // MUST verify class is a concrete ServiceProvider implementation
-                        if (clazz != null
-                                && ServiceProvider.class.isAssignableFrom(clazz)
-                                && !clazz.isInterface()
-                                && !java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
-
-                            @SuppressWarnings("unchecked")
-                            Class<? extends ServiceProvider> providerClass = (Class<? extends ServiceProvider>) clazz;
-
-                            ServiceProvider providerInstance = SPLUtils.instantiate(providerClass);
-                            registerProvider(providerInstance, jarPath, true);
-                        }
-                    } catch (AbstractMethodError | NoClassDefFoundError | ServiceConfigurationError e) {
-                        registrationError("Incompatible module.", jarPath, e);
-                    } catch (Exception e) {
-                        registrationError("Failed to instantiate candidate provider " + className + " in module " + moduleName + ".", jarPath, e);
-                    }
-                }
-            }
-        }
-    }
-
     /// Adds a module to the root layer's `moduleToLayers` map and updates
-    // the `modules` `TrackableArray`
+    /// the `modules` `TrackableArray`
     private void addModuleToMap(String moduleName) {
         Set<SPL> layers = rootLayer.moduleToLayers.get(moduleName);
         if (layers == null) {
@@ -795,13 +617,20 @@ public class SPLBranch implements SPL {
         try {
             Class<? extends ServiceProvider> providerClass = instance.getClass();
             if (isAutoRegistration && noAutoRegistration(providerClass)) {
-                getReporter().trace("  Not auto-registering %s", instance.getClass().getName());
+                REPORTER.trace("  Not auto-registering %s", instance.getClass().getName());
                 return;
             }
 
-            getReporter().trace("  Registering %s", instance.getClass().getName());
             List<Class<ServiceProvider>> interfaceHierarchy = new ArrayList<>();
             if (collectCascaraModuleInterfaces(providerClass, interfaceHierarchy)) {
+
+                for (Class<ServiceProvider> serviceInterface : interfaceHierarchy) {
+                    if (noAutoRegistration(serviceInterface.getClass())) {
+                        REPORTER.trace("  Not auto-registering %s", instance.getClass().getName());
+                        return;
+                    }
+                }
+                REPORTER.trace("  Registering %s", instance.getClass().getName());
 
                 // Experimental:
                 // Store the rich ContentTypes that services support
@@ -813,13 +642,12 @@ public class SPLBranch implements SPL {
                 }
 
                 boolean isSingleton = false;
-                List<Method> methods = JreUtils.getAllMethods(providerClass);
+                List<Method> methods = ReflectionUtils.getAllMethods(providerClass);
                 for (Method method : methods) {
                     if (method.isAnnotationPresent(SingletonInitializer.class)) {
                         isSingleton = true;
                     }
                 }
-
 
                 Priority annotation = providerClass.getAnnotation(Priority.class);
                 int priority =  annotation != null ? annotation.value() : 0; // Default priority is 0
@@ -844,29 +672,25 @@ public class SPLBranch implements SPL {
                 }
 
                 if (contentType == null) {
-                    getReporter().debug("  Registered " + providerClass.getName());
+                    REPORTER.debug("  Registered " + providerClass.getName());
                 } else {
-                    getReporter().debug("  Registered " + providerClass.getName() + " with content types:");
+                    REPORTER.debug("  Registered " + providerClass.getName() + " with content types:");
                     for (String type : contentType.getMimeTypes()) {
-                        getReporter().debug("    " + type);
+                        REPORTER.debug("    " + type);
                     }
                 }
 
                 declaredProviders.add(provider);
             }
-        } catch(AbstractMethodError e) {
-            registrationError("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e);
-        } catch (NoClassDefFoundError e) {
-            registrationError("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e);
-        } catch (ServiceConfigurationError e) {
-            registrationError("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e);
+        } catch(AbstractMethodError | ServiceConfigurationError e) {
+            registrationFailure("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e, isAutoRegistration);
         }
     }
 
     private Properties getServiceProperties(Class<ServiceProvider> serviceInterface) {
         Properties properties = new Properties();
         setModuleProperties(properties, serviceInterface);
-        properties.set("serviceName", serviceInterface.getSimpleName());
+        properties.set(SPL.SERVICE_NAME, serviceInterface.getSimpleName());
         return properties;
     }
 
@@ -874,9 +698,9 @@ public class SPLBranch implements SPL {
         Properties properties = new Properties();
         setModuleProperties(properties, provider.getClass());
         if (jarPath != null) {
-            properties.set("jarPath", jarPath.toString());
+            properties.set(SPL.JAR_PATH, jarPath.toString());
         }
-        properties.set("providerName", provider.getClass().getSimpleName());
+        properties.set(SPL.PROVIDER_NAME, provider.getClass().getSimpleName());
         Properties declaredCapabilities = provider.getServiceProperties();
         if (declaredCapabilities != null) {
             properties.addAll(declaredCapabilities);
@@ -886,11 +710,11 @@ public class SPLBranch implements SPL {
 
     private void setModuleProperties(Properties properties, Class<?> type) {
         Module module = type.getModule();
-        properties.set("moduleName", module.getName());
+        properties.set(SPL.MODULE_NAME, module.getName());
         ModuleDescriptor descriptor = module.getDescriptor();
         if (descriptor != null) {
             descriptor.rawVersion().ifPresent(moduleVersion -> {
-                properties.set("moduleVersion", moduleVersion);
+                properties.set(SPL.MODULE_VERSION, moduleVersion);
             });
         }
     }
@@ -926,7 +750,7 @@ public class SPLBranch implements SPL {
         return found;
     }
 
-    private void registrationError(String message, Path location, Throwable t) {
+    private void registrationFailure(String message, Path location, Throwable t, boolean isAutoRegistration) {
         String logMessage = message;
         if (location != null) {
             logMessage = logMessage + " " + location;
@@ -934,7 +758,11 @@ public class SPLBranch implements SPL {
         if (t != null) {
             logMessage = logMessage + " " + t.getMessage();
         }
-        getReporter().error(GenericMessage.ERROR, logMessage);
+        if (isAutoRegistration) {
+            REPORTER.warn(GenericMessage.ERROR, logMessage);
+        } else {
+            REPORTER.error(GenericMessage.ERROR, logMessage);
+        }
     }
 
     private Path[] getJarPaths() {
@@ -967,7 +795,7 @@ public class SPLBranch implements SPL {
     }
 
     private List<ServiceMetadata> internalFindAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate, SPLBranch previous) {
-        getReporter().debug("[finding] layer=\"" + name + "\", service=\"" + serviceType.getSimpleName() + "\"");
+        REPORTER.debug("[finding] layer=\"" + name + "\", service=\"" + serviceType.getSimpleName() + "\"");
         List<ServiceMetadata> found = new ArrayList<>();
 
         addAllToList(findProvidersInBranches(serviceType, capabilityPredicate, 0), found);
@@ -1033,38 +861,17 @@ public class SPLBranch implements SPL {
     // Diagnostics
     //
 
-    /// Returns the Reporter of this layer or the nearest ancetor that has one.
-    private Reporter getReporter() {
-        return reporter;
-        // if (ownsReporter || parent == null) { return reporter; }
-        // return parent.getReporter();
-    }
-
     protected void reportFinding(ServiceMetadata item, int depth) {
-        getReporter().debug("[found  ] " + "layer=\"" + name + "\", provider=\"" + item.getType().getName() + "\"" +
+        REPORTER.debug("[found  ] " + "layer=\"" + name + "\", provider=\"" + item.getType().getName() + "\"" +
             (item.getJarPath() == null ? "" : ", jar=\"" + item.getJarPath() + "\""));
     }
 
     protected static void bootError(Throwable e, ServiceMessage code, Object... details) {
-        final Reporter reporter = rootLayer.reporter;
-        if (reporter.isSilent()) {
-            System.err.println(
-                DiagnosticLocalizer.DEFAULT.format(code, details)
-            );
-        } else {
-            reporter.error(e, code, details);
-        }
+        REPORTER.error(e, code, details);
     }
 
     protected static void bootWarning(ServiceMessage code, Object... details) {
-        final Reporter reporter = rootLayer.reporter;
-        if (reporter.isSilent()) {
-            System.err.println(
-                DiagnosticLocalizer.DEFAULT.format(code, details)
-            );
-        } else {
-            reporter.warn(code, details);
-        }
+        REPORTER.warn(code, details);
     }
 
     public void setParent(SPL parent) {

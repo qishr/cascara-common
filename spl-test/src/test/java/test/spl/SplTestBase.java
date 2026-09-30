@@ -39,11 +39,29 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
+import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.junit.util.TestModulePackager;
 import io.github.qishr.cascara.test.common.junit.util.VfsTestBase;
 
 public class SplTestBase extends VfsTestBase {
+    @BeforeEach
+    protected void setUp() throws IOException {
+        // GlobalReporter.globalInstance().setLevel(Level.TRACE);
+
+        super.setUp();
+    }
+
+    @AfterEach
+    protected void tearDown() throws IOException {
+        super.tearDown();
+    }
+
     protected Path createModuleA() throws IOException {
         Path providerAJar = Cascara.getModulePath().resolve("provider-a.jar");
 

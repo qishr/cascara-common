@@ -37,6 +37,7 @@ package io.github.qishr.cascara.common.diagnostic.message;
 
 import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ServiceConfigurationError;
 
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 
@@ -70,6 +71,18 @@ public interface DiagnosticMessage {
         // ExceptionInInitializerError - if the initialization provoked by this method fails.
         else if (t instanceof ExceptionInInitializerError) {
             return LangMessage.EXCEPTION_IN_INITIALIZER;
+        }
+        // AbstractMethodError - when an application tries to call an abstract method.
+        else if (t instanceof AbstractMethodError) {
+            return LangMessage.ABSTRACT_METHOD_ERROR;
+        }
+        // NoClassDefFoundError - when trying to load in the definition of a class and no definition of the class could be found.
+        else if (t instanceof NoClassDefFoundError) {
+            return LangMessage.NO_CLASS_DEF_FOUND_ERROR;
+        }
+        // ServiceConfigurationError - when something goes wrong while locating, loading, or instantiating a service provider.
+        else if (t instanceof ServiceConfigurationError) {
+            return LangMessage.SERVICE_CONFIG_ERROR;
         }
         // NullPointerException - if the specified object is null and the method is an instance method.
         else if (t instanceof NullPointerException) {

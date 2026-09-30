@@ -38,7 +38,7 @@ package io.github.qishr.cascara.common.service;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public enum ServiceMessage implements DiagnosticMessage {
-    CONFIGURATION_ERROR("SPL-101", "Configuration error: {0}"),
+    CONFIGURATION_ERROR("SPL-102", "Configuration error: {0}"),
     // NOT_A_SERVICE("SPL-102", "{0} is not a Service"),
     NOT_A_SERVICE_PROVIDER("SPL-103", "{0} is not a ServiceProvider"),
 

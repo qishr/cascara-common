@@ -131,21 +131,21 @@ public class ArchiveFile implements AutoCloseable {
     //
     //
 
-    public InputStream getInputStream(String filePath) throws LocalizableIOException {
-        byte[] byteArray = extractFile(filePath);
+    public InputStream getInputStream(String entryName) throws LocalizableIOException {
+        byte[] byteArray = extractFile(entryName);
         return new ByteArrayInputStream(byteArray);
     }
 
-    public byte[] extractFile(String filePath) throws LocalizableIOException {
-        return extractFile(archivePath, filePath);
+    public byte[] extractFile(String entryName) throws LocalizableIOException {
+        return extractFile(archivePath, entryName);
     }
 
-    protected static byte[] extractFile(Path archivePath, String filePath) throws LocalizableIOException {
+    protected static byte[] extractFile(Path archivePath, String entryName) throws LocalizableIOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(archivePath))) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
-                if (entry.getName().equals(filePath)) {
+                if (entry.getName().equals(entryName)) {
                     byte[] buffer = new byte[1024];
                     int len;
                     while ((len = zipInputStream.read(buffer)) != -1) {
@@ -155,25 +155,23 @@ public class ArchiveFile implements AutoCloseable {
                 }
             }
         } catch (IOException e) {
-            throw new LocalizableIOException(e, FileMessage.READ_ERROR, filePath);
+            throw new LocalizableIOException(e, FileMessage.READ_ERROR, entryName);
             // e.printStackTrace();
             // return new byte[0];
         }
         return new byte[0];
     }
 
-    // TODO: FileInfo should be EntryInfo
-
     public List<EntryInfo> listFiles() throws LocalizableIOException {
         return listFiles(archivePath, null);
     }
 
-    public List<EntryInfo> listFiles(String dirPath) throws LocalizableIOException {
-        return listFiles(archivePath, dirPath);
+    public List<EntryInfo> listFiles(String entryName) throws LocalizableIOException {
+        return listFiles(archivePath, entryName);
     }
 
-    public void addDirectory(Path dirPath) throws LocalizableIOException {
-        addDirectory(dirPath, "");
+    public void addDirectory(Path entryName) throws LocalizableIOException {
+        addDirectory(entryName, "");
     }
 
     public void addDirectory(Path sourcePath, String entryName) throws LocalizableIOException {
@@ -236,19 +234,19 @@ public class ArchiveFile implements AutoCloseable {
     //
     //
 
-    protected static List<EntryInfo> listFiles(Path archivePath, String dirPath) throws LocalizableIOException {
-        if (dirPath != null && !dirPath.isEmpty() && !dirPath.endsWith("/")) {
-            dirPath = dirPath + "/";
+    protected static List<EntryInfo> listFiles(Path archivePath, String entryName) throws LocalizableIOException {
+        if (entryName != null && !entryName.isEmpty() && !entryName.endsWith("/")) {
+            entryName = entryName + "/";
         }
         List<EntryInfo> fileInfoList = new ArrayList<>();
         try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(archivePath))) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
-                if (dirPath == null) {
+                if (entryName == null) {
                     EntryInfo fileInfo = new EntryInfo(entry.getName());
                     fileInfoList.add(fileInfo);
-                } else if (entry.getName().startsWith(dirPath) && !entry.getName().equals(dirPath)) {
-                    EntryInfo fileInfo = new EntryInfo(entry.getName().substring(dirPath.length()));
+                } else if (entry.getName().startsWith(entryName) && !entry.getName().equals(entryName)) {
+                    EntryInfo fileInfo = new EntryInfo(entry.getName().substring(entryName.length()));
                     fileInfoList.add(fileInfo);
                 }
             }
@@ -261,20 +259,20 @@ public class ArchiveFile implements AutoCloseable {
         return fileInfoList;
     }
 
-    private void addFileInternal(Path sourcePath, Path entryPath) throws LocalizableIOException{
+    private void addFileInternal(Path sourcePath, Path entryName) throws LocalizableIOException{
         List<LocalizableIOException> exceptions = new ArrayList<>();
-        addFileInternalNoException(sourcePath, entryPath, exceptions);
+        addFileInternalNoException(sourcePath, entryName, exceptions);
         if (!exceptions.isEmpty()) {
             throw exceptions.getFirst();
         }
     }
 
-    private void addFileInternalNoException(Path sourcePath, Path entryPath, List<LocalizableIOException> exceptions) {
+    private void addFileInternalNoException(Path sourcePath, Path entryName, List<LocalizableIOException> exceptions) {
         try (InputStream in = Files.newInputStream(sourcePath)) {
             byte[] buf = new byte[1024];
             int len;
-            ensureParentExists(entryPath);
-            try (OutputStream os = Files.newOutputStream(entryPath, StandardOpenOption.CREATE)) {
+            ensureParentExists(entryName);
+            try (OutputStream os = Files.newOutputStream(entryName, StandardOpenOption.CREATE)) {
                 while ((len = in.read(buf)) > 0) {
                     os.write(buf, 0, len);
                 }
@@ -287,20 +285,20 @@ public class ArchiveFile implements AutoCloseable {
         }
     }
 
-    private void addFileInternal(String content, Path entryPath) throws LocalizableIOException {
+    private void addFileInternal(String content, Path entryName) throws LocalizableIOException {
         byte[] buf = content.getBytes();
-        ensureParentExists(entryPath);
-        try (OutputStream os = Files.newOutputStream(entryPath, StandardOpenOption.CREATE)) {
+        ensureParentExists(entryName);
+        try (OutputStream os = Files.newOutputStream(entryName, StandardOpenOption.CREATE)) {
             os.write(buf, 0, buf.length);
         } catch (IOException e) {
             throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
     }
 
-    private void ensureParentExists(Path entryPath) throws LocalizableIOException {
-        if (entryPath.getParent() != null) {
+    private void ensureParentExists(Path entryName) throws LocalizableIOException {
+        if (entryName.getParent() != null) {
             try {
-                Files.createDirectories(entryPath.getParent());
+                Files.createDirectories(entryName.getParent());
             } catch (IOException e) {
                 throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
             }

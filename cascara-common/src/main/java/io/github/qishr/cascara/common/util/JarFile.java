@@ -51,6 +51,8 @@ import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.property.Properties;
 
 public class JarFile extends ArchiveFile {
+    private static final String META_INF = "META-INF/";
+    private static final String META_INF_VERSIONS = "META-INF/versions/";
     private JarManifest manifest;
     private Properties mavenProperties;
     private Set<String> packageNames = null;
@@ -200,16 +202,37 @@ public class JarFile extends ArchiveFile {
         }
     }
 
+    private String getClassPath() {
+        try {
+            List<EntryInfo> versions = listFiles(META_INF_VERSIONS);
+            for (EntryInfo entry : versions) {
+                String versionEntryName = entry.getPath(); //.substring(META_INF_VERSIONS.length());
+                int slash = versionEntryName.indexOf("/");
+                if (slash > -1) {
+                    String classPath = META_INF_VERSIONS + entry.getPath().substring(0, slash);
+                    // System.out.println("classPath: " + classPath);
+                    return classPath;
+                }
+            }
+        } catch (LocalizableIOException e) {}
+        return "";
+    }
+
     private void discoverClasses() {
         List<EntryInfo> allFiles;
+        String classPath = getClassPath();
         try {
-            allFiles = listFiles();
+            allFiles = listFiles(classPath);
         } catch (LocalizableIOException e) {
             return;
         }
         classNames = new HashSet<>();
         for (EntryInfo fileInfo : allFiles) {
             String entryName = fileInfo.getPath();
+            if (entryName.startsWith(META_INF)) {
+                continue;
+            }
+            // System.out.println("entryName: " + entryName);
             if (entryName.endsWith(".class")) {
                 if (entryName.endsWith("module-info.class")) {
                     continue;

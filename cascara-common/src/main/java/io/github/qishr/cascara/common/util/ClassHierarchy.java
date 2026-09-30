@@ -60,12 +60,6 @@ public class ClassHierarchy {
 
     private ClassHierarchy() {}
 
-    // TODO: Move to JreUtils
-    public static ClassLoader getEffectiveClassLoader() {
-        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-        return tccl != null ? tccl : ClassLoader.getSystemClassLoader();
-    }
-
     @Nullable
     public static List<String> getSubclasses(String className) {
         ensureHierarchy();
@@ -167,7 +161,7 @@ public class ClassHierarchy {
 
         // 2. Scan TCCL root resource directories
         try {
-            ClassLoader cl = getEffectiveClassLoader();
+            ClassLoader cl = JreUtils.getEffectiveClassLoader();
             Enumeration<URL> roots = cl.getResources("");
             while (roots.hasMoreElements()) {
                 URL root = roots.nextElement();
@@ -270,7 +264,7 @@ public class ClassHierarchy {
     }
 
     private static Class<?> loadClassSafely(String className) {
-        ClassLoader cl = getEffectiveClassLoader();
+        ClassLoader cl = JreUtils.getEffectiveClassLoader();
         try {
             return Class.forName(className, false, cl);
         } catch (NoClassDefFoundError e) {

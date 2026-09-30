@@ -198,10 +198,4 @@ public class Property<T> implements TabularData {
         }
         return null;
 	}
-
-    // @Override
-    // public Object getProperty(String key) {
-    //     // TODO Auto-generated method stub
-    //     throw new UnsupportedOperationException("Unimplemented method 'getValue'");
-    // }
 }

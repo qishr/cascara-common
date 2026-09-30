@@ -51,7 +51,7 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.StandardReporter;
-import io.github.qishr.cascara.common.diagnostic.code.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.lang.type.PrimitiveType;
 import io.github.qishr.cascara.common.lang.type.ScalarDescriptor;
 import io.github.qishr.cascara.common.lang.util.SourceBuffer;
@@ -133,7 +133,9 @@ class ModuleRegistrationTests extends SplTestBase {
 
         // Track reactive changes
         List<ArrayChangeTracker<ServiceMetadata>> changes = new ArrayList<>();
-        spl.getVisibleProviders().addArrayListener((array, change) -> changes.add(change));
+        spl.getVisibleProviders().addArrayListener((array, change) -> {
+            changes.add(change);
+        });
 
         // Create a layer
         SPL layer = spl.create("singletonLayer");

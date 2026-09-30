@@ -68,6 +68,9 @@ public enum LangMessage implements DiagnosticMessage {
     ILLEGAL_ARGUMENT_EXCEPTION("LANG-408", "Field {0} threw an illegal argument exception"),
     INSTANTIATION_EXCEPTION("LANG-409", "Field {0} threw an instantiation exception"),
     EXCEPTION_IN_INITIALIZER("LANG-410", "Exception in initializer for {0}"),
+    ABSTRACT_METHOD_ERROR("LANG-411", "Abstract method error: {0}"),
+    NO_CLASS_DEF_FOUND_ERROR("LANG-412", "No class definition found: {0}"),
+    SERVICE_CONFIG_ERROR("LANG-413", "Service configuration error: {0}"),
 
     // TODO: Where are these used?
     NOT_ARRAY_OR_OBJECT("LANG-501", "Value {0} is not an array or object therefore its key {1} cannot be resolved"),

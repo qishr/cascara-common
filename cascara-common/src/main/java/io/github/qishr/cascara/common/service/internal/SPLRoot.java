@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -49,13 +50,15 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.filewatcher.FileWatcher;
 import io.github.qishr.cascara.common.property.Properties;
-import io.github.qishr.cascara.common.service.ServiceMessage;
 import io.github.qishr.cascara.common.service.ServiceException;
+import io.github.qishr.cascara.common.service.ServiceMessage;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
+import io.github.qishr.cascara.common.util.ClassPath;
 import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.ContentTypeResolver;
 import io.github.qishr.cascara.common.util.JreUtils;
+import io.github.qishr.cascara.common.util.ModulePath;
 
 public class SPLRoot extends SPLBranch {
     private static final Properties EMPTY_PROPERTIES = new Properties();
@@ -77,28 +80,8 @@ public class SPLRoot extends SPLBranch {
         contentTypes = new HashSet<>();
         loadPreferences();
         displayEnvironmentInformation();
-
-        reporter.debug("Discovering providers in modules");
-        ModuleLayer boot = ModuleLayer.boot();
-        boot.modules().forEach((module) -> {
-            final String moduleName = module.getName();
-            try {
-                reporter.trace("Found module " + moduleName);
-                registerModule(module);
-            } catch (Exception e) {
-                bootWarning(
-                    ServiceMessage.FAILED_TO_REGISTER_MODULE,
-                    moduleName,
-                    e.getMessage()
-                );
-            }
-        });
-
-        // Fallback: classic ServiceLoader scanning for classpath/unnamed-module usage,
-        // and to pick up any providers using META-INF/services even when modular.
-        reporter.debug("Discovering providers in classpath");
-        registerViaServiceLoader();
-
+        REPORTER.debug("Discovering providers");
+        discoverClasses();
         isBooting = false;
 
         try {
@@ -112,6 +95,49 @@ public class SPLRoot extends SPLBranch {
         } catch (ServiceException e) {
             // Ignore
         }
+    }
+
+    private void discoverClasses() {
+        Set<String> excludePackages = new HashSet<>();
+        excludePackages.add("net.bytebuddy");
+        excludePackages.add("org.mockito");
+        excludePackages.add("org.junit");
+        excludePackages.add("org.objenesis");
+        excludePackages.add("org.opentest4j");
+        excludePackages.add("worker.org.gradle");
+
+        Set<String> classes = new HashSet<>();
+        long start = System.currentTimeMillis();
+
+        // Discover classes on the module path
+        ModulePath modulePath = new ModulePath(null, excludePackages, null);
+        classes.addAll(modulePath.getClasses());
+
+        // Get the set of modulepath entries
+        Set<String> modulePathSet = pathSet(System.getProperty("jdk.module.path"));
+
+        // Get the set of classpath entries
+        Set<String> classPathSet = pathSet(System.getProperty("java.class.path"));
+
+        // Remove entries from the classpath set that are covered by the modulepath
+        classPathSet.removeAll(modulePathSet);
+
+        // Discover classes in the abridged classpath set
+        ClassPath classPath = new ClassPath(classPathSet, excludePackages);
+        classes.addAll(classPath.getClasses());
+
+        if (REPORTER.getLevel().includes(Level.TRACE)) {
+            REPORTER.trace("classes: ");
+            classes.stream().sorted().forEach(s -> REPORTER.trace("  " + s));
+        }
+
+        long finish = System.currentTimeMillis();
+        long timeElapsed = finish - start;
+        REPORTER.debug("Discovered %d classes in % ms", classes.size(), timeElapsed);
+
+        enumerateProviders(classes, null, null, true);
+
+        modules.addAll(modulePath.getModules());
     }
 
     /// Retrieves the root Service Provider Layer.
@@ -164,6 +190,14 @@ public class SPLRoot extends SPLBranch {
     // Private Methods
     //
 
+    private Set<String> pathSet(String paths) {
+        Set<String> pathSet = new HashSet<>();
+        if (paths != null) {
+            Collections.addAll(pathSet, paths.split(File.pathSeparator, -1));
+        }
+        return pathSet;
+    }
+
     private void collectLayers(SPLBranch layer, Set<SPLBranch> collected) {
         collected.add(layer);
         for (SPLBranch descendant : layer.namedChildren.values()) {
@@ -179,7 +213,7 @@ public class SPLRoot extends SPLBranch {
                 try {
                     Files.createFile(propsFile);
                 } catch (IOException e) {
-                    reporter.error(e, FileMessage.WRITE_ERROR, propsFile);
+                    REPORTER.error(e, FileMessage.WRITE_ERROR, propsFile);
                     return;
                 }
             }
@@ -201,15 +235,15 @@ public class SPLRoot extends SPLBranch {
 
     private void displayEnvironmentInformation() {
         if (GlobalReporter.globalInstance().getLevel().includes(Level.DEBUG)) {
-            reporter.debug("Environment Information:");
-            reporter.debug("  Cascara version: " + Cascara.getVersion());
-            reporter.debug("  Module cascara.common version: " + Cascara.getCommonVersion());
-            reporter.debug("  JPMS Enabled: " + JreUtils.isJpmsEnabled());
+            REPORTER.debug("Environment Information:");
+            REPORTER.debug("  Cascara version: " + Cascara.getVersion());
+            REPORTER.debug("  Module cascara.common version: " + Cascara.getCommonVersion());
+            REPORTER.debug("  JPMS Enabled: " + JreUtils.isJpmsEnabled());
             displayPaths("Module Path", System.getProperty("jdk.module.path"));
             displayPaths("Class Path", System.getProperty("java.class.path"));
-            reporter.debug("  Terminal: " + JreUtils.isRunningInTerminal());
-            reporter.debug("  Eclipse: " + JreUtils.isRunningViaEclipse());
-            reporter.debug("  Gradle: " + JreUtils.isRunningViaGradle());
+            REPORTER.debug("  Terminal: " + JreUtils.isRunningInTerminal());
+            REPORTER.debug("  Eclipse: " + JreUtils.isRunningViaEclipse());
+            REPORTER.debug("  Gradle: " + JreUtils.isRunningViaGradle());
         }
     }
 
@@ -218,11 +252,11 @@ public class SPLRoot extends SPLBranch {
             ? new String[]{}
             : paths.split(File.pathSeparator, -1);
         if (array.length == 0) {
-            reporter.debug("  No " + name);
+            REPORTER.debug("  No " + name);
         } else {
-            reporter.debug("  " + name);
+            REPORTER.debug("  " + name);
             for (String path : array) {
-                reporter.debug("    " + path);
+                REPORTER.debug("    " + path);
             }
         }
     }

@@ -32,18 +32,15 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
@@ -136,55 +133,6 @@ public class JreUtils {
         return cleanPath.substring(0, lastSlash).replace('/', '.');
     }
 
-    public static ProcessHandle parentProcess() {
-        ProcessHandle ph = ProcessHandle.current();
-        return ph.parent().orElse(null);
-    }
-
-    @Nullable
-    private static String[] parentProcessArgs() {
-        ProcessHandle parent = parentProcess();
-        if (parent == null) {
-            return null; // Unable to determine
-        }
-        return parent.info().arguments().orElse(null);
-    }
-
-    public static boolean isRunningInTerminal() {
-        return System.console() != null;
-    }
-
-    public static boolean isRunningViaGradle() {
-        String[] args = parentProcessArgs();
-        if (args == null) {
-            return false; // Unable to determine
-        }
-        for (String arg : args) {
-            if (arg.contains("gradle-daemon-main") ||
-                arg.contains("gradle-instrumentation-agent") ||
-                arg.contains("org.gradle.launcher")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean isRunningViaEclipse() {
-        // "-Declipse.application=org.eclipse.jdt.ls.core.id1"
-        // "-Declipse.product=org.eclipse.jdt.ls.core.product"
-        String[] args = parentProcessArgs();
-        if (args == null) {
-            return false; // Unable to determine
-        }
-        for (String arg : args) {
-            if (arg.contains("-Declipse.application=org.eclipse.jdt.ls.core.id1") ||
-                arg.contains("-Declipse.product=org.eclipse.jdt.ls.core.product")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static boolean isJpmsEnabled() {
         Module m = JreUtils.class.getModule();
         return m != null && m.getName() != null && !m.getName().isEmpty();
@@ -208,20 +156,65 @@ public class JreUtils {
         return null;
     }
 
+    public static ProcessHandle parentProcess() {
+        ProcessHandle ph = ProcessHandle.current();
+        return ph.parent().orElse(null);
+    }
+
+    @Nullable
+    private static String[] parentProcessArgs() {
+        ProcessHandle parent = parentProcess();
+        if (parent == null) {
+            return null; // Unable to determine
+        }
+        return parent.info().arguments().orElse(null);
+    }
+
+    //
+    //
+    //
+
+    @Experimental
     public static ClassLoader getEffectiveClassLoader() {
         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         return tccl != null ? tccl : ClassLoader.getSystemClassLoader();
     }
 
-    public static List<Method> getAllMethods(Class<?> jvmType) {
-        List<Method> methods = new ArrayList<>();
-        Class<?> current = jvmType;
-        while (current != null && current != Object.class) {
-            for (Method m : current.getDeclaredMethods()) {
-                methods.add(m);
-            }
-            current = current.getSuperclass();
+    @Experimental
+    public static boolean isRunningInTerminal() {
+        return System.console() != null;
+    }
+
+    @Experimental
+    public static boolean isRunningViaGradle() {
+        String[] args = parentProcessArgs();
+        if (args == null) {
+            return false; // Unable to determine
         }
-        return methods;
+        for (String arg : args) {
+            if (arg.contains("gradle-daemon-main") ||
+                arg.contains("gradle-instrumentation-agent") ||
+                arg.contains("org.gradle.launcher")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Experimental
+    public static boolean isRunningViaEclipse() {
+        // "-Declipse.application=org.eclipse.jdt.ls.core.id1"
+        // "-Declipse.product=org.eclipse.jdt.ls.core.product"
+        String[] args = parentProcessArgs();
+        if (args == null) {
+            return false; // Unable to determine
+        }
+        for (String arg : args) {
+            if (arg.contains("-Declipse.application=org.eclipse.jdt.ls.core.id1") ||
+                arg.contains("-Declipse.product=org.eclipse.jdt.ls.core.product")) {
+                return true;
+            }
+        }
+        return false;
     }
 }

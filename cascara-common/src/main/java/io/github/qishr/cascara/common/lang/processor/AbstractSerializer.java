@@ -80,7 +80,6 @@ import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceProviderFactory;
 import io.github.qishr.cascara.common.util.ClassHierarchy;
-import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public abstract class AbstractSerializer<
@@ -256,7 +255,7 @@ public abstract class AbstractSerializer<
         }
 
         // 2. Process dynamic settings (@YamlAnyGetter)
-        for (Method method : JreUtils.getAllMethods(jvmType)) {
+        for (Method method : ReflectionUtils.getAllMethods(jvmType)) {
             if (method.isAnnotationPresent(AnyGetter.class)) {
                 // Try to make the method accessible. If this fails, continue to the next field.
                 try {
@@ -829,7 +828,7 @@ public abstract class AbstractSerializer<
     }
 
     private void processAnySetter(Object instance, M rootMap, Set<String> claimedKeys, Class<?> jvmType) {
-        for (Method method : JreUtils.getAllMethods(jvmType)) {
+        for (Method method : ReflectionUtils.getAllMethods(jvmType)) {
             if (method.isAnnotationPresent(AnySetter.class)) {
                 // Try to make the method accessible. If this fails, continue to the next field.
                 try {

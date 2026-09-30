@@ -56,7 +56,7 @@ public class ServiceMetadata {
         this.contentType = contentType;
         this.isSingleton = isSingleton;
         this.priority = priority;
-        String capTypeString = properties.getString("javaType");
+        String capTypeString = properties.getString(SPL.JVM_TYPE);
         try {
             capabilityType = capTypeString == null ? null : Class.forName(capTypeString);
         } catch (Exception e) {
@@ -106,11 +106,11 @@ public class ServiceMetadata {
     }
 
     public String getJarPath() {
-        return getProperty("jarPath");
+        return getProperty(SPL.JAR_PATH);
     }
 
     public String getTitle() {
-        return getProperty("title");
+        return getProperty(SPL.TITLE);
     }
 
     public ContentType getContentType() {

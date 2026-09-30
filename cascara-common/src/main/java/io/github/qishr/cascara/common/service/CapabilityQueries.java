@@ -47,7 +47,7 @@ public class CapabilityQueries {
     /// Matches if a property has a specific exact value (matches JSON Schema types like String, Boolean, Number)
     public static Predicate<ServiceMetadata> hasExactValue(String key, Object expectedValue) {
         return meta -> {
-            if (meta.getContentType() != null && "contentType".equals(key)) {
+            if (meta.getContentType() != null && SPL.CONTENT_TYPE.equals(key)) {
                 if (meta.getContentType().matches(String.valueOf(expectedValue))) {
                     return true;
                 }
@@ -80,7 +80,7 @@ public class CapabilityQueries {
         }
         return meta -> {
             Properties props = meta.getProperties();
-            String capTypeString = props.getString("javaType");
+            String capTypeString = props.getString(SPL.JVM_TYPE);
             Class<?> capabilityType;
             try {
                 // TODO: For performance, have Properties be able to return the Class<?> instead of a string

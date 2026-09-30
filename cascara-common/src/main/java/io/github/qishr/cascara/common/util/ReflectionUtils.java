@@ -32,7 +32,6 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.util;
 
 import java.lang.annotation.Annotation;
@@ -50,6 +49,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
@@ -107,7 +107,6 @@ public class ReflectionUtils {
 
         return false;
     }
-
 
     public static boolean canAssign(Type fromThis, Class<?> toThat) {
         if (fromThis == null || toThat == null) {
@@ -244,6 +243,18 @@ public class ReflectionUtils {
         return fields;
     }
 
+    public static List<Method> getAllMethods(Class<?> jvmType) {
+        List<Method> methods = new ArrayList<>();
+        Class<?> current = jvmType;
+        while (current != null && current != Object.class) {
+            for (Method m : current.getDeclaredMethods()) {
+                methods.add(m);
+            }
+            current = current.getSuperclass();
+        }
+        return methods;
+    }
+
     public static Set<Class<?>> getReferencedClasses(Class<?> clazz) {
         return getReferencedClasses(clazz, (Function<Class<?>,Boolean>)null);
     }
@@ -266,37 +277,6 @@ public class ReflectionUtils {
     public static String getTypeName(Type jvmType) {
         Class<?> jvmClass = getRawClass(jvmType);
         return jvmClass.getName();
-    }
-
-    @Nullable
-    public static String getTestName() {
-        Method testMethod = getTestMethod();
-        if (testMethod == null) {
-            return null;
-        }
-        return testMethod.getName();
-    }
-
-    @Nullable
-    public static Method getTestMethod() {
-        StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
-        for (StackTraceElement frame : callStack) {
-            String className = frame.getClassName();
-            String methodName = frame.getMethodName();
-            Class<?> clazz;
-            try {
-                clazz = Class.forName(className);
-                List<Method> methods = getMethodsByName(clazz, methodName);
-                for (Method method : methods) {
-                    if (hasTestAnnotation(method)) {
-                        return method;
-                    }
-                }
-            } catch (ClassNotFoundException e) {
-                break;
-            }
-        }
-        return null;
     }
 
     @Nullable
@@ -339,6 +319,43 @@ public class ReflectionUtils {
     }
 
     //
+    //
+    //
+
+    @Experimental
+    @Nullable
+    public static String getTestName() {
+        Method testMethod = getTestMethod();
+        if (testMethod == null) {
+            return null;
+        }
+        return testMethod.getName();
+    }
+
+    @Experimental
+    @Nullable
+    public static Method getTestMethod() {
+        StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
+        for (StackTraceElement frame : callStack) {
+            String className = frame.getClassName();
+            String methodName = frame.getMethodName();
+            Class<?> clazz;
+            try {
+                clazz = Class.forName(className);
+                List<Method> methods = getMethodsByName(clazz, methodName);
+                for (Method method : methods) {
+                    if (hasTestAnnotation(method)) {
+                        return method;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                break;
+            }
+        }
+        return null;
+    }
+
+    //
     // Private Methods
     //
 
@@ -348,12 +365,11 @@ public class ReflectionUtils {
     }
 
     private static void collectReferencedClasses(Class<?> clazz, Function<Class<?>,Boolean> excludeFunction, Set<Class<?>> visited, Set<Class<?>> collected) {
-        // PlainMapNode node = new PlainMapNode();
-
         for (Field field : getAllFields(clazz)) {
             Type type = field.getGenericType();
 
             // TODO:
+            // PlainMapNode node = new PlainMapNode();
             // applyTypeAnalysis(field, node);
             // String analyzedType = node.getString(SchemaKeyword.TYPE.asString());
             // if (isStandardScalarType(type) ||

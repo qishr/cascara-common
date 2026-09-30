@@ -40,26 +40,36 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import io.github.qishr.cascara.common.data.TreeNode;
-import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.service.internal.SPLRoot;
 import io.github.qishr.cascara.common.service.internal.SPLUtils;
 import io.github.qishr.cascara.common.trackable.TrackableArray;
 
 public interface SPL extends TreeNode<SPL> {
+    public static final String SERVICE_NAME = "serviceName";
+    public static final String JAR_PATH = "jarPath";
+    public static final String PROVIDER_NAME = "providerName";
+    public static final String MODULE_NAME = "moduleName";
+    public static final String MODULE_VERSION = "moduleVersion";
+    public static final String JVM_TYPE = "jvmType";
+    public static final String TITLE = "title";
+    public static final String CONTENT_TYPE = "contentType";
+
+
+
     /// Retrieves the root Service Provider Layer.
     static SPL getRoot() {
         return SPLRoot.instance();
     }
 
+    /// Returns an instance of a specific service provider.
     static <T> T load(Class<T> serviceType, ServiceMetadata metadata) {
         return SPLUtils.loadProvider(serviceType, metadata);
     }
 
+    /// Returns an instance of a service provider.
     static <T> T load(Class<T> serviceType) {
         return SPLUtils.loadDefault(serviceType);
     }
-
-    // void setReporter(Reporter reporter);
 
     //
     // Layer info, hierarchy, creation and deletion
@@ -76,36 +86,60 @@ public interface SPL extends TreeNode<SPL> {
     SPL getChild(String name);
     boolean hasChild(String name);
 
+    /// Creates a service provider layer with the specified name.
     SPL create(String name);
+
+    /// Creates private a service provider layer with the specified name.
+    /// Providers in a private layer can only be found by searching the
+    /// private layer or its descendants.
     SPL createPrivate(String name);
+
     void remove(String name);
 
     //
     // Find provider metadata from all layers starting at this one
     //
 
+    /// Returns a list of all known service types.
     Set<Class<ServiceProvider>> findServiceTypes();
+
+    /// Returns a list of metadata for all known service types.
     Set<ServiceMetadata> findServices();
+
+    /// Retrieves metadata of the nearest known provider of the specified service type.
     ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType);
+
+    /// Retrieves metadata of the nearest known provider whose capabilities satisfy the given predicate.
     ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate);
+
+    /// Retrieves metadata of all known providers of the specified service type.
     List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType);
+
+    /// Retrieves metadata of all known providers whose capabilities satisfy the given predicate.
     List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate);
 
     //
     // Get provider metadata from this specific layer
     //
 
+    /// Retrieves metadata of the specified provider if it exists in this layer, otherwise `null` is returne.
     ServiceMetadata getProvider(String providerName);
+
+    /// Retrieves metadata of providers in this layer.
     List<ServiceMetadata> getProviders();
+
+    /// Retrieves metadata of providers of the specified service type in this layer.
     List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType);
+
+    /// Retrieves metadata of providers in this layer whose capabilities satisfy the given predicate.
     List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate);
+
     boolean hasProvider(String name);
 
     //
     // Provider registration in this specific layer
     //
 
-    void registerModule(Module module);
     void registerClass(Class<?> clazz);
     void registerJar(Path jarPath);
 }

@@ -37,10 +37,10 @@ package io.github.qishr.cascara.common.lang.type;
 
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.service.SPL;
 
 public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
     public static final String KEYWORD_TYPE = "type";
-    public static final String JVM_TYPE = "javaType";
 
     protected Properties properties = new Properties();
 
@@ -50,7 +50,7 @@ public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
     protected AbstractTypeDescriptor(Class<T> jvmType, PrimitiveType schemaType) {
         this.jvmType = jvmType;
         this.schemaType = schemaType;
-        properties.set(JVM_TYPE, jvmType.getName());
+        properties.set(SPL.JVM_TYPE, jvmType.getName());
         if (schemaType != null) {
             properties.set(KEYWORD_TYPE, schemaType.asString());
         }

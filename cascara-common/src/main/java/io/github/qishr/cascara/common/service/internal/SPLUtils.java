@@ -177,18 +177,14 @@ public class SPLUtils {
         return result;
     }
 
-
     public static Set<ServiceMetadata> mergeDeclaredProviders(Set<SPLBranch> visibleLayers) {
         Set<ServiceMetadata> merged = new HashSet<>();
-
         for (SPLBranch visible : visibleLayers) {
             for (ServiceMetadata provider : visible.providersByFqcn.values()) {
                 merged.add(provider);
             }
         }
-
         return merged;
-
     }
 
     public static void diffAndApply(TrackableArray<ServiceMetadata> oldArray, Set<ServiceMetadata> newList) {

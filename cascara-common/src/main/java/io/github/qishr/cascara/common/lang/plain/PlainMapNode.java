@@ -44,6 +44,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 import io.github.qishr.cascara.common.lang.ast.*;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
@@ -132,27 +133,15 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<PlainNod
 
     @Override
     public List<PlainNode> values() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'values'");
+        throw new UnimplementedMethodException();
     }
 
     @Override
     public PlainMapNode put(PlainNode key, PlainNode value) {
-
-
-
         PlainMapEntryNode entry = getEntry(key);
         if (entry == null) {
             entry = new PlainMapEntryNode(key, value);
-
-
-
             entriesByKey.put(key, entry);
-
-            // entries.entrySet().add(entry);
-
-
-
             return this;
         }
         entry.setRaw(value);
@@ -203,30 +192,6 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<PlainNod
         return this;
     }
 
-    // @Override
-    // public PlainNode get(String key) {
-    //     if (key == null) return null;
-
-    //     for (Map.Entry<PlainNode,PlainMapEntryNode> entry : entriesByKey.entrySet()) {
-    //         PlainMapEntryNode entryNode = entry.getValue();
-
-    //         PlainNode kNode = entryNode.getKey();
-    //         String entryKey = null;
-    //         if (kNode instanceof PlainScalarNode scalar) {
-    //             entryKey = scalar.asString();
-    //         } else {
-    //             entryKey = kNode.toString();
-    //         }
-
-    //         if (key.equals(entryKey)) {
-    //             PlainNode val = entryNode.getValue();
-    //             // return (val instanceof ReferenceAnchorNode a) ? a.getInnerNode() : val;
-    //             return val;
-    //         }
-    //     }
-    //     return null;
-    // }
-
     @Override
     public List<PlainMapEntryNode> getChildren() {
         return List.copyOf(entriesByKey.values());
@@ -260,6 +225,5 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<PlainNod
     @Override
     public Iterator<PlainMapEntryNode> iterator() {
         return entriesByKey.sequencedValues().iterator();
-        // return new MapEntryIterator<JsonNode>(entriesByKey);
     }
 }

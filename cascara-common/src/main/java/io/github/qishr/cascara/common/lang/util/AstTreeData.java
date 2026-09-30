@@ -92,8 +92,7 @@ public class AstTreeData implements TreeData<AstTreeData,AstNode> {
 
 	@Override
 	public Object[] getValues() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'getValues'");
+		throw new UnimplementedMethodException();
 	}
 
 	@Override
