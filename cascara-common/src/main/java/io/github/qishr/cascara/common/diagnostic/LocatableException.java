@@ -37,7 +37,7 @@ package io.github.qishr.cascara.common.diagnostic;
 
 import java.net.URI;
 
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public abstract class LocatableException extends LocalizableRuntimeException {
     private final int line;
@@ -47,22 +47,22 @@ public abstract class LocatableException extends LocalizableRuntimeException {
     private final String rawMessage;
 
     /// Standard Constructor
-    public LocatableException(URI uri, int line, int column, Throwable cause, DiagnosticCode code, Object... details) {
+    public LocatableException(URI uri, int line, int column, Throwable cause, DiagnosticMessage code, Object... details) {
         super(cause, code, details);
         // this.message = messageWithLocation(code.getMessage(), line, uri);
-        this.rawMessage = code.getMessage();
+        this.rawMessage = code.getFormat();
         this.line = line;
         this.column = column;
         this.uri = uri;
     }
 
     /// Standard constructor for parser-detected logic errors
-    public LocatableException(URI uri, int line, int column, DiagnosticCode code, Object... details) {
+    public LocatableException(URI uri, int line, int column, DiagnosticMessage code, Object... details) {
         this(uri, line, column, null, code, details);
     }
 
     /// Constructor for when we only have a URI but no line or column
-    public LocatableException(URI uri, Throwable cause, DiagnosticCode code, Object... details) {
+    public LocatableException(URI uri, Throwable cause, DiagnosticMessage code, Object... details) {
         this(uri, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
     }
 

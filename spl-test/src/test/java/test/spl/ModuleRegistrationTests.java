@@ -51,7 +51,7 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.StandardReporter;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.code.GenericMessage;
 import io.github.qishr.cascara.common.lang.type.PrimitiveType;
 import io.github.qishr.cascara.common.lang.type.ScalarDescriptor;
 import io.github.qishr.cascara.common.lang.util.SourceBuffer;
@@ -102,7 +102,7 @@ class ModuleRegistrationTests extends SplTestBase {
             changes.add(change);
         });
 
-        reporter.info(GenericDiagnosticCode.INFO, "Test registering JAR");
+        reporter.info(GenericMessage.INFO, "Test registering JAR");
         Path providerAJar = createModuleA();
         layer.registerJar(providerAJar);
 

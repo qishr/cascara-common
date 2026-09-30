@@ -197,13 +197,13 @@ public final class RgbaColor implements ColorPrimitive, Duplicable<RgbaColor> {
 
     private static void validate(int red, int green, int blue) {
         if (red < 0 || red > 255) {
-            throw new ColorException(ColorDiagnosticCode.RED_RANGE, red);
+            throw new ColorException(ColorMessage.RED_RANGE, red);
         }
         if (green < 0 || green > 255) {
-            throw new ColorException(ColorDiagnosticCode.BLUE_RANGE, red);
+            throw new ColorException(ColorMessage.BLUE_RANGE, red);
         }
         if (blue < 0 || blue > 255) {
-            throw new ColorException(ColorDiagnosticCode.GREEN_RANGE, red);
+            throw new ColorException(ColorMessage.GREEN_RANGE, red);
         }
     }
 }

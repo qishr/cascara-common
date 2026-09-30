@@ -57,18 +57,18 @@ import io.github.qishr.cascara.common.annotation.DataField;
 import io.github.qishr.cascara.common.annotation.DataIgnore;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.diagnostic.UnexpectedNullReturnException;
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.ast.MapEntryAstNode;
 import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
-import io.github.qishr.cascara.common.lang.diagnostic.LangDiagnosticCode;
+import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.type.ScalarDescriptor;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
@@ -129,7 +129,7 @@ public abstract class AbstractSerializer<
 
         depth++;
         if (depth > depthLimit) {
-            throw new SerializerException(LangDiagnosticCode.FAILED_SERIALIZE, "Depth limit exceeded");
+            throw new SerializerException(LangMessage.FAILED_SERIALIZE, "Depth limit exceeded");
         }
 
         try {
@@ -159,7 +159,7 @@ public abstract class AbstractSerializer<
                     } catch (Exception e) {
                         throw new SerializerException(
                             e,
-                            LangDiagnosticCode.FAILED_TO_MAP_AST,
+                            LangMessage.FAILED_TO_MAP_AST,
                             jvmInstance.getClass().getName(),
                             e.getMessage()
                         );
@@ -184,7 +184,7 @@ public abstract class AbstractSerializer<
 
             if (jvmInstance.getClass().isArray()) {
                 // TODO: Handle this
-                throw new SerializerException(GenericDiagnosticCode.ERROR, "Unhandled array type");
+                throw new SerializerException(GenericMessage.ERROR, "Unhandled array type");
             }
 
             // Lists
@@ -226,7 +226,7 @@ public abstract class AbstractSerializer<
                 try {
                     map = (Map<?, ?>) field.get(jvmInstance);
                 } catch (IllegalAccessException e) {
-                    throw new SerializerException(e, LangDiagnosticCode.FIELD_NOT_ACCESSIBLE, field.getName());
+                    throw new SerializerException(e, LangMessage.FIELD_NOT_ACCESSIBLE, field.getName());
                 }
                 if (map != null) {
                     for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -242,7 +242,7 @@ public abstract class AbstractSerializer<
 			try {
 				value = field.get(jvmInstance);
 			} catch (IllegalAccessException e) {
-                throw new SerializerException(e, LangDiagnosticCode.FIELD_NOT_ACCESSIBLE, field.getName());
+                throw new SerializerException(e, LangMessage.FIELD_NOT_ACCESSIBLE, field.getName());
 			}
             if (value != null) {
                 String keyName = field.isAnnotationPresent(DataField.class)
@@ -391,7 +391,7 @@ public abstract class AbstractSerializer<
                 // This is not possible to resolve.
                 throw new SerializerException(
                     node,
-                    LangDiagnosticCode.EXPECTED_SCALAR,
+                    LangMessage.EXPECTED_SCALAR,
                     cls.getSimpleName()
                 );
             }
@@ -412,7 +412,7 @@ public abstract class AbstractSerializer<
 
             throw new SerializerException(
                 node,
-                LangDiagnosticCode.FAILED_DESERIALIZE_SCALAR_TO_NON_SCALAR,
+                LangMessage.FAILED_DESERIALIZE_SCALAR_TO_NON_SCALAR,
                 ReflectionUtils.getTypeName(targetType)
             );
         }
@@ -512,7 +512,7 @@ public abstract class AbstractSerializer<
 
         // 2. We now check against the generic MapAstNode interface
         if (!(node instanceof MapAstNode mapNode)) {
-            throw new SerializerException(node, LangDiagnosticCode.EXPECTED_MAP_STRUCTURE, jvmInstance.getClass()); //jvmType.getName());
+            throw new SerializerException(node, LangMessage.EXPECTED_MAP_STRUCTURE, jvmInstance.getClass()); //jvmType.getName());
         }
 
         // 3. Process Declared Fields
@@ -579,7 +579,7 @@ public abstract class AbstractSerializer<
         }
 
         if (!(node instanceof SequenceAstNode sequence)) {
-            throw new SerializerException(node, LangDiagnosticCode.EXPECTED_SEQUENCE, ReflectionUtils.getTypeName(targetType));
+            throw new SerializerException(node, LangMessage.EXPECTED_SEQUENCE, ReflectionUtils.getTypeName(targetType));
         }
 
         List<Object> result = new ArrayList<>();
@@ -609,7 +609,7 @@ public abstract class AbstractSerializer<
                 key = string;
             } else {
                 // TODO: Improve error handling
-                throw new SerializerException(node, GenericDiagnosticCode.ERROR, "Non-scalar key not implemented: " + entry.getKey());
+                throw new SerializerException(node, GenericMessage.ERROR, "Non-scalar key not implemented: " + entry.getKey());
             }
 
             Object val = deserializeType(entry.getValue(), valType);
@@ -649,7 +649,7 @@ public abstract class AbstractSerializer<
             try {
                 return descriptor.toJvmType(text);
             } catch (Exception e) {
-                throw new SerializerException(scalar, e, LangDiagnosticCode.FAILED_DESERIALIZE_SCALAR, jvmInstance.getClass(), e.getMessage());
+                throw new SerializerException(scalar, e, LangMessage.FAILED_DESERIALIZE_SCALAR, jvmInstance.getClass(), e.getMessage());
             }
         }
 
@@ -665,7 +665,7 @@ public abstract class AbstractSerializer<
         // Proper solution is black box testing, make the tests their own module.
         // Quick fix might be to let the caller tell the serializer what type descriptors to use.
 
-        throw new SerializerException(scalar, LangDiagnosticCode.UNSUPPORTED_TYPE, ReflectionUtils.getTypeName(targetType));
+        throw new SerializerException(scalar, LangMessage.UNSUPPORTED_TYPE, ReflectionUtils.getTypeName(targetType));
     }
 
     private Object deserializeScalarWithDescriptor(ScalarAstNode<?> scalar, ScalarDescriptor<?> descriptor) {
@@ -675,7 +675,7 @@ public abstract class AbstractSerializer<
             Object object = descriptor.toJvmType(stringValue);
             return object;
         } catch (Exception e) {
-            throw new SerializerException(scalar, e, LangDiagnosticCode.FAILED_TO_MAP_TYPE, descriptor.getJvmType().getName(), e.getMessage());
+            throw new SerializerException(scalar, e, LangMessage.FAILED_TO_MAP_TYPE, descriptor.getJvmType().getName(), e.getMessage());
         }
     }
 
@@ -752,7 +752,7 @@ public abstract class AbstractSerializer<
             C jvmInstance = targetClass.getConstructor().newInstance();
             return jvmInstance;
         } catch (NoSuchMethodException e) {
-            throw new SerializerException(node, e, LangDiagnosticCode.NO_SUCH_CONSTRUCTOR, ReflectionUtils.getTypeName(jvmType));
+            throw new SerializerException(node, e, LangMessage.NO_SUCH_CONSTRUCTOR, ReflectionUtils.getTypeName(jvmType));
         } catch (Exception e) {
             throw error(e, ReflectionUtils.getTypeName(jvmType));
         }
@@ -825,7 +825,7 @@ public abstract class AbstractSerializer<
             return jvmClass;
         }
         // TODO: Improve error handling, test for this
-        throw new SerializerException(GenericDiagnosticCode.ERROR, "not a class: " + jvmType);
+        throw new SerializerException(GenericMessage.ERROR, "not a class: " + jvmType);
     }
 
     private void processAnySetter(Object instance, M rootMap, Set<String> claimedKeys, Class<?> jvmType) {
@@ -859,9 +859,9 @@ public abstract class AbstractSerializer<
                         try {
                             method.invoke(instance, key, value);
                         } catch (IllegalAccessException e) {
-                            throw new SerializerException(e, LangDiagnosticCode.FIELD_NOT_ACCESSIBLE, method.getName());
+                            throw new SerializerException(e, LangMessage.FIELD_NOT_ACCESSIBLE, method.getName());
                         } catch (InvocationTargetException e) {
-                            throw new SerializerException(e, LangDiagnosticCode.INVOCATION_TARGET_EXCEPTION, method.getName());
+                            throw new SerializerException(e, LangMessage.INVOCATION_TARGET_EXCEPTION, method.getName());
                         }
                     }
                 }
@@ -992,15 +992,15 @@ public abstract class AbstractSerializer<
     //
 
     protected SerializerException error(Throwable t, Object... details) {
-        DiagnosticCode d = DiagnosticCode.forException(t);
+        DiagnosticMessage d = DiagnosticMessage.forException(t);
         if (d == null) {
-            return new SerializerException(t, GenericDiagnosticCode.ERROR, t.getMessage());
+            return new SerializerException(t, GenericMessage.ERROR, t.getMessage());
         } else {
             return new SerializerException(d, details);
         }
     }
 
-    protected void warn(DiagnosticCode code, Object... details) {
+    protected void warn(DiagnosticMessage code, Object... details) {
         reporter.warn(code, details);
     }
 
@@ -1015,7 +1015,7 @@ public abstract class AbstractSerializer<
     private void warnInaccessible(String fullName, Throwable t) {
         if (previousWarnings.contains(fullName)) return;
         previousWarnings.add(fullName);
-        warn(LangDiagnosticCode.FIELD_NOT_ACCESSIBLE_REASON, fullName, t.getMessage());
+        warn(LangMessage.FIELD_NOT_ACCESSIBLE_REASON, fullName, t.getMessage());
     }
 
     protected void debug(String message, Object... details) {

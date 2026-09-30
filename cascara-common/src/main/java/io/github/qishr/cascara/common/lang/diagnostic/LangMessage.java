@@ -35,9 +35,9 @@
 
 package io.github.qishr.cascara.common.lang.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
-public enum LangDiagnosticCode implements DiagnosticCode {
+public enum LangMessage implements DiagnosticMessage {
     EXPECTED_STREAM_START("LANG-101", "Expected stream start."),
     EXPECTED_STREAM_END("TOKEN-102", "Expected steam end."),
     UNEXPECTED_STREAM_END("TOKEN-103", "Unexpected stream end."),
@@ -76,13 +76,13 @@ public enum LangDiagnosticCode implements DiagnosticCode {
     NOT_AN_ARRAY_INDEX("LANG-504", "{0} is not an array index");
 
     private final String code;
-    private final String message;
+    private final String format;
 
-    LangDiagnosticCode(String code, String message) {
+    LangMessage(String code, String format) {
         this.code = code;
-        this.message = message;
+        this.format = format;
     }
 
     @Override public String getCode() { return code; }
-    @Override public String getMessage() { return message; }
+    @Override public String getFormat() { return format; }
 }

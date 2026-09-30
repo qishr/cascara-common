@@ -33,34 +33,27 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic.code;
+package io.github.qishr.cascara.common.color;
 
-public enum HttpDiagnosticCode implements DiagnosticCode {
-    // Infrastructure Errors (Pre-response)
-    // NAME_RESOLUTION_FAILED("HTTP-001", 1),
-    // CONNECTION_TIMEOUT("HTTP-002", 1),
-    // TLS_HANDSHAKE_FAILED("HTTP-003", 1),
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
-    // Standard HTTP Mappings (Dynamic Catch-All or Explicit Enums)
-    BAD_REQUEST("HTTP-400", "Bad Request: {0}"),
-    FORBIDDEN("HTTP-403", "Forbidden: {0}"),
-    NOT_FOUND("HTTP-404", "Not found: {0}"),
-    SERVER_ERROR("HTTP-500", "Server error: {0}");
+public enum ColorMessage implements DiagnosticMessage {
+    INVALID_COLOR_FORMAT("COLOR-101", "Invalid color format: {0}"),
+    INVALID_RGBA_FORMAT("COLOR-102", "Invalid RGBa format: {0}"),
+    INVALID_Hsba_FORMAT("COLOR-103", "Invalid Hsba format: {0}"),
+
+    RED_RANGE("COLOR-201", "Integer value for red must be in the range 0 to 255 but was {0}"),
+    GREEN_RANGE("COLOR-202", "Integer value for green must be in the range 0 to 255 but was {0}"),
+    BLUE_RANGE("COLOR-203", "Integer value for red blue be in the range 0 to 255 but was {0}");
 
     private final String code;
-    private final String message;
+    private final String format;
 
-    HttpDiagnosticCode(String code, String message) {
+    ColorMessage(String code, String format) {
         this.code = code;
-        this.message = message;
+        this.format = format;
     }
 
     @Override public String getCode() { return code; }
-    @Override public String getMessage() { return message; }
-
-    /// Factory method to dynamically resolve or generate an HTTP code
-    /// straight from a standard network response status code.
-    public static String fromStatusCode(int statusCode) {
-        return "HTTP-" + statusCode;
-    }
+    @Override public String getFormat() { return format; }
 }

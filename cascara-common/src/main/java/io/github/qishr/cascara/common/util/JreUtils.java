@@ -46,8 +46,8 @@ import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
-import io.github.qishr.cascara.common.diagnostic.code.FileDiagnosticCode;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 
 public class JreUtils {
     public static String getResourceAsString(Class<?> clazz, String path) throws LocalizableIOException {
@@ -66,7 +66,7 @@ public class JreUtils {
 
             content = result.toString();
         } catch (IOException e) {
-            throw new LocalizableIOException(e, FileDiagnosticCode.READ_ERROR, path);
+            throw new LocalizableIOException(e, FileMessage.READ_ERROR, path);
         }
         return content;
     }
@@ -105,7 +105,7 @@ public class JreUtils {
                     // Check if targetModule does NOT open this package to the class's module
                     if (!targetModule.isOpen(packageName, myModule)) {
                         throw new LocalizableIOException(
-                            GenericDiagnosticCode.RESOURCE_INACCESSIBLE,
+                            GenericMessage.RESOURCE_INACCESSIBLE,
                             path,
                             targetModule.getName(),
                             packageName,
@@ -117,7 +117,7 @@ public class JreUtils {
                     }
                 }
             }
-            throw new LocalizableIOException(FileDiagnosticCode.FILE_NOT_FOUND, path);
+            throw new LocalizableIOException(FileMessage.FILE_NOT_FOUND, path);
         }
         return is;
     }

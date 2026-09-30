@@ -115,7 +115,7 @@ public class SPLModuleScanner {
                                 String simpleName = fileName.substring(0, fileName.length() - 6);
                                 if (!simpleName.contains("$")) {
                                     String fqcn = packageName.isEmpty() ? simpleName : packageName + "." + simpleName;
-                                    getReporter().trace("      Found candidate class: " + fqcn);
+                                    getReporter().trace("  Found candidate class: " + fqcn);
                                     classNames.add(fqcn);
                                 }
                             });

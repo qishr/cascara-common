@@ -35,12 +35,12 @@
 
 package io.github.qishr.cascara.common.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 
 public class UnexpectedNullReturnException extends LocalizableRuntimeException {
 
     public UnexpectedNullReturnException(String instanceName, String instanceMethod) {
-        super(GenericDiagnosticCode.UNEXPECTED_NULL_RETURN, instanceName, buildMethoDetails(instanceName, instanceMethod));
+        super(GenericMessage.UNEXPECTED_NULL_RETURN, instanceName, buildMethoDetails(instanceName, instanceMethod));
     }
 
     // TODO: Consistency with UnimplementedMethodException

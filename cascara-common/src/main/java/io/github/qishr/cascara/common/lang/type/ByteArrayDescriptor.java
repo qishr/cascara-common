@@ -39,7 +39,7 @@ import java.util.Base64;
 
 import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 
 public class ByteArrayDescriptor extends AbstractScalarDescriptor<byte[]> {
     public ByteArrayDescriptor() {
@@ -51,7 +51,7 @@ public class ByteArrayDescriptor extends AbstractScalarDescriptor<byte[]> {
         try {
             return Base64.getDecoder().decode(text);
         } catch (IllegalArgumentException e) {
-            throw new LocalizableRuntimeException(e, GenericDiagnosticCode.MALFORMED_BASE64);
+            throw new LocalizableRuntimeException(e, GenericMessage.MALFORMED_BASE64);
         }
     }
 

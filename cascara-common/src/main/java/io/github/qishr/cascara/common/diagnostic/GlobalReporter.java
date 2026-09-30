@@ -162,7 +162,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                     "[%s] [%s] %s at line %d\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
                     diagnostic.getSource(),
-                    diagnostic.getMessage(),
+                    diagnostic.getFormattedMessage(),
                     diagnostic.getLine()
                 );
             } else {
@@ -170,7 +170,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                     "[%s] [%s] %s\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
                     diagnostic.getSource(),
-                    diagnostic.getMessage()
+                    diagnostic.getFormattedMessage()
                 );
             }
         } else {
@@ -179,7 +179,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                     "[%s] [%s] %s at %s:%d\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
                     diagnostic.getSource(),
-                    diagnostic.getMessage(),
+                    diagnostic.getFormattedMessage(),
                     diagnostic.getUri(),
                     diagnostic.getLine()
                 );
@@ -188,7 +188,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                     "[%s] [%s] %s in file %s\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
                     diagnostic.getSource(),
-                    diagnostic.getMessage(),
+                    diagnostic.getFormattedMessage(),
                     diagnostic.getUri()
                 );
             }

@@ -35,13 +35,13 @@
 
 package io.github.qishr.cascara.common.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public class AbstractLocalizableException extends Exception implements LocalizableException {
 
     private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
 
-    private final DiagnosticCode code;
+    private final DiagnosticMessage diagnosticMessage;
     private final Object[] details;
 
     public static DiagnosticLocalizer getLocalizer() {
@@ -52,22 +52,22 @@ public class AbstractLocalizableException extends Exception implements Localizab
         localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
     }
 
-    public AbstractLocalizableException(DiagnosticCode code, Object... details) {
+    public AbstractLocalizableException(DiagnosticMessage code, Object... details) {
         super(format(code, details));
-        this.code = code;
+        this.diagnosticMessage = code;
         this.details = details != null ? details : new Object[0];
     }
 
-    public AbstractLocalizableException(Throwable cause, DiagnosticCode code, Object... details) {
+    public AbstractLocalizableException(Throwable cause, DiagnosticMessage code, Object... details) {
         super(format(code, details));
-        this.code = code;
+        this.diagnosticMessage = code;
         this.details = details != null ? details : new Object[0];
     }
 
     /// Returns a diagnostic error code for the error message.
     @Override
-	public DiagnosticCode getCode() {
-		return code;
+	public DiagnosticMessage getDiagnosticMessage() {
+		return diagnosticMessage;
 	}
 
     /// Returns the details, if any, to be used in formatting the error message.
@@ -80,9 +80,9 @@ public class AbstractLocalizableException extends Exception implements Localizab
     @Override
     public String getLocalizedMessage() {
         try {
-            return localizer.format(code, details);
+            return localizer.format(diagnosticMessage, details);
         } catch (IllegalArgumentException e) {
-            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, code.getCode(), code.getMessage());
+            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
         }
     }
 
@@ -90,14 +90,14 @@ public class AbstractLocalizableException extends Exception implements Localizab
     @Override
     public String getMessage() {
         try {
-            return DiagnosticLocalizer.DEFAULT.format(code, details);
+            return DiagnosticLocalizer.DEFAULT.format(diagnosticMessage, details);
         } catch (IllegalArgumentException e) {
-            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, code.getCode(), code.getMessage());
+            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
         }
     }
 
-    /// Formats a [DiagnosticCode]'s message without localizing it.
-    private static String format(DiagnosticCode code, Object... details) {
+    /// Formats a [DiagnosticMessage] without localizing it.
+    private static String format(DiagnosticMessage code, Object... details) {
         return DiagnosticLocalizer.DEFAULT.format(code, details);
     }
 }

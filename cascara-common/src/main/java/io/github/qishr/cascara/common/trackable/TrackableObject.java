@@ -236,7 +236,7 @@ public class TrackableObject extends AbstractTrackable implements TrackableTabul
         } else if (trackable instanceof TrackableProperty property) {
             property.setValue(value);
         } else {
-            throw new TrackingException(TrackingDiagnosticCode.PROPERTY_NOT_RECOGNIZED, key);
+            throw new TrackingException(TrackingMessage.PROPERTY_NOT_RECOGNIZED, key);
         }
 
         invalidate();

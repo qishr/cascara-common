@@ -41,7 +41,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.util.StringUtils;
 
 public class ColorUtils {
@@ -85,7 +85,7 @@ public class ColorUtils {
         if (toColor(colorString) instanceof RgbaColor color) {
             return color;
         }
-        throw new ColorException(ColorDiagnosticCode.INVALID_COLOR_FORMAT, colorString);
+        throw new ColorException(ColorMessage.INVALID_COLOR_FORMAT, colorString);
     }
 
     public static HsbaColor toHsbaColor(String colorString) {
@@ -96,15 +96,15 @@ public class ColorUtils {
             HsbaColor hsbaColor = toHsbaColor(rgbaColor);
             return hsbaColor;
         }
-        throw new ColorException(ColorDiagnosticCode.INVALID_COLOR_FORMAT, colorString);
+        throw new ColorException(ColorMessage.INVALID_COLOR_FORMAT, colorString);
     }
 
     public static ColorPrimitive toColor(String colorString) {
         if (colorString == null) {
-            throw new LocalizableRuntimeException(GenericDiagnosticCode.UNEXPECTED_NULL_PARAMETER, "ColorUtils", "toColor");
+            throw new LocalizableRuntimeException(GenericMessage.UNEXPECTED_NULL_PARAMETER, "ColorUtils", "toColor");
         }
         if (colorString.isEmpty()) {
-            throw new LocalizableRuntimeException(ColorDiagnosticCode.INVALID_COLOR_FORMAT, colorString);
+            throw new LocalizableRuntimeException(ColorMessage.INVALID_COLOR_FORMAT, colorString);
         }
         colorString = colorString.toLowerCase(Locale.ROOT);
         ColorPrimitive color = null;
@@ -120,7 +120,7 @@ public class ColorUtils {
             color = toHsbaColor(StringUtils.parseNumberList(stripCloseParen(colorString.substring(4))));
         }
         if (color == null) {
-            throw new ColorException(ColorDiagnosticCode.INVALID_COLOR_FORMAT, colorString);
+            throw new ColorException(ColorMessage.INVALID_COLOR_FORMAT, colorString);
         }
         return color;
     }

@@ -36,15 +36,15 @@
 package io.github.qishr.cascara.common.color;
 
 import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public class ColorException extends LocalizableRuntimeException {
 
-    public ColorException(DiagnosticCode code, Object... details) {
+    public ColorException(DiagnosticMessage code, Object... details) {
         super(code, details);
     }
 
-    public ColorException(Exception e, DiagnosticCode code, Object... details) {
+    public ColorException(Exception e, DiagnosticMessage code, Object... details) {
         super(e, code, details);
     }
 }

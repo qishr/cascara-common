@@ -51,7 +51,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 
 public class ReflectionUtils {
@@ -187,7 +187,7 @@ public class ReflectionUtils {
             return (C) java.lang.reflect.Array.newInstance(comp, 0).getClass();
         }
 
-        throw new SerializerException(GenericDiagnosticCode.ERROR, "Failed to classify type: " + jvmType);
+        throw new SerializerException(GenericMessage.ERROR, "Failed to classify type: " + jvmType);
     }
 
     @Nullable

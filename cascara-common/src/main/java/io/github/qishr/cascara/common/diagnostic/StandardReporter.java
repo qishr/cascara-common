@@ -55,7 +55,6 @@ public class StandardReporter extends AbstractReporter<StandardReporter> {
     @Override
     protected StandardReporter self() { return this; }
 
-
     @Override
     protected String formatMessage(Diagnostic diagnostic, String msgLine, int msgLineNumber, boolean colorize) {
         int diagnosticLineNumber = diagnostic.getLine();
@@ -73,27 +72,18 @@ public class StandardReporter extends AbstractReporter<StandardReporter> {
 
         StringBuilder sb = new StringBuilder();
 
-        // showDiagnosticCodes
         if (showProblemCodes && diagnostic.getLevel().isProblem() && msgLineNumber == 0) {
-            String msgCode = diagnostic.getCode().getCode();
+            String msgCode = diagnostic.getMessage().getCode();
             sb.append("[");
             if (colorize) {
-
                 sb.append(TermUtils.ANSI_WHITE);
                 sb.append(msgCode);
                 sb.append(TermUtils.ANSI_RESET);
-                // sb.append(colorStack.peek());
-
             } else {
                 sb.append(msgCode);
             }
             sb.append("] ");
         }
-
-        // // First line is default color, subsequent lines from the same diagnostic message are green.
-        // if (colorize && msgLineNumber > 0) {
-        //     sb.append(TermUtils.ANSI_GREEN);
-        // }
 
         sb.append(msgLine);
 

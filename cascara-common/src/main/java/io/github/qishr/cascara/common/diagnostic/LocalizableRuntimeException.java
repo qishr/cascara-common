@@ -35,32 +35,32 @@
 
 package io.github.qishr.cascara.common.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public class LocalizableRuntimeException extends RuntimeException implements LocalizableException {
     // private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
 
-    private final DiagnosticCode code;
+    private final DiagnosticMessage diagnosticMessage;
     private final Object[] details;
 
     // public static void setLocalizer(DiagnosticLocalizer customLocalizer) {
     //     localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
     // }
 
-    public LocalizableRuntimeException(DiagnosticCode code, Object... details) {
+    public LocalizableRuntimeException(DiagnosticMessage code, Object... details) {
         super(AbstractLocalizableException.getLocalizer().format(code, details));
-        this.code = code;
+        this.diagnosticMessage = code;
         this.details = details != null ? details : new Object[0];
     }
 
-    public LocalizableRuntimeException(Throwable cause, DiagnosticCode code, Object... details) {
+    public LocalizableRuntimeException(Throwable cause, DiagnosticMessage code, Object... details) {
         super(AbstractLocalizableException.getLocalizer().format(code, details), cause);
-        this.code = code;
+        this.diagnosticMessage = code;
         this.details = details != null ? details : new Object[0];
     }
 
-	public DiagnosticCode getCode() {
-		return code;
+	public DiagnosticMessage getDiagnosticMessage() {
+		return diagnosticMessage;
 	}
 
 	public Object[] getDetails() {
@@ -69,6 +69,6 @@ public class LocalizableRuntimeException extends RuntimeException implements Loc
 
     @Override
     public String getLocalizedMessage() {
-        return AbstractLocalizableException.getLocalizer().format(code, details);
+        return AbstractLocalizableException.getLocalizer().format(diagnosticMessage, details);
     }
 }

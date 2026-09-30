@@ -33,9 +33,9 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic.code;
+package io.github.qishr.cascara.common.diagnostic.message;
 
-public enum GenericDiagnosticCode implements DiagnosticCode {
+public enum GenericMessage implements DiagnosticMessage {
     INFO("INFO-101", "{0}"),
 
     // Warnings
@@ -76,13 +76,13 @@ public enum GenericDiagnosticCode implements DiagnosticCode {
 
 
     private final String code;
-    private final String message;
+    private final String format;
 
-    GenericDiagnosticCode(String code, String message) {
+    GenericMessage(String code, String format) {
         this.code = code;
-        this.message = message;
+        this.format = format;
     }
 
     @Override public String getCode() { return code; }
-    @Override public String getMessage() { return message; }
+    @Override public String getFormat() { return format; }
 }

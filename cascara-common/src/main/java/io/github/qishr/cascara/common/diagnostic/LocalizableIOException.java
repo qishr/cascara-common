@@ -37,27 +37,27 @@ package io.github.qishr.cascara.common.diagnostic;
 
 import java.io.IOException;
 
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public class LocalizableIOException extends IOException implements LocalizableException {
 
-    private final DiagnosticCode code;
+    private final DiagnosticMessage diagnosticMessage;
     private final Object[] details;
 
-    public LocalizableIOException(DiagnosticCode code, Object... details) {
+    public LocalizableIOException(DiagnosticMessage code, Object... details) {
         this(null, code, details);
     }
 
-    public LocalizableIOException(Throwable cause, DiagnosticCode code, Object... details) {
+    public LocalizableIOException(Throwable cause, DiagnosticMessage code, Object... details) {
         super(cause);
-        this.code = code;
+        this.diagnosticMessage = code;
         this.details = details;
     }
 
     /// Returns a diagnostic error code for the error message.
     @Override
-	public DiagnosticCode getCode() {
-		return code;
+	public DiagnosticMessage getDiagnosticMessage() {
+		return diagnosticMessage;
 	}
 
     /// Returns the details, if any, to be used in formatting the error message.
@@ -70,9 +70,9 @@ public class LocalizableIOException extends IOException implements LocalizableEx
     @Override
     public String getLocalizedMessage() {
         try {
-            return AbstractLocalizableException.getLocalizer().format(code, details);
+            return AbstractLocalizableException.getLocalizer().format(diagnosticMessage, details);
         } catch (IllegalArgumentException e) {
-            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, code.getCode(), code.getMessage());
+            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
         }
     }
 
@@ -80,9 +80,9 @@ public class LocalizableIOException extends IOException implements LocalizableEx
     @Override
     public String getMessage() {
         try {
-            return DiagnosticLocalizer.DEFAULT.format(code, details);
+            return DiagnosticLocalizer.DEFAULT.format(diagnosticMessage, details);
         } catch (IllegalArgumentException e) {
-            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, code.getCode(), code.getMessage());
+            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
         }
     }
 }

@@ -239,7 +239,7 @@ tasks.named('processResources', ProcessResources) {
     inputs.property "version", project.version
 
     doLast {
-        def versionText = "Manifest-Version: 1.0\r\nCascara-Version: ${project.cascara_version}\r\n"
+        def versionText = "Manifest-Version: 1.0\r\nCascara-Version: ${project.cascara_version}\r\nImplementation-Version: ${project.version}\r\n"
 
         // Write to resources directory
         def resManifest = file("${destinationDir}/META-INF/MANIFEST.MF")

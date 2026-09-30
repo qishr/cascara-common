@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.semver.SemVer;
 
@@ -89,7 +89,7 @@ public class JarManifest extends Properties {
                 }
             }
         } catch (Exception e) {
-            throw new LocalizableRuntimeException(e, GenericDiagnosticCode.MANIFEST_READ, e.getMessage());
+            throw new LocalizableRuntimeException(e, GenericMessage.MANIFEST_READ, e.getMessage());
         }
 
         for (Map.Entry<String, StringBuilder> entry : mf.entrySet()) {
@@ -106,7 +106,7 @@ public class JarManifest extends Properties {
         } catch (LocalizableIOException e) {
             throw new LocalizableRuntimeException(
                 e,
-                GenericDiagnosticCode.MANIFEST_READ,
+                GenericMessage.MANIFEST_READ,
                 clazz.getSimpleName()
             );
         }
@@ -116,7 +116,7 @@ public class JarManifest extends Properties {
         } catch (Exception e) {
             throw new LocalizableRuntimeException(
                 e,
-                GenericDiagnosticCode.MANIFEST_READ,
+                GenericMessage.MANIFEST_READ,
                 clazz.getSimpleName()
             );
         }

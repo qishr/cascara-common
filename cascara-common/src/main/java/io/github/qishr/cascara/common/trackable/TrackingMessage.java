@@ -1,8 +1,8 @@
 package io.github.qishr.cascara.common.trackable;
 
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
-public enum TrackingDiagnosticCode implements DiagnosticCode {
+public enum TrackingMessage implements DiagnosticMessage {
     // Data
     UI_DATA_ERROR("UI-101", "UI data error."),
     PROPERTY_NOT_RECOGNIZED("UI-102","Unrecognized property name: {0}."),
@@ -27,13 +27,13 @@ public enum TrackingDiagnosticCode implements DiagnosticCode {
 
 
     private final String code;
-    private final String message;
+    private final String format;
 
-    TrackingDiagnosticCode(String code, String message) {
+    TrackingMessage(String code, String format) {
         this.code = code;
-        this.message = message;
+        this.format = format;
     }
 
     @Override public String getCode() { return code; }
-    @Override public String getMessage() { return message; }
+    @Override public String getFormat() { return format; }
 }

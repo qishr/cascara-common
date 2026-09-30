@@ -38,12 +38,12 @@ package io.github.qishr.cascara.common.diagnostic;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public interface LocalizableException {
 
-    /// Returns a diagnostic error code for the error message.
-	DiagnosticCode getCode();
+    /// Returns a diagnostic message for the error.
+	DiagnosticMessage getDiagnosticMessage();
 
     /// Returns the details, if any, to be used in formatting the error message.
 	Object[] getDetails();

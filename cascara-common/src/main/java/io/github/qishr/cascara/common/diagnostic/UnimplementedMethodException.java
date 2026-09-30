@@ -35,14 +35,14 @@
 
 package io.github.qishr.cascara.common.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public class UnimplementedMethodException extends LocalizableRuntimeException {
 
     public UnimplementedMethodException() {
-        super(GenericDiagnosticCode.UNSUPPORTED_OPERATION, buildMethoDetails());
+        super(GenericMessage.UNSUPPORTED_OPERATION, buildMethoDetails());
     }
 
     private static Object[] buildMethoDetails() {

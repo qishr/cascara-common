@@ -60,6 +60,7 @@ public class ClassHierarchy {
 
     private ClassHierarchy() {}
 
+    // TODO: Move to JreUtils
     public static ClassLoader getEffectiveClassLoader() {
         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         return tccl != null ? tccl : ClassLoader.getSystemClassLoader();

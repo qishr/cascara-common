@@ -59,7 +59,7 @@ public interface SPL extends TreeNode<SPL> {
         return SPLUtils.loadDefault(serviceType);
     }
 
-    void setReporter(Reporter reporter);
+    // void setReporter(Reporter reporter);
 
     //
     // Layer info, hierarchy, creation and deletion

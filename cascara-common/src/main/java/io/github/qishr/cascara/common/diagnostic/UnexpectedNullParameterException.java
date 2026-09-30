@@ -35,14 +35,14 @@
 
 package io.github.qishr.cascara.common.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public class UnexpectedNullParameterException extends LocalizableRuntimeException {
 
     public UnexpectedNullParameterException(String paramName) {
-        super(GenericDiagnosticCode.UNEXPECTED_NULL_PARAMETER, buildMethoDetails(paramName));
+        super(GenericMessage.UNEXPECTED_NULL_PARAMETER, buildMethoDetails(paramName));
     }
 
     // TODO: Consistency with UnimplementedMethodException

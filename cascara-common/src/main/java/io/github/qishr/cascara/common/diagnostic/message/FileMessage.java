@@ -33,9 +33,9 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic.code;
+package io.github.qishr.cascara.common.diagnostic.message;
 
-public enum FileDiagnosticCode implements DiagnosticCode {
+public enum FileMessage implements DiagnosticMessage {
     FILE_NOT_FOUND("FILE-101", "File not found: {0}"),
     ACCESS_DENIED("FILE-102", "Access denied"),
     IS_DIRECTORY("FILE-103", "{0} is a directory"),
@@ -46,13 +46,13 @@ public enum FileDiagnosticCode implements DiagnosticCode {
     DELETE_ERROR("FILE-204", "Error deleting file {0}");
 
     private final String code;
-    private final String message;
+    private final String format;
 
-    FileDiagnosticCode(String code, String message) {
+    FileMessage(String code, String format) {
         this.code = code;
-        this.message = message;
+        this.format = format;
     }
 
     @Override public String getCode() { return code; }
-    @Override public String getMessage() { return message; }
+    @Override public String getFormat() { return format; }
 }

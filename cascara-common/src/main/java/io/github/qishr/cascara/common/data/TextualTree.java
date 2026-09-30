@@ -40,7 +40,7 @@ import java.io.Writer;
 import java.util.List;
 
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
 
@@ -75,7 +75,7 @@ public class TextualTree<T extends TreeData<T,V>,V> {
             writer.write(node.getNodeName() == null ? "NULL" : node.getNodeName());
             writer.write(NL);
         } catch (IOException e) {
-            throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+            throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
 
         if (renderValues && node.getPayload() != null) {

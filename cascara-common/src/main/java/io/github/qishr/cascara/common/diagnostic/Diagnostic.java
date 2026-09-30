@@ -39,7 +39,7 @@ import java.net.URI;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 /// Represents a discrete event, log entry, or syntax/semantic problem identified
@@ -59,8 +59,8 @@ public class Diagnostic {
 
     private final String source;
     private final Level level;
-    private final DiagnosticCode code;
-    private final String message;
+    private final DiagnosticMessage message;
+    private final String formattedMessage;
     private final Object[] details;
     private final Throwable cause;
 
@@ -83,7 +83,7 @@ public class Diagnostic {
     /// @param code An optional stable error or classification code, primarily useful for localization and documentation lookups.
     /// @param message The descriptive message explaining this diagnostic event.
     /// @param details Arguments referenced by the format specifiers in the format string.
-    public Diagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, Throwable cause, DiagnosticCode code, String message, Object... details) {
+    public Diagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, Throwable cause, DiagnosticMessage code, String message, Object... details) {
         this.uri = uri;
         this.line = line;
         this.column = column;
@@ -92,7 +92,7 @@ public class Diagnostic {
 
         this.source = source;
         this.cause = cause;
-        this.code = code;
+        this.message = code;
         this.details = details;
 
         this.thread = Thread.currentThread().getName();
@@ -105,13 +105,13 @@ public class Diagnostic {
                 formattedMessage = ("Message code or text required when creating Diagnostic.");
             } else {
                 if (details.length == 0) {
-                    formattedMessage = code.getMessage();
+                    formattedMessage = code.getFormat();
                 } else {
                     try {
-                        String format = code.getMessage().replaceAll("'", "''");
+                        String format = code.getFormat().replaceAll("'", "''");
                         formattedMessage = MessageFormat.format(format, details);
                     } catch (IllegalArgumentException e) {
-                        formattedMessage = "Formatting problem while reporting (code " + code.getCode() + "): " + code.getMessage() + ".";
+                        formattedMessage = "Formatting problem while reporting (code " + code.getCode() + "): " + code.getFormat() + ".";
                         level = Level.ERROR;
                     }
                 }
@@ -130,7 +130,7 @@ public class Diagnostic {
         }
 
         this.level = level;
-        this.message = formattedMessage;
+        this.formattedMessage = formattedMessage;
     }
 
     /// Constructs a [Diagnostic] entry by resolving positioning metadata directly from a parsing [Token].
@@ -146,7 +146,7 @@ public class Diagnostic {
     /// @param code An optional stable error or classification code, primarily useful for localization and documentation lookups.
     /// @param message The descriptive message explaining this diagnostic event.
     /// @param details Arguments referenced by the format specifiers in the format string.
-    public Diagnostic(URI uri, Token token, String source, Level level, Throwable cause, DiagnosticCode code, String message, Object... details) {
+    public Diagnostic(URI uri, Token token, String source, Level level, Throwable cause, DiagnosticMessage code, String message, Object... details) {
         this(
             uri,
             token.getStartLine(),
@@ -178,16 +178,17 @@ public class Diagnostic {
     public int getEndOffset() { return endOffset; }
 
     /// Returns the identifier string of the subsystem that produced this diagnostic.
+    /// This is usually the FQCN of the class creating the diagnostic report.
     public String getSource() { return source; }
 
     /// Returns the severity [Level] classification of this diagnostic.
     public Level getLevel() { return level; }
 
     /// Returns the stable classification code, suitable for localization and system filtering.
-    public DiagnosticCode getCode() { return code; }
+    public DiagnosticMessage getMessage() { return message; }
 
     /// Returns the formatted descriptive text message of this diagnostic.
-    public String getMessage() { return message; }
+    public String getFormattedMessage() { return formattedMessage; }
 
     /// Returns the arguments for the message format placeholders.
     public Object[] getDetails() { return details; }

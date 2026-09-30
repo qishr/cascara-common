@@ -61,6 +61,24 @@ public class Cascara {
     // }
 
     public static SemVer getVersion() {
+        java.util.jar.Manifest manifest = getManifest();
+        String ver = manifest.getMainAttributes().getValue("Cascara-Version");
+        if (ver != null && !ver.isBlank()) {
+            return new SemVer(ver);
+        }
+        return new SemVer("0.0.0");
+    }
+
+    public static SemVer getCommonVersion() {
+        java.util.jar.Manifest manifest = getManifest();
+        String ver = manifest.getMainAttributes().getValue("Implementation-Version");
+        if (ver != null && !ver.isBlank()) {
+            return new SemVer(ver);
+        }
+        return new SemVer("0.0.0");
+    }
+
+    private static java.util.jar.Manifest getManifest() {
         try {
             var codeSource = Cascara.class.getProtectionDomain().getCodeSource();
             if (codeSource != null && codeSource.getLocation() != null) {
@@ -71,10 +89,7 @@ public class Cascara {
                     try (java.util.jar.JarFile jarFile = new java.util.jar.JarFile(new File(location.toURI()))) {
                         java.util.jar.Manifest manifest = jarFile.getManifest();
                         if (manifest != null) {
-                            String ver = manifest.getMainAttributes().getValue("Cascara-Version");
-                            if (ver != null && !ver.isBlank()) {
-                                return new SemVer(ver);
-                            }
+                            return manifest;
                         }
                     }
                 } else {
@@ -92,18 +107,14 @@ public class Cascara {
                     if (manifestFile.exists()) {
                         try (InputStream is = new FileInputStream(manifestFile)) {
                             java.util.jar.Manifest manifest = new java.util.jar.Manifest(is);
-                            String ver = manifest.getMainAttributes().getValue("Cascara-Version");
-                            if (ver != null && !ver.isBlank()) {
-                                return new SemVer(ver);
-                            }
+                            return manifest;
                         }
                     }
                 }
             }
         } catch (Exception ignored) {
         }
-
-        return new SemVer("0.0.0");
+        return null;
     }
 
     public static String getHomeEnvVar() {

@@ -50,7 +50,7 @@ import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.diagnostic.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
-import io.github.qishr.cascara.common.diagnostic.code.FileDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.util.Duplicable;
 
 public class Properties implements TabularData, Duplicable<Properties> {
@@ -305,10 +305,10 @@ public class Properties implements TabularData, Duplicable<Properties> {
                 String content = Files.readString(path, StandardCharsets.UTF_8);
                 return PropertyParser.parse(content);
             } catch (IOException e) {
-                throw new LocalizableIOException(FileDiagnosticCode.READ_ERROR, path);
+                throw new LocalizableIOException(FileMessage.READ_ERROR, path);
             }
         } else {
-            throw new LocalizableIOException(FileDiagnosticCode.FILE_NOT_FOUND, path);
+            throw new LocalizableIOException(FileMessage.FILE_NOT_FOUND, path);
         }
     }
 

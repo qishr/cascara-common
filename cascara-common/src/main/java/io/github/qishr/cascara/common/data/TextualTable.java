@@ -42,7 +42,7 @@ import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.util.StringUtils;
 import io.github.qishr.cascara.common.util.TermUtils;
 
@@ -233,7 +233,7 @@ public class TextualTable {
             writer.flush();
             return this;
         } catch (IOException e) {
-            throw new LocalizableRuntimeException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+            throw new LocalizableRuntimeException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
     }
 

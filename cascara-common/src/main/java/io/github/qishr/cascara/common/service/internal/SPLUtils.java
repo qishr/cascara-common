@@ -41,7 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import io.github.qishr.cascara.common.service.ServiceDiagnosticCode;
+import io.github.qishr.cascara.common.service.ServiceMessage;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;
@@ -52,7 +52,7 @@ public class SPLUtils {
     /// Returns an instance of a specific service provider.
     public static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
-            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, serviceType);
+            throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, serviceType);
         }
         Class<? extends ServiceProvider> clazz = metadata.getType();
         return serviceType.cast(getInstance(clazz, metadata));
@@ -62,13 +62,13 @@ public class SPLUtils {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T> T loadDefault(Class<T> serviceType) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
-            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, serviceType);
+            throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, serviceType);
         }
 
         SPLRoot rootLayer = SPLRoot.instance();
         List<ServiceMetadata> providers = rootLayer.findAllProviders((Class) serviceType);
         if (providers.isEmpty()) {
-            throw new ServiceException(ServiceDiagnosticCode.NO_PROVIDER_REGISTERED, serviceType.getSimpleName());
+            throw new ServiceException(ServiceMessage.NO_PROVIDER_REGISTERED, serviceType.getSimpleName());
         }
 
         ServiceMetadata providerMeta = getPreferredMeta(serviceType, providers);
@@ -87,7 +87,7 @@ public class SPLUtils {
     /// @param providerClass The class of the provider to instantiate.
     public static <T> T getInstance(Class<T> providerClass, ServiceMetadata serviceMeta) {
         if (!ServiceProvider.class.isAssignableFrom(providerClass)) {
-            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, providerClass);
+            throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, providerClass);
         }
 
         if (serviceMeta.isSingleton()) {
@@ -106,12 +106,12 @@ public class SPLUtils {
     @SuppressWarnings("unchecked")
     public static <T> T instantiate(Class<T> providerClass) {
         if (!ServiceProvider.class.isAssignableFrom(providerClass)) {
-            throw new ServiceException(ServiceDiagnosticCode.NOT_A_SERVICE_PROVIDER, providerClass);
+            throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, providerClass);
         }
         try {
             Constructor<?> constructor = providerClass.getDeclaredConstructor();
             if (constructor == null) {
-                throw new ServiceException(ServiceDiagnosticCode.NOARGS_CONSTRUCTOR_REQUIRED, providerClass.getName());
+                throw new ServiceException(ServiceMessage.NOARGS_CONSTRUCTOR_REQUIRED, providerClass.getName());
             } else {
                 if (!constructor.canAccess(null)) {
                     constructor.trySetAccessible();
@@ -121,7 +121,7 @@ public class SPLUtils {
             }
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
                 | NoSuchMethodException e) {
-            throw new ServiceException(e, ServiceDiagnosticCode.FAILED_TO_INSTANTIATE_CLASS, providerClass.getName(), e.getMessage());
+            throw new ServiceException(e, ServiceMessage.FAILED_TO_INSTANTIATE_CLASS, providerClass.getName(), e.getMessage());
         }
     }
 

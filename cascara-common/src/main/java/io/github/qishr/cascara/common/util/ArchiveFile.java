@@ -57,8 +57,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
-import io.github.qishr.cascara.common.diagnostic.code.FileDiagnosticCode;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 
 public class ArchiveFile implements AutoCloseable {
     protected Path archivePath = null;
@@ -77,18 +77,18 @@ public class ArchiveFile implements AutoCloseable {
         if (create) {
             if (Files.exists(archivePath)) {
                 if (Files.isDirectory(archivePath)) {
-                    throw new LocalizableIOException(FileDiagnosticCode.IS_DIRECTORY, archivePath);
+                    throw new LocalizableIOException(FileMessage.IS_DIRECTORY, archivePath);
                 } else {
                     try {
                         Files.delete(archivePath);
                     } catch (IOException e) {
-                        throw new LocalizableIOException(e, FileDiagnosticCode.DELETE_ERROR, archivePath);
+                        throw new LocalizableIOException(e, FileMessage.DELETE_ERROR, archivePath);
                     }
                 }
             }
         } else {
             if (!Files.exists(archivePath)) {
-                throw new LocalizableIOException(FileDiagnosticCode.FILE_NOT_FOUND, archivePath);
+                throw new LocalizableIOException(FileMessage.FILE_NOT_FOUND, archivePath);
             }
         }
         this.archivePath = archivePath;
@@ -106,9 +106,9 @@ public class ArchiveFile implements AutoCloseable {
             return FileSystems.newFileSystem(uri, env);
         } catch (IOException e) {
             if (create) {
-                throw new LocalizableIOException(e, FileDiagnosticCode.WRITE_ERROR, archivePath);
+                throw new LocalizableIOException(e, FileMessage.WRITE_ERROR, archivePath);
             } else {
-                throw new LocalizableIOException(e, FileDiagnosticCode.READ_ERROR, archivePath);
+                throw new LocalizableIOException(e, FileMessage.READ_ERROR, archivePath);
             }
         }
     }
@@ -155,7 +155,7 @@ public class ArchiveFile implements AutoCloseable {
                 }
             }
         } catch (IOException e) {
-            throw new LocalizableIOException(e, FileDiagnosticCode.READ_ERROR, filePath);
+            throw new LocalizableIOException(e, FileMessage.READ_ERROR, filePath);
             // e.printStackTrace();
             // return new byte[0];
         }
@@ -192,7 +192,7 @@ public class ArchiveFile implements AutoCloseable {
                     .filter(Files::isRegularFile)
                     .toList();
         } catch (IOException e) {
-            throw new LocalizableIOException(e, FileDiagnosticCode.READ_ERROR, sourcePath);
+            throw new LocalizableIOException(e, FileMessage.READ_ERROR, sourcePath);
         }
 
         String entryPrefix = entryName == null || entryName.isEmpty()
@@ -210,7 +210,7 @@ public class ArchiveFile implements AutoCloseable {
                 run.accept(file, entryPath);
             }
         } catch (IOException e) {
-            throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+            throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
     }
 
@@ -219,7 +219,7 @@ public class ArchiveFile implements AutoCloseable {
         try (FileSystem fileSystem = getFileSystem()) {
             addFileInternal(sourcePath, fileSystem.getPath(entryName));
         } catch (IOException e) {
-            throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+            throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
     }
 
@@ -228,7 +228,7 @@ public class ArchiveFile implements AutoCloseable {
         try (FileSystem fileSystem = getFileSystem()) {
             addFileInternal(content, fileSystem.getPath(entryName));
         } catch (IOException e) {
-            throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+            throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
     }
 
@@ -253,9 +253,9 @@ public class ArchiveFile implements AutoCloseable {
                 }
             }
         } catch (FileNotFoundException e) {
-            throw new LocalizableIOException(e, FileDiagnosticCode.FILE_NOT_FOUND, archivePath);
+            throw new LocalizableIOException(e, FileMessage.FILE_NOT_FOUND, archivePath);
         } catch (IOException e) {
-            throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+            throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
 
         return fileInfoList;
@@ -281,9 +281,9 @@ public class ArchiveFile implements AutoCloseable {
                 in.close();
             }
         } catch (FileNotFoundException e) {
-            exceptions.add(new LocalizableIOException(e, FileDiagnosticCode.FILE_NOT_FOUND, sourcePath));
+            exceptions.add(new LocalizableIOException(e, FileMessage.FILE_NOT_FOUND, sourcePath));
         } catch (IOException e) {
-            exceptions.add(new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage()));
+            exceptions.add(new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage()));
         }
     }
 
@@ -293,7 +293,7 @@ public class ArchiveFile implements AutoCloseable {
         try (OutputStream os = Files.newOutputStream(entryPath, StandardOpenOption.CREATE)) {
             os.write(buf, 0, buf.length);
         } catch (IOException e) {
-            throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+            throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
     }
 
@@ -302,7 +302,7 @@ public class ArchiveFile implements AutoCloseable {
             try {
                 Files.createDirectories(entryPath.getParent());
             } catch (IOException e) {
-                throw new LocalizableIOException(e, GenericDiagnosticCode.IO_ERROR, e.getMessage());
+                throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
             }
         }
     }

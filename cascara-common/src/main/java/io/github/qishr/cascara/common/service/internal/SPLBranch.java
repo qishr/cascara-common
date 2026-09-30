@@ -67,12 +67,12 @@ import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
-import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.service.ContentTypeProvider;
-import io.github.qishr.cascara.common.service.ServiceDiagnosticCode;
+import io.github.qishr.cascara.common.service.ServiceMessage;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;
@@ -87,9 +87,10 @@ import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.ModulePath;
 
 public class SPLBranch implements SPL {
+    protected Reporter reporter = GlobalReporter.forClass(SPL.class);
+
     protected static SPLRoot rootLayer;
 
-    protected Reporter reporter = GlobalReporter.forClass(SPL.class);
     protected boolean ownsReporter = false;
     protected boolean isBooting = false;
 
@@ -119,16 +120,16 @@ public class SPLBranch implements SPL {
 
     protected SPLBranch() { }
 
-    /// Sets the reporter for communicating mapping warnings or errors in this layer.
-    @Override
-    public void setReporter(Reporter reporter) {
-        if (reporter == null) {
-            reporter = new NoOpReporter();
-        } else {
-            this.reporter = reporter;
-            this.ownsReporter = true;
-        }
-    }
+    // /// Sets the reporter for communicating mapping warnings or errors in this layer.
+    // @Override
+    // public void setReporter(Reporter reporter) {
+    //     if (reporter == null) {
+    //         reporter = new NoOpReporter();
+    //     } else {
+    //         this.reporter = reporter;
+    //         this.ownsReporter = true;
+    //     }
+    // }
 
     //
     // Layer metadata, hierarchy, creation and deletion
@@ -228,54 +229,16 @@ public class SPLBranch implements SPL {
     @Override
     public ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType) {
         List<ServiceMetadata> all = internalFindAllProviders(serviceType, null, null);
-
-
-        // // TODO: Store priority in ServiceMetadata once...
-        // ServiceMetadata highestPriorityProvider = null;
-        // int highestPriority = -3;
-        // for (ServiceMetadata provider : all) {
-        //     int priority = SPLUtils.getPriority(provider);
-        //     if (priority > highestPriority) {
-        //         highestPriority = priority;
-        //         highestPriorityProvider = provider;
-        //     }
-        // }
-
         ServiceMetadata highestPriorityProvider = getHighestPriority(all);
         return highestPriorityProvider;
-
-
-        // // TODO: Use priority
-        // return all.isEmpty() ? null : all.getFirst();
-
-
     }
 
     /// Retrieves metadata of the nearest known provider whose capabilities satisfy the given predicate.
     @Override
     public ServiceMetadata findProvider(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate) {
         List<ServiceMetadata> all = internalFindAllProviders(serviceType, capabilityPredicate, null);
-
-
-        // // TODO: Store priority in ServiceMetadata once...
-        // ServiceMetadata highestPriorityProvider = null;
-        // int highestPriority = -3;
-        // for (ServiceMetadata provider : all) {
-        //     int priority = SPLUtils.getPriority(provider);
-        //     if (priority > highestPriority) {
-        //         highestPriority = priority;
-        //         highestPriorityProvider = provider;
-        //     }
-        // }
-
         ServiceMetadata highestPriorityProvider = getHighestPriority(all);
         return highestPriorityProvider;
-
-
-        // // TODO: Use priority
-        // return all.isEmpty() ? null : all.getFirst();
-
-
     }
 
     /// Retrieves metadata of all known providers of the specified service type.
@@ -375,7 +338,7 @@ public class SPLBranch implements SPL {
             if (method.isAnnotationPresent(SingletonInitializer.class)) {
                 if (method.getParameterCount() > 0) {
                     throw new ServiceException(
-                        ServiceDiagnosticCode.INVALID_SINGLETON_INITIALIZER,
+                        ServiceMessage.INVALID_SINGLETON_INITIALIZER,
                         clazz.getName() + "." + method.getName(), "Method must take zero arguments"
                     );
                 }
@@ -383,11 +346,11 @@ public class SPLBranch implements SPL {
                     method.setAccessible(true);
                     method.invoke(instance);
                 } catch (Exception e) {
-                    DiagnosticCode code = DiagnosticCode.forException(e);
+                    DiagnosticMessage code = DiagnosticMessage.forException(e);
                     if (code == null) {
                         throw new ServiceException(
                             e,
-                            GenericDiagnosticCode.ERROR,
+                            GenericMessage.ERROR,
                             e.getMessage() + ": " + clazz.getSimpleName() + "." + method.getName()
                         );
                     } else {
@@ -408,7 +371,7 @@ public class SPLBranch implements SPL {
     }
 
     //
-    // Provider Registration in Specific Layer
+    // Hierarchy
     //
 
     @Override
@@ -468,6 +431,7 @@ public class SPLBranch implements SPL {
         Set<String> candidateClassNames = new HashSet<>();
 
         // 1. Collect standard SPI declarations (provides ... with ...)
+        // TODO: Why?
         for (Provides service : desc.provides()) {
             candidateClassNames.addAll(service.providers());
         }
@@ -491,11 +455,11 @@ public class SPLBranch implements SPL {
                 } catch (ServiceException e) {
                     getReporter().trace("Class \"" + providerClassName + "\" is not a Cascara ServiceProvider");
                 } catch (NoClassDefFoundError e) {
-                    getReporter().warn(ServiceDiagnosticCode.CLASS_NOT_FOUND, providerClassName);
+                    getReporter().warn(ServiceMessage.CLASS_NOT_FOUND, providerClassName);
                 } catch (ClassNotFoundException e) {
-                    getReporter().warn(ServiceDiagnosticCode.CLASS_NOT_FOUND, providerClassName);
+                    getReporter().warn(ServiceMessage.CLASS_NOT_FOUND, providerClassName);
                 } catch (Exception e) {
-                    getReporter().warn(ServiceDiagnosticCode.FAILED_TO_INSTANTIATE_CLASS, providerClassName, e.getMessage());
+                    getReporter().warn(ServiceMessage.FAILED_TO_INSTANTIATE_CLASS, providerClassName, e.getMessage());
                 }
 
                 if (clazz != null
@@ -529,11 +493,11 @@ public class SPLBranch implements SPL {
         try (JarFile jar = JarFile.open(jarPath)) {
             moduleName = jar.getModuleName();
             if (moduleName == null || moduleName.isEmpty()) {
-                throw new ServiceException(ServiceDiagnosticCode.NON_MODULAR_JAR, jarPath);
+                throw new ServiceException(ServiceMessage.NON_MODULAR_JAR, jarPath);
             }
             manifest = jar.getManifest();
         } catch (Exception e) {
-            throw new ServiceException(e, ServiceDiagnosticCode.FAILED_TO_READ_JAR, jarPath, e.getMessage());
+            throw new ServiceException(e, ServiceMessage.FAILED_TO_READ_JAR, jarPath, e.getMessage());
         }
 
         SemVer moduleBuildCascaraVersion = new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
@@ -572,8 +536,52 @@ public class SPLBranch implements SPL {
         ClassHierarchy.invalidate();
     }
 
+
     //
-    // Private Methods
+    // Layer Hierarchy
+    //
+
+    private SPLBranch createInternal(String name, boolean isPublic) {
+        if (name == null) {
+            throw new UnexpectedNullParameterException("name");
+        }
+        SPLBranch layer = new SPLBranch();
+        layer.parent = this;
+        layer.isPublic = isPublic;
+        layer.name = name;
+        namedChildren.put(name, layer);
+        SPLUtils.recomputeAllVisibleProviders(rootLayer);
+        return layer;
+    }
+
+    /// Recursively removes a child layer and all descendant layers.
+    private void removeInternal(SPLBranch layerToRemove) {
+        for (SPLBranch childLayer : layerToRemove.namedChildren.values()) {
+            removeInternal(childLayer);
+        }
+        layerToRemove.delete();
+        namedChildren.remove(layerToRemove.getName());
+    }
+
+    /// Removes everything allocated in this layer
+    private void delete() {
+        List<String> modulesCopy = new ArrayList<>(modules);
+        for (String moduleName : modulesCopy) {
+            removeModuleFromMap(moduleName);
+        }
+    }
+
+    private void collectPublicDescendants(SPLBranch layer, Set<SPLBranch> collected) {
+        for (SPLBranch descendant : layer.namedChildren.values()) {
+            if (descendant.isPublic) {
+                collected.add(descendant);
+                collectPublicDescendants(descendant, collected);
+            }
+        }
+    }
+
+    //
+    // Discovery
     //
 
     protected void registerViaServiceLoader() {
@@ -589,11 +597,11 @@ public class SPLBranch implements SPL {
         //                 registerProvider(provider, null);
         //             }
         //         } catch (ServiceConfigurationError e) {
-        //             bootWarning(ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
+        //             bootWarning(ServiceDiagnosticMessage.CONFIGURATION_ERROR, e.getMessage());
         //         }
         //     }
         // } catch (ServiceConfigurationError e) {
-        //     bootError(e, ServiceDiagnosticCode.CONFIGURATION_ERROR, e.getMessage());
+        //     bootError(e, ServiceDiagnosticMessage.CONFIGURATION_ERROR, e.getMessage());
         // }
 
         // 2. Classpath / Unnamed Module scanning fallback
@@ -601,19 +609,6 @@ public class SPLBranch implements SPL {
         if (cl != null) {
             scanClasspathProviders(cl);
         }
-    }
-
-    private ServiceMetadata getHighestPriority(List<ServiceMetadata> all) {
-        ServiceMetadata highestPriorityProvider = null;
-        int highestPriority = -3;
-        for (ServiceMetadata provider : all) {
-            int priority = provider.getPriority();
-            if (priority > highestPriority) {
-                highestPriority = priority;
-                highestPriorityProvider = provider;
-            }
-        }
-        return highestPriorityProvider;
     }
 
     private void scanClasspathProviders(ClassLoader cl) {
@@ -668,61 +663,6 @@ public class SPLBranch implements SPL {
         }
     }
 
-    //
-    //
-    //
-
-    private SPLBranch createInternal(String name, boolean isPublic) {
-        if (name == null) {
-            throw new UnexpectedNullParameterException("name");
-        }
-        SPLBranch layer = new SPLBranch();
-        layer.parent = this;
-        layer.isPublic = isPublic;
-        layer.name = name;
-        namedChildren.put(name, layer);
-        SPLUtils.recomputeAllVisibleProviders(rootLayer);
-        return layer;
-    }
-
-    /// Recursively removes a child layer and all descendant layers.
-    private void removeInternal(SPLBranch layerToRemove) {
-        for (SPLBranch childLayer : layerToRemove.namedChildren.values()) {
-            removeInternal(childLayer);
-        }
-        layerToRemove.delete();
-        namedChildren.remove(layerToRemove.getName());
-    }
-
-    /// Removes everything allocated in this layer
-    private void delete() {
-        List<String> modulesCopy = new ArrayList<>(modules);
-        for (String moduleName : modulesCopy) {
-            removeModuleFromMap(moduleName);
-        }
-    }
-
-    private void collectPublicDescendants(SPLBranch layer, Set<SPLBranch> collected) {
-        for (SPLBranch descendant : layer.namedChildren.values()) {
-            if (descendant.isPublic) {
-                collected.add(descendant);
-                collectPublicDescendants(descendant, collected);
-            }
-        }
-    }
-
-    private void registerClassInternal(Class<?> type, boolean isAutoRegistration) {
-        String providerFqcn = type.getName();
-        if (!isRegistered(providerFqcn)) {
-            ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(type);
-            Path jarPath = modulePath != null ? modulePath.getPathForModule(type.getModule().getName()) : null;
-            registerProvider(instance, jarPath, isAutoRegistration);
-            if (isBooting) {
-                rootLayer.bootProviders.add(providerFqcn);
-            }
-        }
-    }
-
     private void verifyModuleVersionCompatibility(String moduleName, SemVer moduleBuildCascaraVersion, SemVer moduleMinCascaraVersion) {
         SemVer activeCascaraVersion = Cascara.getVersion();
 
@@ -740,43 +680,10 @@ public class SPLBranch implements SPL {
             System.out.println("moduleBuildCascaraVersion: " + moduleBuildCascaraVersion);
             System.out.println("moduleMinCascaraVersion: " + moduleMinCascaraVersion);
             throw new ServiceException(
-                ServiceDiagnosticCode.INCOMPATIBLE_MODULE_VERSION,
+                ServiceMessage.INCOMPATIBLE_MODULE_VERSION,
                 moduleName, moduleMinCascaraVersion, activeCascaraVersion
             );
         }
-    }
-
-    /// Adds a module to the root layer's `moduleToLayers` map and updates
-    // the `modules` `TrackableArray`
-    private void addModuleToMap(String moduleName) {
-        Set<SPL> layers = rootLayer.moduleToLayers.get(moduleName);
-        if (layers == null) {
-            layers = new HashSet<>();
-            rootLayer.moduleToLayers.put(moduleName, layers);
-        }
-        layers.add(this);
-        if (!modules.contains(moduleName)) {
-            modules.add(moduleName);
-        }
-    }
-
-    /// Removes a module from the root layer's `moduleToLayers` map and updates
-    // the `modules` `TrackableArray`
-    private void removeModuleFromMap(String moduleName) {
-        Set<SPL> layers = rootLayer.moduleToLayers.get(moduleName);
-        if (layers != null) {
-            layers.remove(this);
-            if (layers.isEmpty()) {
-                rootLayer.moduleToLayers.remove(moduleName);
-            }
-        }
-        modules.remove(moduleName);
-    }
-
-    /// Returns the Reporter of this layer or the nearest ancetor that has one.
-    private Reporter getReporter() {
-        if (ownsReporter || parent == null) { return reporter; }
-        return parent.getReporter();
     }
 
     /// Use SPI and class scanning to find service implementations inside this layer
@@ -833,12 +740,55 @@ public class SPLBranch implements SPL {
         }
     }
 
+    /// Adds a module to the root layer's `moduleToLayers` map and updates
+    // the `modules` `TrackableArray`
+    private void addModuleToMap(String moduleName) {
+        Set<SPL> layers = rootLayer.moduleToLayers.get(moduleName);
+        if (layers == null) {
+            layers = new HashSet<>();
+            rootLayer.moduleToLayers.put(moduleName, layers);
+        }
+        layers.add(this);
+        if (!modules.contains(moduleName)) {
+            modules.add(moduleName);
+        }
+    }
+
+    /// Removes a module from the root layer's `moduleToLayers` map and updates
+    /// the `modules` `TrackableArray`
+    private void removeModuleFromMap(String moduleName) {
+        Set<SPL> layers = rootLayer.moduleToLayers.get(moduleName);
+        if (layers != null) {
+            layers.remove(this);
+            if (layers.isEmpty()) {
+                rootLayer.moduleToLayers.remove(moduleName);
+            }
+        }
+        modules.remove(moduleName);
+    }
+
+    //
+    // Registration
+    //
+
     private boolean isRegistered(String providerFqcn) {
         return rootLayer.bootProviders.contains(providerFqcn) || providersByFqcn.containsKey(providerFqcn);
     }
 
     private boolean noAutoRegistration(Class<?> clazz) {
         return clazz.isAnnotationPresent(NoAutoRegistration.class);
+    }
+
+    private void registerClassInternal(Class<?> type, boolean isAutoRegistration) {
+        String providerFqcn = type.getName();
+        if (!isRegistered(providerFqcn)) {
+            ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(type);
+            Path jarPath = modulePath != null ? modulePath.getPathForModule(type.getModule().getName()) : null;
+            registerProvider(instance, jarPath, isAutoRegistration);
+            if (isBooting) {
+                rootLayer.bootProviders.add(providerFqcn);
+            }
+        }
     }
 
     private void registerProvider(ServiceProvider instance, Path jarPath, boolean isAutoRegistration) {
@@ -984,7 +934,7 @@ public class SPLBranch implements SPL {
         if (t != null) {
             logMessage = logMessage + " " + t.getMessage();
         }
-        getReporter().error(GenericDiagnosticCode.ERROR, logMessage);
+        getReporter().error(GenericMessage.ERROR, logMessage);
     }
 
     private Path[] getJarPaths() {
@@ -1000,8 +950,21 @@ public class SPLBranch implements SPL {
     }
 
     //
-    // Hierarchy Traversal Code
+    // Finding
     //
+
+    private ServiceMetadata getHighestPriority(List<ServiceMetadata> all) {
+        ServiceMetadata highestPriorityProvider = null;
+        int highestPriority = -3;
+        for (ServiceMetadata provider : all) {
+            int priority = provider.getPriority();
+            if (priority > highestPriority) {
+                highestPriority = priority;
+                highestPriorityProvider = provider;
+            }
+        }
+        return highestPriorityProvider;
+    }
 
     private List<ServiceMetadata> internalFindAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<ServiceMetadata> capabilityPredicate, SPLBranch previous) {
         getReporter().debug("[finding] layer=\"" + name + "\", service=\"" + serviceType.getSimpleName() + "\"");
@@ -1070,12 +1033,19 @@ public class SPLBranch implements SPL {
     // Diagnostics
     //
 
+    /// Returns the Reporter of this layer or the nearest ancetor that has one.
+    private Reporter getReporter() {
+        return reporter;
+        // if (ownsReporter || parent == null) { return reporter; }
+        // return parent.getReporter();
+    }
+
     protected void reportFinding(ServiceMetadata item, int depth) {
         getReporter().debug("[found  ] " + "layer=\"" + name + "\", provider=\"" + item.getType().getName() + "\"" +
             (item.getJarPath() == null ? "" : ", jar=\"" + item.getJarPath() + "\""));
     }
 
-    protected static void bootError(Throwable e, ServiceDiagnosticCode code, Object... details) {
+    protected static void bootError(Throwable e, ServiceMessage code, Object... details) {
         final Reporter reporter = rootLayer.reporter;
         if (reporter.isSilent()) {
             System.err.println(
@@ -1086,7 +1056,7 @@ public class SPLBranch implements SPL {
         }
     }
 
-    protected static void bootWarning(ServiceDiagnosticCode code, Object... details) {
+    protected static void bootWarning(ServiceMessage code, Object... details) {
         final Reporter reporter = rootLayer.reporter;
         if (reporter.isSilent()) {
             System.err.println(

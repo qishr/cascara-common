@@ -37,22 +37,22 @@ package io.github.qishr.cascara.common.diagnostic;
 
 import java.text.MessageFormat;
 
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 @FunctionalInterface
 public interface DiagnosticLocalizer {
     public static final String FORMATTING_ERROR = "Problem encountered while formatting error with code %s: %s";
 
     /// Formats the code with dynamic arguments using the environment's current language bundle.
-    String format(DiagnosticCode code, Object... details);
+    String format(DiagnosticMessage message, Object... details);
 
     /// A default fail-safe implementation that falls back to standard MessageFormat
-    DiagnosticLocalizer DEFAULT = (code, details) -> {
+    DiagnosticLocalizer DEFAULT = (message, details) -> {
         try {
-            String pattern = code.getMessage().replace("'", "''");
+            String pattern = message.getFormat().replace("'", "''");
             return MessageFormat.format(pattern, details);
         } catch (IllegalArgumentException e) {
-            return String.format(FORMATTING_ERROR, code.getCode(), code.getMessage());
+            return String.format(FORMATTING_ERROR, message.getCode(), message.getFormat());
         }
     };
 }

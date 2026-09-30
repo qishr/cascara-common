@@ -34,6 +34,7 @@
 
 package io.github.qishr.cascara.common.service.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,18 +43,19 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
-import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
-import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.diagnostic.code.FileDiagnosticCode;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.filewatcher.FileWatcher;
 import io.github.qishr.cascara.common.property.Properties;
-import io.github.qishr.cascara.common.service.ServiceDiagnosticCode;
+import io.github.qishr.cascara.common.service.ServiceMessage;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.ContentTypeResolver;
+import io.github.qishr.cascara.common.util.JreUtils;
 
 public class SPLRoot extends SPLBranch {
     private static final Properties EMPTY_PROPERTIES = new Properties();
@@ -74,7 +76,9 @@ public class SPLRoot extends SPLBranch {
         name = "root";
         contentTypes = new HashSet<>();
         loadPreferences();
+        displayEnvironmentInformation();
 
+        reporter.debug("Discovering providers in modules");
         ModuleLayer boot = ModuleLayer.boot();
         boot.modules().forEach((module) -> {
             final String moduleName = module.getName();
@@ -83,7 +87,7 @@ public class SPLRoot extends SPLBranch {
                 registerModule(module);
             } catch (Exception e) {
                 bootWarning(
-                    ServiceDiagnosticCode.FAILED_TO_REGISTER_MODULE,
+                    ServiceMessage.FAILED_TO_REGISTER_MODULE,
                     moduleName,
                     e.getMessage()
                 );
@@ -92,6 +96,7 @@ public class SPLRoot extends SPLBranch {
 
         // Fallback: classic ServiceLoader scanning for classpath/unnamed-module usage,
         // and to pick up any providers using META-INF/services even when modular.
+        reporter.debug("Discovering providers in classpath");
         registerViaServiceLoader();
 
         isBooting = false;
@@ -135,13 +140,6 @@ public class SPLRoot extends SPLBranch {
         return collected;
     }
 
-    private void collectLayers(SPLBranch layer, Set<SPLBranch> collected) {
-        collected.add(layer);
-        for (SPLBranch descendant : layer.namedChildren.values()) {
-            collectLayers(descendant, collected);
-        }
-    }
-
     public String getPreferredProviderClassName(Class<?> serviceType) {
         return getProperties().getString(serviceType.getName());
     }
@@ -162,6 +160,17 @@ public class SPLRoot extends SPLBranch {
         return properties == null ? EMPTY_PROPERTIES : properties;
     }
 
+    //
+    // Private Methods
+    //
+
+    private void collectLayers(SPLBranch layer, Set<SPLBranch> collected) {
+        collected.add(layer);
+        for (SPLBranch descendant : layer.namedChildren.values()) {
+            collectLayers(descendant, collected);
+        }
+    }
+
     private void loadPreferences() {
         Path propsFile = Cascara.getSplPropertiesPath();
 
@@ -170,7 +179,7 @@ public class SPLRoot extends SPLBranch {
                 try {
                     Files.createFile(propsFile);
                 } catch (IOException e) {
-                    reporter.error(e, FileDiagnosticCode.WRITE_ERROR, propsFile);
+                    reporter.error(e, FileMessage.WRITE_ERROR, propsFile);
                     return;
                 }
             }
@@ -187,6 +196,34 @@ public class SPLRoot extends SPLBranch {
             try {
                 properties = Properties.load(propsFile);
             } catch (LocalizableIOException e) {}
+        }
+    }
+
+    private void displayEnvironmentInformation() {
+        if (GlobalReporter.globalInstance().getLevel().includes(Level.DEBUG)) {
+            reporter.debug("Environment Information:");
+            reporter.debug("  Cascara version: " + Cascara.getVersion());
+            reporter.debug("  Module cascara.common version: " + Cascara.getCommonVersion());
+            reporter.debug("  JPMS Enabled: " + JreUtils.isJpmsEnabled());
+            displayPaths("Module Path", System.getProperty("jdk.module.path"));
+            displayPaths("Class Path", System.getProperty("java.class.path"));
+            reporter.debug("  Terminal: " + JreUtils.isRunningInTerminal());
+            reporter.debug("  Eclipse: " + JreUtils.isRunningViaEclipse());
+            reporter.debug("  Gradle: " + JreUtils.isRunningViaGradle());
+        }
+    }
+
+    private void displayPaths(String name, String paths) {
+        String[] array = paths == null
+            ? new String[]{}
+            : paths.split(File.pathSeparator, -1);
+        if (array.length == 0) {
+            reporter.debug("  No " + name);
+        } else {
+            reporter.debug("  " + name);
+            for (String path : array) {
+                reporter.debug("    " + path);
+            }
         }
     }
 }

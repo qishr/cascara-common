@@ -33,36 +33,19 @@
 // version.
 
 
-package io.github.qishr.cascara.common.service;
-
-import io.github.qishr.cascara.common.diagnostic.code.DiagnosticCode;
-
-public enum ServiceDiagnosticCode implements DiagnosticCode {
-    CONFIGURATION_ERROR("SPL-101", "Configuration error: {0}"),
-    // NOT_A_SERVICE("SPL-102", "{0} is not a Service"),
-    NOT_A_SERVICE_PROVIDER("SPL-103", "{0} is not a ServiceProvider"),
-
-    FAILED_TO_REGISTER_MODULE("SPL-201", "Failed to register {0} module: {1}"),
-
-    NOARGS_CONSTRUCTOR_REQUIRED("SPL-301", "Class {0} has no no-args constructor"),
-    FAILED_TO_INSTANTIATE_CLASS("SPL-302", "Failed to instantiate class {0}: {1}"),
-    CLASS_NOT_FOUND("SPL-304", "Class {0} was not found"),
-    FAILED_TO_READ_JAR("SPL-305", "Failed to read Jar \"{0}\": {1}"),
-    NON_MODULAR_JAR("SPL-306", "Jar \"{0}\" does not contain a module"),
-    INCOMPATIBLE_MODULE_VERSION("SPL-307", "Module \"{0}\" requires Cascara >= {1}, but active version is {2}"),
-    NO_PROVIDER_REGISTERED("SPL-308", "No \"{0}\" providers registered"),
-    NO_PROVIDER_REGISTERED_FOR("SPL-309", "No \"{0}\" providers registered for {1}"),
-    NO_SINGLETON_METHOD("SPL-310", "Class \"{0}\" has no singleton method"),
-    INVALID_SINGLETON_INITIALIZER("SPL-311", "Invalid singleton initializer {0}: {1}");
+package io.github.qishr.cascara.common.diagnostic.message;
+public enum DnsMessage implements DiagnosticMessage {
+    UNKNOWN_HOST("DNS-101", "Unknown Host: {0}"),
+    TIMEOUT("DNS-102", "DNS Timeout: {0}");
 
     private final String code;
-    private final String message;
+    private final String format;
 
-    ServiceDiagnosticCode(String code, String message) {
+    DnsMessage(String code, String format) {
         this.code = code;
-        this.message = message;
+        this.format = format;
     }
 
     @Override public String getCode() { return code; }
-    @Override public String getMessage() { return message; }
+    @Override public String getFormat() { return format; }
 }

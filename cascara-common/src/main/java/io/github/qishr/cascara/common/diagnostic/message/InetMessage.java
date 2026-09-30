@@ -33,19 +33,22 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic.code;
-public enum DnsDiagnosticCode implements DiagnosticCode {
-    UNKNOWN_HOST("DNS-101", "Unknown Host: {0}"),
-    TIMEOUT("DNS-102", "DNS Timeout: {0}");
+package io.github.qishr.cascara.common.diagnostic.message;
+
+public enum InetMessage implements DiagnosticMessage {
+    NETWORK_UNREACHABLE("INET-101", "Network unreachable"),
+    CONNECTION_REFUSED("INET-102", "Connection refused: {0}"),
+    CONNECTION_TIMEOUT("INET-103", "Connection timeout: {0}"),
+    TLS_HANDSHAKE_FAILED("INET-201", "TLS Handshake Failed: {0}");
 
     private final String code;
-    private final String message;
+    private final String format;
 
-    DnsDiagnosticCode(String code, String message) {
+    InetMessage(String code, String format) {
         this.code = code;
-        this.message = message;
+        this.format = format;
     }
 
     @Override public String getCode() { return code; }
-    @Override public String getMessage() { return message; }
+    @Override public String getFormat() { return format; }
 }
