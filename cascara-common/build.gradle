@@ -114,6 +114,25 @@ tasks.named('check') {
     dependsOn tasks.named('test'), tasks.named('testClasspath'), tasks.named('testJarClasspath')
 }
 
+tasks.named('processResources', ProcessResources) {
+    inputs.property "version", project.version
+
+    doLast {
+        def versionText = "Manifest-Version: 1.0\r\nCascara-Version: ${project.cascara_version}\r\nImplementation-Version: ${project.version}\r\n"
+
+        // Write to resources directory
+        def resManifest = file("${destinationDir}/META-INF/MANIFEST.MF")
+        resManifest.parentFile.mkdirs()
+        resManifest.write(versionText, 'UTF-8')
+
+        // Write to compiled classes directories so codeSource location finds it in exploded builds
+        sourceSets.main.output.classesDirs.each { dir ->
+            def classManifest = file("${dir}/META-INF/MANIFEST.MF")
+            classManifest.parentFile.mkdirs()
+            classManifest.write(versionText, 'UTF-8')
+        }
+    }
+}
 
 // jacocoTestReport {
 //     dependsOn tasks.named('test')
