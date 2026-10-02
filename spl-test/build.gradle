@@ -1,5 +1,6 @@
 plugins {
     id "io.github.qishr.cascara-meta.java-library" version "0.1.0"
+    id 'eclipse'
 }
 
 
@@ -20,7 +21,8 @@ dependencies {
     implementation("org.junit.jupiter:junit-jupiter-engine")
     implementation('org.junit.platform:junit-platform-launcher')
     implementation('io.github.qishr:cascara-test-common-junit')
-    implementation(project(':cascara-common'))
+    // implementation(project(':common'))
+    implementation('io.github.qishr:cascara-common')
     implementation(project(':spl-test-interfaces'))
 }
 
@@ -36,4 +38,17 @@ test {
         '--module-path', "$buildDir/modulepath",
         '--add-modules', 'ALL-MODULE-PATH'
     ]
+}
+
+
+eclipse {
+    classpath {
+        file {
+            whenMerged { classpath ->
+                classpath.entries.findAll { it instanceof org.gradle.plugins.ide.eclipse.model.ProjectDependency }.each { dep ->
+                    dep.entryAttributes['module'] = 'true'
+                }
+            }
+        }
+    }
 }
