@@ -38,10 +38,13 @@ package io.github.qishr.cascara.common.property;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.cert.PolicyQualifierInfo;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.nio.charset.StandardCharsets;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
@@ -53,7 +56,7 @@ import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.util.Duplicable;
 
-public class Properties implements TabularData, Duplicable<Properties> {
+public class Properties implements TabularData, Duplicable<Properties>, Iterable<Property<?>> {
     List<Property<?>> propertiesList = new ArrayList<>();
     Map<String,Property<?>> propertiesMap = new HashMap<>();
 
@@ -223,14 +226,15 @@ public class Properties implements TabularData, Duplicable<Properties> {
         return this;
     }
 
-    public void addAll(Properties properties) {
+    public Properties addAll(Properties properties) {
         for (Property<?> prop : properties.asList()) {
             set(prop.getName(), prop.getValue());
         }
+        return this;
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void add(Property<?> property) {
+    public Properties add(Property<?> property) {
         Property existing = getProperty(property.getName());
         if (existing != null) {
             existing.setValue(property.getValue());
@@ -238,6 +242,20 @@ public class Properties implements TabularData, Duplicable<Properties> {
             propertiesList.add(property);
             propertiesMap.put(property.getName(), property);
         }
+        return this;
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Properties add(String name, Object value) {
+        Property existing = getProperty(name);
+        if (existing != null) {
+            existing.setValue(value);
+        } else {
+            Property property = new Property(name, value);
+            propertiesList.add(property);
+            propertiesMap.put(property.getName(), property);
+        }
+        return this;
     }
 
 	@Override
@@ -295,6 +313,21 @@ public class Properties implements TabularData, Duplicable<Properties> {
         return sb.toString();
     }
 
+    /// Returns Iterator instance
+    @Override
+    public Iterator<Property<?>> iterator() {
+        return new PropertyIterator(propertiesList);
+    }
+
+    public static Properties fromSystemProperties() {
+        Properties properties = new Properties();
+        for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
+            String name = String.valueOf(entry.getKey());
+            properties.add(name, entry.getValue());
+        }
+        return properties;
+    }
+
     public static Properties parse(String text) {
         return PropertyParser.parse(text);
     }
@@ -344,6 +377,32 @@ public class Properties implements TabularData, Duplicable<Properties> {
             }
 
             return properties;
+        }
+    }
+
+    static class PropertyIterator implements Iterator<Property<?>> {
+        List<Property<?>> list;
+        int currentIndex = 0;
+
+        // initialize pointer to head of the list for iteration
+        public PropertyIterator(List<Property<?>> list) {
+            this.list = list;
+        }
+
+        // returns false if next element does not exist
+        public boolean hasNext() {
+            return currentIndex < list.size();
+        }
+
+        // return current data and update pointer
+        public Property<?> next() {
+            Property<?> data = list.get(currentIndex++);
+            return data;
+        }
+
+        // implement if needed
+        public void remove() {
+            throw new UnsupportedOperationException();
         }
     }
 }

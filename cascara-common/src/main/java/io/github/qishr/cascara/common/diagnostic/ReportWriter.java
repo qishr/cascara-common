@@ -70,7 +70,7 @@ public class ReportWriter extends Writer {
         }
     }
 
-    void outputLine(String msgLine, int msgLineNumber) {
+    void displayLine(String msgLine, int msgLineNumber) {
         flush();
         reporter.displayLine(level, msgLine, msgLineNumber);
     }

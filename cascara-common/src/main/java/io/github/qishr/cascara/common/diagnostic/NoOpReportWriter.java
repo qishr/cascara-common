@@ -20,7 +20,7 @@ public class NoOpReportWriter extends ReportWriter {
 
     @Override public void close() {}
 
-    void outputLine(String msgLine, int msgLineNumber) {}
+    void displayLine(String msgLine, int msgLineNumber) {}
 
     void logLine(String msgLine, int msgLineNumber) {}
 

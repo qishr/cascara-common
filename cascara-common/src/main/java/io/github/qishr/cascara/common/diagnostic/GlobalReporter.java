@@ -35,28 +35,65 @@
 
 package io.github.qishr.cascara.common.diagnostic;
 
+import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.property.Property;
+import io.github.qishr.cascara.common.util.Pair;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public class GlobalReporter extends AbstractReporter<GlobalReporter> {
-    private static final DateTimeFormatter TIME_FORMAT =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    private static final String PROP_CASC_REPORT_LEVEL = "casc.report.level.";
+    private static final String ENV_CASC_REPORT_LEVEL = "CASC_REPORT_LEVEL_";
+
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
 
     private static final GlobalReporter globalInstance = new GlobalReporter();
+    private final Map<String,GlobalReporter> classInstances = new HashMap<>();
 
-    private static final Map<String,GlobalReporter> classInstances = new HashMap<>();
+    private final Map<String,Level> envLevels = new HashMap<>();
+
+    private boolean allowApiOverride;
+    private Path reportConfigPath;
+
+    private GlobalReporter() {
+        // TODO:
+        // CASC_REPORT_CONFIG=/path/
+
+        // CASC_REPORT_ALLOW_API_OVERRIDE=true
+        String allowApiOverride = System.getenv("CASC_REPORT_ALLOW_API_OVERRIDE");
+        this.allowApiOverride = (allowApiOverride != null && allowApiOverride.toLowerCase().equals("true"));
+
+        // System properties...
+        // -Dcasc.report.config=
+        // -Dcasc.report.level.fqcn=
+        setLevels(Properties.fromSystemProperties());
+
+        // System environment...
+        // CASC_REPORT_LEVEL_*
+        // CASC_REPORT_LEVEL_COM_FOO=DEBUG
+        Map<String,String> env = System.getenv();
+        for (Entry<String, String> entry : System.getenv().entrySet()) {
+            String name = String.valueOf(entry.getKey());
+            if (name.startsWith(ENV_CASC_REPORT_LEVEL)) {
+                String uppercaseClassName = name.substring(ENV_CASC_REPORT_LEVEL.length());
+                Level level = Level.valueOf(entry.getValue());
+                if (level != null) {
+                    envLevels.put(uppercaseClassName, level);
+                }
+            }
+        }
+    }
 
     private GlobalReporter(String source) {
         this.source = source;
         this.level = globalInstance.level;
-    }
-
-    private GlobalReporter() {
-        // Nothing to see here
     }
 
     /// {@inheritDoc}
@@ -67,55 +104,86 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         return globalInstance;
     }
 
+    /// Gets a `GlobalReporter` instance for the specifie class.
+    /// @param clazz the class to get a `GlobalReporter` instance for.
     public static GlobalReporter forClass(Class<?> clazz) {
-        return forSource(clazz.getSimpleName());
+        return forSource(clazz.getName());
     }
 
-    public static GlobalReporter forSource(String source) {
-        GlobalReporter reporter = classInstances.get(source);
+    /// Gets a `GlobalReporter` instance for the specifie class.
+    /// @param fqcn the fully qualified name of the class to get a `GlobalReporter` instance for.
+    public static GlobalReporter forSource(String fqcn) {
+        GlobalReporter reporter = globalInstance.classInstances.get(fqcn);
         if (reporter == null) {
-            reporter = new GlobalReporter(source);
-            classInstances.put(source, reporter);
+            reporter = new GlobalReporter(fqcn);
+            globalInstance.classInstances.put(fqcn, reporter);
+            String envKey = fqcn.replace('.', '_').toUpperCase();
+            Level envLevel = globalInstance.envLevels.get(envKey);
+            if (envLevel != null) {
+                reporter.level = envLevel;
+            }
         }
         return reporter;
     }
 
+    /// {@inheritDoc}
     @Override
     public GlobalReporter setLevel(Level level) {
-        this.level = level;
+        if (this != globalInstance) {
+            setLevelsForAll(level);
+        } else {
+            this.level = level;
+        }
+        return this;
+    }
+
+    /// Sets the reporting level for the specified class.
+    /// @param fqcn the fully qualified class name of the class to set the level for.
+    /// @param level the level to set for the class.
+    public GlobalReporter setLevel(String fqcn, Level level) {
+        assertGlobalInstance();
+        GlobalReporter reporter = GlobalReporter.forSource(fqcn);
+        reporter.setLevel(level);
+        return this;
+    }
+
+    // TODO: support full JlsName
+    public GlobalReporter setLevels(Properties properties) {
+        for (Property<?> property : properties) {
+            String propertyName = property.getName();
+            if (propertyName.startsWith(PROP_CASC_REPORT_LEVEL)) {
+                String fqcn = propertyName.substring(PROP_CASC_REPORT_LEVEL.length());
+                Level level = Level.valueOf(property.asString());
+                if (level != null) {
+                    setLevel(fqcn, level);
+                }
+            }
+        }
         return this;
     }
 
     @Override
     public GlobalReporter setDiagnosticConsumer(Consumer<Diagnostic> collector) {
-        if (this != globalInstance) {
-            throw new UnsupportedOperationException("The method setDiagnosticWriter in GlobalReporter may only be called on the global instance.");
-        }
+        assertGlobalInstance();
         super.setDiagnosticConsumer(collector);
         return this;
     }
 
     @Override
     public GlobalReporter setProblemConsumer(Consumer<Diagnostic> collector) {
-        if (this != globalInstance) {
-            throw new UnsupportedOperationException("The method setCollector in GlobalReporter may only be called on the global instance.");
-        }
+        assertGlobalInstance();
         super.setProblemConsumer(collector);
         return this;
     }
 
     public GlobalReporter setSystemOutputEnabled(boolean b) {
-        if (this != globalInstance) {
-            throw new UnsupportedOperationException("The method setDisableSystemOutput in GlobalReporter may only be called on the global instance.");
-        }
+        assertGlobalInstance();
         super.setSystemOutputEnabled(b);
         return this;
     }
 
     public GlobalReporter setFlushEnabled(boolean b) {
-        if (this != globalInstance) {
-            throw new UnsupportedOperationException("The method setDisableFlush in GlobalReporter may only be called on the global instance.");
-        }
+        assertGlobalInstance();
         super.setFlushEnabled(b);
         return this;
     }
@@ -192,6 +260,25 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                     diagnostic.getUri()
                 );
             }
+        }
+    }
+
+    private void setLevelsForAll(Level level) {
+        this.level = level;
+        for (GlobalReporter reporter : classInstances.values()) {
+            reporter.level = level;
+        }
+    }
+
+    private void assertGlobalInstance() {
+        if (this != globalInstance) {
+            Pair<Class<?>,String> caller = ReflectionUtils.getCaller();
+            String methodName = caller.getR();
+            String msg = String.format(
+                "The method %s in GlobalReporter may only be called on the global instance.",
+                methodName
+            );
+            throw new UnsupportedOperationException(msg);
         }
     }
 }

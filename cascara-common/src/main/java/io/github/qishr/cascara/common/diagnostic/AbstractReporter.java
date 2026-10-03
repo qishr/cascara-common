@@ -467,7 +467,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
                 ? formatMessage(diagnostic, lines[i], i, true).stripTrailing()
                 : logLine;
             writer.logLine(logLine, i);
-            writer.outputLine(consoleLine, i);
+            writer.displayLine(consoleLine, i);
         }
         if (diagnostic.getCause() != null && isStackTraceEnabled()) {
             StringWriter sw = new StringWriter();
@@ -477,7 +477,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
             for (int i = 0; i < lines.length; i++) {
                 String logLine = lines[i];
                 writer.logLine(logLine, i);
-                writer.outputLine(logLine, i);
+                writer.displayLine(logLine, i);
             }
         }
     }

@@ -44,15 +44,17 @@ tasks.named('test', Test) {
         def mainClassesDir = sourceSets.main.output.classesDirs.asPath
         def runtimeLibs = configurations.testRuntimeClasspath.asPath
 
-        jvmArgs += [
+        jvmArgs([
             '--module-path', "${mainClassesDir}${File.pathSeparator}${runtimeLibs}",
             '--add-modules', mainModuleName,
             '--patch-module', "${mainModuleName}=${sourceSets.test.output.classesDirs.asPath}",
             '--add-reads', "${mainModuleName}=ALL-UNNAMED",
             '--add-modules', 'org.junit.platform.launcher',
             '--add-reads', 'cascara.common=org.junit.jupiter.api',
-            '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
-        ]
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+
+            '--add-opens', 'java.base/java.lang=cascara.common'
+        ])
     }
 }
 

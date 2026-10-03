@@ -138,6 +138,7 @@ public final class PlainSequenceNode extends PlainNode implements SequenceAstNod
     }
 
     /// Returns Iterator instance
+    @Override
     public Iterator<PlainNode> iterator() {
         return new SequenceIterator<PlainNode>(this);
     }
