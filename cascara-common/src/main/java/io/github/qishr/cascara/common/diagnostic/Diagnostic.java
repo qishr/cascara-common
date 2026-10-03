@@ -37,7 +37,6 @@ package io.github.qishr.cascara.common.diagnostic;
 
 import java.net.URI;
 import java.text.MessageFormat;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
@@ -112,7 +111,7 @@ public class Diagnostic {
                         String format = code.getFormat().replaceAll("'", "''");
                         formattedMessage = MessageFormat.format(format, details);
                     } catch (IllegalArgumentException e) {
-                        formattedMessage = "Formatting problem while reporting (code " + code.getCode() + "): " + code.getFormat() + ".";
+                        formattedMessage = "Formatting problem while reporting (code " + code.getCode() + "): " + code.getFormat() + ". " + e.getMessage();
                         level = Level.ERROR;
                     }
                 }
@@ -124,7 +123,7 @@ public class Diagnostic {
                 try {
                     formattedMessage = String.format(message, details);
                 } catch (IllegalArgumentException e) {
-                    formattedMessage = "Formatting problem while reporting: " + message + ".";
+                    formattedMessage = "Formatting problem while reporting: " + message + ". " + e.getMessage();
                     level = Level.ERROR;
                 }
             }

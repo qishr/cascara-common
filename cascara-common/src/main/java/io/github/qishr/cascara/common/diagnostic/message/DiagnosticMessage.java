@@ -84,6 +84,12 @@ public interface DiagnosticMessage {
         else if (t instanceof ServiceConfigurationError) {
             return LangMessage.SERVICE_CONFIG_ERROR;
         }
+        else if (t instanceof SecurityException) {
+            return LangMessage.SECURITY_EXCEPTION;
+        }
+        else if (t instanceof IllegalAccessException) {
+            return LangMessage.ILLEGAL_ACCESS_EXCEPTION;
+        }
         // NullPointerException - if the specified object is null and the method is an instance method.
         else if (t instanceof NullPointerException) {
             return GenericMessage.NPE;

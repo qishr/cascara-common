@@ -23,6 +23,9 @@ dependencies {
     implementation('io.github.qishr:cascara-test-common-junit')
     implementation('io.github.qishr:cascara-common')
     implementation(project(':spl-test-interfaces'))
+
+    implementation('io.github.qishr:cascara-lang-json')
+    implementation(project(':test-task'))
 }
 
 

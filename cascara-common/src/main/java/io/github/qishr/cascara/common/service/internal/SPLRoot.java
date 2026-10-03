@@ -132,7 +132,7 @@ public class SPLRoot extends SPLBranch {
 
         long finish = System.currentTimeMillis();
         long timeElapsed = finish - start;
-        REPORTER.debug("Discovered %d classes in % ms", classes.size(), timeElapsed);
+        REPORTER.debug("Discovered %d classes in %d ms", classes.size(), (int)timeElapsed);
 
         enumerateProviders(classes, null, null, true);
 

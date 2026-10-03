@@ -32,19 +32,25 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-module test.spl {
-    requires java.management;
+package io.github.qishr.cascara.common.exec;
 
-    requires transitive cascara.common;
-    requires cascara.test.common.junit;
-    requires transitive test.interfaces;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
-    requires test.task;
-    requires cascara.lang.json;
+public enum ExecutionMessage implements DiagnosticMessage {
+    PROCESS_FAILED("ERROR-101", "Failed to start process for {0}"),
+    TASK_FAILED("ERROR-101", "Task {0} failed"),
+    INPUT_FAILED("ERROR-102", "Failed to write input to task {0}"),
+    OUTPUT_FAILED("ERROR-102", "Failed to read output of task {0}"),
+    INTERRUPT("ERROR-102", "Task {0} was interrupted");
 
-    requires org.junit.jupiter.api;
+    private final String code;
+    private final String format;
 
-    exports test.spl;
-    opens test.spl to org.junit.platform.commons;
+    ExecutionMessage(String code, String format) {
+        this.code = code;
+        this.format = format;
+    }
 
+    @Override public String getCode() { return code; }
+    @Override public String getFormat() { return format; }
 }

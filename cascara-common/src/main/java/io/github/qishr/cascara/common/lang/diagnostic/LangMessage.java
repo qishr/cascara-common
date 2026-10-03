@@ -71,12 +71,16 @@ public enum LangMessage implements DiagnosticMessage {
     ABSTRACT_METHOD_ERROR("LANG-411", "Abstract method error: {0}"),
     NO_CLASS_DEF_FOUND_ERROR("LANG-412", "No class definition found: {0}"),
     SERVICE_CONFIG_ERROR("LANG-413", "Service configuration error: {0}"),
+    SECURITY_EXCEPTION("LANG-414", "Security exception: {0}"),
+    ILLEGAL_ACCESS_EXCEPTION("LANG-415", "Illegal access exception: {0}"),
+
+    UNKNOWN_GENERIC_TYPE("LANG-501", "Could not resolve generic type argument for {0}"),
 
     // TODO: Where are these used?
-    NOT_ARRAY_OR_OBJECT("LANG-501", "Value {0} is not an array or object therefore its key {1} cannot be resolved"),
-    OUT_OF_BOUNDS("LANG-502", "index {0} is out of bounds - the array has {1} elements"),
-    ERROR_READING_VALUE_AT("LANG-503", "Error reading value at index position {0"),
-    NOT_AN_ARRAY_INDEX("LANG-504", "{0} is not an array index");
+    NOT_ARRAY_OR_OBJECT("LANG-601", "Value {0} is not an array or object therefore its key {1} cannot be resolved"),
+    OUT_OF_BOUNDS("LANG-602", "index {0} is out of bounds - the array has {1} elements"),
+    ERROR_READING_VALUE_AT("LANG-603", "Error reading value at index position {0"),
+    NOT_AN_ARRAY_INDEX("LANG-604", "{0} is not an array index");
 
     private final String code;
     private final String format;

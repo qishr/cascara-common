@@ -1,0 +1,206 @@
+package io.github.qishr.cascara.common.exec;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import io.github.qishr.cascara.common.util.Pair;
+
+public final class JvmProcess {
+
+    private final Class<?> mainClass;
+    private JvmOptions jvmOptions = new JvmOptions();
+
+    private JvmProcess(Class<?> mainClass) {
+        this.mainClass = mainClass;
+    }
+
+    public static JvmProcess forClass(Class<?> mainClass) {
+        return new JvmProcess(mainClass);
+    }
+
+    public JvmProcess setOptions(JvmOptions options) {
+        this.jvmOptions = options;
+        return  this;
+    }
+
+    public Response run() throws IOException, InterruptedException {
+        return run(null);
+    }
+
+    public Response run(String input) {
+        List<String> command = new ArrayList<>();
+
+        // 1. Executable Java binary
+        String javaBin = ProcessHandle.current().info().command().orElse("java");
+        command.add(javaBin);
+
+        // 2. Classpath resolution
+        String classPathToUse = jvmOptions.getClassPath() != null ? jvmOptions.getClassPath() : System.getProperty("java.class.path");
+        if (jvmOptions.inheritParentClassPath() && classPathToUse != null && !classPathToUse.isBlank()) {
+            command.add("-cp");
+            command.add(classPathToUse);
+        }
+
+        Pair<String,String> mp = ArtifactResolver.buildModulePath(
+            List.of("cascara-common", "spl-test-interfaces", "test-task", "cascara-lang-json"),
+            "spl-test"
+        );
+        String modulePathToUse = mp.getL();
+
+        // 3. Module path resolution
+        // String modulePathToUse = customModulePath != null ? customModulePath : System.getProperty("jdk.module.path");
+        if (jvmOptions.inheritParentModulePath() && modulePathToUse != null && !modulePathToUse.isBlank()) {
+            command.add("--module-path");
+            command.add(modulePathToUse);
+        }
+
+        // 4. JPMS options
+        for (String mod : jvmOptions.getModules()) {
+            command.add("--add-modules");
+            command.add(mod);
+        }
+        for (String openTarget : jvmOptions.getOpens()) {
+            command.add("--add-opens");
+            command.add(openTarget);
+        }
+        for (String readTarget : jvmOptions.getReads()) {
+            command.add("--add-reads");
+            command.add(readTarget);
+        }
+
+        // 5. System properties (-D)
+        jvmOptions.getSystemProperties().forEach((k, v) -> command.add("-D" + k + "=" + v));
+
+
+
+        // TODO: Also support non-modular
+        // 6. Entry point class & execution arguments
+        // command.add(mainClass.getName());
+        String moduleArg = mainClass.getModule().getName() + "/" + mainClass.getName();
+        command.add("--module");
+        command.add(moduleArg);
+
+
+
+        command.addAll(jvmOptions.getArgs());
+
+        if (jvmOptions.debug()) {
+            System.out.println("JvmProcess Command:");
+            for (String s : command) {
+                System.out.println("  " + s);
+            }
+        }
+
+        ProcessBuilder pb = new ProcessBuilder(command);
+
+        // Environment variables
+        if (!jvmOptions.getEnv().isEmpty()) {
+            pb.environment().putAll(jvmOptions.getEnv());
+        }
+
+        long startTime = System.nanoTime();
+        Process process;
+        try {
+            process = pb.start();
+        } catch (IOException e) {
+            throw new ExecutionException(e, ExecutionMessage.PROCESS_FAILED, mainClass.getName());
+        }
+
+        // Capture stdout and stderr asynchronously to prevent OS buffer deadlocks
+        var stdoutStream = process.getInputStream();
+        var stderrStream = process.getErrorStream();
+
+        if (input != null && !input.isEmpty()) {
+            // System.out.println("Sending: " + input);
+            var inputStream = process.getOutputStream();
+            try {
+                inputStream.write(input.getBytes());
+                inputStream.flush();
+                inputStream.close();
+            } catch (IOException e) {
+                throw new ExecutionException(e, ExecutionMessage.INPUT_FAILED, mainClass.getName(), null);
+            }
+        }
+
+        boolean completed;
+        try {
+            completed = process.waitFor(jvmOptions.getTimeout().toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new ExecutionException(e, ExecutionMessage.INTERRUPT, mainClass.getName(), null);
+        }
+        long elapsedNanos = System.nanoTime() - startTime;
+
+
+        if (!completed) {
+            process.destroyForcibly();
+
+            String outResponse = "";
+            String errResponse = "";
+
+            try {
+                outResponse = new String(stdoutStream.readAllBytes(), StandardCharsets.UTF_8);
+            } catch (IOException e) {}
+            try {
+                errResponse = new String(stderrStream.readAllBytes(), StandardCharsets.UTF_8);
+            } catch (IOException e) {}
+
+            return new Response(
+                command,
+                jvmOptions,
+                -1,
+                true,
+                outResponse,
+                errResponse,
+                Duration.ofNanos(elapsedNanos)
+            );
+        }
+
+        String outResponse = "";
+        String errResponse = "";
+
+        try {
+            outResponse = new String(stdoutStream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            System.err.println("TestProcess error reading stdout: " + e.getMessage());
+        }
+        try {
+            errResponse = new String(stderrStream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            System.err.println("TestProcess error reading stderr: " + e.getMessage());
+        }
+
+        return new Response(
+            command,
+            jvmOptions,
+            process.exitValue(),
+            false,
+            outResponse,
+            errResponse,
+            Duration.ofNanos(elapsedNanos)
+        );
+    }
+
+    public static class Response {
+        public final List<String> command;
+        public final JvmOptions jvmOptions;
+        public final int exitCode;
+        public final boolean timedOut;
+        public final String out;
+        public final String err;
+        public final Duration duration;
+
+        Response( List<String> command, JvmOptions jvmOptions, int exitCode, boolean timedOut, String out, String err, Duration duration) {
+            this.command = command;
+            this.jvmOptions = jvmOptions;
+            this.exitCode = exitCode;
+            this.timedOut = timedOut;
+            this.out = out;
+            this.err = err;
+            this.duration = duration;
+        }
+    }
+}

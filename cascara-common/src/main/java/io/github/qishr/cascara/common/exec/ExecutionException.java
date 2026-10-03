@@ -32,19 +32,39 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-module test.spl {
-    requires java.management;
+package io.github.qishr.cascara.common.exec;
 
-    requires transitive cascara.common;
-    requires cascara.test.common.junit;
-    requires transitive test.interfaces;
+import java.util.List;
 
-    requires test.task;
-    requires cascara.lang.json;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
-    requires org.junit.jupiter.api;
+public class ExecutionException extends LocalizableRuntimeException {
 
-    exports test.spl;
-    opens test.spl to org.junit.platform.commons;
+    private final List<Diagnostic> diagnostics;
 
+    public ExecutionException(DiagnosticMessage code, Object... details) {
+        super(code, details);
+        this.diagnostics = null;
+    }
+
+    public ExecutionException(List<Diagnostic> diagnostics, DiagnosticMessage code, Object... details) {
+        super(code, details);
+        this.diagnostics = diagnostics;
+    }
+
+    public ExecutionException(Throwable cause, DiagnosticMessage code, Object... details) {
+        super(cause, code, details);
+        this.diagnostics = null;
+    }
+
+    public ExecutionException(Throwable cause, List<Diagnostic> diagnostics, DiagnosticMessage code, Object... details) {
+        super(cause, code, details);
+        this.diagnostics = diagnostics;
+    }
+
+    public List<Diagnostic> getDiagnostics() {
+        return diagnostics;
+    }
 }

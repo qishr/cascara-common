@@ -32,19 +32,11 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-module test.spl {
-    requires java.management;
-
-    requires transitive cascara.common;
-    requires cascara.test.common.junit;
+module test.task {
+    requires cascara.common;
     requires transitive test.interfaces;
-
-    requires test.task;
     requires cascara.lang.json;
 
-    requires org.junit.jupiter.api;
-
-    exports test.spl;
-    opens test.spl to org.junit.platform.commons;
-
+    exports test.task;
+    opens test.task;
 }
