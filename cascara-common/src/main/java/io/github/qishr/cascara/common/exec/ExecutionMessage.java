@@ -40,7 +40,7 @@ public enum ExecutionMessage implements DiagnosticMessage {
     PROCESS_FAILED("ERROR-101", "Failed to start process for {0}"),
     TASK_FAILED("ERROR-101", "Task {0} failed"),
     INPUT_FAILED("ERROR-102", "Failed to write input to task {0}"),
-    OUTPUT_FAILED("ERROR-102", "Failed to read output of task {0}"),
+    OUTPUT_FAILED("ERROR-102", "Failed to read output of task {0}.\n System.out: \"{1}\"\n System.err: \"{2}\""),
     INTERRUPT("ERROR-102", "Task {0} was interrupted");
 
     private final String code;

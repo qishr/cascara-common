@@ -6,7 +6,11 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
@@ -88,6 +92,10 @@ public abstract class AbstractExecutionTask<I,O> {
         Serializer<?> serializer = new ProcessorFactory().createSerializer(IsolatedExecutor.SERIALIZATION_FORMAT);
         var object = serializer.fromString(json, inputClass);
 
+        List<Diagnostic> diagnostics = new ArrayList<>();
+        GlobalReporter.globalInstance().setDiagnosticConsumer(d -> diagnostics.add(d));
+        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
         O response = null;
         if (object == null) {
             error("Failed to deserialize payload: " + json);
@@ -99,8 +107,9 @@ public abstract class AbstractExecutionTask<I,O> {
                 error(e, "Error: " + e.getMessage());
             }
         }
-        json = serializer.toString(response);
-        System.out.println(json);
+
+        System.out.println(serializer.toString(response));
+        System.err.println(serializer.toString(diagnostics));
     }
 
     protected void error(String msg) {

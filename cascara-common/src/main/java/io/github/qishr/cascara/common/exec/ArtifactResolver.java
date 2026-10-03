@@ -24,15 +24,13 @@ public final class ArtifactResolver {
         String argModulePath = "";
         String argAddModules = "";
         for (String mavenName : dependencies) {
-            Path jarPath = ArtifactResolver.resolveJarPath(mavenName, subprojectName);
+            Path jarPath = resolveJarPath(mavenName, subprojectName);
             String javaName;
             try (JarFile jarFile = JarFile.open(jarPath)) {
                 javaName = jarFile.getModuleName();
             } catch (Exception e) {
                 throw new RuntimeException("Failed to open " + jarPath + ": " + e.getMessage());
             }
-            // System.out.println("Maven name: " + mavenName);
-            // System.out.println("Java name : " + javaName);
 
             if (!argModulePath.isEmpty()) {
                 argModulePath += File.pathSeparator;
@@ -98,11 +96,6 @@ public final class ArtifactResolver {
             if (dirContains(rootProjectPath, "settings.gradle")) {
                 return rootProjectPath;
             }
-            // String dirName = current.getFileName().toString();
-            // if ("bin".equals(dirName) || "build".equals(dirName) || "out".equals(dirName)) {
-            //     projectRoot = current.getParent();
-            //     break;
-            // }
             rootProjectPath = rootProjectPath.getParent();
         }
         if (rootProjectPath == null) {
@@ -162,10 +155,6 @@ public final class ArtifactResolver {
         }
     }
 
-    //
-    //
-    //
-
     private static boolean match(String name, String mavenName) {
         if (mavenName.length() + 4 > name.length()) {
             return false;
@@ -183,34 +172,6 @@ public final class ArtifactResolver {
                 return false;
             }
         }
-        // if (suffix.endsWith("-sources") ||
-        //     suffix.endsWith("-javadoc")) {
-        //         return false;
-        // }
         return true;
     }
-
-    // @Nullable
-    // private static Pair<Class<?>,String> getCaller(boolean ignoreQueryingClass) {
-    //     String thisClass = ReflectionUtils.class.getName();
-    //     String queryingClass = null;
-    //     StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
-    //     for (StackTraceElement frame : callStack) {
-    //         String className = frame.getClassName();
-    //         String methodName = frame.getMethodName();
-    //         if (!className.equals("java.lang.Thread") && !className.equals(thisClass)) {
-    //             if (queryingClass == null) {
-    //                 queryingClass = className;
-    //             } else if (!ignoreQueryingClass || !className.equals(queryingClass)) {
-    //                 try {
-    //                     Class<?> callingClass = Class.forName(className);
-    //                     return new Pair<>(callingClass, methodName);
-    //                 } catch (ClassNotFoundException e) {
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     return null;
-    // }
 }

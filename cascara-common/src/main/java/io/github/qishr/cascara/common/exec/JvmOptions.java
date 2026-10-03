@@ -10,6 +10,7 @@ import io.github.qishr.cascara.common.annotation.Beta;
 
 @Beta
 public class JvmOptions {
+    private String moduleName;
     private Map<String, String> systemProperties = new HashMap<>();
     private Map<String, String> environmentVariables = new HashMap<>();
     private List<String> addModules = new ArrayList<>();
@@ -136,6 +137,15 @@ public class JvmOptions {
 
     public JvmOptions setDebug(boolean debug) {
         this.debug = debug;
+        return this;
+    }
+
+    public String getModuleName() {
+        return moduleName;
+    }
+
+    public JvmOptions setModuleName(String name) {
+        this.moduleName = name;
         return this;
     }
 }

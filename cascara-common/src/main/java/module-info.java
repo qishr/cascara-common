@@ -34,6 +34,8 @@
 
 module cascara.common {
     requires java.management;
+    requires java.base;
+    requires jdk.unsupported;
 
     uses io.github.qishr.cascara.common.service.ServiceProvider;
 

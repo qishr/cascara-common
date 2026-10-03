@@ -5,7 +5,7 @@ import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.lang.diagnostic.ParserException;
+import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
 import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
@@ -54,11 +54,11 @@ public class IsolatedExecutor {
             responsePayload = r;
 
             diagnostics = serializer.fromString(jvmResponse.err, new TypeReference<List<Diagnostic>>() {});
-        } catch (ParserException e) {
-            throw new ExecutionException(ExecutionMessage.OUTPUT_FAILED, task.getName());
+        } catch (SerializerException e) {
+            throw new ExecutionException(e, ExecutionMessage.OUTPUT_FAILED, task.getName(), jvmResponse.out, jvmResponse.err);
         }
 
-        return new Response<T>(jvmResponse.command, jvmResponse.jvmOptions, task, responsePayload, diagnostics, !jvmResponse.timedOut && jvmResponse.exitCode == 0);
+        return new Response<T>(jvmResponse, task, responsePayload, diagnostics, !jvmResponse.timedOut && jvmResponse.exitCode == 0);
     }
 
     public IsolatedExecutor setOptions(JvmOptions options) {
@@ -69,14 +69,18 @@ public class IsolatedExecutor {
     public static class Response<T> {
         private final List<String> command;
         private final JvmOptions jvmOptions;
+        private final String out;
+        private final String err;
         private final Class<? extends AbstractExecutionTask<?,?>> task;
         private final T payload;
         private final List<Diagnostic> diagnostics;
         private final boolean success;
 
-        Response(List<String> command, JvmOptions jvmOptions, Class<? extends AbstractExecutionTask<?,?>> task, T payload, List<Diagnostic> diagnostics, boolean success) {
-            this.command = command;
-            this.jvmOptions = jvmOptions;
+        Response(JvmProcess.Response jvmResponse, Class<? extends AbstractExecutionTask<?,?>> task, T payload, List<Diagnostic> diagnostics, boolean success) {
+            this.command = jvmResponse.command;
+            this.jvmOptions = jvmResponse.jvmOptions;
+            this.out = jvmResponse.out;
+            this.err = jvmResponse.err;
             this.task = task;
             this.payload = payload;
             this.diagnostics = diagnostics;
@@ -108,6 +112,14 @@ public class IsolatedExecutor {
 
         public JvmOptions getJvmOptions() {
             return jvmOptions;
+        }
+
+        public String getSystemOut() {
+            return out;
+        }
+
+        public String getSystemErr() {
+            return err;
         }
     }
 }

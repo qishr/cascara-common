@@ -223,6 +223,15 @@ public class ReflectionUtils {
         return Object.class;
     }
 
+    @Nullable
+    public static Class<?> getArrayComponentType(Type targetType) {
+        Class<?> rawClass = getRawClass(targetType);
+        if (rawClass.isArray()) {
+            return rawClass.componentType();
+        }
+        return null;
+    }
+
     public static List<Field> getAllFields(Class<?> clazz) {
         return getAllFields(clazz, null);
     }

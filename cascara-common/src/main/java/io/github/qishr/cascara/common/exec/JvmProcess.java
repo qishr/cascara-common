@@ -38,6 +38,160 @@ public final class JvmProcess {
         String javaBin = ProcessHandle.current().info().command().orElse("java");
         command.add(javaBin);
 
+        // 2. System properties (-D)
+        jvmOptions.getSystemProperties().forEach((k, v) -> command.add("-D" + k + "=" + v));
+
+        // 3. Module path vs. Classpath
+        String modulePath = jvmOptions.getModulePath();
+        if (modulePath != null && !modulePath.isBlank()) {
+            command.add("--module-path");
+            command.add(modulePath);
+        }
+
+        String classPath = jvmOptions.getClassPath() != null
+            ? jvmOptions.getClassPath()
+            : (jvmOptions.inheritParentClassPath() ? System.getProperty("java.class.path") : null);
+
+        if (classPath != null && !classPath.isBlank()) {
+            command.add("-cp");
+            command.add(classPath);
+        }
+
+        // 4. Encapsulation and Access Directives
+        for (String mod : jvmOptions.getModules()) {
+            command.add("--add-modules");
+            command.add(mod);
+        }
+        for (String openTarget : jvmOptions.getOpens()) {
+            command.add("--add-opens");
+            command.add(openTarget);
+        }
+        for (String readTarget : jvmOptions.getReads()) {
+            command.add("--add-reads");
+            command.add(readTarget);
+        }
+
+        // 5. Entry Point: Determined strictly by whether a module name is targeted
+        String moduleName = jvmOptions.getModuleName();
+        if (moduleName != null && !moduleName.isBlank()) {
+            // Modular execution: java --module moduleName/mainClassName
+            command.add("--module");
+            command.add(moduleName + "/" + mainClass.getName());
+        } else {
+            // Standard classpath execution: java mainClassName
+            command.add(mainClass.getName());
+        }
+
+        command.addAll(jvmOptions.getArgs());
+
+        if (jvmOptions.debug()) {
+            System.out.println("JvmProcess Command:");
+            for (String s : command) {
+                System.out.println("  " + s);
+            }
+        }
+
+        ProcessBuilder pb = new ProcessBuilder(command);
+
+        // Environment variables
+        if (!jvmOptions.getEnv().isEmpty()) {
+            pb.environment().putAll(jvmOptions.getEnv());
+        }
+
+        long startTime = System.nanoTime();
+        Process process;
+        try {
+            process = pb.start();
+        } catch (IOException e) {
+            throw new ExecutionException(e, ExecutionMessage.PROCESS_FAILED, mainClass.getName());
+        }
+
+        // Capture stdout and stderr asynchronously to prevent OS buffer deadlocks
+        var stdoutStream = process.getInputStream();
+        var stderrStream = process.getErrorStream();
+
+        if (input != null && !input.isEmpty()) {
+            // System.out.println("Sending: " + input);
+            var inputStream = process.getOutputStream();
+            try {
+                inputStream.write(input.getBytes());
+                inputStream.flush();
+                inputStream.close();
+            } catch (IOException e) {
+                throw new ExecutionException(e, ExecutionMessage.INPUT_FAILED, mainClass.getName(), null);
+            }
+        }
+
+        boolean completed;
+        try {
+            completed = process.waitFor(jvmOptions.getTimeout().toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new ExecutionException(e, ExecutionMessage.INTERRUPT, mainClass.getName(), null);
+        }
+        long elapsedNanos = System.nanoTime() - startTime;
+
+
+        if (!completed) {
+            process.destroyForcibly();
+
+            String outResponse = "";
+            String errResponse = "";
+
+            try {
+                outResponse = new String(stdoutStream.readAllBytes(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                // TODO: We probably want to throw an ExecutionException
+            }
+            try {
+                errResponse = new String(stderrStream.readAllBytes(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                // TODO: We probably want to throw an ExecutionException
+            }
+
+            return new Response(
+                command,
+                jvmOptions,
+                -1,
+                true,
+                outResponse,
+                errResponse,
+                Duration.ofNanos(elapsedNanos)
+            );
+        }
+
+        String outResponse = "";
+        String errResponse = "";
+
+        try {
+            outResponse = new String(stdoutStream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            System.err.println("TestProcess error reading stdout: " + e.getMessage());
+        }
+        try {
+            errResponse = new String(stderrStream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            System.err.println("TestProcess error reading stderr: " + e.getMessage());
+        }
+
+        return new Response(
+            command,
+            jvmOptions,
+            process.exitValue(),
+            false,
+            outResponse,
+            errResponse,
+            Duration.ofNanos(elapsedNanos)
+        );
+
+    }
+
+    public Response _run(String input) {
+        List<String> command = new ArrayList<>();
+
+        // 1. Executable Java binary
+        String javaBin = ProcessHandle.current().info().command().orElse("java");
+        command.add(javaBin);
+
         // 2. Classpath resolution
         String classPathToUse = jvmOptions.getClassPath() != null ? jvmOptions.getClassPath() : System.getProperty("java.class.path");
         if (jvmOptions.inheritParentClassPath() && classPathToUse != null && !classPathToUse.isBlank()) {
@@ -45,11 +199,16 @@ public final class JvmProcess {
             command.add(classPathToUse);
         }
 
+
+
+        // TODO: Make this work without JPMS
         Pair<String,String> mp = ArtifactResolver.buildModulePath(
             List.of("cascara-common", "spl-test-interfaces", "test-task", "cascara-lang-json"),
             "spl-test"
         );
         String modulePathToUse = mp.getL();
+
+
 
         // 3. Module path resolution
         // String modulePathToUse = customModulePath != null ? customModulePath : System.getProperty("jdk.module.path");
@@ -77,7 +236,7 @@ public final class JvmProcess {
 
 
 
-        // TODO: Also support non-modular
+        // TODO: Make this work without JPMS
         // 6. Entry point class & execution arguments
         // command.add(mainClass.getName());
         String moduleArg = mainClass.getModule().getName() + "/" + mainClass.getName();

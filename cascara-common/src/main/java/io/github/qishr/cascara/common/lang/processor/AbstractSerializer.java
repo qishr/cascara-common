@@ -35,6 +35,8 @@
 
 package io.github.qishr.cascara.common.lang.processor;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
@@ -50,6 +52,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import sun.misc.Unsafe;
 
 import io.github.qishr.cascara.common.annotation.AnyGetter;
 import io.github.qishr.cascara.common.annotation.AnySetter;
@@ -107,6 +110,18 @@ public abstract class AbstractSerializer<
     // State
     protected int depth = 0;
     private Set<String> previousWarnings = new HashSet<>();
+
+    private static final Unsafe UNSAFE;
+
+    static {
+        try {
+            Field field = Unsafe.class.getDeclaredField("theUnsafe");
+            field.setAccessible(true);
+            UNSAFE = (Unsafe) field.get(null);
+        } catch (Exception e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, LanguageOptions<?> options) {
         this.contentType = contentType;
@@ -182,8 +197,7 @@ public abstract class AbstractSerializer<
             }
 
             if (jvmInstance.getClass().isArray()) {
-                // TODO: Handle this
-                throw new SerializerException(GenericMessage.ERROR, "Unhandled array type");
+                return (N) serializeArray(jvmInstance);
             }
 
             // Lists
@@ -286,6 +300,17 @@ public abstract class AbstractSerializer<
         return objectMap;
     }
 
+    protected L serializeArray(Object jvmInstance) {
+        L sequence = astFactory.createSequenceNode();
+        int length = Array.getLength(jvmInstance);
+        for (int i = 0; i < length; i++) {
+            Object item = Array.get(jvmInstance, i);
+            if (item == null) continue;
+            sequence.add(serialize(item));
+        }
+        return sequence;
+    }
+
     /// Serializes a List into a YamlSequence.
     protected L serializeList(List<?> list) {
         // TODO: Other SequencedCollection classes; Sets
@@ -362,6 +387,11 @@ public abstract class AbstractSerializer<
         TypeDescriptor<?> typeDescriptor = getTypeDescriptor(targetType);
         if (typeDescriptor instanceof TypeSerializer<?> typeSerializer) {
             return typeSerializer.deserialize(node);
+        }
+
+        Class<?> rawClass = ReflectionUtils.getRawClass(targetType);
+        if (rawClass.isArray()) {
+            return deserializeArray(node, targetType);
         }
 
         // 2. Collection targetType
@@ -557,6 +587,46 @@ public abstract class AbstractSerializer<
         return jvmInstance;
     }
 
+    private Object deserializeArray(AstNode node, Type targetType) {
+        if (node == null) {
+            Class<?> componentType = ReflectionUtils.getArrayComponentType(targetType);
+            return Array.newInstance(componentType, 0);
+        }
+
+        Type itemType = ReflectionUtils.getArrayComponentType(targetType);
+
+        if (itemType == null) {
+            throw new UnexpectedNullReturnException("ReflectionUtils", "getArrayComponentType");
+        }
+
+        // Fallback for single values in YAML where an array was expected
+        if (node instanceof ScalarAstNode scalar) {
+            Object val = deserializeScalar(scalar, itemType);
+
+            if (val == null) {
+                return Array.newInstance((Class<?>) itemType, 0);
+            }
+
+            Object array = Array.newInstance((Class<?>) itemType, 1);
+            Array.set(array, 0, val);
+            return array;
+        }
+
+        if (!(node instanceof SequenceAstNode sequence)) {
+            throw new SerializerException(node, LangMessage.EXPECTED_SEQUENCE, ReflectionUtils.getTypeName(targetType));
+        }
+
+        Object array = Array.newInstance((Class<?>) itemType, sequence.getChildren().size());
+
+        int index = 0;
+        for (AstNode item : sequence.getChildren()) {
+            Object val = deserializeType(item, itemType);
+            Array.set(array, index++, val);
+        }
+
+        return array;
+    }
+
     private List<?> deserializeList(AstNode node, Type targetType) {
         if (node == null) return new ArrayList<>();
         Type itemIype = ReflectionUtils.getGenericElementTypeFromListType(targetType);
@@ -744,14 +814,30 @@ public abstract class AbstractSerializer<
         return best;
     }
 
-    private <C> C newTypeInstance(AstNode node, Type jvmType) throws SerializerException {
+    @SuppressWarnings("unchecked")
+    public static <T> T allocateInstanceUnsafe(Class<T> clazz) {
         try {
-            Class<C> baseClass = ReflectionUtils.getRawClass(jvmType);
-            Class<? extends C> targetClass = resolvePolymorphicTarget(node, baseClass);
+            return (T) UNSAFE.allocateInstance(clazz);
+        } catch (InstantiationException e) {
+            throw new RuntimeException("Failed to allocate instance of " + clazz.getName(), e);
+        }
+    }
+
+    private <C> C newTypeInstance(AstNode node, Type jvmType) throws SerializerException {
+        Class<C> baseClass = ReflectionUtils.getRawClass(jvmType);
+        Class<? extends C> targetClass = resolvePolymorphicTarget(node, baseClass);
+        try {
+            // Class<C> baseClass = ReflectionUtils.getRawClass(jvmType);
+            // Class<? extends C> targetClass = resolvePolymorphicTarget(node, baseClass);
             C jvmInstance = targetClass.getConstructor().newInstance();
             return jvmInstance;
         } catch (NoSuchMethodException e) {
-            throw new SerializerException(node, e, LangMessage.NO_SUCH_CONSTRUCTOR, ReflectionUtils.getTypeName(jvmType));
+            try {
+                // Fall back to Unsafe-style allocation without invoking a constructor
+                return allocateInstanceUnsafe(targetClass);
+            } catch (Exception ex) {
+                throw new SerializerException(node, e, LangMessage.NO_SUCH_CONSTRUCTOR, ReflectionUtils.getTypeName(jvmType)); // This is line 804
+            }
         } catch (Exception e) {
             throw error(e, ReflectionUtils.getTypeName(jvmType));
         }
