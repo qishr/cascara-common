@@ -44,7 +44,7 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.exec.ipc.DiagnosticIpcClient;
+import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
@@ -150,9 +150,10 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     /// {@inheritDoc}
     @Override
     public GlobalReporter setLevel(Level level) {
-        if (!allowApiOverride) {
-            throw new UnsupportedOperationException("This reporter does not allow setting its level via the API");
-        }
+        // TODO: Only throw here if the API call would actually override an environment setting
+        // if (!allowApiOverride) {
+        //     throw new UnsupportedOperationException("This reporter does not allow setting its level via the API");
+        // }
         return setLevelInternal(level);
     }
 
@@ -262,17 +263,17 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     protected void report(Diagnostic diagnostic) {
         super.report(diagnostic);
         if (this.level.includes(diagnostic.getLevel())) {
-            DiagnosticIpcClient client = globalInstance.diagnosticClient;
+            IpcClient client = globalInstance.diagnosticClient;
             Serializer<?> serializer = globalInstance.diagnosticSerializer;
             if (client == null && serializer != null) {
-                client = DiagnosticIpcClient.tryConnect();
+                client = IpcClient.tryConnect(serializer);
             }
 
             if (client != null) {
-                String json = serializer.toString(diagnostic);
+                // String json = serializer.toString(diagnostic);
                 try {
-                    client.sendDiagnosticJson(json);
-                    return;
+                    client.send(diagnostic);
+                    // client.sendDiagnosticJson(json);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

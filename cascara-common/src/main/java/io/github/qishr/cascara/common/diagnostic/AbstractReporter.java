@@ -45,7 +45,7 @@ import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.exec.ipc.DiagnosticIpcClient;
+import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.token.Token;
 import io.github.qishr.cascara.common.util.JreUtils;
@@ -76,7 +76,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// The simple name of the class that made the report
     protected String source;
 
-    protected DiagnosticIpcClient diagnosticClient;
+    protected IpcClient diagnosticClient;
     protected Serializer<?> diagnosticSerializer;
 
     /// Consumes diagnostics included in the current Level or more

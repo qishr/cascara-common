@@ -5,9 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
@@ -20,6 +22,12 @@ import test.task.GlobalReporterTestTask;
 
 
 public class GlobalReporterTests extends JvmProcessTestBase {
+    @BeforeEach
+    protected void setUp() {
+        reporter = GlobalReporter.forClass(getClass());
+        super.setUp();
+    }
+
     @Test
     void test_debugLevel() throws Exception {
         ReporterTestInput input = new ReporterTestInput("debug-message");

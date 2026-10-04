@@ -22,8 +22,8 @@ public class JvmProcessTestBase {
 
     @BeforeEach
     void setUp() {
-        reporter = new StandardReporter()
-            .setAnsiColoringEnabled(true);
+        // reporter = new StandardReporter()
+        //     .setAnsiColoringEnabled(true);
 
         if (TEST_DEBUG_ENABLED) {
             reporter.setLevel(Level.DEBUG);
@@ -46,24 +46,20 @@ public class JvmProcessTestBase {
     protected void debug(Response<ReporterTestOutput> response) {
         if (TEST_DEBUG_ENABLED) {
             ReportWriter writer = reporter.getWriter(Level.DEBUG);
-            try {
-                writer.write("System.out:\n");
-                writer.write(2, response.getSystemOut());
-                writer.write("System.err:\n");
-                writer.write(2, response.getSystemErr());
-            } catch (IOException e) {}
+            reporter.debug("System.out:\n");
+            writer.write(2, response.getSystemOut());
+            reporter.debug("System.err:\n");
+            writer.write(2, response.getSystemErr());
         }
     }
 
     protected void debug(JvmProcess.Response response) {
         if (TEST_DEBUG_ENABLED) {
             ReportWriter writer = reporter.getWriter(Level.DEBUG);
-            try {
-                writer.write("JvmProcess.Response.out:\n");
-                writer.write(2, response.out);
-                writer.write("JvmProcess.Response.err:\n");
-                writer.write(2, response.err);
-            } catch (IOException e) {}
+            reporter.debug("JvmProcess.Response.out:\n");
+            writer.write(2, response.out);
+            reporter.debug("JvmProcess.Response.err:\n");
+            writer.write(2, response.err);
         }
     }
 }

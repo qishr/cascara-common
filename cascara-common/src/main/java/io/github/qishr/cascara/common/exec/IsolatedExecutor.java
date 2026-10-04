@@ -6,8 +6,8 @@ import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.exec.ipc.DiagnosticIpcClient;
-import io.github.qishr.cascara.common.exec.ipc.DiagnosticIpcServer;
+import io.github.qishr.cascara.common.exec.ipc.IpcClient;
+import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
@@ -50,35 +50,25 @@ public class IsolatedExecutor {
         String json = serializer.toString(input);
 
         List<Diagnostic> diagnostics = new ArrayList<>();
+        T taskResponse;
         JvmProcess.Response jvmResponse;
-        try (DiagnosticIpcServer diagServer = DiagnosticIpcServer.start()) {
-            options.setSystemProperty(DiagnosticIpcClient.SOCKET_PROP, diagServer.getSocketPath().toString());
+
+        try (IpcServer ipcServer = IpcServer.start(serializer)) {
+            options.setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
             jvmProcess.setOptions(options);
 
             jvmResponse = jvmProcess.run(json);
 
-            List<String> rawDiags =  diagServer.getRawDiagnostics();
+            Class<T> targetClass = (Class<T>) responseClass;
+            List<T> outputs = ipcServer.getMessages(targetClass);
+            taskResponse = outputs.isEmpty() ? null : outputs.getFirst();
 
-            // Deserialize
-            try {
-                for (String s : rawDiags) {
-                    diagnostics.add(serializer.fromString(s, Diagnostic.class));
-                }
-            } catch (SerializerException e) {
-                throw new ExecutionException(e, ExecutionMessage.DIAGNOSTIC_DESERIALIZATION_FAILED, task.getName());
-            }
+            diagnostics = ipcServer.getMessages(Diagnostic.class);
         } catch (IOException e) {
             throw new ExecutionException(e, ExecutionMessage.DIAGNOSTIC_SERVER_FAILED, task.getName());
         }
 
-        T responsePayload;
-        try {
-            responsePayload = (T) serializer.fromString(jvmResponse.out, responseClass);
-        } catch (SerializerException e) {
-            throw new ExecutionException(e, ExecutionMessage.OUTPUT_FAILED, task.getName(), jvmResponse.out, jvmResponse.err);
-        }
-
-        return new Response<T>(jvmResponse, task, responsePayload, diagnostics, !jvmResponse.timedOut && jvmResponse.exitCode == 0);
+        return new Response<T>(jvmResponse, task, taskResponse, diagnostics, !jvmResponse.timedOut && jvmResponse.exitCode == 0);
     }
 
     public IsolatedExecutor setOptions(JvmOptions options) {
