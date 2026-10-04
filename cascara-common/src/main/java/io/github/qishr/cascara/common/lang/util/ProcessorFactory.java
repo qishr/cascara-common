@@ -36,6 +36,7 @@
 package io.github.qishr.cascara.common.lang.util;
 
 import io.github.qishr.cascara.common.annotation.Beta;
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.lang.processor.AstParser;
 import io.github.qishr.cascara.common.lang.processor.PullParser;
 import io.github.qishr.cascara.common.lang.processor.PushParser;
@@ -50,6 +51,16 @@ import io.github.qishr.cascara.common.util.ContentType;
 @Beta
 public class ProcessorFactory extends AbstractServiceProviderFactory {
     public static final String CONTENT_TYPE = "contentType";
+
+    private static ProcessorFactory systemProcessorFactory;
+
+    @Experimental
+    public static ProcessorFactory system() {
+        if (systemProcessorFactory == null) {
+            systemProcessorFactory = new ProcessorFactory();
+        }
+        return systemProcessorFactory;
+    }
 
     public ProcessorFactory() {
         super();

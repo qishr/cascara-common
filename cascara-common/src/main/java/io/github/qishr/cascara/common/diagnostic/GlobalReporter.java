@@ -35,6 +35,7 @@
 
 package io.github.qishr.cascara.common.diagnostic;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -43,6 +44,8 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.exec.ipc.DiagnosticIpcClient;
+import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.util.Pair;
@@ -52,9 +55,11 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     private static final String PROP_CASC_REPORT_LEVEL = "casc.report.level.";
     private static final String ENV_CASC_REPORT_LEVEL = "CASC_REPORT_LEVEL_";
 
+    public static final String SERIALIZATION_FORMAT = "application/json";
+
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
 
-    private static final GlobalReporter globalInstance = new GlobalReporter();
+    private static GlobalReporter globalInstance = new GlobalReporter().init();
     private final Map<String,GlobalReporter> classInstances = new HashMap<>();
 
     private final Map<String,Level> envLevels = new HashMap<>();
@@ -63,23 +68,31 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     private Path reportConfigPath;
 
     private GlobalReporter() {
+    }
+
+    private GlobalReporter init() {
+        globalInstance = this;
         // TODO:
         // CASC_REPORT_CONFIG=/path/
 
+
+        // This will only ever be used by apps like Studio.
+        // Tests will always use a new JvmProcess and set reporting options with -D
         // CASC_REPORT_ALLOW_API_OVERRIDE=true
         String allowApiOverride = System.getenv("CASC_REPORT_ALLOW_API_OVERRIDE");
-        this.allowApiOverride = (allowApiOverride != null && allowApiOverride.toLowerCase().equals("true"));
+        this.allowApiOverride = (allowApiOverride != null && allowApiOverride.equalsIgnoreCase("true"));
 
         // System properties...
         // -Dcasc.report.config=
         // -Dcasc.report.level.fqcn=
-        setLevels(Properties.fromSystemProperties());
+        Properties systemProperties = Properties.fromSystemProperties();
+        setLevels(systemProperties);
 
         // System environment...
         // CASC_REPORT_LEVEL_*
         // CASC_REPORT_LEVEL_COM_FOO=DEBUG
         Map<String,String> env = System.getenv();
-        for (Entry<String, String> entry : System.getenv().entrySet()) {
+        for (Entry<String, String> entry : env.entrySet()) {
             String name = String.valueOf(entry.getKey());
             if (name.startsWith(ENV_CASC_REPORT_LEVEL)) {
                 String uppercaseClassName = name.substring(ENV_CASC_REPORT_LEVEL.length());
@@ -89,11 +102,19 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 }
             }
         }
+        return this;
     }
 
     private GlobalReporter(String source) {
         this.source = source;
         this.level = globalInstance.level;
+    }
+
+    public static void initSerializer(Serializer<?> serializer) {
+        if (globalInstance().diagnosticSerializer == null) {
+            // globalInstance().diagnosticSerializer = ProcessorFactory.system().createSerializer(SERIALIZATION_FORMAT);
+            globalInstance.diagnosticSerializer = serializer;
+        }
     }
 
     /// {@inheritDoc}
@@ -129,6 +150,13 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     /// {@inheritDoc}
     @Override
     public GlobalReporter setLevel(Level level) {
+        if (!allowApiOverride) {
+            throw new UnsupportedOperationException("This reporter does not allow setting its level via the API");
+        }
+        return setLevelInternal(level);
+    }
+
+    private GlobalReporter setLevelInternal(Level level) {
         if (this != globalInstance) {
             setLevelsForAll(level);
         } else {
@@ -141,9 +169,16 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     /// @param fqcn the fully qualified class name of the class to set the level for.
     /// @param level the level to set for the class.
     public GlobalReporter setLevel(String fqcn, Level level) {
-        assertGlobalInstance();
+        if (!allowApiOverride) {
+            throw new UnsupportedOperationException("This reporter does not allow setting its level via the API");
+        }
+        return setLevelInternal(fqcn, level);
+    }
+
+    public GlobalReporter setLevelInternal(String fqcn, Level level) {
+        // assertGlobalInstance();
         GlobalReporter reporter = GlobalReporter.forSource(fqcn);
-        reporter.setLevel(level);
+        reporter.setLevelInternal(level);
         return this;
     }
 
@@ -155,7 +190,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 String fqcn = propertyName.substring(PROP_CASC_REPORT_LEVEL.length());
                 Level level = Level.valueOf(property.asString());
                 if (level != null) {
-                    setLevel(fqcn, level);
+                    setLevelInternal(fqcn, level);
                 }
             }
         }
@@ -220,6 +255,29 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     @Override
     protected boolean isStackTraceEnabled() {
         return this == globalInstance ? stackTraceEnabled : globalInstance.isStackTraceEnabled();
+    }
+
+    /// Central reporting method. All other rporting methods call this.
+    @Override
+    protected void report(Diagnostic diagnostic) {
+        super.report(diagnostic);
+        if (this.level.includes(diagnostic.getLevel())) {
+            DiagnosticIpcClient client = globalInstance.diagnosticClient;
+            Serializer<?> serializer = globalInstance.diagnosticSerializer;
+            if (client == null && serializer != null) {
+                client = DiagnosticIpcClient.tryConnect();
+            }
+
+            if (client != null) {
+                String json = serializer.toString(diagnostic);
+                try {
+                    client.sendDiagnosticJson(json);
+                    return;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     @Override

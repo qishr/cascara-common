@@ -35,6 +35,7 @@
 package io.github.qishr.cascara.common.service;
 
 import io.github.qishr.cascara.common.annotation.Beta;
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
 import io.github.qishr.cascara.common.lang.util.SourceBuffer;
 import io.github.qishr.cascara.common.lang.util.SourceBufferOptions;
@@ -44,6 +45,15 @@ import io.github.qishr.cascara.common.util.ContentTypeResolver;
 /// Note: For language processors, use io.github.qishr.cascara.common.lang.util.ProcessorFactory
 @Beta
 public class ServiceProviderFactory extends AbstractServiceProviderFactory {
+    private static ServiceProviderFactory systemProcessorFactory;
+
+    @Experimental
+    public static ServiceProviderFactory system() {
+        if (systemProcessorFactory == null) {
+            systemProcessorFactory = new ServiceProviderFactory();
+        }
+        return systemProcessorFactory;
+    }
 
     public ServiceProviderFactory() {
         super();

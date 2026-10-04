@@ -33,6 +33,8 @@
 // version.
 
 module test.task {
+    requires java.management;
+
     requires cascara.common;
     requires transitive test.interfaces;
     requires cascara.lang.json;

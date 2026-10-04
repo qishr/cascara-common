@@ -1,4 +1,4 @@
-package test.spl;
+package test.exec;
 
 import java.io.IOException;
 import java.util.List;
@@ -11,10 +11,11 @@ import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.StandardReporter;
 import io.github.qishr.cascara.common.exec.ArtifactResolver;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
+import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.util.Pair;
 import test.interfaces.ReporterTestOutput;
 
-public class DiagnosticTestBase {
+public class JvmProcessTestBase {
     protected static final boolean TEST_DEBUG_ENABLED = true;
     protected static final boolean PROCESS_DEBUG_ENABLED = false;
     protected Reporter reporter;
@@ -46,10 +47,22 @@ public class DiagnosticTestBase {
         if (TEST_DEBUG_ENABLED) {
             ReportWriter writer = reporter.getWriter(Level.DEBUG);
             try {
-                writer.write("Payload:\n");
+                writer.write("System.out:\n");
                 writer.write(2, response.getSystemOut());
-                writer.write("Diagnostics:\n");
+                writer.write("System.err:\n");
                 writer.write(2, response.getSystemErr());
+            } catch (IOException e) {}
+        }
+    }
+
+    protected void debug(JvmProcess.Response response) {
+        if (TEST_DEBUG_ENABLED) {
+            ReportWriter writer = reporter.getWriter(Level.DEBUG);
+            try {
+                writer.write("JvmProcess.Response.out:\n");
+                writer.write(2, response.out);
+                writer.write("JvmProcess.Response.err:\n");
+                writer.write(2, response.err);
             } catch (IOException e) {}
         }
     }

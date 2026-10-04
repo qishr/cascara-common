@@ -43,8 +43,11 @@ module test.spl {
     requires cascara.lang.json;
 
     requires org.junit.jupiter.api;
+    requires java.rmi;
+
+    exports test.exec;
+    opens test.exec to org.junit.platform.commons;
 
     exports test.spl;
     opens test.spl to org.junit.platform.commons;
-
 }

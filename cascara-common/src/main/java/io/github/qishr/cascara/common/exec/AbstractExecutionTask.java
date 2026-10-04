@@ -6,10 +6,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
 
-import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
@@ -76,6 +73,8 @@ public abstract class AbstractExecutionTask<I,O> {
 
     @SuppressWarnings("unchecked")
     public void run(Class<?> targetClass, Class<?> inputClass) {
+        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
         StringBuilder sb = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             char[] buffer = new char[4096];
@@ -92,10 +91,6 @@ public abstract class AbstractExecutionTask<I,O> {
         Serializer<?> serializer = new ProcessorFactory().createSerializer(IsolatedExecutor.SERIALIZATION_FORMAT);
         var object = serializer.fromString(json, inputClass);
 
-        List<Diagnostic> diagnostics = new ArrayList<>();
-        GlobalReporter.globalInstance().setDiagnosticConsumer(d -> diagnostics.add(d));
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
-
         O response = null;
         if (object == null) {
             error("Failed to deserialize payload: " + json);
@@ -109,7 +104,6 @@ public abstract class AbstractExecutionTask<I,O> {
         }
 
         System.out.println(serializer.toString(response));
-        System.err.println(serializer.toString(diagnostics));
     }
 
     protected void error(String msg) {

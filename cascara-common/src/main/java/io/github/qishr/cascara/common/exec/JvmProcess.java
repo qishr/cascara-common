@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import io.github.qishr.cascara.common.util.Pair;
@@ -84,18 +85,22 @@ public final class JvmProcess {
 
         command.addAll(jvmOptions.getArgs());
 
-        if (jvmOptions.debug()) {
-            System.out.println("JvmProcess Command:");
-            for (String s : command) {
-                System.out.println("  " + s);
-            }
-        }
-
         ProcessBuilder pb = new ProcessBuilder(command);
 
         // Environment variables
         if (!jvmOptions.getEnv().isEmpty()) {
             pb.environment().putAll(jvmOptions.getEnv());
+        }
+
+        if (jvmOptions.debug()) {
+            System.out.println("JvmProcess Command:");
+            for (String s : command) {
+                System.out.println("  " + s);
+            }
+            System.out.println("JvmProcess Environment:");
+            for (Entry<String,String> entry : pb.environment().entrySet()) {
+                System.out.println("  " + entry.getKey() + " = " + entry.getValue());
+            }
         }
 
         long startTime = System.nanoTime();

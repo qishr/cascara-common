@@ -140,6 +140,9 @@ public abstract class AbstractSerializer<
     /// Creates the appropriate AstNode (Scalar, Sequence, or Map) based on the Java value type.
     @SuppressWarnings("unchecked")
     protected N serialize(Object jvmInstance) {
+        if (jvmInstance == null) {
+            return null;
+        }
 
         depth++;
         if (depth > depthLimit) {

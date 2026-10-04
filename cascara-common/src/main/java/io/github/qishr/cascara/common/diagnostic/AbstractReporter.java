@@ -45,6 +45,8 @@ import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.exec.ipc.DiagnosticIpcClient;
+import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.token.Token;
 import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.TermUtils;
@@ -73,6 +75,9 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     /// The simple name of the class that made the report
     protected String source;
+
+    protected DiagnosticIpcClient diagnosticClient;
+    protected Serializer<?> diagnosticSerializer;
 
     /// Consumes diagnostics included in the current Level or more
     /// important, with ERROR being the most important.
@@ -442,6 +447,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected boolean isStackTraceEnabled() { return stackTraceEnabled; }
 
+    /// Central reporting method. All other rporting methods call this.
     protected void report(Diagnostic diagnostic) {
         if (this.level.compareTo(diagnostic.getLevel()) >= 0) {
             writeString(diagnostic);
@@ -455,6 +461,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         }
     }
 
+    /// Reports a Diagnostic to the console and the line consumer if they are enabled.
     protected void writeString(Diagnostic diagnostic) {
         ReportWriter writer = writers[diagnostic.getLevel().ordinal()];
         if (writer == null) {
@@ -528,7 +535,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     }
 
     //
-    //
+    // TODO: These shol be move to a utility class
     //
 
     /// With message string
@@ -567,6 +574,10 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         }
         return new Diagnostic(null, token, source, level, cause, code, null, details);
     }
+
+    //
+    //
+    //
 
     protected boolean isProblem(Level level) {
         return (level == Level.ERROR || level == Level.WARN || level == Level.INFO);

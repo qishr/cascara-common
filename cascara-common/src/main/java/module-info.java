@@ -45,6 +45,7 @@ module cascara.common {
     exports io.github.qishr.cascara.common.diagnostic;
     exports io.github.qishr.cascara.common.diagnostic.message;
     exports io.github.qishr.cascara.common.exec;
+    exports io.github.qishr.cascara.common.exec.ipc;
     exports io.github.qishr.cascara.common.filewatcher;
     exports io.github.qishr.cascara.common.lang.plain;
     exports io.github.qishr.cascara.common.lang.ast;

@@ -33,6 +33,8 @@
 // version.
 
 module test.interfaces {
+    requires java.management;
+
     requires cascara.common;
     exports test.interfaces;
 

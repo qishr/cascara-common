@@ -37,11 +37,13 @@ package io.github.qishr.cascara.common.exec;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public enum ExecutionMessage implements DiagnosticMessage {
-    PROCESS_FAILED("ERROR-101", "Failed to start process for {0}"),
-    TASK_FAILED("ERROR-101", "Task {0} failed"),
-    INPUT_FAILED("ERROR-102", "Failed to write input to task {0}"),
-    OUTPUT_FAILED("ERROR-102", "Failed to read output of task {0}.\n System.out: \"{1}\"\n System.err: \"{2}\""),
-    INTERRUPT("ERROR-102", "Task {0} was interrupted");
+    PROCESS_FAILED("EXEC-101", "Failed to start process for {0}"),
+    TASK_FAILED("EXEC-102", "Task {0} failed"),
+    INPUT_FAILED("EXEC-103", "Failed to write input to task {0}"),
+    OUTPUT_FAILED("EXEC-104", "Failed to read output of task {0}.\n System.out: \"{1}\"\n System.err: \"{2}\""),
+    INTERRUPT("EXEC-105", "Task {0} was interrupted"),
+    DIAGNOSTIC_SERVER_FAILED("EXEC-106", "Failed to initialize DiagnosticIpcServer for task {0}"),
+    DIAGNOSTIC_DESERIALIZATION_FAILED("EXEC-107", "Failed to deserialize diagnostics for task {0}");
 
     private final String code;
     private final String format;

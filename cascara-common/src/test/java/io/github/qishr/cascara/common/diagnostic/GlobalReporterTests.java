@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -148,7 +147,6 @@ public class GlobalReporterTests {
         String key = "CASC_REPORT_LEVEL_" + GlobalReporterTests.class.getName().replace('.', '_').toUpperCase();
         setEnv(key, "DEBUG");
 
-        GlobalReporter globalInstance = GlobalReporter.globalInstance();
         GlobalReporter.globalInstance().setLineConsumer(lines::add);
 
         try {

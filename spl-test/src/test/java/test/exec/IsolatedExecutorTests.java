@@ -1,7 +1,6 @@
-package test.spl;
+package test.exec;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
@@ -11,39 +10,11 @@ import org.junit.jupiter.api.Test;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
-import io.github.qishr.cascara.common.exec.JvmProcess;
-import io.github.qishr.cascara.common.lang.processor.Serializer;
-import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
 import test.interfaces.ReporterTestInput;
 import test.interfaces.ReporterTestOutput;
 import test.task.GlobalReporterTestTask;
 
-public class IsolatedExecutorTests extends DiagnosticTestBase {
-
-    @Test
-    void test_JvmProcess() throws Exception {
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
-
-        Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
-        String json = serializer.toString(input);
-
-        JvmOptions options = new JvmOptions()
-            .setModuleName(GlobalReporterTestTask.class.getModule().getName())
-            .setModulePath(getModulePath())
-            .setDebug(PROCESS_DEBUG_ENABLED);
-
-        JvmProcess tp = JvmProcess.forClass(GlobalReporterTestTask.class)
-            .setOptions(options);
-
-        JvmProcess.Response result = tp.run(json);
-
-        debug("result.out: " + result.out);
-        debug("result.err: " + result.err);
-
-        assertEquals(0, result.exitCode);
-        assertFalse(result.timedOut);
-        assertTrue(result.out.contains("isolated"));
-    }
+public class IsolatedExecutorTests extends JvmProcessTestBase {
 
     @Test
     void test_IsolatedExecutor_1() throws Exception {

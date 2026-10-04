@@ -1,13 +1,15 @@
 package io.github.qishr.cascara.common.exec;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.exec.ipc.DiagnosticIpcClient;
+import io.github.qishr.cascara.common.exec.ipc.DiagnosticIpcServer;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
-import io.github.qishr.cascara.common.lang.type.TypeReference;
 import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
 
 @Beta
@@ -15,6 +17,7 @@ public class IsolatedExecutor {
     public static final String SERIALIZATION_FORMAT = "application/json";
 
     private final JvmProcess jvmProcess;
+    private JvmOptions options;
     private final Class<?> responseClass;
     private final Class<? extends AbstractExecutionTask<?,?>> task;
 
@@ -37,23 +40,40 @@ public class IsolatedExecutor {
         return run(input, null);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> Response<T> run(Object input, JvmOptions options) {
-        if (options != null) {
-            setOptions(options);
+        if (options == null) {
+            options = this.options;
         }
+
         Serializer<?> serializer = new ProcessorFactory().createSerializer(SERIALIZATION_FORMAT);
         String json = serializer.toString(input);
 
-        JvmProcess.Response jvmResponse = jvmProcess.run(json);
+        List<Diagnostic> diagnostics = new ArrayList<>();
+        JvmProcess.Response jvmResponse;
+        try (DiagnosticIpcServer diagServer = DiagnosticIpcServer.start()) {
+            options.setSystemProperty(DiagnosticIpcClient.SOCKET_PROP, diagServer.getSocketPath().toString());
+            jvmProcess.setOptions(options);
+
+            jvmResponse = jvmProcess.run(json);
+
+            List<String> rawDiags =  diagServer.getRawDiagnostics();
+
+            // Deserialize
+            try {
+                for (String s : rawDiags) {
+                    diagnostics.add(serializer.fromString(s, Diagnostic.class));
+                }
+            } catch (SerializerException e) {
+                throw new ExecutionException(e, ExecutionMessage.DIAGNOSTIC_DESERIALIZATION_FAILED, task.getName());
+            }
+        } catch (IOException e) {
+            throw new ExecutionException(e, ExecutionMessage.DIAGNOSTIC_SERVER_FAILED, task.getName());
+        }
 
         T responsePayload;
-        List<Diagnostic> diagnostics;
         try {
-            @SuppressWarnings("unchecked")
-            T r = (T) serializer.fromString(jvmResponse.out, responseClass);
-            responsePayload = r;
-
-            diagnostics = serializer.fromString(jvmResponse.err, new TypeReference<List<Diagnostic>>() {});
+            responsePayload = (T) serializer.fromString(jvmResponse.out, responseClass);
         } catch (SerializerException e) {
             throw new ExecutionException(e, ExecutionMessage.OUTPUT_FAILED, task.getName(), jvmResponse.out, jvmResponse.err);
         }
@@ -62,7 +82,7 @@ public class IsolatedExecutor {
     }
 
     public IsolatedExecutor setOptions(JvmOptions options) {
-        jvmProcess.setOptions(options);
+        this.options = options;
         return  this;
     }
 

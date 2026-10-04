@@ -1,4 +1,4 @@
-package test.spl;
+package test.exec;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,7 +15,11 @@ import test.interfaces.ReporterTestInput;
 import test.interfaces.ReporterTestOutput;
 import test.task.GlobalReporterTestTask;
 
-public class GlobalReporterTests extends DiagnosticTestBase {
+// ./gradlew :cascara-common:build publishToMavenLocal -x javadoc -x test -x testClasspath -x testJarClasspath --refresh-dependencies
+// ./gradlew :spl-test:build -x javadoc :spl-test:test --tests "*GlobalReporterTests*"
+
+
+public class GlobalReporterTests extends JvmProcessTestBase {
     @Test
     void test_debugLevel() throws Exception {
         ReporterTestInput input = new ReporterTestInput("debug-message");
@@ -24,17 +28,15 @@ public class GlobalReporterTests extends DiagnosticTestBase {
 
         JvmOptions options = new JvmOptions()
             .setEnv(classKey, "DEBUG")
-            .setModuleName(GlobalReporterTestTask.class.getModule().getName()) // Forces --module-path launch
+            .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
             .addModule("test.task")
             .setTimeout(Duration.ofSeconds(5))
             .setDebug(PROCESS_DEBUG_ENABLED);
 
-        Response<ReporterTestOutput> result = IsolatedExecutor.run(
-            GlobalReporterTestTask.class,
-            input,
-            ReporterTestOutput.class,
-            options);
+        IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
+
+        Response<ReporterTestOutput> result = exec.run(input, options);
 
         debug(result);
 
