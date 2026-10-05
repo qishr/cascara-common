@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,18 +12,13 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
-import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.exec.ExecutionException;
-import io.github.qishr.cascara.common.exec.ExecutionMessage;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
-import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
 import test.interfaces.ReporterTestInput;
-import test.interfaces.ReporterTestOutput;
 import test.task.GlobalReporterTestTask;
 
 public class JvmProcessTests extends JvmProcessTestBase {
@@ -35,7 +29,7 @@ public class JvmProcessTests extends JvmProcessTestBase {
     }
 
     @Test
-    void test_JvmProcess() throws Exception {
+    void test_JvmProcess_withoutIPC() throws Exception {
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
 
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
@@ -61,7 +55,7 @@ public class JvmProcessTests extends JvmProcessTestBase {
     }
 
     @Test
-    void test_ipc() throws IOException {
+    void test_JvmProcess_withIPC() throws IOException {
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString(input);

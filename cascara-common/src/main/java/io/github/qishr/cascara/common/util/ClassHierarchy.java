@@ -45,7 +45,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -54,45 +53,73 @@ import java.util.Set;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.Nullable;
 
+
+
+
+import java.util.Collections;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+
 @Experimental
 public class ClassHierarchy {
-    private static final Map<String, Set<String>> hierarchy = new HashMap<>();
+
+    private static final AtomicReference<Map<String, Set<String>>> HIERARCHY_REF = new AtomicReference<>();
+
+    private static final Object LOCK = new Object();
 
     private ClassHierarchy() {}
 
+    public static void invalidate() {
+        synchronized (LOCK) {
+            HIERARCHY_REF.set(null);
+        }
+    }
+
+    private static Map<String, Set<String>> ensureHierarchy() {
+        Map<String, Set<String>> map = HIERARCHY_REF.get();
+        if (map == null) {
+            // System.out.println("ensureHierarchy-1");
+            synchronized (LOCK) {
+                // System.out.println("ensureHierarchy-2");
+                map = HIERARCHY_REF.get();
+                if (map == null) {
+                    // System.out.println("ensureHierarchy-3");
+                    Map<String, Set<String>> newMap = new ConcurrentHashMap<>();
+                    scanSystemPackages(newMap);
+                    // System.out.println("ensureHierarchy-4");
+                    scanClassPath(newMap);
+                    // System.out.println("ensureHierarchy-5");
+                    scanModulePath(newMap);
+                    // System.out.println("ensureHierarchy-6");
+
+                    HIERARCHY_REF.set(newMap);
+                    map = newMap;
+                }
+            }
+        }
+        return map;
+    }
+
     @Nullable
     public static List<String> getSubclasses(String className) {
-        ensureHierarchy();
-        Set<String> classes = hierarchy.get(className);
+        Set<String> classes = ensureHierarchy().get(className);
         return classes == null
             ? null
-            : hierarchy.get(className).stream().sorted().toList();
+            : classes.stream().sorted().toList();
     }
 
     public static Map<String, Set<String>> getAll() {
-        ensureHierarchy();
-        return hierarchy;
+        return Collections.unmodifiableMap(ensureHierarchy());
     }
 
-    public static void invalidate() {
-        hierarchy.clear();
+    private static void save(String k, String v, Map<String, Set<String>> hierarchy) {
+        hierarchy.computeIfAbsent(k, key -> ConcurrentHashMap.newKeySet()).add(v);
     }
 
     //
     // Private methods
     //
-
-    private static void ensureHierarchy() {
-        if (hierarchy.isEmpty()) {
-            scanSystemPackages(hierarchy);
-            scanClassPath(hierarchy);
-            scanModulePath(hierarchy);
-
-            // TODO: track SPL module load/unload
-            //   - store module of origin for each class to help with this?
-            //   - Beware: current module path will have those modules in it
-        }
-    }
 
     private static void scanSystemPackages(Map<String, Set<String>> hierarchy) {
         for (String packageName : jrtList("/packages")) {
@@ -128,7 +155,10 @@ public class ClassHierarchy {
     private static void scanModulePath(Map<String, Set<String>> hierarchy) {
         ModulePath mp = new ModulePath();
         for (String className : mp.getClasses()) {
+            // System.out.println("scanModulePath-1 className = " + className);
             Class<?> jvmClass = loadClassSafely(className);
+            // System.out.println("scanModulePath-2");
+            // System.out.println("scanModulePath jvmClass = " + jvmClass);
             List<Class<?>> ancestry = new ArrayList<>();
             collectAncestry(jvmClass, ancestry);
             for (Class<?> h : ancestry) {
@@ -151,7 +181,7 @@ public class ClassHierarchy {
                 try {
                     if (Files.isDirectory(file)) {
                         scanDirectory(file, "", classNames);
-                    } else if (file.getFileName().endsWith(".jar")) {
+                    } else if (file.getFileName().toString().endsWith(".jar")) {
                         scanJarFile(file, classNames);
                     }
                 } catch (Exception ignored) {
@@ -194,24 +224,6 @@ public class ClassHierarchy {
         }
     }
 
-    // private static void scanDirectory(File fileOrDir, String currentPrefix, Set<String> classNames) {
-    //     File[] files = fileOrDir.listFiles();
-    //     if (files == null) return;
-
-    //     for (File file : files) {
-    //         if (file.isDirectory()) {
-    //             // Keep building package prefix with dots
-    //             String nextPrefix = currentPrefix.isEmpty() ? file.getName() : currentPrefix + "." + file.getName();
-    //             scanDirectory(file, nextPrefix, classNames);
-    //         } else if (file.getName().endsWith(".class")) {
-    //             String rawName = file.getName().substring(0, file.getName().length() - 6);
-
-    //             // If top-level file in package directory contains $, preserve binary name format (Outer$Inner)
-    //             String fullName = currentPrefix.isEmpty() ? rawName : currentPrefix + "." + rawName;
-    //             classNames.add(fullName);
-    //         }
-    //     }
-    // }
     private static void scanDirectory(Path fileOrDir, String currentPrefix, Set<String> classNames) {
         if (!Files.isDirectory(fileOrDir)) return;
 
@@ -257,10 +269,6 @@ public class ClassHierarchy {
             collected.add(superClass);
             collectAncestry(superClass, collected);
         }
-    }
-
-    private static void save(String k, String v, Map<String, Set<String>> hierarchy) {
-        hierarchy.computeIfAbsent(k, key -> new HashSet<>()).add(v);
     }
 
     private static Class<?> loadClassSafely(String className) {

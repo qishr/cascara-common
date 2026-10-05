@@ -36,7 +36,6 @@
 package io.github.qishr.cascara.common.diagnostic;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,7 +64,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     private final Map<String,Level> envLevels = new HashMap<>();
 
     private boolean allowApiOverride;
-    private Path reportConfigPath;
 
     private GlobalReporter() {
     }
@@ -266,14 +264,16 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
             IpcClient client = globalInstance.diagnosticClient;
             Serializer<?> serializer = globalInstance.diagnosticSerializer;
             if (client == null && serializer != null) {
-                client = IpcClient.tryConnect(serializer);
+                try {
+                    client = IpcClient.tryConnect(serializer);
+                } catch (Exception e) {
+                    // This just means there was no IpcServer to connect to, which is okay
+                }
             }
 
             if (client != null) {
-                // String json = serializer.toString(diagnostic);
                 try {
                     client.send(diagnostic);
-                    // client.sendDiagnosticJson(json);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

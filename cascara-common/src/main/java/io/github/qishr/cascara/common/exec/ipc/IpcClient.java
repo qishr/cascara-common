@@ -8,12 +8,14 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import io.github.qishr.cascara.common.exec.ExecutionException;
+import io.github.qishr.cascara.common.exec.ExecutionMessage;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 public final class IpcClient implements AutoCloseable {
 
     public static final String SOCKET_PROP = "cascara.ipc.socket";
-    private static volatile IpcClient INSTANCE;
 
     private final SocketChannel channel;
     private final BufferedWriter writer;
@@ -25,35 +27,6 @@ public final class IpcClient implements AutoCloseable {
         this.serializer = serializer;
     }
 
-    // public static IpcClient getInstance(Serializer<?> serializer) {
-    //     if (INSTANCE == null) {
-    //         synchronized (IpcClient.class) {
-    //             if (INSTANCE == null) {
-    //                 INSTANCE = tryConnect(serializer);
-    //             }
-    //         }
-    //     }
-    //     return INSTANCE;
-    // }
-
-    // private static IpcClient tryConnect(Serializer<?> serializer) {
-    //     String socketPathStr = System.getProperty(SOCKET_PROP);
-    //     if (socketPathStr == null || socketPathStr.isBlank()) {
-    //         return null;
-    //     }
-
-    //     try {
-    //         UnixDomainSocketAddress address = UnixDomainSocketAddress.of(Path.of(socketPathStr));
-    //         SocketChannel channel = SocketChannel.open(address);
-    //         BufferedWriter writer = new BufferedWriter(
-    //             Channels.newWriter(channel, StandardCharsets.UTF_8)
-    //         );
-    //         return new IpcClient(channel, writer, serializer);
-    //     } catch (IOException e) {
-    //         return null;
-    //     }
-    // }
-
     public static IpcClient tryConnect(Serializer<?> serializer) {
         String socketPathStr = System.getProperty(SOCKET_PROP);
         if (socketPathStr == null || socketPathStr.isBlank()) {
@@ -62,7 +35,7 @@ public final class IpcClient implements AutoCloseable {
 
         Path socketPath = Path.of(socketPathStr);
         if (!Files.exists(socketPath)) {
-            return null;
+            throw new ExecutionException(ExecutionMessage.NO_SOCKET_FILE, socketPathStr);
         }
 
         try {
@@ -73,30 +46,19 @@ public final class IpcClient implements AutoCloseable {
             );
             return new IpcClient(channel, writer, serializer);
         } catch (IOException e) {
-            return null;
+            throw new ExecutionException(ExecutionMessage.CONNECT_FAILED, e.getMessage());
         }
     }
-
-    // public synchronized void send(Object message) throws IOException {
-    //     if (message == null) return;
-
-    //     // No double encoding!
-    //     IpcFrame frame = IpcFrame.of(message);
-    //     String frameJson = serializer.toString(frame);
-
-    //     writer.write(frameJson.replace('\n', ' '));
-    //     writer.newLine();
-    //     writer.flush();
-    // }
 
     public synchronized void send(Object message) throws IOException {
         if (message == null) return;
 
-        IpcFrame frame = IpcFrame.of(message);
-        String frameJson = serializer.toString(frame);
+        String className = message.getClass().getName();
+        String payloadJson = serializer.toString(message).replace('\n', ' ');
 
         try {
-            writer.write(frameJson.replace('\n', ' '));
+            String line = className + "|" + payloadJson + "\n";
+            writer.write(line);
             writer.newLine();
             writer.flush();
         } catch (IOException e) {
@@ -107,59 +69,18 @@ public final class IpcClient implements AutoCloseable {
     }
 
     @Override
-    public void close() {
-        try { writer.close(); } catch (IOException ignored) {}
-        try { channel.close(); } catch (IOException ignored) {}
+    public void close() throws IOException {
+        try {
+            if (channel != null && channel.isOpen()) {
+                writer.flush();
+                // Signal EOF gracefully to the server before closing the channel
+                channel.shutdownOutput();
+            }
+        } catch (IOException ignored) {
+        } finally {
+            if (channel != null) {
+                channel.close();
+            }
+        }
     }
 }
-
-// public final class IpcClient implements AutoCloseable {
-
-//     public static final String SOCKET_PROP = "cascara.ipc.socket";
-
-//     private final SocketChannel channel;
-//     private final BufferedWriter writer;
-//     private final Serializer<?> serializer;
-
-//     private IpcClient(SocketChannel channel, BufferedWriter writer, Serializer<?> serializer) {
-//         this.channel = channel;
-//         this.writer = writer;
-//         this.serializer = serializer;
-//     }
-
-//     public static IpcClient tryConnect(Serializer<?> serializer) {
-//         String socketPathStr = System.getProperty(SOCKET_PROP);
-//         if (socketPathStr == null || socketPathStr.isBlank()) {
-//             return null;
-//         }
-
-//         try {
-//             UnixDomainSocketAddress address = UnixDomainSocketAddress.of(Path.of(socketPathStr));
-//             SocketChannel channel = SocketChannel.open(address);
-//             BufferedWriter writer = new BufferedWriter(
-//                 Channels.newWriter(channel, StandardCharsets.UTF_8)
-//             );
-//             return new IpcClient(channel, writer, serializer);
-//         } catch (IOException e) {
-//             System.err.println("Failed to connect to IPC socket: " + e.getMessage());
-//             return null;
-//         }
-//     }
-
-//     public synchronized void send(Object message) throws IOException {
-//         String payloadJson = serializer.toString(message);
-//         IpcFrame frame = IpcFrame.of(message.getClass(), payloadJson);
-//         String frameJson = serializer.toString(frame);
-
-//         System.out.println("CLIENT: sending: " + frameJson);
-//         writer.write(frameJson.replace('\n', ' '));
-//         writer.newLine();
-//         writer.flush();
-//     }
-
-//     @Override
-//     public void close() {
-//         try { writer.close(); } catch (IOException ignored) {}
-//         try { channel.close(); } catch (IOException ignored) {}
-//     }
-// }

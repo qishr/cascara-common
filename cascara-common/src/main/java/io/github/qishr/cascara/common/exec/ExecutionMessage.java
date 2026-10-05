@@ -43,7 +43,10 @@ public enum ExecutionMessage implements DiagnosticMessage {
     OUTPUT_FAILED("EXEC-104", "Failed to read output of task {0}.\n System.out: \"{1}\"\n System.err: \"{2}\""),
     INTERRUPT("EXEC-105", "Task {0} was interrupted"),
     DIAGNOSTIC_SERVER_FAILED("EXEC-106", "Failed to initialize DiagnosticIpcServer for task {0}"),
-    DIAGNOSTIC_DESERIALIZATION_FAILED("EXEC-107", "Failed to deserialize diagnostics for task {0}");
+    DIAGNOSTIC_DESERIALIZATION_FAILED("EXEC-107", "Failed to deserialize diagnostics for task {0}"),
+    IPC_RECV_FAILED("EXEC-108", "IPC receive failed: {0}"),
+    NO_SOCKET_FILE("EXEC-109", "Socket file does not exist: {0}"),
+    CONNECT_FAILED("EXEC-110", "IPC connection failed: {0}");
 
     private final String code;
     private final String format;

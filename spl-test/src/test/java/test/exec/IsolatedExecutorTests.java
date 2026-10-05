@@ -39,8 +39,7 @@ public class IsolatedExecutorTests extends JvmProcessTestBase {
 
         Response<ReporterTestOutput> result = exec.run(input);
 
-        debug("payload: " + result.getPayload());
-        debug("diagnostics: " + result.getDiagnostics());
+        debug(result);
 
         assertTrue(result.isSuccess());
         assertEquals(42, result.getPayload().n());

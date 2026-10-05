@@ -36,7 +36,6 @@
 package io.github.qishr.cascara.common.lang.processor;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
@@ -828,7 +827,12 @@ public abstract class AbstractSerializer<
 
     private <C> C newTypeInstance(AstNode node, Type jvmType) throws SerializerException {
         Class<C> baseClass = ReflectionUtils.getRawClass(jvmType);
-        Class<? extends C> targetClass = resolvePolymorphicTarget(node, baseClass);
+        Class<? extends C> targetClass;
+        try {
+            targetClass = resolvePolymorphicTarget(node, baseClass);
+        } catch (Throwable e) {
+            throw new SerializerException(node, e, LangMessage.NO_CLASS_DEF_FOUND_ERROR , ReflectionUtils.getTypeName(jvmType)); // This is line 804
+        }
         try {
             // Class<C> baseClass = ReflectionUtils.getRawClass(jvmType);
             // Class<? extends C> targetClass = resolvePolymorphicTarget(node, baseClass);

@@ -4,8 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.StandardProtocolFamily;
 import java.net.UnixDomainSocketAddress;
-import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.Channels;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
@@ -13,58 +13,107 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Phaser;
+
+import io.github.qishr.cascara.common.exec.ExecutionException;
+import io.github.qishr.cascara.common.exec.ExecutionMessage;
+import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
-public final class IpcServer implements AutoCloseable {
+public class IpcServer implements AutoCloseable {
 
     private final Path socketPath;
-    private final ServerSocketChannel serverChannel;
     private final Serializer<?> serializer;
-    private final Map<String, List<String>> rawPayloadsByType = new ConcurrentHashMap<>();
+    private final ServerSocketChannel serverChannel;
+    private final ConcurrentHashMap<String, List<Object>> payloadsByType = new ConcurrentHashMap<>();
+    private final Phaser activeConnections = new Phaser(1); // 1 registered for the server itself
     private CompletableFuture<Void> listenerFuture;
 
-    private IpcServer(Path socketPath, ServerSocketChannel serverChannel, Serializer<?> serializer) {
+    public IpcServer(Path socketPath, Serializer<?> serializer) throws IOException {
         this.socketPath = socketPath;
-        this.serverChannel = serverChannel;
         this.serializer = serializer;
+
+        UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
+        this.serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
+        this.serverChannel.bind(address);
     }
 
     public static IpcServer start(Serializer<?> serializer) throws IOException {
-        Path tempDir = Path.of(System.getProperty("java.io.tmpdir"));
-        Path socketPath = Files.createTempFile(tempDir, "cascara-ipc-", ".sock");
-        Files.deleteIfExists(socketPath);
+        Path tempSocket = Files.createTempFile("spl-ipc-", ".sock");
+        Files.deleteIfExists(tempSocket);
 
-        ServerSocketChannel serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
-        serverChannel.bind(UnixDomainSocketAddress.of(socketPath));
-
-        IpcServer server = new IpcServer(socketPath, serverChannel, serializer);
+        IpcServer server = new IpcServer(tempSocket, serializer);
         server.listenAsync();
         return server;
+    }
+
+    public synchronized void listenAsync() {
+        if (listenerFuture != null && !listenerFuture.isDone()) {
+            return;
+        }
+        this.listenerFuture = CompletableFuture.runAsync(this::listenLoop);
     }
 
     public Path getSocketPath() {
         return socketPath;
     }
 
-    private void listenAsync() {
-        this.listenerFuture = CompletableFuture.runAsync(() -> {
-            while (serverChannel.isOpen()) {
-                try {
-                    SocketChannel clientChannel = serverChannel.accept();
-                    handleClientConnection(clientChannel);
-                } catch (AsynchronousCloseException e) {
-                    // Server closed cleanly
-                    break;
-                } catch (IOException e) {
-                    if (!serverChannel.isOpen()) break;
-                    System.err.println("IPC accept error: " + e.getMessage());
-                }
+    public <T> List<T> getMessages(Class<T> type) {
+        List<Object> rawList = payloadsByType.getOrDefault(type.getName(), List.of());
+        if (rawList.isEmpty()) {
+            return List.of();
+        }
+        List<T> result = new ArrayList<>(rawList.size());
+        for (Object item : rawList) {
+            if (type.isInstance(item)) {
+                result.add(type.cast(item));
             }
-        });
+        }
+        return result;
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            if (serverChannel != null && serverChannel.isOpen()) {
+                serverChannel.close();
+            }
+            if (listenerFuture != null) {
+                listenerFuture.join();
+            }
+        } finally {
+            try {
+                if (socketPath != null) {
+                    Files.deleteIfExists(socketPath);
+                }
+            } finally {
+                // Guarantees the server deregisters even if socket cleanup throws
+                activeConnections.arriveAndAwaitAdvance();
+            }
+        }
+    }
+
+    private void listenLoop() {
+        while (serverChannel.isOpen()) {
+            try {
+                SocketChannel clientChannel = serverChannel.accept();
+                activeConnections.register(); // Track active task
+                Thread.ofVirtual().start(() -> {
+                    try {
+                        handleClientConnection(clientChannel);
+                    } finally {
+                        activeConnections.arriveAndDeregister();
+                    }
+                });
+            } catch (ClosedChannelException e) {
+                break;
+            } catch (IOException e) {
+                if (!serverChannel.isOpen()) break;
+            }
+        }
     }
 
     private void handleClientConnection(SocketChannel clientChannel) {
@@ -74,99 +123,36 @@ public final class IpcServer implements AutoCloseable {
 
             String line;
             while ((line = reader.readLine()) != null) {
-                if (!line.isBlank()) {
-                    // 1. Read raw frame metadata
-                    IpcFrame frame = serializer.fromString(line, IpcFrame.class);
+                if (line.isBlank()) continue;
 
-                    // 2. Extract payload directly (re-serialize/map if needed by serializer)
-                    String rawPayloadJson = serializer.toString(frame.payload());
+                int delimiterIdx = line.indexOf('|');
+                if (delimiterIdx == -1) continue;
 
-                    rawPayloadsByType
-                        .computeIfAbsent(frame.type(), k -> new CopyOnWriteArrayList<>())
-                        .add(rawPayloadJson);
+                String className = line.substring(0, delimiterIdx).trim();
+                String payloadJson = line.substring(delimiterIdx + 1).trim();
+
+                try {
+                    Class<?> targetClass = Class.forName(className);
+
+                    Object payload = null;
+                    try {
+                        payload = serializer.fromString(payloadJson, targetClass);
+                    } catch (SerializerException e) {
+                        // TODO: Do we report this?
+                        System.err.println("SERVER ERROR: Could not deserialize payload: " + e.getMessage());
+                    }
+
+                    payloadsByType
+                        .computeIfAbsent(className, k -> new CopyOnWriteArrayList<>())
+                        .add(payload);
+
+                } catch (Exception e) {
+                    // TODO: Do we report this?
+                    System.err.println("SERVER ERROR: Could not find class " + className);
                 }
             }
         } catch (IOException e) {
-            // Client disconnected
+            throw new ExecutionException(ExecutionMessage.IPC_RECV_FAILED, e.getMessage());
         }
-    }
-
-    // private void listenAsync() {
-    //     this.listenerFuture = CompletableFuture.runAsync(() -> {
-    //         // 1. Accept the incoming client connection from the sub-JVM
-    //         SocketChannel clientChannel;
-    //         try {
-    //             clientChannel = serverChannel.accept();
-    //         } catch (AsynchronousCloseException e) {
-    //             // Expected when IpcServer is closed before a client connects
-    //             return;
-    //         } catch (IOException e) {
-    //             System.err.println("IPC Server accept error: " + e.getMessage());
-    //             return;
-    //         }
-
-    //         // 2. Read incoming frames from the connected client until EOF
-    //         try (clientChannel;
-    //             BufferedReader reader = new BufferedReader(
-    //                 Channels.newReader(clientChannel, StandardCharsets.UTF_8))) {
-
-    //             String line;
-    //             while ((line = reader.readLine()) != null) {
-    //                 if (!line.isBlank()) {
-    //                     IpcFrame frame = serializer.fromString(line, IpcFrame.class);
-    //                     System.out.println("SERVER: received: " + line);
-    //                     rawPayloadsByType
-    //                         .computeIfAbsent(frame.type(), k -> new CopyOnWriteArrayList<>())
-    //                         .add(frame.payload());
-    //                 }
-    //             }
-    //         } catch (Exception e) {
-    //             // Log frame reading or deserialization issues specifically
-    //             System.err.println("IPC Frame Reading Error: " + e.getMessage());
-    //         }
-    //     });
-    // }
-
-    // private void listenAsync() {
-    //     this.listenerFuture = CompletableFuture.runAsync(() -> {
-    //         try (SocketChannel clientChannel = serverChannel.accept();
-    //              BufferedReader reader = new BufferedReader(
-    //                  Channels.newReader(clientChannel, StandardCharsets.UTF_8))) {
-
-    //             String line;
-    //             while ((line = reader.readLine()) != null) {
-    //                 if (!line.isBlank()) {
-    //                     IpcFrame frame = (IpcFrame) serializer.fromString(line, IpcFrame.class);
-    //                     rawPayloadsByType
-    //                         .computeIfAbsent(frame.type(), k -> new CopyOnWriteArrayList<>())
-    //                         .add(frame.payload());
-    //                 }
-    //             }
-    //         } catch (Exception e) {
-    //             // Socket closed cleanly on process termination
-    //             System.err.println("IPC Server Frame Deserialization Error: " + e.getMessage());
-    //             e.printStackTrace();
-    //         }
-    //     });
-    // }
-
-    public <T> List<T> getMessages(Class<T> type) {
-        if (listenerFuture != null) {
-            try {
-                listenerFuture.get(500, java.util.concurrent.TimeUnit.MILLISECONDS);
-            } catch (Exception ignored) {}
-        }
-        List<String> raw = rawPayloadsByType.getOrDefault(type.getName(), List.of());
-        List<T> result = new ArrayList<>(raw.size());
-        for (String json : raw) {
-            result.add(type.cast(serializer.fromString(json, type)));
-        }
-        return result;
-    }
-
-    @Override
-    public void close() {
-        try { serverChannel.close(); } catch (IOException ignored) {}
-        try { Files.deleteIfExists(socketPath); } catch (IOException ignored) {}
     }
 }

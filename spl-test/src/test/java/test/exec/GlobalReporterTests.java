@@ -20,7 +20,6 @@ import test.task.GlobalReporterTestTask;
 // ./gradlew :cascara-common:build publishToMavenLocal -x javadoc -x test -x testClasspath -x testJarClasspath --refresh-dependencies
 // ./gradlew :spl-test:build -x javadoc :spl-test:test --tests "*GlobalReporterTests*"
 
-
 public class GlobalReporterTests extends JvmProcessTestBase {
     @BeforeEach
     protected void setUp() {

@@ -1,6 +1,5 @@
 package test.exec;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -8,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.ReportWriter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.diagnostic.StandardReporter;
 import io.github.qishr.cascara.common.exec.ArtifactResolver;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmProcess;
@@ -46,20 +44,28 @@ public class JvmProcessTestBase {
     protected void debug(Response<ReporterTestOutput> response) {
         if (TEST_DEBUG_ENABLED) {
             ReportWriter writer = reporter.getWriter(Level.DEBUG);
-            reporter.debug("System.out:\n");
-            writer.write(2, response.getSystemOut());
-            reporter.debug("System.err:\n");
-            writer.write(2, response.getSystemErr());
+            if (!response.getSystemOut().isBlank()) {
+                reporter.debug("System.out:\n");
+                writer.write(2, response.getSystemOut());
+            }
+            if (!response.getSystemErr().isBlank()) {
+                reporter.debug("System.err:\n");
+                writer.write(2, response.getSystemErr());
+            }
         }
     }
 
     protected void debug(JvmProcess.Response response) {
         if (TEST_DEBUG_ENABLED) {
             ReportWriter writer = reporter.getWriter(Level.DEBUG);
-            reporter.debug("JvmProcess.Response.out:\n");
-            writer.write(2, response.out);
-            reporter.debug("JvmProcess.Response.err:\n");
-            writer.write(2, response.err);
+            if (!response.out.isBlank()) {
+                reporter.debug("JvmProcess.Response.out:\n");
+                writer.write(2, response.out);
+            }
+            if (!response.err.isBlank()) {
+                reporter.debug("JvmProcess.Response.err:\n");
+                writer.write(2, response.err);
+            }
         }
     }
 }

@@ -8,7 +8,6 @@ import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
-import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
 
@@ -47,17 +46,24 @@ public class IsolatedExecutor {
         }
 
         Serializer<?> serializer = new ProcessorFactory().createSerializer(SERIALIZATION_FORMAT);
+        // serializer.setOptions(options);
+
         String json = serializer.toString(input);
 
         List<Diagnostic> diagnostics = new ArrayList<>();
         T taskResponse;
         JvmProcess.Response jvmResponse;
 
-        try (IpcServer ipcServer = IpcServer.start(serializer)) {
+        IpcServer ipcServer;
+        try {
+            ipcServer = IpcServer.start(serializer);
+
             options.setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
             jvmProcess.setOptions(options);
 
             jvmResponse = jvmProcess.run(json);
+
+            ipcServer.close();
 
             Class<T> targetClass = (Class<T>) responseClass;
             List<T> outputs = ipcServer.getMessages(targetClass);
