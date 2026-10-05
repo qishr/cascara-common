@@ -36,17 +36,24 @@
 package io.github.qishr.cascara.common.diagnostic;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
+import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
+import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
@@ -57,6 +64,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     public static final String SERIALIZATION_FORMAT = "application/json";
 
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
+    // private static ProcessorFactory processorFactory;
 
     private static GlobalReporter globalInstance = new GlobalReporter().init();
     private final Map<String,GlobalReporter> classInstances = new HashMap<>();
@@ -64,6 +72,11 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     private final Map<String,Level> envLevels = new HashMap<>();
 
     private boolean allowApiOverride;
+
+    private IpcClient ipcClient;
+    private boolean ipcUnavailable = false;
+    int sent = 0;
+    List<Diagnostic> queue = new ArrayList<>();
 
     private GlobalReporter() {
     }
@@ -96,6 +109,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 String uppercaseClassName = name.substring(ENV_CASC_REPORT_LEVEL.length());
                 Level level = Level.valueOf(entry.getValue());
                 if (level != null) {
+                    // System.out.println("GR-INIT: " + uppercaseClassName + " " + level);
                     envLevels.put(uppercaseClassName, level);
                 }
             }
@@ -109,9 +123,10 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     public static void initSerializer(Serializer<?> serializer) {
-        if (globalInstance().diagnosticSerializer == null) {
+        if (globalInstance().serializer == null) {
+            // System.out.println("GR: set serializer");
             // globalInstance().diagnosticSerializer = ProcessorFactory.system().createSerializer(SERIALIZATION_FORMAT);
-            globalInstance.diagnosticSerializer = serializer;
+            globalInstance.serializer = serializer;
         }
     }
 
@@ -132,6 +147,13 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     /// Gets a `GlobalReporter` instance for the specifie class.
     /// @param fqcn the fully qualified name of the class to get a `GlobalReporter` instance for.
     public static GlobalReporter forSource(String fqcn) {
+        GlobalReporter reporter = forSourceInternal(fqcn);
+        // System.out.println("GLOBALREPORTER for " + fqcn + " " + reporter.level);
+        // Thread.dumpStack();
+        return reporter;
+    }
+
+    private static GlobalReporter forSourceInternal(String fqcn) {
         GlobalReporter reporter = globalInstance.classInstances.get(fqcn);
         if (reporter == null) {
             reporter = new GlobalReporter(fqcn);
@@ -176,7 +198,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
     public GlobalReporter setLevelInternal(String fqcn, Level level) {
         // assertGlobalInstance();
-        GlobalReporter reporter = GlobalReporter.forSource(fqcn);
+        GlobalReporter reporter = GlobalReporter.forSourceInternal(fqcn);
         reporter.setLevelInternal(level);
         return this;
     }
@@ -189,6 +211,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 String fqcn = propertyName.substring(PROP_CASC_REPORT_LEVEL.length());
                 Level level = Level.valueOf(property.asString());
                 if (level != null) {
+                    // System.out.println("GR-INIT: " + fqcn + " " + level);
                     setLevelInternal(fqcn, level);
                 }
             }
@@ -256,29 +279,100 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         return this == globalInstance ? stackTraceEnabled : globalInstance.isStackTraceEnabled();
     }
 
-    /// Central reporting method. All other rporting methods call this.
-    @Override
-    protected void report(Diagnostic diagnostic) {
-        super.report(diagnostic);
-        if (this.level.includes(diagnostic.getLevel())) {
-            IpcClient client = globalInstance.diagnosticClient;
-            Serializer<?> serializer = globalInstance.diagnosticSerializer;
-            if (client == null && serializer != null) {
-                try {
-                    client = IpcClient.tryConnect(serializer);
-                } catch (Exception e) {
-                    // This just means there was no IpcServer to connect to, which is okay
-                }
-            }
-
-            if (client != null) {
-                try {
-                    client.send(diagnostic);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+    @Experimental
+    public void closeIpc() {
+        if (globalInstance.ipcClient != null) {
+            try {
+                globalInstance.ipcClient.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } finally {
+                globalInstance.ipcClient = null;
             }
         }
+    }
+
+    /// Central reporting method. All other rporting methods call this.
+    @Override
+    public void report(Diagnostic diagnostic) {
+        // System.out.println("GR-1");
+        super.report(diagnostic);
+        // System.out.println("GR-2");
+        if (this.level.includes(diagnostic.getLevel())) {
+            // System.out.println("GR-REP-1");
+            if (SPL.isBooting()) {
+                // System.out.println("GR-REP-2");
+                // TODO: If SPL is still booting, Queue it
+                // If SPL has finished booting, discard it.
+                globalInstance.queue.add(diagnostic);
+            } else {
+                // System.out.println("GR-REP-3");
+                globalInstance.sendDiagnostic(diagnostic);
+            }
+        }
+    }
+
+    private void sendDiagnostic(Diagnostic diagnostic) {
+        if (ipcUnavailable || serializer == null) {
+            return;
+        }
+
+        // RuntimeMXBean rtmxb = ManagementFactory.getRuntimeMXBean();
+        // System.out.println("GR-IPC-1");
+
+        if (ipcClient == null) {
+            // System.out.println("GR-IPC-2");
+            try {
+
+                ipcClient = IpcClient.tryConnect(serializer);
+            } catch (Exception e) {
+                System.out.println("GR-IPC ERROR: " + e.getMessage());
+                // There was no IpcServer to connect to, which is okay
+                ipcUnavailable = true;
+            }
+        }
+
+        if (ipcUnavailable || ipcClient == null) {
+            // System.out.println("GR-IPC: Unavailable");
+            // Discard queued diagnostics
+            queue.clear();
+        } else {
+            try {
+                // TODO: Send queued diagnostics
+                if (!queue.isEmpty()) {
+                    // System.out.println("GR-IPC: Sending queued diagnostics");
+                    for (Diagnostic d : queue) {
+                        if (ipcClient.getServerProcessId() != d.getProcessId()) {
+                            ipcClient.send(d);
+                        }
+                    }
+                    queue.clear();
+                }
+
+
+                // System.out.println(
+                //     "GLOBALREPORTER: pid=" + rtmxb.getPid() +
+                //     " this=" + this.level +
+                //     " diag=" + diagnostic.getLevel()
+                // );
+                // System.out.println("GR-IPC-3");
+
+
+                // TODO: This guard should use the JVM ID (with host name)
+                // instead of just PID
+                if (ipcClient.getServerProcessId() != diagnostic.getProcessId()) {
+                    // if (sent++ < 5) {
+                        ipcClient.send(diagnostic);
+                    // }
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+
     }
 
     @Override
@@ -286,16 +380,18 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         if (diagnostic.getUri() == null) {
             if (diagnostic.getLine() > 0) {
                 return String.format(
-                    "[%s] [%s] %s at line %d\n",
+                    "[%s] [%d] [%s] %s at line %d\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
+                    diagnostic.getProcessId(),
                     diagnostic.getSource(),
                     diagnostic.getFormattedMessage(),
                     diagnostic.getLine()
                 );
             } else {
                 return String.format(
-                    "[%s] [%s] %s\n",
+                    "[%s] [%d] [%s] %s\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
+                    diagnostic.getProcessId(),
                     diagnostic.getSource(),
                     diagnostic.getFormattedMessage()
                 );
@@ -303,8 +399,9 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         } else {
             if (diagnostic.getLine() > 0) {
                 return String.format(
-                    "[%s] [%s] %s at %s:%d\n",
+                    "[%s] [%d] [%s] %s at %s:%d\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
+                    diagnostic.getProcessId(),
                     diagnostic.getSource(),
                     diagnostic.getFormattedMessage(),
                     diagnostic.getUri(),
@@ -312,8 +409,9 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 );
             } else {
                 return String.format(
-                    "[%s] [%s] %s in file %s\n",
+                    "[%s] [%d] [%s] %s in file %s\n",
                     diagnostic.getTimestamp().format(TIME_FORMAT),
+                    diagnostic.getProcessId(),
                     diagnostic.getSource(),
                     diagnostic.getFormattedMessage(),
                     diagnostic.getUri()

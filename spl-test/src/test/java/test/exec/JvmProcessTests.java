@@ -8,16 +8,19 @@ import java.io.IOException;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
+import io.github.qishr.cascara.common.service.SPL;
 import test.interfaces.ReporterTestInput;
 import test.task.GlobalReporterTestTask;
 
@@ -60,7 +63,7 @@ public class JvmProcessTests extends JvmProcessTestBase {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString(input);
 
-        try (IpcServer ipcServer = IpcServer.start(serializer)) {
+        try (IpcServer ipcServer = IpcServer.start(serializer, false)) {
             Class<?> taskClass = GlobalReporterTestTask.class;
 
             String classKey = "CASC_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
@@ -85,5 +88,35 @@ public class JvmProcessTests extends JvmProcessTestBase {
             Diagnostic diagnostic = diagnostics.getFirst();
             assertEquals("hello-isolated-world", diagnostic.getFormattedMessage());
         }
+    }
+
+    @Test
+    void test_IPC_forwardsDiagnostics() throws IOException {
+        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
+        Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
+        String json = serializer.toString(input);
+
+        IpcServer ipcServer = IpcServer.start(serializer, true);
+        Class<?> taskClass = GlobalReporterTestTask.class;
+
+        GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
+        GlobalReporter.forClass(taskClass).setLevel(Level.DEBUG);
+
+        JvmOptions options = new JvmOptions()
+            .setModuleName(taskClass.getModule().getName())
+            .setModulePath(getModulePath())
+            .setDebug(PROCESS_DEBUG_ENABLED)
+            .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
+            .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
+            .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
+
+        // Run sub-JVM process...
+        JvmProcess.Response response = JvmProcess.forClass(taskClass).setOptions(options).run(json);
+        ipcServer.close();
+
+        debug(response);
+
+        List<Diagnostic> diagnostics = ipcServer.getMessages(Diagnostic.class);
+        assertFalse(diagnostics.isEmpty());
     }
 }

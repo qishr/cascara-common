@@ -85,7 +85,7 @@ public class Diagnostic {
     /// @param code An optional stable error or classification code, primarily useful for localization and documentation lookups.
     /// @param message The descriptive message explaining this diagnostic event.
     /// @param details Arguments referenced by the format specifiers in the format string.
-    public Diagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, Throwable cause, DiagnosticMessage code, String message, Object... details) {
+    public Diagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, Throwable cause, DiagnosticMessage message, String format, Object... details) {
         this.uri = uri;
         this.line = line;
         this.column = column;
@@ -94,7 +94,7 @@ public class Diagnostic {
 
         this.source = source;
         this.cause = cause;
-        this.message = code;
+        this.message = message;
         this.details = details;
 
         this.thread = Thread.currentThread().getName();
@@ -103,30 +103,30 @@ public class Diagnostic {
 
         String formattedMessage;
 
-        if (message == null) {
-            if (code == null) {
+        if (format == null) {
+            if (message == null) {
                 formattedMessage = ("Message code or text required when creating Diagnostic.");
             } else {
                 if (details.length == 0) {
-                    formattedMessage = code.getFormat();
+                    formattedMessage = message.getFormat();
                 } else {
                     try {
-                        String format = code.getFormat().replaceAll("'", "''");
-                        formattedMessage = MessageFormat.format(format, details);
+                        String messageFormat = message.getFormat().replaceAll("'", "''");
+                        formattedMessage = MessageFormat.format(messageFormat, details);
                     } catch (IllegalArgumentException e) {
-                        formattedMessage = "Formatting problem while reporting (code " + code.getCode() + "): " + code.getFormat() + ". " + e.getMessage();
+                        formattedMessage = "Formatting problem while reporting (code " + message.getCode() + "): " + message.getFormat() + ". " + e.getMessage();
                         level = Level.ERROR;
                     }
                 }
             }
         } else {
             if (details.length == 0) {
-                formattedMessage = message;
+                formattedMessage = format;
             } else {
                 try {
-                    formattedMessage = String.format(message, details);
+                    formattedMessage = String.format(format, details);
                 } catch (IllegalArgumentException e) {
-                    formattedMessage = "Formatting problem while reporting: " + message + ". " + e.getMessage();
+                    formattedMessage = "Formatting problem while reporting: " + format + ". " + e.getMessage();
                     level = Level.ERROR;
                 }
             }
@@ -149,7 +149,7 @@ public class Diagnostic {
     /// @param code An optional stable error or classification code, primarily useful for localization and documentation lookups.
     /// @param message The descriptive message explaining this diagnostic event.
     /// @param details Arguments referenced by the format specifiers in the format string.
-    public Diagnostic(URI uri, Token token, String source, Level level, Throwable cause, DiagnosticMessage code, String message, Object... details) {
+    public Diagnostic(URI uri, Token token, String source, Level level, Throwable cause, DiagnosticMessage message, String format, Object... details) {
         this(
             uri,
             token.getStartLine(),
@@ -159,8 +159,8 @@ public class Diagnostic {
             source,
             level,
             cause,
-            code,
             message,
+            format,
             details
         );
     }

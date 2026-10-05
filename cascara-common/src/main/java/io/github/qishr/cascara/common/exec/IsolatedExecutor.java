@@ -56,7 +56,7 @@ public class IsolatedExecutor {
 
         IpcServer ipcServer;
         try {
-            ipcServer = IpcServer.start(serializer);
+            ipcServer = IpcServer.start(serializer, options.diagnisticForwaringEnabled());
 
             options.setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
             jvmProcess.setOptions(options);

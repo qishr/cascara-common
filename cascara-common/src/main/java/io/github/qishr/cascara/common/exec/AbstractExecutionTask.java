@@ -74,6 +74,7 @@ public abstract class AbstractExecutionTask<I, O> {
 
     @SuppressWarnings("unchecked")
     public void run(Class<?> targetClass, Class<?> inputClass) {
+        // GlobalReporter.globalInstance();
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
         StringBuilder sb = new StringBuilder();
@@ -94,12 +95,14 @@ public abstract class AbstractExecutionTask<I, O> {
 
         O response = null;
         if (object == null) {
+            // TODO: ExecutionException
             error("Failed to deserialize payload: " + json);
             return;
         } else {
             try {
                 response = run((I) object);
             } catch (Exception e) {
+                // TODO: ExecutionException
                 error(e, "Error: " + e.getMessage());
             }
         }
@@ -113,6 +116,7 @@ public abstract class AbstractExecutionTask<I, O> {
                     System.out.println(serializer.toString(response));
                 }
             } catch (IOException e) {
+                // TODO: ExecutionException
                 error(e, "Failed to transmit task output over IPC: " + e.getMessage());
                 // Fallback to stdout if socket transmit fails
                 System.out.println(serializer.toString(response));

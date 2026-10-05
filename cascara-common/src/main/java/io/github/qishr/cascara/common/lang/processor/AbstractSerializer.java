@@ -105,6 +105,7 @@ public abstract class AbstractSerializer<
     private final AstNodeFactory<N,S,L,M,E,K> astFactory;
     private final Map<Class<?>,TypeDescriptor<?>> typeDescriptors = new HashMap<>();
     private final ServiceProviderFactory providerFactory = new ServiceProviderFactory();
+    private boolean useProviderFactory = true;
 
     // State
     protected int depth = 0;
@@ -126,6 +127,11 @@ public abstract class AbstractSerializer<
         this.contentType = contentType;
         this.astFactory = astFactory;
         this.options = options;
+    }
+
+    public T setUseProviderFactory(boolean b) {
+        useProviderFactory = b;
+        return self();
     }
 
     protected abstract T self();
@@ -1036,6 +1042,10 @@ public abstract class AbstractSerializer<
         // 1. First check if one has been registered locally
         if (typeDescriptors.containsKey(jvmType)) {
             return typeDescriptors.get(jvmType);
+        }
+
+        if (!useProviderFactory) {
+            return null;
         }
 
         // 2. Use service provider layer to get one

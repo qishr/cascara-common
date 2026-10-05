@@ -1,5 +1,6 @@
 package io.github.qishr.cascara.common.exec.ipc;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.UnixDomainSocketAddress;
@@ -21,10 +22,13 @@ public final class IpcClient implements AutoCloseable {
     private final BufferedWriter writer;
     private final Serializer<?> serializer;
 
-    private IpcClient(SocketChannel channel, BufferedWriter writer, Serializer<?> serializer) {
+private final long serverPid;
+
+    private IpcClient(SocketChannel channel, BufferedWriter writer, Serializer<?> serializer, long serverPid) {
         this.channel = channel;
         this.writer = writer;
         this.serializer = serializer;
+        this.serverPid = serverPid;
     }
 
     public static IpcClient tryConnect(Serializer<?> serializer) {
@@ -41,13 +45,28 @@ public final class IpcClient implements AutoCloseable {
         try {
             UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
             SocketChannel channel = SocketChannel.open(address);
+
+            // Read the handshake header from the server
+            BufferedReader reader = new BufferedReader(
+                Channels.newReader(channel, StandardCharsets.UTF_8)
+            );
+            String line = reader.readLine();
+            if (line == null || !line.startsWith("SERVER_PID:")) {
+                throw new ExecutionException(ExecutionMessage.CONNECT_FAILED, "Invalid server handshake header");
+            }
+            long serverPid = Long.parseLong(line.substring("SERVER_PID:".length()));
+
             BufferedWriter writer = new BufferedWriter(
                 Channels.newWriter(channel, StandardCharsets.UTF_8)
             );
-            return new IpcClient(channel, writer, serializer);
-        } catch (IOException e) {
+            return new IpcClient(channel, writer, serializer, serverPid);
+        } catch (IOException | NumberFormatException e) {
             throw new ExecutionException(ExecutionMessage.CONNECT_FAILED, e.getMessage());
         }
+    }
+
+    public long getServerProcessId() {
+        return this.serverPid;
     }
 
     public synchronized void send(Object message) throws IOException {
@@ -58,6 +77,7 @@ public final class IpcClient implements AutoCloseable {
 
         try {
             String line = className + "|" + payloadJson + "\n";
+            // System.out.println("CLIENT: " + line);
             writer.write(line);
             writer.newLine();
             writer.flush();

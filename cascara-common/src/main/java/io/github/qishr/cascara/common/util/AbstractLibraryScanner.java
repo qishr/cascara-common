@@ -23,7 +23,7 @@ public abstract class AbstractLibraryScanner {
     protected static final String DOT_JAR = ".jar";
     protected static final String MODULE_INFO = "module-info";
 
-    protected abstract Reporter getReporter();
+    // protected abstract Reporter getReporter();
     protected abstract void addModuleDescriptor(String moduleName, ModuleDescriptor descriptor);
     protected abstract void addModuleLocation(String moduleName, Path path);
     protected abstract void addClassToModule(String className, String moduleName);
@@ -53,7 +53,7 @@ public abstract class AbstractLibraryScanner {
             String jarModuleName = jar.getModuleName();
             Set<String> jarClassNames = jar.getClassNames();
             if (jarClassNames == null) {
-                getReporter().trace("No classes found");
+                // getReporter().trace("No classes found");
                 return null;
             }
             for (String className : jarClassNames) {
@@ -143,7 +143,9 @@ public abstract class AbstractLibraryScanner {
         return moduleName;
     }
 
+    // TODO: Find a way for this to work with GlobalReporter
     protected void error(Throwable t) {
-        getReporter().debug(t.getClass().getName() + ": " + t.getMessage());
+        System.err.println(t.getMessage());
+        // getReporter().debug(t.getClass().getName() + ": " + t.getMessage());
     }
 }

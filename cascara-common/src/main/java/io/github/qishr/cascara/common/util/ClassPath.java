@@ -50,7 +50,7 @@ import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 
 public class ClassPath extends AbstractLibraryScanner {
-    private static final Reporter REPORTER = GlobalReporter.forClass(ClassPath.class);
+    // private static final Reporter REPORTER = GlobalReporter.forClass(ClassPath.class);
     private static final String PATHS = System.getProperty("java.class.path");
 
     public ClassPath() {
@@ -79,10 +79,10 @@ public class ClassPath extends AbstractLibraryScanner {
         loadClassPath(classPaths);
     }
 
-    @Override
-    protected Reporter getReporter() {
-        return REPORTER;
-    }
+    // @Override
+    // protected Reporter getReporter() {
+    //     return REPORTER;
+    // }
 
     @Override
     protected void addModuleDescriptor(String moduleName, ModuleDescriptor descriptor) {
@@ -113,7 +113,7 @@ public class ClassPath extends AbstractLibraryScanner {
                     : Path.of(pathString);
 
             if (!Files.exists(path)) {
-                REPORTER.debug("Non-existant class path: " + path);
+                // REPORTER.debug("Non-existant class path: " + path);
                 continue;
             }
 

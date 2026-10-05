@@ -102,4 +102,5 @@ public interface Serializer<N extends AstNode> extends Processor {
 
     Serializer<N> registerTypeDescriptor(TypeDescriptor<?> typeDescriptor);
     Serializer<N> setParser(AstParser<N,?,?> parser);
+    Serializer<N> setUseProviderFactory(boolean b);
 }

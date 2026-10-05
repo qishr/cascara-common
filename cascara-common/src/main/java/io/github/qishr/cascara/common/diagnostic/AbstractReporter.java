@@ -76,8 +76,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// The simple name of the class that made the report
     protected String source;
 
-    protected IpcClient diagnosticClient;
-    protected Serializer<?> diagnosticSerializer;
+    protected Serializer<?> serializer;
 
     /// Consumes diagnostics included in the current Level or more
     /// important, with ERROR being the most important.
@@ -207,7 +206,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     public void error(Exception e) {
         if (e instanceof LocalizableException localizable) {
             if (e instanceof LocatableException locatable) {
-                report(buildDiagnostic(
+                report(DiagnosticBuilder.build(
                     locatable.getUri(),
                     locatable.getLine(),
                     locatable.getColumn(),
@@ -216,13 +215,13 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
                     source, Level.ERROR, localizable.getCause(),
                     localizable.getDiagnosticMessage(), localizable.getDetails()));
             } else {
-                report(buildDiagnostic(
+                report(DiagnosticBuilder.build(
                     source, Level.ERROR, localizable.getCause(),
                     localizable.getDiagnosticMessage(), localizable.getDetails())
                 );
             }
         } else {
-            report(buildDiagnostic(
+            report(DiagnosticBuilder.build(
                 source, Level.ERROR, e.getCause(),
                 GenericMessage.EXCEPTION, e.getMessage())
             );
@@ -236,37 +235,37 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void trace(String message, Object... details) {
-        report(buildDiagnostic(source, Level.TRACE, message, details));
+        report(DiagnosticBuilder.build(source, Level.TRACE, message, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void debug(String message, Object... details) {
-        report(buildDiagnostic(source, Level.DEBUG, message, details));
+        report(DiagnosticBuilder.build(source, Level.DEBUG, message, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void info(DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(source, Level.INFO, null, code, details));
+        report(DiagnosticBuilder.build(source, Level.INFO, null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void warn(DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(source, Level.WARN, null, code, details));
+        report(DiagnosticBuilder.build(source, Level.WARN, null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void error(DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(source, Level.ERROR, null, code, details));
+        report(DiagnosticBuilder.build(source, Level.ERROR, null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void error(Throwable cause, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(source, Level.ERROR, cause, code, details));
+        report(DiagnosticBuilder.build(source, Level.ERROR, cause, code, details));
     }
 
     //
@@ -276,7 +275,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void infoAt(int line, int column, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(
+        report(DiagnosticBuilder.build(
             null, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
@@ -287,7 +286,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void warnAt(int line, int column, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(
+        report(DiagnosticBuilder.build(
             null, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
@@ -298,7 +297,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void errorAt(int line, int column, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(
+        report(DiagnosticBuilder.build(
             null, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
@@ -309,7 +308,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void errorAt(int line, int column, Throwable cause, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(
+        report(DiagnosticBuilder.build(
             null, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
@@ -324,25 +323,25 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void infoAt(int line, int column, int startOffset, int endOffset, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(null, line, column, startOffset, endOffset, source, Level.INFO, null, code, null, details));
+        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.INFO, null, code, null, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void warnAt(int line, int column, int startOffset, int endOffset, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(null, line, column, startOffset, endOffset, source, Level.WARN, null, code, null, details));
+        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.WARN, null, code, null, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void errorAt(int line, int column, int startOffset, int endOffset, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(null, line, column, startOffset, endOffset, source, Level.ERROR, null, code, details));
+        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.ERROR, null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void errorAt(int line, int column, int startOffset, int endOffset, Throwable cause, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(null, line, column, startOffset, endOffset, source, Level.ERROR, cause, code, details));
+        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.ERROR, cause, code, details));
     }
 
     //
@@ -352,25 +351,25 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void infoAt(Token token, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(token, source, Level.INFO, null, code, details));
+        report(DiagnosticBuilder.build(token, source, Level.INFO, null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void warnAt(Token token, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(token, source, Level.WARN, null, code, details));
+        report(DiagnosticBuilder.build(token, source, Level.WARN, null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void errorAt(Token token, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(token, source, Level.ERROR, null, code, details));
+        report(DiagnosticBuilder.build(token, source, Level.ERROR, null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void errorAt(Token token, Throwable cause, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(token, source, Level.ERROR, cause, code, details));
+        report(DiagnosticBuilder.build(token, source, Level.ERROR, cause, code, details));
     }
 
     //
@@ -380,7 +379,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void warnAt(URI uri, int line, int column, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(
+        report(DiagnosticBuilder.build(
             uri, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
@@ -391,7 +390,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void errorAt(URI uri, int line, int column, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(
+        report(DiagnosticBuilder.build(
             uri, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
@@ -401,7 +400,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     @Override
     public void warnAt(URI uri, Token token, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(
+        report(DiagnosticBuilder.build(
             uri, token.getStartLine(), token.getStartColumn(),
             token.getOffset(),
             Diagnostic.UNKNOWN_COORD,
@@ -411,7 +410,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     @Override
     public void errorAt(URI uri, Token token, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(
+        report(DiagnosticBuilder.build(
             uri, token.getStartLine(), token.getStartColumn(),
             token.getOffset(),
             Diagnostic.UNKNOWN_COORD,
@@ -421,7 +420,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     @Override
     public void errorAt(URI uri, Token token, Throwable t, DiagnosticMessage code, Object... details) {
-        report(buildDiagnostic(
+        report(DiagnosticBuilder.build(
             uri, token.getStartLine(), token.getStartColumn(),
             token.getOffset(),
             Diagnostic.UNKNOWN_COORD,
@@ -534,46 +533,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         }
     }
 
-    //
-    // TODO: These shol be move to a utility class
-    //
 
-    /// With message string
-    protected Diagnostic buildDiagnostic(String source, Level level, String message, Object... details) {
-        return new Diagnostic(
-            null,
-            Diagnostic.UNKNOWN_COORD,
-            Diagnostic.UNKNOWN_COORD,
-            Diagnostic.UNKNOWN_COORD,
-            Diagnostic.UNKNOWN_COORD,
-            source, level, null, null, message, details
-        );
-    }
-
-    /// With diagnostic code, and cause
-    protected Diagnostic buildDiagnostic(String source, Level level, Throwable cause, DiagnosticMessage code, Object... details) {
-        return new Diagnostic(
-            null,
-            Diagnostic.UNKNOWN_COORD,
-            Diagnostic.UNKNOWN_COORD,
-            Diagnostic.UNKNOWN_COORD,
-            Diagnostic.UNKNOWN_COORD,
-            source, level, cause, code, null, details
-        );
-    }
-
-    /// With diagnostic code, location, and cause
-    protected Diagnostic buildDiagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, Throwable cause, DiagnosticMessage code, Object... details) {
-        return new Diagnostic(uri, line, column, startOffset, endOffset, source, level, cause, code, null, details);
-    }
-
-    /// With diagnostic code, token, and cause
-    protected Diagnostic buildDiagnostic(Token token, String source, Level level, Throwable cause, DiagnosticMessage code, Object... details) {
-        if (token == null) {
-            throw new IllegalArgumentException("Token must not be null");
-        }
-        return new Diagnostic(null, token, source, level, cause, code, null, details);
-    }
 
     //
     //

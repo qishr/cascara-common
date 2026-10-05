@@ -57,7 +57,7 @@ import io.github.qishr.cascara.common.diagnostic.Reporter;
 
 @Experimental
 public class ModulePath extends AbstractLibraryScanner {
-    private static final Reporter REPORTER = GlobalReporter.forClass(ModulePath.class);
+    // private static final Reporter REPORTER = GlobalReporter.forClass(ModulePath.class);
     private static final String PATHS = System.getProperty("jdk.module.path");
 
     private Set<String> moduleNames = new HashSet<>();
@@ -141,10 +141,10 @@ public class ModulePath extends AbstractLibraryScanner {
         }
     }
 
-    @Override
-    protected Reporter getReporter() {
-        return REPORTER;
-    }
+    // @Override
+    // protected Reporter getReporter() {
+    //     return REPORTER;
+    // }
 
     protected String scanDirectoryUrl(Path directory, URL[] urls, String moduleName) {
         Set<String> discovered = new HashSet<>();
@@ -208,7 +208,7 @@ public class ModulePath extends AbstractLibraryScanner {
         moduleToClasses = new HashMap<>();
 
         if (modulePaths == null || modulePaths.isEmpty()) {
-            REPORTER.debug("No module path");
+            // REPORTER.debug("No module path");
             return;
         }
 
@@ -221,7 +221,7 @@ public class ModulePath extends AbstractLibraryScanner {
                     : Path.of(modulePathString);
 
             if (!Files.exists(path)) {
-                REPORTER.debug("Non-existant module path: " + path);
+                // REPORTER.debug("Non-existant module path: " + path);
                 continue;
             }
 

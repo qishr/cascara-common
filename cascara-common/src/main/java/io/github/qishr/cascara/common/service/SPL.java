@@ -54,11 +54,13 @@ public interface SPL extends TreeNode<SPL> {
     public static final String TITLE = "title";
     public static final String CONTENT_TYPE = "contentType";
 
-
-
     /// Retrieves the root Service Provider Layer.
     static SPL getRoot() {
         return SPLRoot.instance();
+    }
+
+    static boolean isBooting() {
+        return SPLRoot.isBooting();
     }
 
     /// Returns an instance of a specific service provider.

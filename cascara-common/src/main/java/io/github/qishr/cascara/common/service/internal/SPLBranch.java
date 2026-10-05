@@ -85,8 +85,8 @@ public class SPLBranch implements SPL {
 
     protected static SPLRoot rootLayer;
 
+    // TODO: Remove this
     protected boolean ownsReporter = false;
-    protected boolean isBooting = false;
 
     protected String name;
     protected boolean isPublic;
@@ -608,7 +608,7 @@ public class SPLBranch implements SPL {
             ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(type);
             Path jarPath = modulePath != null ? modulePath.getPathForModule(type.getModule().getName()) : null;
             registerProvider(instance, jarPath, isAutoRegistration);
-            if (isBooting) {
+            if (SPLRoot.isBooting) {
                 rootLayer.bootProviders.add(providerFqcn);
             }
         }
@@ -675,11 +675,11 @@ public class SPLBranch implements SPL {
                 if (contentType == null) {
                     REPORTER.debug("  Registered " + providerClass.getName());
                 } else {
-                    if (contentType.getMimeTypes().contains(GlobalReporter.SERIALIZATION_FORMAT)) {
-                        if (instance instanceof Serializer<?> serializer) {
-                            GlobalReporter.initSerializer(serializer);
-                        }
-                    }
+                    // if (contentType.getMimeTypes().contains(GlobalReporter.SERIALIZATION_FORMAT)) {
+                    //     if (instance instanceof Serializer<?> serializer) {
+                    //         GlobalReporter.initSerializer(serializer);
+                    //     }
+                    // }
                     REPORTER.debug("  Registered " + providerClass.getName() + " with content types:");
                     for (String type : contentType.getMimeTypes()) {
                         REPORTER.debug("    " + type);

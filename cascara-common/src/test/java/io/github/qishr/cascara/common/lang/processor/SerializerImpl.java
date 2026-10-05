@@ -62,6 +62,10 @@ public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,
         return this;
     }
 
+    public SerializerImpl setUseTypeDescriptorFactory(boolean b) {
+        return this;
+    }
+
     @Override
     protected PlainNode serializeKey(Object key) {
         return serialize(key);

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.StandardProtocolFamily;
 import java.net.UnixDomainSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
@@ -18,6 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Phaser;
 
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.exec.ExecutionException;
 import io.github.qishr.cascara.common.exec.ExecutionMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
@@ -31,21 +34,23 @@ public class IpcServer implements AutoCloseable {
     private final ConcurrentHashMap<String, List<Object>> payloadsByType = new ConcurrentHashMap<>();
     private final Phaser activeConnections = new Phaser(1); // 1 registered for the server itself
     private CompletableFuture<Void> listenerFuture;
+    private boolean diagnosticForwarding;
 
-    public IpcServer(Path socketPath, Serializer<?> serializer) throws IOException {
+    public IpcServer(Path socketPath, Serializer<?> serializer, boolean diagnosticForwarding) throws IOException {
         this.socketPath = socketPath;
         this.serializer = serializer;
+        this.diagnosticForwarding = diagnosticForwarding;
 
         UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
         this.serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
         this.serverChannel.bind(address);
     }
 
-    public static IpcServer start(Serializer<?> serializer) throws IOException {
+    public static IpcServer start(Serializer<?> serializer, boolean diagnosticForwarding) throws IOException {
         Path tempSocket = Files.createTempFile("spl-ipc-", ".sock");
         Files.deleteIfExists(tempSocket);
 
-        IpcServer server = new IpcServer(tempSocket, serializer);
+        IpcServer server = new IpcServer(tempSocket, serializer, diagnosticForwarding);
         server.listenAsync();
         return server;
     }
@@ -84,6 +89,10 @@ public class IpcServer implements AutoCloseable {
             if (listenerFuture != null) {
                 listenerFuture.join();
             }
+            // int rp = activeConnections.getRegisteredParties();
+            // int uap = activeConnections.getUnarrivedParties();
+            // System.out.println("Registered parties: " + rp);
+            // System.out.println("Unarrived parties: " + uap);
         } finally {
             try {
                 if (socketPath != null) {
@@ -92,6 +101,7 @@ public class IpcServer implements AutoCloseable {
             } finally {
                 // Guarantees the server deregisters even if socket cleanup throws
                 activeConnections.arriveAndAwaitAdvance();
+                // activeConnections.arriveAndDeregister();
             }
         }
     }
@@ -121,9 +131,18 @@ public class IpcServer implements AutoCloseable {
              BufferedReader reader = new BufferedReader(
                  Channels.newReader(clientChannel, StandardCharsets.UTF_8))) {
 
+            // Send server PID header as the first line
+            String header = "SERVER_PID:" + ProcessHandle.current().pid() + "\n";
+            ByteBuffer buffer = ByteBuffer.wrap(header.getBytes(StandardCharsets.UTF_8));
+            while (buffer.hasRemaining()) {
+                clientChannel.write(buffer);
+            }
+
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) continue;
+
+                // System.out.println("SERVER: " + line);
 
                 int delimiterIdx = line.indexOf('|');
                 if (delimiterIdx == -1) continue;
@@ -140,6 +159,20 @@ public class IpcServer implements AutoCloseable {
                     } catch (SerializerException e) {
                         // TODO: Do we report this?
                         System.err.println("SERVER ERROR: Could not deserialize payload: " + e.getMessage());
+                    }
+
+                    // System.out.println(
+                    //     "SERVER: diagnosticForwarding=" + diagnosticForwarding +
+                    //     " payload=" + payload
+                    // );
+
+                    if (diagnosticForwarding && payload instanceof Diagnostic diagnostic) {
+                        // System.out.println("SERVER: Diagnostic Forwarding");
+                        // GlobalReporter.globalInstance().report(diagnostic);
+                        GlobalReporter reporter = GlobalReporter.forSource(diagnostic.getSource());
+                        if (reporter != null) {
+                            reporter.report(diagnostic);
+                        }
                     }
 
                     payloadsByType
