@@ -63,31 +63,31 @@ public class JvmProcessTests extends JvmProcessTestBase {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString(input);
 
-        try (IpcServer ipcServer = IpcServer.start(serializer, false)) {
-            Class<?> taskClass = GlobalReporterTestTask.class;
+        IpcServer ipcServer = IpcServer.start(serializer, false);
+        Class<?> taskClass = GlobalReporterTestTask.class;
 
-            String classKey = "CASC_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
+        String classKey = "CASC_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
 
-            JvmOptions options = new JvmOptions()
-                .setModuleName(taskClass.getModule().getName())
-                .setModulePath(getModulePath())
-                .setDebug(PROCESS_DEBUG_ENABLED)
-                .setEnv(classKey, "DEBUG")
-                .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
-                .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
+        JvmOptions options = new JvmOptions()
+            .setModuleName(taskClass.getModule().getName())
+            .setModulePath(getModulePath())
+            .setDebug(PROCESS_DEBUG_ENABLED)
+            .setEnv(classKey, "DEBUG")
+            .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
+            .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
 
-            // Run sub-JVM process...
-            JvmProcess.Response response = JvmProcess.forClass(taskClass).setOptions(options).run(json);
+        // Run sub-JVM process...
+        JvmProcess.Response response = JvmProcess.forClass(taskClass).setOptions(options).run(json);
+        ipcServer.close();
 
-            debug(response);
+        debug(response);
 
-            // Fetch diagnostics
-            List<Diagnostic> diagnostics = ipcServer.getMessages(Diagnostic.class);
+        // Fetch diagnostics
+        List<Diagnostic> diagnostics = ipcServer.getMessages(Diagnostic.class);
 
-            assertFalse(diagnostics.isEmpty());
-            Diagnostic diagnostic = diagnostics.getFirst();
-            assertEquals("hello-isolated-world", diagnostic.getFormattedMessage());
-        }
+        assertFalse(diagnostics.isEmpty());
+        Diagnostic diagnostic = diagnostics.getFirst();
+        assertEquals("hello-isolated-world", diagnostic.getFormattedMessage());
     }
 
     @Test
