@@ -23,6 +23,7 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.exec.ExecutionException;
 import io.github.qishr.cascara.common.exec.ExecutionMessage;
+import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
@@ -142,6 +143,7 @@ public class IpcServer implements AutoCloseable {
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) continue;
 
+                // TODO: Option to turn this on an off
                 // System.out.println("SERVER: " + line);
 
                 int delimiterIdx = line.indexOf('|');
@@ -157,8 +159,9 @@ public class IpcServer implements AutoCloseable {
                     try {
                         payload = serializer.fromString(payloadJson, targetClass);
                     } catch (SerializerException e) {
-                        // TODO: Do we report this?
-                        System.err.println("SERVER ERROR: Could not deserialize payload: " + e.getMessage());
+                        // System.out.println("SERVER: " + e.getMessage());
+                        // continue;
+                        throw new ExecutionException(e, ExecutionMessage.DESERIALIZATION_FAILED, e.getMessage());
                     }
 
                     // System.out.println(
@@ -179,13 +182,14 @@ public class IpcServer implements AutoCloseable {
                         .computeIfAbsent(className, k -> new CopyOnWriteArrayList<>())
                         .add(payload);
 
-                } catch (Exception e) {
-                    // TODO: Do we report this?
-                    System.err.println("SERVER ERROR: Could not find class " + className);
-                }
+                // } catch (Exception e) {
+                //     throw new ExecutionException(e, LangMessage.NO_CLASS_DEF_FOUND_ERROR, className);
+                } catch (ClassNotFoundException e) {
+                    throw new ExecutionException(e, LangMessage.NO_CLASS_DEF_FOUND_ERROR, className);
+                } finally {}
             }
         } catch (IOException e) {
-            throw new ExecutionException(ExecutionMessage.IPC_RECV_FAILED, e.getMessage());
+            throw new ExecutionException(e, ExecutionMessage.IPC_RECV_FAILED, e.getMessage());
         }
     }
 }

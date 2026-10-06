@@ -32,31 +32,54 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.exec;
 
+package io.github.qishr.cascara.common.lang.type;
+
+import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
-public enum ExecutionMessage implements DiagnosticMessage {
-    PROCESS_FAILED("EXEC-101", "Failed to start process for {0}"),
-    TASK_FAILED("EXEC-102", "Task {0} failed"),
-    INPUT_FAILED("EXEC-103", "Failed to write input to task {0}"),
-    OUTPUT_FAILED("EXEC-104", "Failed to read output of task {0}.\n System.out: \"{1}\"\n System.err: \"{2}\""),
-    INTERRUPT("EXEC-105", "Task {0} was interrupted"),
-    DIAGNOSTIC_SERVER_FAILED("EXEC-106", "Failed to initialize DiagnosticIpcServer for task {0}"),
-    DIAGNOSTIC_DESERIALIZATION_FAILED("EXEC-107", "Failed to deserialize diagnostics for task {0}"),
-    DESERIALIZATION_FAILED("EXEC-108", "Failed to deserialize {0}"),
-    IPC_RECV_FAILED("EXEC-109", "IPC receive failed: {0}"),
-    NO_SOCKET_FILE("EXEC-110", "Socket file does not exist: {0}"),
-    CONNECT_FAILED("EXEC-111", "IPC connection failed: {0}");
+public class DiagnosticMessageTypeSerializer extends AbstractScalarDescriptor<DiagnosticMessage> {
 
-    private final String code;
-    private final String format;
-
-    ExecutionMessage(String code, String format) {
-        this.code = code;
-        this.format = format;
+    public DiagnosticMessageTypeSerializer() {
+        super(DiagnosticMessage.class, PrimitiveType.STRING);
     }
 
-    @Override public String getCode() { return code; }
-    @Override public String getFormat() { return format; }
+    @Override
+    public DiagnosticMessage toJvmType(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        int dot = text.lastIndexOf(".");
+        if (dot == -1) {
+            return null;
+        }
+        String className = text.substring(0, dot);
+        String enumVal = text.substring(dot + 1);
+
+        Class<?> msgClass;
+        try {
+            msgClass = Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+
+        if (!msgClass.isEnum()) {
+            return null;
+        }
+
+        Enum<?> value = Enum.valueOf((Class<Enum>) msgClass, enumVal);
+        return (DiagnosticMessage)value;
+    }
+
+    @Override
+    public Object toPrimitive(DiagnosticMessage jvmInstance) {
+        return jvmInstance.getClass().getName() + "." + jvmInstance.getCode();
+    }
+
+    @Override
+    public boolean validate(String text, Reporter collector) {
+        // TODO
+        throw new UnimplementedMethodException();
+    }
 }

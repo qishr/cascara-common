@@ -73,11 +73,15 @@ private final long serverPid;
         if (message == null) return;
 
         String className = message.getClass().getName();
-        String payloadJson = serializer.toString(message).replace('\n', ' ');
+        String json = serializer.toString(message);
+        String payloadJson = json.replace('\n', ' ');
 
         try {
             String line = className + "|" + payloadJson + "\n";
-            // System.out.println("CLIENT: " + line);
+
+            // TODO: -D to turn this on an off
+            // System.out.println("CLIENT: " + className + ": " + json);
+
             writer.write(line);
             writer.newLine();
             writer.flush();

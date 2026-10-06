@@ -17,8 +17,8 @@ public class GlobalReporterTestTask extends AbstractExecutionTask<ReporterTestIn
         VmInfo info = new VmInfo();
         info.init();
 
-        System.err.println("pid = " + info.rtPid);
-        System.err.println("uptime = " + info.rtUptime + " ms");
+        System.out.println("pid = " + info.rtPid);
+        System.out.println("uptime = " + info.rtUptime + " ms");
 
         return new ReporterTestOutput(
             42,

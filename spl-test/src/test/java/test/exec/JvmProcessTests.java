@@ -100,13 +100,11 @@ public class JvmProcessTests extends JvmProcessTestBase {
         Class<?> taskClass = GlobalReporterTestTask.class;
 
         GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
-        GlobalReporter.forClass(taskClass).setLevel(Level.DEBUG);
 
         JvmOptions options = new JvmOptions()
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
-            .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
             .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
             .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
 

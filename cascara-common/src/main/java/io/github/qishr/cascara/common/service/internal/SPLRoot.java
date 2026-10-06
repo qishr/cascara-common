@@ -38,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,10 +51,10 @@ import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.filewatcher.FileWatcher;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.type.DateTimeTypeDescriptor;
+import io.github.qishr.cascara.common.lang.type.DiagnosticMessageTypeSerializer;
 import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceException;
-import io.github.qishr.cascara.common.service.ServiceProviderFactory;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ClassPath;
@@ -102,7 +101,9 @@ public class SPLRoot extends SPLBranch {
         try {
             Serializer<?> serializer = ProcessorFactory.system().createSerializer(GlobalReporter.SERIALIZATION_FORMAT);
             if (serializer != null) {
+                DiagnosticMessageTypeSerializer dmtd = new DiagnosticMessageTypeSerializer();
                 DateTimeTypeDescriptor dttd = new DateTimeTypeDescriptor();
+                serializer.registerTypeDescriptor(dmtd);
                 serializer.registerTypeDescriptor(dttd);
                 serializer.setUseProviderFactory(false);
                 GlobalReporter.initSerializer(serializer);

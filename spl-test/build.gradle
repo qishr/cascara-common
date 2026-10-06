@@ -21,6 +21,7 @@ dependencies {
     implementation("org.junit.jupiter:junit-jupiter-engine")
     implementation('org.junit.platform:junit-platform-launcher')
     implementation('io.github.qishr:cascara-test-common-junit')
+
     implementation('io.github.qishr:cascara-common')
     implementation(project(':spl-test-interfaces'))
 
