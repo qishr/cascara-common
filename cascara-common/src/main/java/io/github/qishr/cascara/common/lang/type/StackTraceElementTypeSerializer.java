@@ -48,7 +48,7 @@ public class StackTraceElementTypeSerializer extends AbstractTypeDescriptor<Stac
     }
 
     @Override
-    public AstNode serialize(StackTraceElement jvmInstance) throws SerializerException {
+    public PlainMapNode serialize(StackTraceElement jvmInstance) throws SerializerException {
         return new PlainMapNode()
             .put("classLoaderName", jvmInstance.getClassLoaderName())
             .put("moduleName", jvmInstance.getModuleName())

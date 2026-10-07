@@ -58,7 +58,7 @@ public class JmxTestBase extends ExecTestBase {
                 if (System.currentTimeMillis() > deadline) {
                     throw new IllegalStateException("Timed out waiting for MBean registration: " + beanName);
                 }
-                Thread.sleep(50);
+                Thread.sleep(500);
             }
 
             mbsc.invoke(objectName, operationName, params, signature);

@@ -10,6 +10,7 @@ import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.exec.AbstractExecutionTask;
 import io.github.qishr.cascara.common.util.Cascara;
 import test.interfaces.beans.CascaraControl;
+import test.interfaces.beans.SPLStatus;
 import test.interfaces.payload.JmxTestInput;
 import test.interfaces.payload.JmxTestOutput;
 
@@ -45,16 +46,16 @@ public class JmxTestTask extends AbstractExecutionTask<JmxTestInput, JmxTestOutp
 
 
 
-        // reporter.debug("Creating SPLStatus MBean");
+        reporter.debug("Creating SPLStatus MBean");
 
-        // // Create the MBean instance
-        // SPLStatus serverStatus = new SPLStatus();
+        // Create the MBean instance
+        SPLStatus serverStatus = new SPLStatus();
 
-        // // Define an ObjectName (domain:key=value)
-        // ObjectName ssName = new ObjectName("test.interfaces.beans:type=SPLStatus");
+        // Define an ObjectName (domain:key=value)
+        ObjectName ssName = new ObjectName("test.interfaces.beans:type=SPLStatus");
 
-        // // Register the MBean with the MBean Server
-        // mBeanServer.registerMBean(serverStatus, ssName);
+        // Register the MBean with the MBean Server
+        mBeanServer.registerMBean(serverStatus, ssName);
 
 
 

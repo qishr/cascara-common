@@ -1,18 +1,11 @@
 package test.interfaces.beans;
 
-import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import java.util.List;
+
 
 public interface SPLStatusMBean {
-    // Attribute: CPU Usage (read-only)
-    double getCpuUsage();
+    // New operation to retrieve registered ServiceProvider implementations
+    List<String> getRegisteredServiceProviders();
 
-    // Attribute: Memory Usage (read-only)
-    long getMemoryUsage();
-
-    // Operation: Restart the server
-    void hello();
-
-    void exit();
-
-    void setLogLevel(Level level);
+    void test();
 }
