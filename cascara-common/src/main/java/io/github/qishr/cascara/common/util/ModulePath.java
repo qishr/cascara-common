@@ -52,8 +52,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
-import io.github.qishr.cascara.common.diagnostic.Reporter;
 
 @Experimental
 public class ModulePath extends AbstractLibraryScanner {

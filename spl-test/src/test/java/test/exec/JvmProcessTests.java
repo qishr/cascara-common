@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
@@ -21,13 +21,12 @@ import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
 import io.github.qishr.cascara.common.service.SPL;
-import test.interfaces.ReporterTestInput;
+import test.interfaces.payload.ReporterTestInput;
 import test.task.GlobalReporterTestTask;
 
-public class JvmProcessTests extends JvmProcessTestBase {
+public class JvmProcessTests extends ExecTestBase {
     @BeforeEach
-    protected void setUp() {
-        reporter = GlobalReporter.forClass(getClass());
+    protected void setUp() throws IOException {
         super.setUp();
     }
 
@@ -63,7 +62,7 @@ public class JvmProcessTests extends JvmProcessTestBase {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString(input);
 
-        IpcServer ipcServer = IpcServer.start(serializer, false);
+        IpcServer ipcServer = IpcServer.start(serializer, false, false);
         Class<?> taskClass = GlobalReporterTestTask.class;
 
         String classKey = "CASC_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
@@ -96,10 +95,14 @@ public class JvmProcessTests extends JvmProcessTestBase {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString(input);
 
-        IpcServer ipcServer = IpcServer.start(serializer, true);
+        IpcServer ipcServer = IpcServer.start(serializer, true, false);
         Class<?> taskClass = GlobalReporterTestTask.class;
 
         GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
+
+        List<Diagnostic> diagnostics = new ArrayList<>();
+        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.globalInstance().setDiagnosticConsumer(d -> diagnostics.add(d));
 
         JvmOptions options = new JvmOptions()
             .setModuleName(taskClass.getModule().getName())
@@ -114,7 +117,16 @@ public class JvmProcessTests extends JvmProcessTestBase {
 
         debug(response);
 
-        List<Diagnostic> diagnostics = ipcServer.getMessages(Diagnostic.class);
+        // Verify that SPL's "Discovering providers" debug message appears
+        // in the parent JVM's global diagnostics.
         assertFalse(diagnostics.isEmpty());
+        boolean foundSplBoot = false;
+        for (Diagnostic d : diagnostics) {
+            if (d.getFormattedMessage().contains("Discovering providers")) {
+                foundSplBoot = true;
+            }
+        }
+        assertTrue(foundSplBoot);
+
     }
 }

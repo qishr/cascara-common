@@ -65,7 +65,7 @@ public enum PrimitiveType {
         if (jvmType instanceof String || jvmType instanceof Character) {
             return STRING;
         }
-        else if (jvmType instanceof Integer || jvmType instanceof Long) {
+        else if (jvmType instanceof Integer || jvmType instanceof Long || jvmType instanceof Short || jvmType instanceof Byte) {
             return INTEGER;
         }
         else if (jvmType instanceof Double || jvmType instanceof Float) {
@@ -73,6 +73,9 @@ public enum PrimitiveType {
         }
         else if (jvmType instanceof Boolean) {
             return BOOLEAN;
+        }
+        else if (jvmType instanceof Number) {
+            return NUMBER;
         }
         if (jvmType instanceof SequencedCollection) {
             return ARRAY;

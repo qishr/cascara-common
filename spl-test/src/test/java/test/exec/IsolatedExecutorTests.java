@@ -3,24 +3,23 @@ package test.exec;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.time.Duration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
-import test.interfaces.ReporterTestInput;
-import test.interfaces.ReporterTestOutput;
+import test.interfaces.payload.ReporterTestInput;
+import test.interfaces.payload.ReporterTestOutput;
 import test.task.GlobalReporterTestTask;
 
-public class IsolatedExecutorTests extends JvmProcessTestBase {
+public class IsolatedExecutorTests extends ExecTestBase {
 
     @BeforeEach
-    protected void setUp() {
-        reporter = GlobalReporter.forClass(getClass());
+    protected void setUp() throws IOException {
         super.setUp();
     }
 

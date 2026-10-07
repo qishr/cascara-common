@@ -50,4 +50,7 @@ module test.spl {
 
     exports test.spl;
     opens test.spl to org.junit.platform.commons;
+
+    exports test.serialization;
+    opens test.serialization to org.junit.platform.commons;
 }

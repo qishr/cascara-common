@@ -1,4 +1,4 @@
-package test.interfaces;
+package test.interfaces.payload;
 
 public class ReporterTestInput {
     private String testMessage;

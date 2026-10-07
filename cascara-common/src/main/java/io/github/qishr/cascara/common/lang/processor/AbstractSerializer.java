@@ -111,6 +111,7 @@ public abstract class AbstractSerializer<
     protected int depth = 0;
     private Set<String> previousWarnings = new HashSet<>();
 
+    private final AstConverter<?> astConverter;
     private static final Unsafe UNSAFE;
 
     static {
@@ -124,8 +125,13 @@ public abstract class AbstractSerializer<
     }
 
     protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, LanguageOptions<?> options) {
+        this(contentType, astFactory, null, options);
+    }
+
+    protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, AstConverter<?> astConverter, LanguageOptions<?> options) {
         this.contentType = contentType;
         this.astFactory = astFactory;
+        this.astConverter = astConverter;
         this.options = options;
     }
 
@@ -170,7 +176,12 @@ public abstract class AbstractSerializer<
 
                 // Custom serializer
                 if (typeDescriptor instanceof TypeSerializer typeSerializer) {
-                    return castToNode(typeSerializer.serialize(jvmInstance));
+                    AstNode rawNode = typeSerializer.serialize(jvmInstance);
+                    if (astConverter == null) {
+                        return castToNode(rawNode);
+                    } else {
+                        return castToNode(astConverter.fromAst(rawNode));
+                    }
                 }
 
                 // ScalarDescriptor -> ScalarValue -> ScalarNode
@@ -228,6 +239,8 @@ public abstract class AbstractSerializer<
         Class<?> jvmType = jvmInstance.getClass();
         M objectMap = astFactory.createMapNode();
 
+        reporter.debug("serializeObject " + jvmInstance);
+
         for (Field field : getAllSerializableFields(jvmType)) {
             // Try to make the field accessible. If this fails, continue to the next field.
             try {
@@ -276,7 +289,7 @@ public abstract class AbstractSerializer<
             }
         }
 
-        // 2. Process dynamic settings (@YamlAnyGetter)
+        // 2. Process dynamic settings (@AnyGetter)
         for (Method method : ReflectionUtils.getAllMethods(jvmType)) {
             if (method.isAnnotationPresent(AnyGetter.class)) {
                 // Try to make the method accessible. If this fails, continue to the next field.
@@ -313,26 +326,34 @@ public abstract class AbstractSerializer<
         int length = Array.getLength(jvmInstance);
         for (int i = 0; i < length; i++) {
             Object item = Array.get(jvmInstance, i);
-            if (item == null) continue;
-            sequence.add(serialize(item));
+            N element = item == null ? null : serialize(item);
+            // if (element instanceof MapAstNode m) {
+            //     System.out.println("i=" + item.getClass());
+            //     for (Object o : m.entrySet()) {
+            //         System.out.println("o=" + o.getClass());
+            //         if (o instanceof MapEntryAstNode e) {
+            //             System.out.println("k:" + e.getKeyString() + " v:" + e.getValue());
+            //         }
+            //     }
+            // }
+            sequence.add(element);
         }
         return sequence;
     }
 
-    /// Serializes a List into a YamlSequence.
+    /// Serializes a List into a Sequence.
     protected L serializeList(List<?> list) {
         // TODO: Other SequencedCollection classes; Sets
         L sequence = astFactory.createSequenceNode();
         for (Object item : list) {
-            if (item == null) continue;
-
-            sequence.add(serialize(item));
+            N element = item == null ? null : serialize(item);
+            sequence.add(element);
         }
         return sequence;
     }
 
     protected M serializeMap(Map<?, ?> map) {
-        M yamlMap = astFactory.createMapNode();
+        M mapNode = astFactory.createMapNode();
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             if (entry.getKey() == null) continue;
 
@@ -341,9 +362,9 @@ public abstract class AbstractSerializer<
                 ? castToNode(astFactory.createScalarNode(null))
                 : serialize(entry.getValue());
 
-            yamlMap.put(keyNode, valueNode);
+            mapNode.put(keyNode, valueNode);
         }
-        return yamlMap;
+        return mapNode;
     }
 
     //
@@ -353,40 +374,43 @@ public abstract class AbstractSerializer<
     /// Converts an AST structure back into a Java object of the generic type referenced by typeRef.
     @SuppressWarnings("unchecked")
     protected <C> C deserialize(AstNode node, TypeReference<C> typeRef) throws SerializerException {
-        return (C) deserializeType(node, typeRef.getType());
+        return (C) deserialize(node, typeRef.getType());
     }
 
     /// Converts an AST structure back into a Java object of the specified type.
-    @SuppressWarnings("unchecked")
-    protected <C> C deserialize(AstNode node, Type jvmType) throws SerializerException {
-        // If the node is null, or it's a scalar representing a null value, we return null immediately.
-        if (node == null || (node instanceof ScalarAstNode scalar && scalar.getPrimitive() == null)) {
-            return null;
-        }
-
-        // 1. SHORTCUT: If the target is a standard Collection, bypass POJO logic
-        if (ReflectionUtils.canAssign(jvmType, Map.class)) {
-            if (node instanceof MapAstNode mapNode) {
-                return (C) convertAstMapToStandardMap(mapNode);
-            }
-            return (C) new LinkedHashMap<>();
-        }
-
-        if (ReflectionUtils.canAssign(jvmType, List.class)) {
-            if (node instanceof SequenceAstNode seqNode) {
-                return (C) convertAstSequenceToStandardList(seqNode);
-            }
-            return (C) new ArrayList<>();
-        }
-
-        C jvmInstance = newTypeInstance(node, jvmType);
-        return deserializeObject(node, jvmInstance);
-    }
-
-    /// Dispatches to the correct deserialization logic based on target type.
     /// @param node The AST node to convert.
     /// @param targetType The class type to convert to.
-    private Object deserializeType(AstNode node, Type targetType) throws SerializerException {
+    @SuppressWarnings("unchecked")
+    protected <C> C deserialize(AstNode node, Type targetType) throws SerializerException {
+    //     // If the node is null, or it's a scalar representing a null value, we return null immediately.
+    //     if (node == null || (node instanceof ScalarAstNode scalar && scalar.getPrimitive() == null)) {
+    //         return null;
+    //     }
+
+    //     // 1. SHORTCUT: If the target is a standard Collection, bypass POJO logic
+    //     if (ReflectionUtils.canAssign(jvmType, Map.class)) {
+    //         if (node instanceof MapAstNode mapNode) {
+    //             return (C) convertAstMapToStandardMap(mapNode);
+    //         }
+    //         return (C) new LinkedHashMap<>();
+    //     }
+
+    //     if (ReflectionUtils.canAssign(jvmType, List.class)) {
+    //         if (node instanceof SequenceAstNode seqNode) {
+    //             return (C) convertAstSequenceToStandardList(seqNode);
+    //         }
+    //         return (C) new ArrayList<>();
+    //     }
+
+    //     C jvmInstance = newTypeInstance(node, jvmType);
+    //     return deserializeObject(node, jvmInstance);
+    // }
+
+    // /// Dispatches to the correct deserialization logic based on target type.
+    // /// @param node The AST node to convert.
+    // /// @param targetType The class type to convert to.
+    // private Object deserializeType(AstNode node, Type targetType) throws SerializerException {
+        // If the node is null, or it's a scalar representing a null value, we return null immediately.
         if (node == null || (node instanceof ScalarAstNode s && s.getPrimitive() == null)) {
             return null;
         }
@@ -394,20 +418,26 @@ public abstract class AbstractSerializer<
         // 1. High Priority Symmetrical Check: Intercept custom type serializers
         TypeDescriptor<?> typeDescriptor = getTypeDescriptor(targetType);
         if (typeDescriptor instanceof TypeSerializer<?> typeSerializer) {
-            return typeSerializer.deserialize(node);
+            return (C) typeSerializer.deserialize(node);
         }
 
         Class<?> rawClass = ReflectionUtils.getRawClass(targetType);
         if (rawClass.isArray()) {
-            return deserializeArray(node, targetType);
+            return (C) deserializeArray(node, targetType);
         }
 
         // 2. Collection targetType
         if (ReflectionUtils.canAssign(targetType, List.class)) {
-            return deserializeList(node, targetType);
+            if (node instanceof MapAstNode mapNode) {
+                return (C) convertAstMapToStandardMap(mapNode);
+            }
+            return (C) deserializeList(node, targetType);
         }
         if (ReflectionUtils.canAssign(targetType, Map.class)) {
-            return deserializeMap(node, targetType);
+            if (node instanceof SequenceAstNode seqNode) {
+                return (C) convertAstSequenceToStandardList(seqNode);
+            }
+            return (C) deserializeMap(node, targetType);
         }
         // TODO: What about Sets?
 
@@ -416,12 +446,12 @@ public abstract class AbstractSerializer<
             if (isScalarType(cls)) {
                 if (node instanceof ScalarAstNode scalar) {
                     if (typeDescriptor instanceof ScalarDescriptor descriptor) {
-                        return deserializeScalarWithDescriptor(scalar, descriptor);
+                        return (C) deserializeScalarWithDescriptor(scalar, descriptor);
                     }
 
                     // If there is no TypeDescriptor it's safe to rely on
                     // deserializeScalar here as we know it's a scalar.
-                    return deserializeScalar(scalar, targetType);
+                    return (C) deserializeScalar(scalar, targetType);
                 }
 
                 // We reach here if targetType is scalar but the node is a collection.
@@ -438,13 +468,13 @@ public abstract class AbstractSerializer<
         // This handles the cases like byte[]
         if (node instanceof ScalarAstNode scalar) {
             if (typeDescriptor instanceof ScalarDescriptor descriptor) {
-                return deserializeScalarWithDescriptor(scalar, descriptor);
+                return (C) deserializeScalarWithDescriptor(scalar, descriptor);
             }
 
             // Without a TypeDescriptor to do the conversion, the only
             // non-scalar targetType we can put a scalar value in is Object.
             if (targetType == Object.class) {
-                return deserializeScalar(scalar, targetType);
+                return (C) deserializeScalar(scalar, targetType);
             }
 
             throw new SerializerException(
@@ -456,18 +486,18 @@ public abstract class AbstractSerializer<
 
         // 5. Parametersized types
         if (targetType instanceof ParameterizedType pt) {
-            return deserializeParameterized(node, pt);
+            return (C) deserializeParameterized(node, pt);
         }
 
         // 6. Wildcards / type variables: fall back to upper bound or Object
         // TODO: These are recursive. Add tests to ensure they can't get stuck in a loop.
         if (targetType instanceof java.lang.reflect.WildcardType wt) {
             Type[] upper = wt.getUpperBounds();
-            return deserializeType(node, upper.length > 0 ? upper[0] : Object.class);
+            return (C) deserialize(node, upper.length > 0 ? upper[0] : Object.class);
         }
         if (targetType instanceof java.lang.reflect.TypeVariable<?> tv) {
             Type[] bounds = tv.getBounds();
-            return deserializeType(node, bounds.length > 0 ? bounds[0] : Object.class);
+            return (C) deserialize(node, bounds.length > 0 ? bounds[0] : Object.class);
         }
 
         // 7. node is a collection, but the targetType didn't match at stage #2
@@ -475,15 +505,15 @@ public abstract class AbstractSerializer<
             reporter.debug("#7: targetType is Object");
             // TODO: What if node is mapNode but targetType is not a map?
             if (node instanceof MapAstNode mapNode) {
-                return convertAstMapToStandardMap(mapNode);
+                return (C) convertAstMapToStandardMap(mapNode);
             }
             // TODO: What if node is seqNode but targetType is not a list?
             // TODO: What if targetType is a set?
             if (node instanceof SequenceAstNode seqNode) {
-                return convertAstSequenceToStandardList(seqNode);
+                return (C) convertAstSequenceToStandardList(seqNode);
             }
             if (node instanceof ScalarAstNode scalar) {
-                return scalar.getPrimitive();
+                return (C) scalar.getPrimitive();
             }
 
             // TODO: It's only possible to reach here if the node
@@ -491,16 +521,18 @@ public abstract class AbstractSerializer<
             // is not YAML or JSON and we don't know how to handle it.
             // Should we throw an exception?
             reporter.debug("#7: node is " + node.getClass().getName());
-            return node;
+            return (C) node;
         }
 
         // Likely cause of arriving here is that the target type either:
         //   - Is a POJO
-        //   - Is in a package that's not opened to cascara.lang.yaml
+        //   - Is in a package that's not opened to cascara.common
 
         // The POJO path...
         reporter.debug("Calling POJO Path from deserializeType");
-        return deserialize(node, targetType);
+        // return deserialize(node, targetType);
+        C jvmInstance = newTypeInstance(node, targetType);
+        return deserializeObject(node, jvmInstance);
     }
 
     private Object deserializeParameterized(AstNode node, ParameterizedType pt) throws SerializerException {
@@ -508,7 +540,7 @@ public abstract class AbstractSerializer<
         Type[] args = pt.getActualTypeArguments();
 
         if (!(raw instanceof Class<?> rawClass)) {
-            return deserializeType(node, Object.class);
+            return deserialize(node, Object.class);
         }
 
         // Collections
@@ -578,7 +610,7 @@ public abstract class AbstractSerializer<
 
             if (valueNode != null) {
                 // We pass field.getType() so it knows this is a List, a String, etc.
-                Object convertedValue = deserializeType(valueNode, field.getGenericType());
+                Object convertedValue = deserialize(valueNode, field.getGenericType());
                 if (convertedValue != null) {
                     try {
                         field.set(jvmInstance, convertedValue);
@@ -589,7 +621,7 @@ public abstract class AbstractSerializer<
             }
         }
 
-        // 4. Handle dynamic properties via @YamlAnySetter
+        // 4. Handle dynamic properties via @AnySetter
         processAnySetter(jvmInstance, (M)node, claimedKeys, jvmType);
 
         return jvmInstance;
@@ -628,7 +660,7 @@ public abstract class AbstractSerializer<
 
         int index = 0;
         for (AstNode item : sequence.getChildren()) {
-            Object val = deserializeType(item, itemType);
+            Object val = deserialize(item, itemType);
             Array.set(array, index++, val);
         }
 
@@ -661,7 +693,7 @@ public abstract class AbstractSerializer<
 
         List<Object> result = new ArrayList<>();
         for (AstNode item : sequence.getChildren()) {
-            Object val = deserializeType(item, itemIype);
+            Object val = deserialize(item, itemIype);
             // YAML sequences can have null entries (- ), we should decide if we allow them.
             // Usually, for a list of strings/objects, we skip nulls or add them.
             result.add(val);
@@ -689,7 +721,7 @@ public abstract class AbstractSerializer<
                 throw new SerializerException(node, GenericMessage.ERROR, "Non-scalar key not implemented: " + entry.getKey());
             }
 
-            Object val = deserializeType(entry.getValue(), valType);
+            Object val = deserialize(entry.getValue(), valType);
             if (key != null) result.put(key, val != null ? val : ""); // TODO: Is "" okay here?
         }
 
@@ -872,7 +904,7 @@ public abstract class AbstractSerializer<
                                         Collection<Object> collection,
                                         Type itemType) {
         for (AstNode child : seqNode.getChildren()) {
-            Object val = deserializeType(child, itemType);
+            Object val = deserialize(child, itemType);
             collection.add(val);
         }
     }
@@ -889,7 +921,7 @@ public abstract class AbstractSerializer<
                 key = entry.getKeyString();
             }
 
-            Object value = deserializeType(entry.getValue(), valueType);
+            Object value = deserialize(entry.getValue(), valueType);
             map.put(key, value);
         }
     }
@@ -899,7 +931,7 @@ public abstract class AbstractSerializer<
         for (MapEntryAstNode<?,?> entry : mapNode.getEntries()) {
             String key = entry.getKeyString();
             // Recursively convert the value
-            Object value = deserializeType(entry.getValue(), Object.class);
+            Object value = deserialize(entry.getValue(), Object.class);
             result.put(key, value);
         }
         return result;
@@ -909,7 +941,7 @@ public abstract class AbstractSerializer<
         List<Object> result = new ArrayList<>();
         for (AstNode child : seqNode.getChildren()) {
             // Recursively convert each item in the list
-            result.add(deserializeType(child, Object.class));
+            result.add(deserialize(child, Object.class));
         }
         return result;
     }

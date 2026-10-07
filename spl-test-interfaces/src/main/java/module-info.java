@@ -36,7 +36,16 @@ module test.interfaces {
     requires java.management;
 
     requires transitive cascara.common;
-    exports test.interfaces;
 
+    exports test.interfaces;
     opens test.interfaces;
+
+    exports test.interfaces.beans;
+    opens test.interfaces.beans;
+
+    exports test.interfaces.payload;
+    opens test.interfaces.payload;
+
+    exports test.interfaces.task;
+    opens test.interfaces.task;
 }

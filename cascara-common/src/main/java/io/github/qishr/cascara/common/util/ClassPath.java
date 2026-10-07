@@ -46,9 +46,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
-import io.github.qishr.cascara.common.diagnostic.Reporter;
-
 public class ClassPath extends AbstractLibraryScanner {
     // private static final Reporter REPORTER = GlobalReporter.forClass(ClassPath.class);
     private static final String PATHS = System.getProperty("java.class.path");

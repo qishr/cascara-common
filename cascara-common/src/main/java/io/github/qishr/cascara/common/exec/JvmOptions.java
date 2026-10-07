@@ -23,7 +23,6 @@ public class JvmOptions {
     private final List<String> args = new ArrayList<>();
     private Duration timeout = Duration.ofSeconds(10);
     private boolean debug;
-    private boolean diagnisticForwaringEnabled = true;;
 
     public Map<String, String> getSystemProperties() {
         return systemProperties;
@@ -136,8 +135,8 @@ public class JvmOptions {
         return debug;
     }
 
-    public JvmOptions setDebug(boolean debug) {
-        this.debug = debug;
+    public JvmOptions setDebug(boolean enabled) {
+        this.debug = enabled;
         return this;
     }
 
@@ -147,15 +146,6 @@ public class JvmOptions {
 
     public JvmOptions setModuleName(String name) {
         this.moduleName = name;
-        return this;
-    }
-
-    public boolean diagnisticForwaringEnabled() {
-        return diagnisticForwaringEnabled;
-    }
-
-    public JvmOptions setDiagnisticForwaringEnabled(boolean enabled) {
-        this.diagnisticForwaringEnabled = enabled;
         return this;
     }
 }

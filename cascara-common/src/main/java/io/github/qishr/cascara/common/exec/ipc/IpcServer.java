@@ -36,22 +36,24 @@ public class IpcServer implements AutoCloseable {
     private final Phaser activeConnections = new Phaser(1); // 1 registered for the server itself
     private CompletableFuture<Void> listenerFuture;
     private boolean diagnosticForwarding;
+    private boolean ipcDebugEnabled;
 
-    public IpcServer(Path socketPath, Serializer<?> serializer, boolean diagnosticForwarding) throws IOException {
+    private IpcServer(Path socketPath, Serializer<?> serializer, boolean diagnosticForwarding, boolean ipcDebugEnabled) throws IOException {
         this.socketPath = socketPath;
         this.serializer = serializer;
         this.diagnosticForwarding = diagnosticForwarding;
+        this.ipcDebugEnabled = ipcDebugEnabled;
 
         UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
         this.serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
         this.serverChannel.bind(address);
     }
 
-    public static IpcServer start(Serializer<?> serializer, boolean diagnosticForwarding) throws IOException {
+    public static IpcServer start(Serializer<?> serializer, boolean diagnosticForwarding, boolean ipcDebugEnabled) throws IOException {
         Path tempSocket = Files.createTempFile("spl-ipc-", ".sock");
         Files.deleteIfExists(tempSocket);
 
-        IpcServer server = new IpcServer(tempSocket, serializer, diagnosticForwarding);
+        IpcServer server = new IpcServer(tempSocket, serializer, diagnosticForwarding, ipcDebugEnabled);
         server.listenAsync();
         return server;
     }
@@ -143,8 +145,9 @@ public class IpcServer implements AutoCloseable {
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) continue;
 
-                // TODO: Option to turn this on an off
-                // System.out.println("SERVER: " + line);
+                if (ipcDebugEnabled) {
+                    System.out.println("SERVER: " + line);
+                }
 
                 int delimiterIdx = line.indexOf('|');
                 if (delimiterIdx == -1) continue;

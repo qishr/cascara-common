@@ -45,6 +45,10 @@ test {
     ]
 }
 
+tasks.named('test', Test) {
+    systemProperty 'java.net.preferIPv4Stack', 'true'
+}
+
 tasks.named('compileTestJava', JavaCompile) {
     modularity.inferModulePath = true
 }

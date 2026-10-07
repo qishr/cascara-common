@@ -19,6 +19,8 @@ public class IsolatedExecutor {
     private JvmOptions options;
     private final Class<?> responseClass;
     private final Class<? extends AbstractExecutionTask<?,?>> task;
+    private boolean ipcDebugEnabled;
+    private boolean diagnisticForwaringEnabled;
 
     private IsolatedExecutor(Class<? extends AbstractExecutionTask<?,?>> task, Class<?> response) {
         this.jvmProcess = JvmProcess.forClass(task);
@@ -33,6 +35,21 @@ public class IsolatedExecutor {
     public static <T> Response<T> run(Class<? extends AbstractExecutionTask<?,?>> task, Object input, Class<?> response, JvmOptions options) {
         IsolatedExecutor exec = IsolatedExecutor.forTask(task, response);
         return exec.run(input, options);
+    }
+
+    public IsolatedExecutor setOptions(JvmOptions options) {
+        this.options = options;
+        return  this;
+    }
+
+    public IsolatedExecutor setIpcDebugEnabled(boolean enabled) {
+        this.ipcDebugEnabled = enabled;
+        return  this;
+    }
+
+    public IsolatedExecutor setDiagnosticForwardingEnabled(boolean enabled) {
+        this.diagnisticForwaringEnabled = enabled;
+        return  this;
     }
 
     public <T> Response<T> run(Object input) throws IOException, InterruptedException {
@@ -56,7 +73,7 @@ public class IsolatedExecutor {
 
         IpcServer ipcServer;
         try {
-            ipcServer = IpcServer.start(serializer, options.diagnisticForwaringEnabled());
+            ipcServer = IpcServer.start(serializer, diagnisticForwaringEnabled, ipcDebugEnabled);
 
             options.setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
             jvmProcess.setOptions(options);
@@ -75,11 +92,6 @@ public class IsolatedExecutor {
         }
 
         return new Response<T>(jvmResponse, task, taskResponse, diagnostics, !jvmResponse.timedOut && jvmResponse.exitCode == 0);
-    }
-
-    public IsolatedExecutor setOptions(JvmOptions options) {
-        this.options = options;
-        return  this;
     }
 
     public static class Response<T> {

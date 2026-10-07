@@ -161,6 +161,12 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<PlainNod
         return this;
     }
 
+    public PlainMapNode put(String key, Number value) {
+        PlainScalarNode scalarValue = new PlainScalarNode(value);
+        put(key, scalarValue);
+        return this;
+    }
+
     @Override
     public PlainMapNode put(String key, PlainNode value) {
         for (PlainMapEntryNode entry : entriesByKey.values()) {

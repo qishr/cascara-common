@@ -17,21 +17,26 @@ import io.github.qishr.cascara.common.lang.processor.Serializer;
 public final class IpcClient implements AutoCloseable {
 
     public static final String SOCKET_PROP = "cascara.ipc.socket";
+    public static final String DEBUG_PROP = "cascara.ipc.debug";
 
     private final SocketChannel channel;
     private final BufferedWriter writer;
     private final Serializer<?> serializer;
+    private final long serverPid;
+    private final boolean ipcDebugEnabled;
 
-private final long serverPid;
-
-    private IpcClient(SocketChannel channel, BufferedWriter writer, Serializer<?> serializer, long serverPid) {
+    private IpcClient(SocketChannel channel, BufferedWriter writer, Serializer<?> serializer, long serverPid, boolean ipcDebugEnabled) {
         this.channel = channel;
         this.writer = writer;
         this.serializer = serializer;
         this.serverPid = serverPid;
+        this.ipcDebugEnabled = ipcDebugEnabled;
     }
 
     public static IpcClient tryConnect(Serializer<?> serializer) {
+        String ipcDebugStr = System.getProperty(DEBUG_PROP);
+        boolean ipcDebugEnabled = "true".equalsIgnoreCase(ipcDebugStr);
+
         String socketPathStr = System.getProperty(SOCKET_PROP);
         if (socketPathStr == null || socketPathStr.isBlank()) {
             return null;
@@ -59,7 +64,7 @@ private final long serverPid;
             BufferedWriter writer = new BufferedWriter(
                 Channels.newWriter(channel, StandardCharsets.UTF_8)
             );
-            return new IpcClient(channel, writer, serializer, serverPid);
+            return new IpcClient(channel, writer, serializer, serverPid, ipcDebugEnabled);
         } catch (IOException | NumberFormatException e) {
             throw new ExecutionException(ExecutionMessage.CONNECT_FAILED, e.getMessage());
         }
@@ -79,8 +84,9 @@ private final long serverPid;
         try {
             String line = className + "|" + payloadJson + "\n";
 
-            // TODO: -D to turn this on an off
-            // System.out.println("CLIENT: " + className + ": " + json);
+            if (ipcDebugEnabled) {
+                System.out.println("CLIENT: " + className + ": " + json);
+            }
 
             writer.write(line);
             writer.newLine();

@@ -38,6 +38,8 @@ package io.github.qishr.cascara.common.diagnostic;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.net.URI;
+import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,12 +52,13 @@ import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
-import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
+import io.github.qishr.cascara.common.util.TermUtils;
+import io.github.qishr.cascara.common.util.UriScheme;
 
 public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     private static final String PROP_CASC_REPORT_LEVEL = "casc.report.level.";
@@ -77,12 +80,16 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     private boolean ipcUnavailable = false;
     int sent = 0;
     List<Diagnostic> queue = new ArrayList<>();
+    long processId;
 
     private GlobalReporter() {
     }
 
     private GlobalReporter init() {
         globalInstance = this;
+        RuntimeMXBean rtmxb = ManagementFactory.getRuntimeMXBean();
+        globalInstance.processId = rtmxb.getPid();
+
         // TODO:
         // CASC_REPORT_CONFIG=/path/
 
@@ -276,7 +283,8 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
     @Override
     protected boolean isStackTraceEnabled() {
-        return this == globalInstance ? stackTraceEnabled : globalInstance.isStackTraceEnabled();
+        // TODO: They shoul all be like this?
+        return stackTraceEnabled || globalInstance.stackTraceEnabled;
     }
 
     @Experimental
@@ -376,48 +384,90 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     @Override
-    protected String formatMessage(Diagnostic diagnostic, String message, int messageLine, boolean useColoring) {
-        if (diagnostic.getUri() == null) {
-            if (diagnostic.getLine() > 0) {
-                return String.format(
-                    "[%s] [%d] [%s] %s at line %d\n",
-                    diagnostic.getTimestamp().format(TIME_FORMAT),
-                    diagnostic.getProcessId(),
-                    diagnostic.getSource(),
-                    diagnostic.getFormattedMessage(),
-                    diagnostic.getLine()
-                );
+    protected String formatMessage(Diagnostic diagnostic, String msgLine, int msgLineNumber, boolean colorize) {
+        int diagnosticLineNumber = diagnostic.getLine();
+        boolean showLineNumber = diagnosticLineNumber > 0;
+        boolean showUri = false;
+
+        String resource = null;
+        URI diagnosticUri = diagnostic.getUri();
+        if (diagnosticUri != null) {
+            resource = UriScheme.of(diagnosticUri) == UriScheme.FILE
+                ? Path.of(diagnostic.getUri()).toString()
+                : diagnostic.getUri().toString();
+            showUri = true;
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        if (msgLineNumber == 0) {
+
+            sb.append("[");
+            sb.append(diagnostic.getTimestamp().format(TIME_FORMAT));
+            sb.append("] ");
+
+            sb.append("[");
+            if (colorize && diagnostic.getProcessId() != globalInstance.processId) {
+                sb.append(TermUtils.ANSI_CYAN);
+                sb.append(diagnostic.getProcessId());
+                sb.append(TermUtils.ANSI_RESET);
             } else {
-                return String.format(
-                    "[%s] [%d] [%s] %s\n",
-                    diagnostic.getTimestamp().format(TIME_FORMAT),
-                    diagnostic.getProcessId(),
-                    diagnostic.getSource(),
-                    diagnostic.getFormattedMessage()
-                );
+                sb.append(diagnostic.getProcessId());
             }
-        } else {
-            if (diagnostic.getLine() > 0) {
-                return String.format(
-                    "[%s] [%d] [%s] %s at %s:%d\n",
-                    diagnostic.getTimestamp().format(TIME_FORMAT),
-                    diagnostic.getProcessId(),
-                    diagnostic.getSource(),
-                    diagnostic.getFormattedMessage(),
-                    diagnostic.getUri(),
-                    diagnostic.getLine()
-                );
-            } else {
-                return String.format(
-                    "[%s] [%d] [%s] %s in file %s\n",
-                    diagnostic.getTimestamp().format(TIME_FORMAT),
-                    diagnostic.getProcessId(),
-                    diagnostic.getSource(),
-                    diagnostic.getFormattedMessage(),
-                    diagnostic.getUri()
-                );
+            // sb.append(diagnostic.getProcessId());
+            sb.append("] ");
+
+            sb.append("[");
+            sb.append(diagnostic.getSource());
+            sb.append("] ");
+
+            if (showProblemCodes && diagnostic.getLevel().isProblem()) {
+                String msgCode = diagnostic.getMessage().getCode();
+                sb.append("[");
+                if (colorize) {
+                    sb.append(TermUtils.ANSI_WHITE);
+                    sb.append(msgCode);
+                    sb.append(TermUtils.ANSI_RESET);
+                } else {
+                    sb.append(msgCode);
+                }
+                sb.append("] ");
             }
         }
+
+        sb.append(msgLine);
+
+        if (showUri) {
+            if (showLineNumber) {
+                sb.append(" at ");
+                sb.append(resource);
+                sb.append(':');
+                sb.append(diagnosticLineNumber);
+            } else {
+                sb.append(" in file ");
+                sb.append(resource);
+            }
+        } else {
+            if (showLineNumber) {
+                if (diagnostic.getColumn() > 0) {
+                    sb.append(" at ");
+                    sb.append(diagnosticLineNumber);
+                    sb.append(":");
+                    sb.append(diagnostic.getColumn());
+                } else {
+                    sb.append(" at line ");
+                    sb.append(diagnosticLineNumber);
+                }
+            }
+        }
+
+        if (colorize) {
+            sb.append(TermUtils.ANSI_RESET);
+        }
+
+        sb.append('\n');
+
+        return sb.toString();
     }
 
     private void setLevelsForAll(Level level) {

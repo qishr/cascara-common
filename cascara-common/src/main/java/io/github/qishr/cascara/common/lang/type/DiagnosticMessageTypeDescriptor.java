@@ -39,9 +39,9 @@ import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
-public class DiagnosticMessageTypeSerializer extends AbstractScalarDescriptor<DiagnosticMessage> {
+public class DiagnosticMessageTypeDescriptor extends AbstractScalarDescriptor<DiagnosticMessage> {
 
-    public DiagnosticMessageTypeSerializer() {
+    public DiagnosticMessageTypeDescriptor() {
         super(DiagnosticMessage.class, PrimitiveType.STRING);
     }
 
@@ -68,13 +68,14 @@ public class DiagnosticMessageTypeSerializer extends AbstractScalarDescriptor<Di
             return null;
         }
 
+        @SuppressWarnings({ "rawtypes", "unchecked" })
         Enum<?> value = Enum.valueOf((Class<Enum>) msgClass, enumVal);
         return (DiagnosticMessage)value;
     }
 
     @Override
     public Object toPrimitive(DiagnosticMessage jvmInstance) {
-        return jvmInstance.getClass().getName() + "." + jvmInstance.getCode();
+        return jvmInstance.getClass().getName() + "." + jvmInstance.name();
     }
 
     @Override

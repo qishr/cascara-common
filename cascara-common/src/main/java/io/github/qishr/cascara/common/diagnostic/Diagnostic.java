@@ -60,10 +60,13 @@ public class Diagnostic {
 
     private final String source;
     private final Level level;
+
     private final DiagnosticMessage message;
+
     private final String formattedMessage;
     private final Object[] details;
     private final Throwable cause;
+    private final StackTraceElement[] stackTrace;
 
     private final String thread;    // This can be taken from the Thread class. No param needed.
     private final long processId;
@@ -85,7 +88,8 @@ public class Diagnostic {
     /// @param code An optional stable error or classification code, primarily useful for localization and documentation lookups.
     /// @param message The descriptive message explaining this diagnostic event.
     /// @param details Arguments referenced by the format specifiers in the format string.
-    public Diagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, Throwable cause, DiagnosticMessage message, String format, Object... details) {
+    public Diagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, StackTraceElement[] stackTrace, Throwable cause, DiagnosticMessage message, String format, Object... details) {
+        // TODO: Level shoul come after cause
         this.uri = uri;
         this.line = line;
         this.column = column;
@@ -93,6 +97,7 @@ public class Diagnostic {
         this.endOffset = endOffset;
 
         this.source = source;
+        this.stackTrace = stackTrace;
         this.cause = cause;
         this.message = message;
         this.details = details;
@@ -149,7 +154,7 @@ public class Diagnostic {
     /// @param code An optional stable error or classification code, primarily useful for localization and documentation lookups.
     /// @param message The descriptive message explaining this diagnostic event.
     /// @param details Arguments referenced by the format specifiers in the format string.
-    public Diagnostic(URI uri, Token token, String source, Level level, Throwable cause, DiagnosticMessage message, String format, Object... details) {
+    public Diagnostic(URI uri, Token token, String source, Level level, StackTraceElement[] stackTrace, Throwable cause, DiagnosticMessage message, String format, Object... details) {
         this(
             uri,
             token.getStartLine(),
@@ -158,6 +163,7 @@ public class Diagnostic {
             token.getOffset() + (token.getLexeme() == null ? 0 : token.getLexeme().length()),
             source,
             level,
+            stackTrace,
             cause,
             message,
             format,
@@ -186,6 +192,8 @@ public class Diagnostic {
 
     /// Returns the severity [Level] classification of this diagnostic.
     public Level getLevel() { return level; }
+
+    public StackTraceElement[] getStackTrace() { return stackTrace; }
 
     /// Returns the stable classification code, suitable for localization and system filtering.
     public DiagnosticMessage getMessage() { return message; }

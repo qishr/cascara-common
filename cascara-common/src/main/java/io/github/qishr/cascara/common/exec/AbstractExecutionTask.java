@@ -8,7 +8,9 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.StandardReporter;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
@@ -76,6 +78,7 @@ public abstract class AbstractExecutionTask<I, O> {
     public void run(Class<?> targetClass, Class<?> inputClass) {
         // GlobalReporter.globalInstance();
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.globalInstance().setStackTraceEnabled(true);
 
         StringBuilder sb = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
@@ -91,7 +94,17 @@ public abstract class AbstractExecutionTask<I, O> {
         String json = sb.toString();
 
         Serializer<?> serializer = new ProcessorFactory().createSerializer(IsolatedExecutor.SERIALIZATION_FORMAT);
-        var object = serializer.fromString(json, inputClass);
+
+        // String ipcDebugStr = System.getProperty(IpcClient.DEBUG_PROP);
+        // boolean ipcDebugEnabled = "true".equalsIgnoreCase(ipcDebugStr);
+        // if (ipcDebugEnabled) {
+        //     serializer.setReporter(new StandardReporter().setLevel(Level.INFO));
+        // }
+
+        I object = null;
+        if (!json.isBlank()) {
+            object = (I) serializer.fromString(json, inputClass);
+        }
 
         O response = null;
         if (object == null) {
@@ -100,10 +113,10 @@ public abstract class AbstractExecutionTask<I, O> {
             return;
         } else {
             try {
-                response = run((I) object);
+                response = run(object);
             } catch (Exception e) {
                 // TODO: ExecutionException
-                error(e, "Error: " + e.getMessage());
+                error(e, e.getMessage());
             }
         }
 

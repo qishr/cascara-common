@@ -45,7 +45,7 @@ public enum LangMessage implements DiagnosticMessage {
     UNKNOWN_NODE_TYPE("LANG-201", "Unknown AST node type: {0}"),
 
     // Serializer
-    FAILED_TO_MAP_TYPE("LANG-401", "Failed to map {0} to YAML AST: {1}"),
+    FAILED_TO_MAP_TYPE("LANG-401", "Failed to map {0} to AST: {1}"),
     FAILED_TO_MAP_AST("LANG-402", "Failed to map AST to {0}: {1}"),
     EXPECTED_MAP_STRUCTURE("LANG-303", "Expected a map structure for {0}"),
     FAILED_SERIALIZE("LANG-304", "Failed to serialize: {0}"),

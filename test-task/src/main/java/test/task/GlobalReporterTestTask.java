@@ -2,8 +2,8 @@ package test.task;
 
 import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.exec.AbstractExecutionTask;
-import test.interfaces.ReporterTestInput;
-import test.interfaces.ReporterTestOutput;
+import test.interfaces.payload.ReporterTestInput;
+import test.interfaces.payload.ReporterTestOutput;
 import test.interfaces.VmInfo;
 
 public class GlobalReporterTestTask extends AbstractExecutionTask<ReporterTestInput, ReporterTestOutput> {

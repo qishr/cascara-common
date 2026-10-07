@@ -1,4 +1,4 @@
-package test.interfaces;
+package test.interfaces.beans;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
@@ -11,6 +11,7 @@ public class SPLStatus implements SPLStatusMBean {
     private long memoryUsage;
 
     public SPLStatus() {
+        // TODO: Because this is not a daemon thread, it blocks return
         // Simulate dynamic updates (e.g., from a background thread)
         new Thread(() -> {
             while (true) {
@@ -35,6 +36,11 @@ public class SPLStatus implements SPLStatusMBean {
     public void hello() {
         REPORTER.info(GenericMessage.INFO,"Hello from SPLStatusMBean");
         // Add restart logic here (e.g., close connections, reset state)
+    }
+
+    @Override
+    public void exit() {
+        System.exit(0);
     }
 
     @Override

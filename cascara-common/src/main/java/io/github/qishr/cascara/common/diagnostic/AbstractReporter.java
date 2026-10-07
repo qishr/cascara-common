@@ -38,14 +38,16 @@ package io.github.qishr.cascara.common.diagnostic;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.token.Token;
 import io.github.qishr.cascara.common.util.JreUtils;
@@ -212,17 +214,23 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
                     locatable.getColumn(),
                     Diagnostic.UNKNOWN_COORD,
                     Diagnostic.UNKNOWN_COORD,
-                    source, Level.ERROR, localizable.getCause(),
+                    source, Level.ERROR,
+                    getStackTrace(),
+                    localizable.getCause(),
                     localizable.getDiagnosticMessage(), localizable.getDetails()));
             } else {
                 report(DiagnosticBuilder.build(
-                    source, Level.ERROR, localizable.getCause(),
+                    source, Level.ERROR,
+                    getStackTrace(),
+                    localizable.getCause(),
                     localizable.getDiagnosticMessage(), localizable.getDetails())
                 );
             }
         } else {
             report(DiagnosticBuilder.build(
-                source, Level.ERROR, e.getCause(),
+                source, Level.ERROR,
+                getStackTrace(),
+                e.getCause(),
                 GenericMessage.EXCEPTION, e.getMessage())
             );
         }
@@ -247,25 +255,25 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void info(DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(source, Level.INFO, null, code, details));
+        report(DiagnosticBuilder.build(source, Level.INFO, null, null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void warn(DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(source, Level.WARN, null, code, details));
+        report(DiagnosticBuilder.build(source, Level.WARN, getStackTrace(), null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void error(DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(source, Level.ERROR, null, code, details));
+        report(DiagnosticBuilder.build(source, Level.ERROR, getStackTrace(), null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void error(Throwable cause, DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(source, Level.ERROR, cause, code, details));
+        report(DiagnosticBuilder.build(source, Level.ERROR, getStackTrace(), cause, code, details));
     }
 
     //
@@ -279,7 +287,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
             null, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
-            source, Level.INFO, null, code, details
+            source, Level.INFO, null, null, code, details
         ));
     }
 
@@ -290,7 +298,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
             null, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
-            source, Level.WARN, null, code, details
+            source, Level.WARN, getStackTrace(), null, code, details
         ));
     }
 
@@ -301,7 +309,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
             null, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
-            source, Level.ERROR, null, code, details
+            source, Level.ERROR, getStackTrace(), null, code, details
         ));
     }
 
@@ -312,7 +320,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
             null, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
-            source, Level.ERROR, cause, code, details
+            source, Level.ERROR, getStackTrace(), cause, code, details
         ));
     }
 
@@ -323,25 +331,25 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void infoAt(int line, int column, int startOffset, int endOffset, DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.INFO, null, code, null, details));
+        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.INFO, null, null, code, null, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void warnAt(int line, int column, int startOffset, int endOffset, DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.WARN, null, code, null, details));
+        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.WARN, getStackTrace(), null, code, null, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void errorAt(int line, int column, int startOffset, int endOffset, DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.ERROR, null, code, details));
+        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.ERROR, getStackTrace(), null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void errorAt(int line, int column, int startOffset, int endOffset, Throwable cause, DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.ERROR, cause, code, details));
+        report(DiagnosticBuilder.build(null, line, column, startOffset, endOffset, source, Level.ERROR, getStackTrace(), cause, code, details));
     }
 
     //
@@ -351,25 +359,25 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// {@inheritDoc}
     @Override
     public void infoAt(Token token, DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(token, source, Level.INFO, null, code, details));
+        report(DiagnosticBuilder.build(token, source, Level.INFO, null, null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void warnAt(Token token, DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(token, source, Level.WARN, null, code, details));
+        report(DiagnosticBuilder.build(token, source, Level.WARN, getStackTrace(), null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void errorAt(Token token, DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(token, source, Level.ERROR, null, code, details));
+        report(DiagnosticBuilder.build(token, source, Level.ERROR, getStackTrace(), null, code, details));
     }
 
     /// {@inheritDoc}
     @Override
     public void errorAt(Token token, Throwable cause, DiagnosticMessage code, Object... details) {
-        report(DiagnosticBuilder.build(token, source, Level.ERROR, cause, code, details));
+        report(DiagnosticBuilder.build(token, source, Level.ERROR, getStackTrace(), cause, code, details));
     }
 
     //
@@ -383,7 +391,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
             uri, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
-            source, Level.WARN, null, code, details
+            source, Level.WARN, getStackTrace(), null, code, details
         ));
     }
 
@@ -394,7 +402,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
             uri, line, column,
             Diagnostic.UNKNOWN_COORD,
             Diagnostic.UNKNOWN_COORD,
-            source, Level.ERROR, null, code, details
+            source, Level.ERROR, getStackTrace(), null, code, details
         ));
     }
 
@@ -404,7 +412,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
             uri, token.getStartLine(), token.getStartColumn(),
             token.getOffset(),
             Diagnostic.UNKNOWN_COORD,
-            source, Level.WARN, null, code, details
+            source, Level.WARN, getStackTrace(), null, code, details
         ));
     }
 
@@ -414,17 +422,17 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
             uri, token.getStartLine(), token.getStartColumn(),
             token.getOffset(),
             Diagnostic.UNKNOWN_COORD,
-            source, Level.ERROR, null, code, details
+            source, Level.ERROR, getStackTrace(), null, code, details
         ));
     }
 
     @Override
-    public void errorAt(URI uri, Token token, Throwable t, DiagnosticMessage code, Object... details) {
+    public void errorAt(URI uri, Token token, Throwable cause, DiagnosticMessage code, Object... details) {
         report(DiagnosticBuilder.build(
             uri, token.getStartLine(), token.getStartColumn(),
             token.getOffset(),
             Diagnostic.UNKNOWN_COORD,
-            source, Level.ERROR, t, code, details
+            source, Level.ERROR, getStackTrace(), cause, code, details
         ));
     }
 
@@ -466,29 +474,60 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         if (writer == null) {
             return;
         }
+
         String[] lines = diagnostic.getFormattedMessage().split("\n");
         for (int i = 0; i < lines.length; i++) {
             String logLine = formatMessage(diagnostic, lines[i], i, false).stripTrailing();
             String consoleLine = ansiColoringEnabled
                 ? formatMessage(diagnostic, lines[i], i, true).stripTrailing()
                 : logLine;
-            writer.logLine(logLine, i);
+            writer.logLine(logLine);
             writer.displayLine(consoleLine, i);
         }
-        if (diagnostic.getCause() != null && isStackTraceEnabled()) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            diagnostic.getCause().printStackTrace(pw);
-            lines = sw.toString().split("\n");
-            for (int i = 0; i < lines.length; i++) {
-                String logLine = lines[i];
-                writer.logLine(logLine, i);
-                writer.displayLine(logLine, i);
+
+        if ((diagnostic.getCause() != null || diagnostic.getStackTrace() != null) && isStackTraceEnabled()) {
+            // StringWriter sw = new StringWriter();
+            // PrintWriter pw = new PrintWriter(sw);
+            if (diagnostic.getCause() != null) {
+                // diagnostic.getCause().printStackTrace(pw);
+                writeStackTrace(diagnostic.getStackTrace(), diagnostic.getCause(), writer);
+            } else if (diagnostic.getStackTrace() != null) {
+                writeStackTrace(diagnostic.getStackTrace(), null, writer);
             }
+            // lines = sw.toString().split("\n");
+            // for (int i = 0; i < lines.length; i++) {
+            //     String logLine = lines[i];
+            //     writer.logLine(logLine, i);
+            //     writer.displayLine(logLine, i);
+            // }
         }
     }
 
-    protected void logLine(Level level, String msgLine, int msgLineNumber) {
+    private void writeStackTrace(StackTraceElement[] stackTrace, Throwable t, ReportWriter writer) {
+        // int msgLineNumber = 0;
+        // TODO: Cause exception details
+        for (StackTraceElement frame : stackTrace) {
+            String msgLine = String.format(
+                "  at %s.%s(%s:%d)",
+                frame.getClassName(),
+                frame.getMethodName(),
+                frame.getFileName(),
+                frame.getLineNumber()
+            );
+            writer.logLine(msgLine);
+            writer.displayLine(msgLine, 1);
+            // msgLineNumber++;
+        }
+
+        // if (t != null) {
+        //     // writer.logLine("Caused by:");
+        //     writer.displayLine("Caused by:" + t.getClass(), 1);
+        //     writer.displayLine("Caused by:" + t.getMessage(), 1);
+        //     // writeStackTrace(t.getStackTrace(), t.getCause(), writer);
+        // }
+    }
+
+    protected void logLine(Level level, String msgLine) {
         if (getLineConsumer() != null) {
             String logLine = "[" + level.getLogPrefix() + "] " + msgLine;
             getLineConsumer().accept(logLine);
@@ -549,5 +588,12 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     public boolean reportsTrace() {
         return !isSilent() && level.includes(Level.TRACE);
+    }
+
+    private StackTraceElement[] getStackTrace() {
+        // TODO: Omit caller
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        StackTraceElement[] result = Arrays.copyOfRange(stackTrace, 3, stackTrace.length);
+        return result;
     }
 }

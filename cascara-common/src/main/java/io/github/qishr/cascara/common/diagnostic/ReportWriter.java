@@ -59,13 +59,13 @@ public class ReportWriter extends Writer {
         while ((newlineIdx = buffer.indexOf("\n")) != -1) {
             String line = buffer.substring(0, newlineIdx).replace("\r", "");
             reporter.displayLine(level, line, msgLineNumber);
-            reporter.logLine(level, line, msgLineNumber);
+            reporter.logLine(level, line);
             buffer.delete(0, newlineIdx + 1);
             msgLineNumber++;
         }
         if (force && buffer.length() > 0) {
             reporter.displayLine(level, buffer.toString(), msgLineNumber);
-            reporter.logLine(level, buffer.toString(), msgLineNumber);
+            reporter.logLine(level, buffer.toString());
             buffer.setLength(0);
         }
     }
@@ -75,9 +75,9 @@ public class ReportWriter extends Writer {
         reporter.displayLine(level, msgLine, msgLineNumber);
     }
 
-    void logLine(String msgLine, int msgLineNumber) {
+    void logLine(String msgLine) {
         flush();
-        reporter.logLine(level, msgLine, msgLineNumber);
+        reporter.logLine(level, msgLine);
     }
 
 }

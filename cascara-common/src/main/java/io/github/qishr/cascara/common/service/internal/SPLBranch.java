@@ -512,12 +512,10 @@ public class SPLBranch implements SPL {
                         @SuppressWarnings("unchecked")
                         Class<? extends ServiceProvider> providerClass = (Class<? extends ServiceProvider>) clazz;
 
-                        // This throws a ServiceException which is caught below
                         ServiceProvider providerInstance = SPLUtils.instantiate(providerClass);
-
                         registerProvider(providerInstance, jarPath, true);
                     }
-                } catch (NoClassDefFoundError e) {
+                } catch (ClassNotFoundException | NoClassDefFoundError e) {
                     if (isAutoRegistration) {
                         REPORTER.debug("NoClassDefFoundError: " + className);
                     } else {
@@ -760,13 +758,29 @@ public class SPLBranch implements SPL {
         if (location != null) {
             logMessage = logMessage + " " + location;
         }
-        if (t != null) {
-            logMessage = logMessage + " " + t.getMessage();
-        }
+
+        // if (message.contains("GlobalReporterTestTask")) {
+        //     // Thread.dumpStack();
+        //     // if (t instanceof Exception e) {
+        //     //     System.err.println(e.getClass());
+        //     //     System.err.println(e.getMessage());
+        //     //     e.printStackTrace();
+        //     //     if (e.getCause() instanceof Exception e2) {
+        //     //         e2.printStackTrace();
+        //     //     }
+        //     // }
+        //     REPORTER.error(t, GenericMessage.ERROR, logMessage);
+        // }
+
+        // TODO: Better reporting
+        // if (t != null) {
+        //     logMessage = logMessage + " " + t.getMessage();
+        // }
         if (isAutoRegistration) {
             REPORTER.warn(GenericMessage.ERROR, logMessage);
+            // REPORTER.error(t, GenericMessage.ERROR, logMessage);
         } else {
-            REPORTER.error(GenericMessage.ERROR, logMessage);
+            REPORTER.error(t, GenericMessage.ERROR, logMessage);
         }
     }
 

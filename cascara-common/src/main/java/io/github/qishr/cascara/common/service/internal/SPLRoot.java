@@ -51,7 +51,8 @@ import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.filewatcher.FileWatcher;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.type.DateTimeTypeDescriptor;
-import io.github.qishr.cascara.common.lang.type.DiagnosticMessageTypeSerializer;
+import io.github.qishr.cascara.common.lang.type.DiagnosticMessageTypeDescriptor;
+import io.github.qishr.cascara.common.lang.type.StackTraceElementTypeSerializer;
 import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceException;
@@ -98,14 +99,24 @@ public class SPLRoot extends SPLBranch {
         } catch (ServiceException e) {
             // Ignore
         }
+
+        // Set up the GlobalReporter serializer.
+        // This is done here rather than in GlobalReporter because GlobalReporter
+        // is used by SPL, and only SPL knows when the serializer becomes available.
         try {
             Serializer<?> serializer = ProcessorFactory.system().createSerializer(GlobalReporter.SERIALIZATION_FORMAT);
             if (serializer != null) {
-                DiagnosticMessageTypeSerializer dmtd = new DiagnosticMessageTypeSerializer();
-                DateTimeTypeDescriptor dttd = new DateTimeTypeDescriptor();
-                serializer.registerTypeDescriptor(dmtd);
-                serializer.registerTypeDescriptor(dttd);
+                // Prevent the serializer from using SPL to find TypeDescriptor and
+                // TypeSerializer providers to avoid infinite recursion:
+                //     SPL -> GlobalReporter -> Serializer -> SPL
                 serializer.setUseProviderFactory(false);
+
+                // Instead of letting the Serializer use SPL, give it the type
+                // descriptors and type serializers it needs for Diagnostic serialization.
+                serializer.registerTypeDescriptor(new DateTimeTypeDescriptor());
+                serializer.registerTypeDescriptor(new DiagnosticMessageTypeDescriptor());
+                serializer.registerTypeDescriptor(new StackTraceElementTypeSerializer());
+
                 GlobalReporter.initSerializer(serializer);
             }
         } catch (ServiceException e) {
@@ -235,6 +246,8 @@ public class SPLRoot extends SPLBranch {
                 try {
                     Files.createFile(propsFile);
                 } catch (IOException e) {
+                    // e.printStackTrace();
+                    // TODO: Human readable IO exception details...
                     REPORTER.error(e, FileMessage.WRITE_ERROR, propsFile);
                     return;
                 }

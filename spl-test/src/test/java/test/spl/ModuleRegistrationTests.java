@@ -40,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -100,6 +101,9 @@ class ModuleRegistrationTests extends SplTestBase {
 
         reporter.info(GenericMessage.INFO, "Test registering JAR");
         Path providerAJar = createModuleA();
+
+        syncVfs();
+
         layer.registerJar(providerAJar);
 
         // Verify the provider is registered

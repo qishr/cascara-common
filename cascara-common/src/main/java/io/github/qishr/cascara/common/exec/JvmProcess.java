@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class JvmProcess {
@@ -26,21 +27,135 @@ public final class JvmProcess {
         return  this;
     }
 
+    /// Synchronous blocking execution (Preserved signature for backwards compatibility).
     public Response run() throws IOException, InterruptedException {
         return run(null);
     }
 
+    /// Executes the process synchronously with optional standard input,
+    /// blocking the calling thread until completion.
+    ///
+    /// @param input standard input payload to stream to the child process, or null
+    /// @return the process execution response payload
+    /// @throws ExecutionException if process launch, input writing, or execution fails
     public Response run(String input) {
-        List<String> command = new ArrayList<>();
+        try {
+            return runAsync(input).get();
+        } catch (java.util.concurrent.ExecutionException e) {
+            if (e.getCause() instanceof ExecutionException ex) {
+                throw ex;
+            }
+            throw new ExecutionException(e.getCause(), ExecutionMessage.PROCESS_FAILED, mainClass.getName());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ExecutionException(e, ExecutionMessage.INTERRUPT, mainClass.getName());
+        }
+    }
 
-        // 1. Executable Java binary
+    /// Non-blocking background execution.
+    public CompletableFuture<Response> runAsync() {
+        return runAsync(null);
+    }
+
+    /// Non-blocking background execution with input.
+    public CompletableFuture<Response> runAsync(String input) {
+
+        List<String> command = buildCommand();
+        ProcessBuilder pb = new ProcessBuilder(command);
+
+        if (!jvmOptions.getEnv().isEmpty()) {
+            pb.environment().putAll(jvmOptions.getEnv());
+        }
+
+        if (jvmOptions.debug()) {
+            System.out.println("JvmProcess Command:");
+            for (String s : command) {
+                System.out.println("  " + s);
+            }
+            System.out.println("JvmProcess Environment:");
+            for (Entry<String, String> entry : pb.environment().entrySet()) {
+                System.out.println("  " + entry.getKey() + " = " + entry.getValue());
+            }
+        }
+
+        long startTime = System.nanoTime();
+        Process process;
+        try {
+            process = pb.start();
+        } catch (IOException e) {
+            return CompletableFuture.failedFuture(
+                new io.github.qishr.cascara.common.exec.ExecutionException(
+                    e,
+                    ExecutionMessage.PROCESS_FAILED,
+                    mainClass.getName()
+                )
+            );
+        }
+
+        // Read streams concurrently to prevent OS stream buffer deadlocks
+        var stdoutFuture = CompletableFuture.supplyAsync(() -> readStream(process.getInputStream()));
+        var stderrFuture = CompletableFuture.supplyAsync(() -> readStream(process.getErrorStream()));
+
+        if (input != null && !input.isEmpty()) {
+            try (var inputStream = process.getOutputStream()) {
+                inputStream.write(input.getBytes(StandardCharsets.UTF_8));
+                inputStream.flush();
+            } catch (IOException e) {
+                process.destroyForcibly();
+                return CompletableFuture.failedFuture(
+                    new io.github.qishr.cascara.common.exec.ExecutionException(
+                        e,
+                        ExecutionMessage.INPUT_FAILED,
+                        mainClass.getName(),
+                        null
+                    )
+                );
+            }
+        }
+
+        long timeoutMs = jvmOptions.getTimeout().toMillis();
+        CompletableFuture<Process> processCompletion = process.onExit();
+
+        if (timeoutMs > 0) {
+            processCompletion = processCompletion.orTimeout(timeoutMs, TimeUnit.MILLISECONDS)
+                .exceptionally(ex -> {
+                    process.destroyForcibly();
+                    return process;
+                });
+        }
+
+        return processCompletion.thenCompose(p ->
+            CompletableFuture.allOf(stdoutFuture, stderrFuture).thenApply(v -> {
+                long elapsedNanos = System.nanoTime() - startTime;
+                boolean timedOut = !p.isAlive() && timeoutMs > 0 && (elapsedNanos / 1_000_000) >= timeoutMs;
+                int exitCode = timedOut ? -1 : p.exitValue();
+
+                return new Response(
+                    command,
+                    jvmOptions,
+                    exitCode,
+                    timedOut,
+                    stdoutFuture.join(),
+                    stderrFuture.join(),
+                    Duration.ofNanos(elapsedNanos)
+                );
+            })
+        );
+    }
+
+    private List<String> buildCommand() {
+        List<String> command = new ArrayList<>();
         String javaBin = ProcessHandle.current().info().command().orElse("java");
         command.add(javaBin);
 
-        // 2. System properties (-D)
-        jvmOptions.getSystemProperties().forEach((k, v) -> command.add("-D" + k + "=" + v));
+        jvmOptions.getSystemProperties().forEach((k, v) -> {
+            if (v == null || v.isBlank()) {
+                command.add("-D" + k);
+            } else {
+                command.add("-D" + k + "=" + v);
+            }
+        });
 
-        // 3. Module path vs. Classpath
         String modulePath = jvmOptions.getModulePath();
         if (modulePath != null && !modulePath.isBlank()) {
             command.add("--module-path");
@@ -56,7 +171,6 @@ public final class JvmProcess {
             command.add(classPath);
         }
 
-        // 4. Encapsulation and Access Directives
         for (String mod : jvmOptions.getModules()) {
             command.add("--add-modules");
             command.add(mod);
@@ -70,122 +184,24 @@ public final class JvmProcess {
             command.add(readTarget);
         }
 
-        // 5. Entry Point: Determined strictly by whether a module name is targeted
         String moduleName = jvmOptions.getModuleName();
         if (moduleName != null && !moduleName.isBlank()) {
-            // Modular execution: java --module moduleName/mainClassName
             command.add("--module");
             command.add(moduleName + "/" + mainClass.getName());
         } else {
-            // Standard classpath execution: java mainClassName
             command.add(mainClass.getName());
         }
 
         command.addAll(jvmOptions.getArgs());
+        return command;
+    }
 
-        ProcessBuilder pb = new ProcessBuilder(command);
-
-        // Environment variables
-        if (!jvmOptions.getEnv().isEmpty()) {
-            pb.environment().putAll(jvmOptions.getEnv());
-        }
-
-        if (jvmOptions.debug()) {
-            System.out.println("JvmProcess Command:");
-            for (String s : command) {
-                System.out.println("  " + s);
-            }
-            System.out.println("JvmProcess Environment:");
-            for (Entry<String,String> entry : pb.environment().entrySet()) {
-                System.out.println("  " + entry.getKey() + " = " + entry.getValue());
-            }
-        }
-
-        long startTime = System.nanoTime();
-        Process process;
+    private static String readStream(java.io.InputStream is) {
         try {
-            process = pb.start();
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new ExecutionException(e, ExecutionMessage.PROCESS_FAILED, mainClass.getName());
+            return "";
         }
-
-        // Capture stdout and stderr asynchronously to prevent OS buffer deadlocks
-        var stdoutStream = process.getInputStream();
-        var stderrStream = process.getErrorStream();
-
-        if (input != null && !input.isEmpty()) {
-            // System.out.println("Sending: " + input);
-            var inputStream = process.getOutputStream();
-            try {
-                inputStream.write(input.getBytes());
-                inputStream.flush();
-                inputStream.close();
-            } catch (IOException e) {
-                throw new ExecutionException(e, ExecutionMessage.INPUT_FAILED, mainClass.getName(), null);
-            }
-        }
-
-        boolean completed;
-        try {
-            completed = process.waitFor(jvmOptions.getTimeout().toMillis(), TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            throw new ExecutionException(e, ExecutionMessage.INTERRUPT, mainClass.getName(), null);
-        }
-        long elapsedNanos = System.nanoTime() - startTime;
-
-
-        if (!completed) {
-            process.destroyForcibly();
-
-            String outResponse = "";
-            String errResponse = "";
-
-            try {
-                outResponse = new String(stdoutStream.readAllBytes(), StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                // TODO: We probably want to throw an ExecutionException
-            }
-            try {
-                errResponse = new String(stderrStream.readAllBytes(), StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                // TODO: We probably want to throw an ExecutionException
-            }
-
-            return new Response(
-                command,
-                jvmOptions,
-                -1,
-                true,
-                outResponse,
-                errResponse,
-                Duration.ofNanos(elapsedNanos)
-            );
-        }
-
-        String outResponse = "";
-        String errResponse = "";
-
-        try {
-            outResponse = new String(stdoutStream.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            System.err.println("TestProcess error reading stdout: " + e.getMessage());
-        }
-        try {
-            errResponse = new String(stderrStream.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            System.err.println("TestProcess error reading stderr: " + e.getMessage());
-        }
-
-        return new Response(
-            command,
-            jvmOptions,
-            process.exitValue(),
-            false,
-            outResponse,
-            errResponse,
-            Duration.ofNanos(elapsedNanos)
-        );
-
     }
 
     public static class Response {

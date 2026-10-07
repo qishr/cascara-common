@@ -1,4 +1,4 @@
-package test.interfaces;
+package test.interfaces.beans;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 
@@ -11,6 +11,8 @@ public interface SPLStatusMBean {
 
     // Operation: Restart the server
     void hello();
+
+    void exit();
 
     void setLogLevel(Level level);
 }
