@@ -36,12 +36,8 @@
 package io.github.qishr.cascara.common.diagnostic;
 
 import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.annotation.Experimental;

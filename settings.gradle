@@ -13,6 +13,5 @@ plugins {
 
 
 include 'cascara-common'
-include 'spl-test'
-include 'spl-test-interfaces'
-// include 'test-task'
+include 'integration-test'
+include 'integration-test-fixtures'
