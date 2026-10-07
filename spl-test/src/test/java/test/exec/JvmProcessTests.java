@@ -22,7 +22,7 @@ import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
 import io.github.qishr.cascara.common.service.SPL;
 import test.interfaces.payload.ReporterTestInput;
-import test.task.GlobalReporterTestTask;
+import test.interfaces.task.GlobalReporterTestTask;
 
 public class JvmProcessTests extends ExecTestBase {
     @BeforeEach

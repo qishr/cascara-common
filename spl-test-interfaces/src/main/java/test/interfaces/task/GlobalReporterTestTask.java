@@ -1,4 +1,4 @@
-package test.task;
+package test.interfaces.task;
 
 import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.exec.AbstractExecutionTask;

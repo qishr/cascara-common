@@ -34,6 +34,9 @@ public class JmxTest extends JmxTestBase {
     // TODO: this fails when running in parallel to other jmx tests. port number?
     @Test
     void test_JMX() throws IOException {
+        REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
+        syncVfs();
+
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString(input);
@@ -42,13 +45,16 @@ public class JmxTest extends JmxTestBase {
         GlobalReporter.forClass(taskClass).setLevel(Level.DEBUG);
         IpcServer ipcServer = IpcServer.start(serializer, true, false);
 
-        JvmOptions options = newJmxTestOptions()
+        int jmxPort = findFreePort();
+
+        JvmOptions options = newJmxTestOptions(jmxPort)
             .setTimeout(Duration.ofHours(24))
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
             .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
-            .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
+            .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
+            .setEnv("CASC_HOME", getPhysicalHomePath());
 
         // Run sub-JVM process...
         JvmProcess.forClass(taskClass)
@@ -66,7 +72,7 @@ public class JmxTest extends JmxTestBase {
             });
 
 
-        String urlString = "service:jmx:rmi:///jndi/rmi://127.0.0.1:9010/jmxrmi";
+        String urlString = String.format("service:jmx:rmi:///jndi/rmi://127.0.0.1:%d/jmxrmi", jmxPort);
         JMXServiceURL url = new JMXServiceURL(urlString);
 
         try {

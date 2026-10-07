@@ -39,7 +39,7 @@ module test.spl {
     requires cascara.test.common.junit;
     requires transitive test.interfaces;
 
-    requires test.task;
+    // requires test.task;
     requires cascara.lang.json;
 
     requires org.junit.jupiter.api;

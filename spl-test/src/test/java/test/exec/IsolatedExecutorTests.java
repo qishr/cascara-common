@@ -14,7 +14,7 @@ import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import test.interfaces.payload.ReporterTestInput;
 import test.interfaces.payload.ReporterTestOutput;
-import test.task.GlobalReporterTestTask;
+import test.interfaces.task.GlobalReporterTestTask;
 
 public class IsolatedExecutorTests extends ExecTestBase {
 

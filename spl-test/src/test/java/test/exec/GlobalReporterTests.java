@@ -15,7 +15,7 @@ import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import test.interfaces.payload.ReporterTestInput;
 import test.interfaces.payload.ReporterTestOutput;
-import test.task.GlobalReporterTestTask;
+import test.interfaces.task.GlobalReporterTestTask;
 
 // ./gradlew :cascara-common:build publishToMavenLocal -x javadoc -x test -x testClasspath -x testJarClasspath --refresh-dependencies
 // ./gradlew :spl-test:build -x javadoc :spl-test:test --tests "*GlobalReporterTests*"

@@ -15,4 +15,4 @@ plugins {
 include 'cascara-common'
 include 'spl-test'
 include 'spl-test-interfaces'
-include 'test-task'
+// include 'test-task'

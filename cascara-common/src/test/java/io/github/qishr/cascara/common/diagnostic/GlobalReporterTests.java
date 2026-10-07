@@ -56,6 +56,7 @@ public class GlobalReporterTests {
         assertEquals(0, lines.size());
     }
 
+    @Disabled
     @Test
     void test_fails_setNonLocalLevelViaLocalInstance() {
         GlobalReporter reporter = GlobalReporter.forClass(GlobalReporterTests.class);

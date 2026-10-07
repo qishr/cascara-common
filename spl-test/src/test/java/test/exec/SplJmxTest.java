@@ -109,8 +109,9 @@ public class SplJmxTest extends JmxTestBase {
         syncVfs();
 
         IpcServer ipcServer = IpcServer.start(serializer, true, ipcDebug);
+        int jmxPort = findFreePort();
 
-        JvmOptions options = newJmxTestOptions()
+        JvmOptions options = newJmxTestOptions(jmxPort)
             .setTimeout(Duration.ofHours(24))
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
@@ -150,7 +151,7 @@ public class SplJmxTest extends JmxTestBase {
             }
         });
 
-        String urlString = "service:jmx:rmi:///jndi/rmi://127.0.0.1:9010/jmxrmi";
+        String urlString = String.format("service:jmx:rmi:///jndi/rmi://127.0.0.1:%d/jmxrmi", jmxPort);
         JMXServiceURL url = new JMXServiceURL(urlString);
 
         JMXConnector jmxConnector = connectWithRetry(url, 20, 1000);
@@ -213,7 +214,9 @@ public class SplJmxTest extends JmxTestBase {
 
         IpcServer ipcServer = IpcServer.start(serializer, true, ipcDebug);
 
-        JvmOptions options = newJmxTestOptions()
+        int jmxPort = findFreePort();
+
+        JvmOptions options = newJmxTestOptions(jmxPort)
             .setTimeout(Duration.ofHours(24))
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
@@ -246,7 +249,7 @@ public class SplJmxTest extends JmxTestBase {
             });
 
 
-        String urlString = "service:jmx:rmi:///jndi/rmi://127.0.0.1:9010/jmxrmi";
+        String urlString = String.format("service:jmx:rmi:///jndi/rmi://127.0.0.1:%d/jmxrmi", jmxPort);
         JMXServiceURL url = new JMXServiceURL(urlString);
 
         JMXConnector jmxConnector = connectWithRetry(url, 20, 1000);

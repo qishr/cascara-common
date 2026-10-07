@@ -102,8 +102,6 @@ class ModuleRegistrationTests extends SplTestBase {
         reporter.info(GenericMessage.INFO, "Test registering JAR");
         Path providerAJar = createModuleA();
 
-        syncVfs();
-
         layer.registerJar(providerAJar);
 
         // Verify the provider is registered

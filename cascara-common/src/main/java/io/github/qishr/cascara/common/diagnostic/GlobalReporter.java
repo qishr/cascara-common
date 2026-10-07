@@ -160,20 +160,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         return reporter;
     }
 
-    private static GlobalReporter forSourceInternal(String fqcn) {
-        GlobalReporter reporter = globalInstance.classInstances.get(fqcn);
-        if (reporter == null) {
-            reporter = new GlobalReporter(fqcn);
-            globalInstance.classInstances.put(fqcn, reporter);
-            String envKey = fqcn.replace('.', '_').toUpperCase();
-            Level envLevel = globalInstance.envLevels.get(envKey);
-            if (envLevel != null) {
-                reporter.level = envLevel;
-            }
-        }
-        return reporter;
-    }
-
     /// {@inheritDoc}
     @Override
     public GlobalReporter setLevel(Level level) {
@@ -184,21 +170,14 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         return setLevelInternal(level);
     }
 
-    private GlobalReporter setLevelInternal(Level level) {
-        if (this != globalInstance) {
-            setLevelsForAll(level);
-        } else {
-            this.level = level;
-        }
-        return this;
-    }
-
     /// Sets the reporting level for the specified class.
     /// @param fqcn the fully qualified class name of the class to set the level for.
     /// @param level the level to set for the class.
     public GlobalReporter setLevel(String fqcn, Level level) {
+        // TODO: Only throw here if the API call would actually override an environment setting
         if (!allowApiOverride) {
-            throw new UnsupportedOperationException("This reporter does not allow setting its level via the API");
+        // if (!allowApiOverride && !fqcn.equals(source)) {
+            // throw new UnsupportedOperationException("This reporter does not allow setting its level via the API");
         }
         return setLevelInternal(fqcn, level);
     }
@@ -251,10 +230,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         super.setFlushEnabled(b);
         return this;
     }
-
-    //
-    //
-    //
 
     @Override
     protected Consumer<Diagnostic> getDiagnosticConsumer() {
@@ -319,6 +294,33 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 globalInstance.sendDiagnostic(diagnostic);
             }
         }
+    }
+
+    //
+    //
+    //
+
+    private static GlobalReporter forSourceInternal(String fqcn) {
+        GlobalReporter reporter = globalInstance.classInstances.get(fqcn);
+        if (reporter == null) {
+            reporter = new GlobalReporter(fqcn);
+            globalInstance.classInstances.put(fqcn, reporter);
+            String envKey = fqcn.replace('.', '_').toUpperCase();
+            Level envLevel = globalInstance.envLevels.get(envKey);
+            if (envLevel != null) {
+                reporter.level = envLevel;
+            }
+        }
+        return reporter;
+    }
+
+    private GlobalReporter setLevelInternal(Level level) {
+        if (this != globalInstance) {
+            setLevelsForAll(level);
+        } else {
+            this.level = level;
+        }
+        return this;
     }
 
     private void sendDiagnostic(Diagnostic diagnostic) {

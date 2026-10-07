@@ -1,6 +1,7 @@
 package test.exec;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,11 +14,19 @@ import javax.management.remote.JMXServiceURL;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 
 public class JmxTestBase extends ExecTestBase {
-    protected JvmOptions newJmxTestOptions() {
+
+    protected static int findFreePort() throws IOException {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        }
+    }
+
+    protected JvmOptions newJmxTestOptions(int jmxPort) {
         JvmOptions options = new JvmOptions()
             .setSystemProperty("com.sun.management.jmxremote","")
-            .setSystemProperty("com.sun.management.jmxremote.port", "9010")
-            .setSystemProperty("com.sun.management.jmxremote.rmi.port", "9010")
+            .setSystemProperty("com.sun.management.jmxremote.port", String.valueOf(jmxPort))
+            .setSystemProperty("com.sun.management.jmxremote.rmi.port", String.valueOf(jmxPort))
             .setSystemProperty("com.sun.management.jmxremote.local.only", "false")
             .setSystemProperty("com.sun.management.jmxremote.authenticate", "false")
             .setSystemProperty("com.sun.management.jmxremote.ssl", "false");

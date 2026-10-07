@@ -26,7 +26,7 @@ dependencies {
     implementation(project(':spl-test-interfaces'))
 
     implementation('io.github.qishr:cascara-lang-json')
-    implementation(project(':test-task'))
+    // implementation(project(':test-task'))
 }
 
 
