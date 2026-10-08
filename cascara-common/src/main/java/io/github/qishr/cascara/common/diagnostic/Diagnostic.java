@@ -37,8 +37,7 @@ package io.github.qishr.cascara.common.diagnostic;
 
 import java.net.URI;
 import java.text.MessageFormat;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.lang.token.Token;
@@ -70,7 +69,8 @@ public class Diagnostic {
 
     private final String thread;    // This can be taken from the Thread class. No param needed.
     private final long processId;
-    private final ZonedDateTime timestamp;
+    private final Instant timestamp;
+    // private final ZonedDateTime timestamp;
 
     /// Constructs a fully qualified [Diagnostic] entry with absolute location indicators.
     ///
@@ -104,7 +104,8 @@ public class Diagnostic {
 
         this.thread = Thread.currentThread().getName();
         this.processId = ProcessHandle.current().pid();
-        this.timestamp = ZonedDateTime.now(ZoneOffset.UTC);
+        // this.timestamp = ZonedDateTime.now(ZoneOffset.UTC);
+        this.timestamp = Instant.now();
 
         String formattedMessage;
 
@@ -213,7 +214,7 @@ public class Diagnostic {
     public long getProcessId() { return processId; }
 
     /// Returns the exact timestamp indicating when this diagnostic was instantiated.
-    public ZonedDateTime getTimestamp() { return timestamp; }
+    public Instant getTimestamp() { return timestamp; }
 
     /// Sets the URI of the source resource associated with this diagnostic.
     public void setUri(URI uri) { this.uri = uri; }

@@ -14,7 +14,7 @@ import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
-import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
+import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 
 public class LocalIpcTests extends ExecTestBase {
     @BeforeEach

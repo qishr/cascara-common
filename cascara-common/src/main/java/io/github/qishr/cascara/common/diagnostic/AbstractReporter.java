@@ -37,6 +37,7 @@ package io.github.qishr.cascara.common.diagnostic;
 
 import java.io.PrintStream;
 import java.net.URI;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -50,6 +51,9 @@ import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.TermUtils;
 
 public abstract class AbstractReporter<T extends AbstractReporter<?>> implements Reporter {
+
+    protected static final ZoneId UTC = ZoneId.of("UTC");
+
     protected static final boolean CAN_USE_ANSI_COLORING = (
         JreUtils.isRunningInTerminal() ||
         JreUtils.isRunningViaEclipse() ||

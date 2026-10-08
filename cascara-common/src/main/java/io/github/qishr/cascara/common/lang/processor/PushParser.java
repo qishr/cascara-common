@@ -40,10 +40,12 @@ import java.io.InputStream;
 import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.lang.diagnostic.ParserException;
 import io.github.qishr.cascara.common.lang.streaming.StreamHandler;
+import io.github.qishr.cascara.common.lang.streaming.StreamingEvent;
+import io.github.qishr.cascara.common.lang.streaming.StreamingEventType;
 
 @Beta
-public interface PushParser extends Processor {
+public interface PushParser<T extends StreamingEventType, E extends StreamingEvent<T>> extends Processor {
     /// Eagerly drives the input stream to completion, passing every
     /// structural event encountered directly to the registered handler.
-    void parse(InputStream input, StreamHandler<?> handler) throws ParserException;
+    void parse(InputStream input, StreamHandler<E> handler) throws ParserException;
 }

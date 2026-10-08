@@ -40,6 +40,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.URI;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -376,10 +377,12 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
         StringBuilder sb = new StringBuilder();
 
+        String timeStamp = ZonedDateTime.ofInstant(diagnostic.getTimestamp(), UTC).format(TIME_FORMAT);
+
         if (msgLineNumber == 0) {
 
             sb.append("[");
-            sb.append(diagnostic.getTimestamp().format(TIME_FORMAT));
+            sb.append(timeStamp);
             sb.append("] ");
 
             sb.append("[");

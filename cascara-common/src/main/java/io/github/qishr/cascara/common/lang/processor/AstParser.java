@@ -37,7 +37,6 @@ package io.github.qishr.cascara.common.lang.processor;
 
 import java.io.InputStream;
 import java.io.Reader;
-import java.text.ParseException;
 import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Beta;
@@ -50,21 +49,21 @@ public interface AstParser<N extends AstNode, T extends Token, L extends Tokeniz
     ///
     /// @param text The raw text source.
     /// @return The root [AstNode].
-    N parse(String text) throws ParseException;
+    N parse(String text);
 
-    N parse(Reader reader) throws ParseException;
+    N parse(Reader reader);
 
     /// Entry point for parsing an `InputStream`.
     ///
     /// @param is is An input stream of the raw text source.
     /// @return The root [AstNode].
-    N parse(InputStream is) throws ParseException;
+    N parse(InputStream is);
 
     /// Primary parsing core driven directly by the Tokenizer interface structure.
     ///
     /// @param tokenizer the tokenizer instance.
     /// @return The root [AstNode].
-    N parse(L tokenizer) throws ParseException;
+    N parse(L tokenizer);
 
     /// Entry point for parsing a list of tokens.
     ///
