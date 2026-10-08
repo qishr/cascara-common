@@ -35,33 +35,35 @@
 
 package io.github.qishr.cascara.common.lang.type;
 
-import java.util.UUID;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 
-public class UuidTypeDescriptor extends AbstractScalarDescriptor<UUID> {
-    public UuidTypeDescriptor() {
-        super(UUID.class, PrimitiveType.STRING, "uuid");
+public class DateTimeDescriptor extends AbstractScalarDescriptor<ZonedDateTime> {
+    public DateTimeDescriptor() {
+        super(ZonedDateTime.class, PrimitiveType.STRING, "date-time");
     }
 
     @Override
-    public UUID toJvmType(String text) {
-        return UUID.fromString(text);
+    public ZonedDateTime toJvmType(String text) {
+        return ZonedDateTime.parse(text);
     }
 
     @Override
-    public Object toPrimitive(UUID jvmInstance) {
+    public Object toPrimitive(ZonedDateTime jvmInstance) {
         return jvmInstance.toString();
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
         try {
-            UUID.fromString(text);
+            ZonedDateTime.parse(text);
             return true;
-        } catch (IllegalArgumentException e) {
+        } catch (DateTimeParseException e) {
             formatError(text, collector);
             return false;
         }
     }
+
 }

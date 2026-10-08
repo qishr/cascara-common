@@ -13,11 +13,11 @@ import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 
 /// Handles serialization and deserialization of [Throwable] instances across AST nodes,
 /// preserving class names, cause chains, suppressed exceptions, and stack traces.
-public class ThrowableTypeSerializer extends AbstractTypeDescriptor<Throwable> implements TypeSerializer<Throwable> {
+public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> implements TypeSerializer<Throwable> {
 
-    private final StackTraceElementTypeSerializer stackTraceSerializer = new StackTraceElementTypeSerializer();
+    private final StackTraceElementSerializer stackTraceSerializer = new StackTraceElementSerializer();
 
-    public ThrowableTypeSerializer() {
+    public ThrowableSerializer() {
         super(Throwable.class, PrimitiveType.STRING);
     }
 

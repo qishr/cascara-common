@@ -35,35 +35,33 @@
 
 package io.github.qishr.cascara.common.lang.type;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
+import java.net.URI;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 
-public class LocalDateTimeTypeDescriptor extends AbstractScalarDescriptor<LocalDateTime> {
-    public LocalDateTimeTypeDescriptor() {
-        super(LocalDateTime.class, PrimitiveType.STRING);
+public class UriDescriptor extends AbstractScalarDescriptor<URI> {
+    public UriDescriptor() {
+        super(URI.class, PrimitiveType.STRING, "uri");
     }
 
     @Override
-    public LocalDateTime toJvmType(String text) {
-        return LocalDateTime.parse(text);
+    public URI toJvmType(String text) {
+        return URI.create(text);
     }
 
     @Override
-    public Object toPrimitive(LocalDateTime jvmInstance) {
+    public Object toPrimitive(URI jvmInstance) {
         return jvmInstance.toString();
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
         try {
-            LocalDateTime.parse(text);
+            URI.create(text);
             return true;
-        } catch (DateTimeParseException e) {
+        } catch (IllegalArgumentException | NullPointerException e) {
             formatError(text, collector);
             return false;
         }
     }
-
 }

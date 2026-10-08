@@ -40,8 +40,8 @@ import java.nio.file.Path;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 
-public class PathTypeDescriptor extends AbstractScalarDescriptor<Path> {
-    public PathTypeDescriptor() {
+public class PathDescriptor extends AbstractScalarDescriptor<Path> {
+    public PathDescriptor() {
         super(Path.class, PrimitiveType.STRING, "path");
     }
 

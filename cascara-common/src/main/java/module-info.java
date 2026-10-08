@@ -74,12 +74,12 @@ module cascara.common {
 
     provides io.github.qishr.cascara.common.service.ServiceProvider
         with io.github.qishr.cascara.common.lang.type.ByteArrayDescriptor,
-             io.github.qishr.cascara.common.lang.type.InstantTypeDescriptor,
-             io.github.qishr.cascara.common.lang.type.DateTimeTypeDescriptor,
-             io.github.qishr.cascara.common.lang.type.LocalDateTimeTypeDescriptor,
-             io.github.qishr.cascara.common.lang.type.PathTypeDescriptor,
-             io.github.qishr.cascara.common.lang.type.UriTypeDescriptor,
-             io.github.qishr.cascara.common.lang.type.UuidTypeDescriptor,
+             io.github.qishr.cascara.common.lang.type.InstantDescriptor,
+             io.github.qishr.cascara.common.lang.type.DateTimeDescriptor,
+             io.github.qishr.cascara.common.lang.type.LocalDateTimeDescriptor,
+             io.github.qishr.cascara.common.lang.type.PathDescriptor,
+             io.github.qishr.cascara.common.lang.type.UriDescriptor,
+             io.github.qishr.cascara.common.lang.type.UuidDescriptor,
              io.github.qishr.cascara.common.lang.util.SourceStringBuffer,
              io.github.qishr.cascara.common.lang.util.SourceInputStreamBuffer;
 }

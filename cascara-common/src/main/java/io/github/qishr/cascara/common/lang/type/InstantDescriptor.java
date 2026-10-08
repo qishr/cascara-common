@@ -33,26 +33,36 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.util;
+package io.github.qishr.cascara.common.lang.type;
 
-import io.github.qishr.cascara.common.lang.ast.AstNode;
-import io.github.qishr.cascara.common.lang.ast.MapAstNode;
-import io.github.qishr.cascara.common.lang.ast.MapEntryAstNode;
-import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
-import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 
-public interface AstNodeFactory<
-    N extends AstNode,
-    S extends ScalarAstNode<N>,
-    L extends SequenceAstNode<N>,
-    M extends MapAstNode<K,N,E>,
-    E extends MapEntryAstNode<K,N>,
-    K
-> {
-    S createScalarNode(Object jvmValue);
-    S createScalarNode(Object jvmValue, QuoteStyle quoteStyle);
-    S createScalarNode(Object jvmValue, QuoteStyle quoteStyle, LanguageOptions<?> options);
-    K createKey(Object key);
-    L createSequenceNode();
-    M createMapNode();
+import io.github.qishr.cascara.common.diagnostic.Reporter;
+
+public class InstantDescriptor extends AbstractScalarDescriptor<Instant> {
+    public InstantDescriptor() {
+        super(Instant.class, PrimitiveType.STRING, "timestamp"); // TODO: is timestamp correct?
+    }
+
+    @Override
+    public Instant toJvmType(String text) {
+        return Instant.parse(text);
+    }
+
+    @Override
+    public Object toPrimitive(Instant jvmInstance) {
+        return jvmInstance.toEpochMilli();
+    }
+
+    @Override
+    public boolean validate(String text, Reporter collector) {
+        try {
+            Instant.parse(text);
+            return true;
+        } catch (DateTimeParseException e) {
+            formatError(text, collector);
+            return false;
+        }
+    }
 }

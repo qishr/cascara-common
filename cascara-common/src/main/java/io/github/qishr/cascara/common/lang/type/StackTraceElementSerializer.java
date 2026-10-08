@@ -41,9 +41,9 @@ import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 
-public class StackTraceElementTypeSerializer extends AbstractTypeDescriptor<StackTraceElement> implements TypeSerializer<StackTraceElement> {
+public class StackTraceElementSerializer extends AbstractTypeDescriptor<StackTraceElement> implements TypeSerializer<StackTraceElement> {
 
-    public StackTraceElementTypeSerializer() {
+    public StackTraceElementSerializer() {
         super(StackTraceElement.class, PrimitiveType.STRING);
     }
 

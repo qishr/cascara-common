@@ -35,52 +35,33 @@
 
 package io.github.qishr.cascara.common.lang.type;
 
+import java.util.UUID;
+
 import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
-public class DiagnosticMessageTypeDescriptor extends AbstractScalarDescriptor<DiagnosticMessage> {
-
-    public DiagnosticMessageTypeDescriptor() {
-        super(DiagnosticMessage.class, PrimitiveType.STRING);
+public class UuidDescriptor extends AbstractScalarDescriptor<UUID> {
+    public UuidDescriptor() {
+        super(UUID.class, PrimitiveType.STRING, "uuid");
     }
 
     @Override
-    public DiagnosticMessage toJvmType(String text) {
-        if (text == null || text.isBlank()) {
-            return null;
-        }
-        int dot = text.lastIndexOf(".");
-        if (dot == -1) {
-            return null;
-        }
-        String className = text.substring(0, dot);
-        String enumVal = text.substring(dot + 1);
-
-        Class<?> msgClass;
-        try {
-            msgClass = Class.forName(className);
-        } catch (ClassNotFoundException e) {
-            return null;
-        }
-
-        if (!msgClass.isEnum()) {
-            return null;
-        }
-
-        @SuppressWarnings({ "rawtypes", "unchecked" })
-        Enum<?> value = Enum.valueOf((Class<Enum>) msgClass, enumVal);
-        return (DiagnosticMessage)value;
+    public UUID toJvmType(String text) {
+        return UUID.fromString(text);
     }
 
     @Override
-    public Object toPrimitive(DiagnosticMessage jvmInstance) {
-        return jvmInstance.getClass().getName() + "." + jvmInstance.name();
+    public Object toPrimitive(UUID jvmInstance) {
+        return jvmInstance.toString();
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
-        // TODO
-        throw new UnimplementedMethodException();
+        try {
+            UUID.fromString(text);
+            return true;
+        } catch (IllegalArgumentException e) {
+            formatError(text, collector);
+            return false;
+        }
     }
 }

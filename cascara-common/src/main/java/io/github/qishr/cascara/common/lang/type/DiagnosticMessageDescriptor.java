@@ -35,33 +35,52 @@
 
 package io.github.qishr.cascara.common.lang.type;
 
-import java.net.URI;
-
 import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
-public class UriTypeDescriptor extends AbstractScalarDescriptor<URI> {
-    public UriTypeDescriptor() {
-        super(URI.class, PrimitiveType.STRING, "uri");
+public class DiagnosticMessageDescriptor extends AbstractScalarDescriptor<DiagnosticMessage> {
+
+    public DiagnosticMessageDescriptor() {
+        super(DiagnosticMessage.class, PrimitiveType.STRING);
     }
 
     @Override
-    public URI toJvmType(String text) {
-        return URI.create(text);
+    public DiagnosticMessage toJvmType(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        int dot = text.lastIndexOf(".");
+        if (dot == -1) {
+            return null;
+        }
+        String className = text.substring(0, dot);
+        String enumVal = text.substring(dot + 1);
+
+        Class<?> msgClass;
+        try {
+            msgClass = Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+
+        if (!msgClass.isEnum()) {
+            return null;
+        }
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        Enum<?> value = Enum.valueOf((Class<Enum>) msgClass, enumVal);
+        return (DiagnosticMessage)value;
     }
 
     @Override
-    public Object toPrimitive(URI jvmInstance) {
-        return jvmInstance.toString();
+    public Object toPrimitive(DiagnosticMessage jvmInstance) {
+        return jvmInstance.getClass().getName() + "." + jvmInstance.name();
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
-        try {
-            URI.create(text);
-            return true;
-        } catch (IllegalArgumentException | NullPointerException e) {
-            formatError(text, collector);
-            return false;
-        }
+        // TODO
+        throw new UnimplementedMethodException();
     }
 }

@@ -49,11 +49,11 @@ import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.filewatcher.FileWatcher;
+import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
-import io.github.qishr.cascara.common.lang.type.DateTimeTypeDescriptor;
-import io.github.qishr.cascara.common.lang.type.DiagnosticMessageTypeDescriptor;
-import io.github.qishr.cascara.common.lang.type.StackTraceElementTypeSerializer;
-import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
+import io.github.qishr.cascara.common.lang.type.DateTimeDescriptor;
+import io.github.qishr.cascara.common.lang.type.DiagnosticMessageDescriptor;
+import io.github.qishr.cascara.common.lang.type.StackTraceElementSerializer;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.SPL;
@@ -113,9 +113,9 @@ public class SPLRoot extends SPLBranch {
 
                 // Instead of letting the Serializer use SPL, give it the type
                 // descriptors and type serializers it needs for Diagnostic serialization.
-                serializer.registerTypeDescriptor(new DateTimeTypeDescriptor());
-                serializer.registerTypeDescriptor(new DiagnosticMessageTypeDescriptor());
-                serializer.registerTypeDescriptor(new StackTraceElementTypeSerializer());
+                serializer.registerTypeDescriptor(new DateTimeDescriptor());
+                serializer.registerTypeDescriptor(new DiagnosticMessageDescriptor());
+                serializer.registerTypeDescriptor(new StackTraceElementSerializer());
 
                 GlobalReporter.initSerializer(serializer);
             }

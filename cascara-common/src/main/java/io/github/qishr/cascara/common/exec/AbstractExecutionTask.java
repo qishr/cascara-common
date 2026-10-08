@@ -11,7 +11,7 @@ import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
-import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
+import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 public abstract class AbstractExecutionTask<I, O> {

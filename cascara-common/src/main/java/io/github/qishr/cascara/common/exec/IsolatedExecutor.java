@@ -8,8 +8,8 @@ import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
+import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
-import io.github.qishr.cascara.common.lang.util.ProcessorFactory;
 
 @Beta
 public class IsolatedExecutor {

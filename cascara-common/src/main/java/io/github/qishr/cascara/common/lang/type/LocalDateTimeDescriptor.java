@@ -35,34 +35,35 @@
 
 package io.github.qishr.cascara.common.lang.type;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 
-public class InstantTypeDescriptor extends AbstractScalarDescriptor<Instant> {
-    public InstantTypeDescriptor() {
-        super(Instant.class, PrimitiveType.STRING, "timestamp"); // TODO: is timestamp correct?
+public class LocalDateTimeDescriptor extends AbstractScalarDescriptor<LocalDateTime> {
+    public LocalDateTimeDescriptor() {
+        super(LocalDateTime.class, PrimitiveType.STRING);
     }
 
     @Override
-    public Instant toJvmType(String text) {
-        return Instant.parse(text);
+    public LocalDateTime toJvmType(String text) {
+        return LocalDateTime.parse(text);
     }
 
     @Override
-    public Object toPrimitive(Instant jvmInstance) {
-        return jvmInstance.toEpochMilli();
+    public Object toPrimitive(LocalDateTime jvmInstance) {
+        return jvmInstance.toString();
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
         try {
-            Instant.parse(text);
+            LocalDateTime.parse(text);
             return true;
         } catch (DateTimeParseException e) {
             formatError(text, collector);
             return false;
         }
     }
+
 }

@@ -33,37 +33,23 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.lang.ast;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
+import io.github.qishr.cascara.common.lang.util.LanguageOptions;
+import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
-import io.github.qishr.cascara.common.diagnostic.Reporter;
-
-public class DateTimeTypeDescriptor extends AbstractScalarDescriptor<ZonedDateTime> {
-    public DateTimeTypeDescriptor() {
-        super(ZonedDateTime.class, PrimitiveType.STRING, "date-time");
-    }
-
-    @Override
-    public ZonedDateTime toJvmType(String text) {
-        return ZonedDateTime.parse(text);
-    }
-
-    @Override
-    public Object toPrimitive(ZonedDateTime jvmInstance) {
-        return jvmInstance.toString();
-    }
-
-    @Override
-    public boolean validate(String text, Reporter collector) {
-        try {
-            ZonedDateTime.parse(text);
-            return true;
-        } catch (DateTimeParseException e) {
-            formatError(text, collector);
-            return false;
-        }
-    }
-
+public interface AstNodeFactory<
+    N extends AstNode,
+    S extends ScalarAstNode<N>,
+    L extends SequenceAstNode<N>,
+    M extends MapAstNode<K,N,E>,
+    E extends MapEntryAstNode<K,N>,
+    K
+> {
+    S createScalarNode(Object jvmValue);
+    S createScalarNode(Object jvmValue, QuoteStyle quoteStyle);
+    S createScalarNode(Object jvmValue, QuoteStyle quoteStyle, LanguageOptions<?> options);
+    K createKey(Object key);
+    L createSequenceNode();
+    M createMapNode();
 }
