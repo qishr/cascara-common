@@ -31,7 +31,6 @@ public class JmxTest extends JmxTestBase {
         super.setUp();
     }
 
-    // TODO: this fails when running in parallel to other jmx tests. port number?
     @Test
     void test_JMX() throws Exception {
         REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
@@ -78,21 +77,9 @@ public class JmxTest extends JmxTestBase {
         JMXConnector jmxConnector = connectWithRetry(url, 20, 1000);
         MBeanServerConnection mbsc = jmxConnector.getMBeanServerConnection();
 
-        try {
-
-            debug("Got MBeanServerConnection");
-            invokeOperation(mbsc, "test.interfaces.beans:type=CascaraControl", "test", null, null, false);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        invokeOperation(mbsc, "test.interfaces.beans:type=CascaraControl", "test", null, null, false);
 
         invokeOperation(mbsc, "test.interfaces.beans:type=CascaraControl", "exit", null, null, false);
-        try {
-            jmxConnector.close();
-        } catch (Exception e) {
-            // e.printStackTrace();
-        }
 
         List<Diagnostic> diagnostics = ipcServer.getMessages(Diagnostic.class);
         assertFalse(diagnostics.isEmpty());

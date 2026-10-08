@@ -201,12 +201,6 @@ public class SplJmxTest extends JmxTestBase {
 
         Class<?> taskClass = JmxTestTask.class;
 
-        // GlobalReporter.forClass(taskClass).setLevel(Level.DEBUG);
-        // GlobalReporter.forClass(taskClass).setStackTraceEnabled(true);
-
-        // GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
-        // GlobalReporter.forClass(SPL.class).setStackTraceEnabled(true);
-
         createModuleA();
         syncVfs();
 
@@ -219,11 +213,7 @@ public class SplJmxTest extends JmxTestBase {
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
-
             .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
-
-            // .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
-            // .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
             .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
             .setEnv("CASC_HOME", getPhysicalHomePath());
 
@@ -264,7 +254,7 @@ public class SplJmxTest extends JmxTestBase {
             );
 
             List<String> providers = statusProxy.getRegisteredServiceProviders();
-            Thread.sleep(1000);
+            Thread.sleep(1000); //Tried removing this sleep
 
             for (String provieder : providers) {
                 REPORTER.debug("Provider: " + provieder);

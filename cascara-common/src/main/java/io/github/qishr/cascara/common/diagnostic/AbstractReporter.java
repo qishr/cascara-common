@@ -450,6 +450,10 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected boolean isStackTraceEnabled() { return stackTraceEnabled; }
 
+    //
+    //
+    //
+
     /// Central reporting method. All other rporting methods call this.
     protected void report(Diagnostic diagnostic) {
         if (this.level.compareTo(diagnostic.getLevel()) >= 0) {
@@ -482,26 +486,15 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         }
 
         if ((diagnostic.getCause() != null || diagnostic.getStackTrace() != null) && isStackTraceEnabled()) {
-            // StringWriter sw = new StringWriter();
-            // PrintWriter pw = new PrintWriter(sw);
             if (diagnostic.getCause() != null) {
-                // diagnostic.getCause().printStackTrace(pw);
                 writeStackTrace(diagnostic.getStackTrace(), diagnostic.getCause(), writer);
             } else if (diagnostic.getStackTrace() != null) {
                 writeStackTrace(diagnostic.getStackTrace(), null, writer);
             }
-            // lines = sw.toString().split("\n");
-            // for (int i = 0; i < lines.length; i++) {
-            //     String logLine = lines[i];
-            //     writer.logLine(logLine, i);
-            //     writer.displayLine(logLine, i);
-            // }
         }
     }
 
     private void writeStackTrace(StackTraceElement[] stackTrace, Throwable t, ReportWriter writer) {
-        // int msgLineNumber = 0;
-        // TODO: Cause exception details
         for (StackTraceElement frame : stackTrace) {
             String msgLine = String.format(
                 "  at %s.%s(%s:%d)",
@@ -512,15 +505,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
             );
             writer.logLine(msgLine);
             writer.displayLine(msgLine, 1);
-            // msgLineNumber++;
         }
-
-        // if (t != null) {
-        //     // writer.logLine("Caused by:");
-        //     writer.displayLine("Caused by:" + t.getClass(), 1);
-        //     writer.displayLine("Caused by:" + t.getMessage(), 1);
-        //     // writeStackTrace(t.getStackTrace(), t.getCause(), writer);
-        // }
     }
 
     protected void logLine(Level level, String msgLine) {
@@ -529,6 +514,17 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
             getLineConsumer().accept(logLine);
         }
     }
+
+    // LineConsumerAppener
+    // ConsoleAppener
+    // Log4jAppender
+
+    // LogFormatter
+    // ConsoleFormatter
+
+    // Both formatters needa way to configure fields
+    // Custom fiels and classes that extend DDiagnostic
+    // Customize fields  for specific source classes? or iagnostic sublasses?
 
     protected void displayLine(Level diagnosticLevel, String msgLine, int msgLineNumber) {
         if (isSystemOutputEnabled()) {

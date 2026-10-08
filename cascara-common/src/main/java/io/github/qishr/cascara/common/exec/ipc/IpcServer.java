@@ -92,10 +92,6 @@ public class IpcServer implements AutoCloseable {
             if (listenerFuture != null) {
                 listenerFuture.join();
             }
-            // int rp = activeConnections.getRegisteredParties();
-            // int uap = activeConnections.getUnarrivedParties();
-            // System.out.println("Registered parties: " + rp);
-            // System.out.println("Unarrived parties: " + uap);
         } finally {
             try {
                 if (socketPath != null) {
@@ -104,7 +100,6 @@ public class IpcServer implements AutoCloseable {
             } finally {
                 // Guarantees the server deregisters even if socket cleanup throws
                 activeConnections.arriveAndAwaitAdvance();
-                // activeConnections.arriveAndDeregister();
             }
         }
     }
@@ -162,19 +157,10 @@ public class IpcServer implements AutoCloseable {
                     try {
                         payload = serializer.fromString(payloadJson, targetClass);
                     } catch (SerializerException e) {
-                        // System.out.println("SERVER: " + e.getMessage());
-                        // continue;
                         throw new ExecutionException(e, ExecutionMessage.DESERIALIZATION_FAILED, e.getMessage());
                     }
 
-                    // System.out.println(
-                    //     "SERVER: diagnosticForwarding=" + diagnosticForwarding +
-                    //     " payload=" + payload
-                    // );
-
                     if (diagnosticForwarding && payload instanceof Diagnostic diagnostic) {
-                        // System.out.println("SERVER: Diagnostic Forwarding");
-                        // GlobalReporter.globalInstance().report(diagnostic);
                         GlobalReporter reporter = GlobalReporter.forSource(diagnostic.getSource());
                         if (reporter != null) {
                             reporter.report(diagnostic);
@@ -184,9 +170,6 @@ public class IpcServer implements AutoCloseable {
                     payloadsByType
                         .computeIfAbsent(className, k -> new CopyOnWriteArrayList<>())
                         .add(payload);
-
-                // } catch (Exception e) {
-                //     throw new ExecutionException(e, LangMessage.NO_CLASS_DEF_FOUND_ERROR, className);
                 } catch (ClassNotFoundException e) {
                     throw new ExecutionException(e, LangMessage.NO_CLASS_DEF_FOUND_ERROR, className);
                 } finally {}

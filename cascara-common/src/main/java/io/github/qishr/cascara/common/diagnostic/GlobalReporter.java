@@ -67,7 +67,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     public static final String SERIALIZATION_FORMAT = "application/json";
 
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
-    // private static ProcessorFactory processorFactory;
 
     private static GlobalReporter globalInstance = new GlobalReporter().init();
     private final Map<String,GlobalReporter> classInstances = new HashMap<>();
@@ -78,9 +77,8 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
     private IpcClient ipcClient;
     private boolean ipcUnavailable = false;
-    int sent = 0;
-    List<Diagnostic> queue = new ArrayList<>();
-    long processId;
+    private List<Diagnostic> queue = new ArrayList<>();
+    private long processId;
 
     private GlobalReporter() {
     }
@@ -197,7 +195,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 String fqcn = propertyName.substring(PROP_CASC_REPORT_LEVEL.length());
                 Level level = Level.valueOf(property.asString());
                 if (level != null) {
-                    // System.out.println("GR-INIT: " + fqcn + " " + level);
                     setLevelInternal(fqcn, level);
                 }
             }
@@ -279,18 +276,13 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     /// Central reporting method. All other rporting methods call this.
     @Override
     public void report(Diagnostic diagnostic) {
-        // System.out.println("GR-1");
         super.report(diagnostic);
-        // System.out.println("GR-2");
         if (this.level.includes(diagnostic.getLevel())) {
-            // System.out.println("GR-REP-1");
             if (SPL.isBooting()) {
-                // System.out.println("GR-REP-2");
                 // TODO: If SPL is still booting, Queue it
                 // If SPL has finished booting, discard it.
                 globalInstance.queue.add(diagnostic);
             } else {
-                // System.out.println("GR-REP-3");
                 globalInstance.sendDiagnostic(diagnostic);
             }
         }
@@ -328,15 +320,11 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
             return;
         }
 
-        // RuntimeMXBean rtmxb = ManagementFactory.getRuntimeMXBean();
-        // System.out.println("GR-IPC-1");
-
         if (ipcClient == null) {
-            // System.out.println("GR-IPC-2");
             try {
-
                 ipcClient = IpcClient.tryConnect(serializer);
             } catch (Exception e) {
+                // TODO: proper exception handling
                 System.out.println("GR-IPC ERROR: " + e.getMessage());
                 // There was no IpcServer to connect to, which is okay
                 ipcUnavailable = true;
@@ -344,7 +332,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         }
 
         if (ipcUnavailable || ipcClient == null) {
-            // System.out.println("GR-IPC: Unavailable");
             // Discard queued diagnostics
             queue.clear();
         } else {
@@ -360,29 +347,16 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                     queue.clear();
                 }
 
-
-                // System.out.println(
-                //     "GLOBALREPORTER: pid=" + rtmxb.getPid() +
-                //     " this=" + this.level +
-                //     " diag=" + diagnostic.getLevel()
-                // );
-                // System.out.println("GR-IPC-3");
-
-
                 // TODO: This guard should use the JVM ID (with host name)
                 // instead of just PID
                 if (ipcClient.getServerProcessId() != diagnostic.getProcessId()) {
-                    // if (sent++ < 5) {
-                        ipcClient.send(diagnostic);
-                    // }
+                    ipcClient.send(diagnostic);
                 }
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
-
     }
 
     @Override

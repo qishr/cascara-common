@@ -24,16 +24,10 @@ public class ExecTestBase extends VfsTestBase {
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
-
         REPORTER = GlobalReporter.forClass(getClass());
-
-        // reporter = new StandardReporter()
-        //     .setAnsiColoringEnabled(true);
-
         if (TEST_DEBUG_ENABLED) {
             REPORTER.setLevel(Level.DEBUG);
         }
-
     }
 
     @AfterEach

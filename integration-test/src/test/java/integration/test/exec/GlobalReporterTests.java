@@ -36,7 +36,6 @@ public class GlobalReporterTests extends ExecTestBase {
             .setEnv(classKey, "DEBUG")
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
-            // .addModule("test.task")
             .setTimeout(Duration.ofSeconds(5))
             .setDebug(PROCESS_DEBUG_ENABLED);
 

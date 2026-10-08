@@ -47,8 +47,6 @@ public class JvmProcessTests extends ExecTestBase {
 
         JvmProcess.Response result = tp.run(json);
 
-        // debug("result.out: " + result.out);
-        // debug("result.err: " + result.err);
         debug(result);
 
         assertEquals(0, result.exitCode);

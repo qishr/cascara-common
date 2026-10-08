@@ -63,7 +63,6 @@ public class IsolatedExecutor {
         }
 
         Serializer<?> serializer = new ProcessorFactory().createSerializer(SERIALIZATION_FORMAT);
-        // serializer.setOptions(options);
 
         String json = serializer.toString(input);
 
