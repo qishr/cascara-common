@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.diagnostic;
+package io.github.qishr.cascara.common.diagnostic.report;
 
 public class NoOpReportWriter extends ReportWriter {
 

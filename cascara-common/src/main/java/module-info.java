@@ -43,7 +43,11 @@ module cascara.common {
     exports io.github.qishr.cascara.common.color;
     exports io.github.qishr.cascara.common.data;
     exports io.github.qishr.cascara.common.diagnostic;
+    exports io.github.qishr.cascara.common.diagnostic.exception;
+    exports io.github.qishr.cascara.common.diagnostic.format;
+    exports io.github.qishr.cascara.common.diagnostic.log;
     exports io.github.qishr.cascara.common.diagnostic.message;
+    exports io.github.qishr.cascara.common.diagnostic.report;
     exports io.github.qishr.cascara.common.exec;
     exports io.github.qishr.cascara.common.exec.ipc;
     exports io.github.qishr.cascara.common.filewatcher;
@@ -65,17 +69,17 @@ module cascara.common {
     exports io.github.qishr.cascara.common.util;
 
     opens io.github.qishr.cascara.common.data;           // For tests
-    opens io.github.qishr.cascara.common.diagnostic;     // For tests
+    opens io.github.qishr.cascara.common.diagnostic;     // For tests and SchmeaGenerator
     opens io.github.qishr.cascara.common.lang.plain;     // For tests
     opens io.github.qishr.cascara.common.lang.processor; // For tests
-    opens io.github.qishr.cascara.common.property;       // For tests
-    opens io.github.qishr.cascara.common.trackable;      // For tests
-    opens io.github.qishr.cascara.common.util;           // For tests
+    opens io.github.qishr.cascara.common.property;       // For tests and SchmeaGenerator
+    opens io.github.qishr.cascara.common.trackable;      // For tests and SchmeaGenerator
+    opens io.github.qishr.cascara.common.util;           // For tests and SchmeaGenerator
 
     provides io.github.qishr.cascara.common.service.ServiceProvider
         with io.github.qishr.cascara.common.lang.type.ByteArrayDescriptor,
              io.github.qishr.cascara.common.lang.type.InstantDescriptor,
-             io.github.qishr.cascara.common.lang.type.DateTimeDescriptor,
+             io.github.qishr.cascara.common.lang.type.ZonedDateTimeDescriptor,
              io.github.qishr.cascara.common.lang.type.LocalDateTimeDescriptor,
              io.github.qishr.cascara.common.lang.type.PathDescriptor,
              io.github.qishr.cascara.common.lang.type.UriDescriptor,

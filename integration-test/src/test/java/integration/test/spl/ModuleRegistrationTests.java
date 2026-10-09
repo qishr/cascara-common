@@ -70,7 +70,7 @@ class ModuleRegistrationTests extends SplTestBase {
         );
 
         // Verify SPL reads correctly from NIO Path operations
-        // Reporter reporter = new StandardReporter();
+        // Reporter reporter = new LocalReporter();
         //.setLevel(Level.DEBUG);
         SPL spl = SPL.getRoot();
         // ServiceProviderRoot root = ServiceProviderLayer.getRoot();

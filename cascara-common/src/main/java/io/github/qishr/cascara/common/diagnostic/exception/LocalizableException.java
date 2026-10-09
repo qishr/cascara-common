@@ -33,24 +33,37 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic;
+package io.github.qishr.cascara.common.diagnostic.exception;
 
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 
-public class UnexpectedNullReturnException extends LocalizableRuntimeException {
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
-    public UnexpectedNullReturnException(String instanceName, String instanceMethod) {
-        super(GenericMessage.UNEXPECTED_NULL_RETURN, instanceName, buildMethoDetails(instanceName, instanceMethod));
-    }
+public interface LocalizableException {
 
-    // TODO: Consistency with UnimplementedMethodException
-    private static Object[] buildMethoDetails(String instanceName, String instanceMethod) {
-        // Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
-        // String className = caller.getL().getName();
-        // String methodName = caller.getR();
-        Object[] details = new Object[2];
-        details[0] = instanceName;
-        details[1] = instanceMethod;
-        return details;
-    }
+    /// Returns a diagnostic message for the error.
+	DiagnosticMessage getDiagnosticMessage();
+
+    /// Returns the details, if any, to be used in formatting the error message.
+	Object[] getDetails();
+
+    /// Returns a localized, formatted error message.
+    String getLocalizedMessage();
+
+    /// Returns a localized, formatted error message.
+    String getMessage();
+
+    Throwable getCause();
+
+    String toString();
+
+    void printStackTrace();
+
+    void printStackTrace(PrintStream s);
+
+    void printStackTrace(PrintWriter s);
+
+    StackTraceElement[] getStackTrace();
+
 }

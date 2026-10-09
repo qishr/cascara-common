@@ -7,7 +7,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.ReportWriter;
 import io.github.qishr.cascara.common.exec.ArtifactResolver;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
@@ -19,14 +18,14 @@ import integration.test.fixtures.payload.ReporterTestOutput;
 public class ExecTestBase extends VfsTestBase {
     protected static final boolean TEST_DEBUG_ENABLED = true;
     protected static final boolean PROCESS_DEBUG_ENABLED = false;
-    protected GlobalReporter REPORTER;
+    // protected GlobalReporter REPORTER;
 
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
-        REPORTER = GlobalReporter.forClass(getClass());
+        // REPORTER = GlobalReporter.forClass(getClass());
         if (TEST_DEBUG_ENABLED) {
-            REPORTER.setLevel(Level.DEBUG);
+            reporter.setLevel(Level.DEBUG);
         }
     }
 
@@ -45,18 +44,18 @@ public class ExecTestBase extends VfsTestBase {
     }
 
     protected void debug(String msg) {
-        REPORTER.debug(msg);
+        reporter.debug(msg);
     }
 
     protected void debug(Response<ReporterTestOutput> response) {
         if (TEST_DEBUG_ENABLED) {
-            ReportWriter writer = REPORTER.getWriter(Level.DEBUG);
+            ReportWriter writer = reporter.getWriter(Level.DEBUG);
             if (!response.getSystemOut().isBlank()) {
-                REPORTER.debug("System.out was:\n");
+                reporter.debug("System.out was:\n");
                 writer.write(2, response.getSystemOut());
             }
             if (!response.getSystemErr().isBlank()) {
-                REPORTER.debug("System.err was:\n");
+                reporter.debug("System.err was:\n");
                 writer.write(2, response.getSystemErr());
             }
         }
@@ -64,13 +63,13 @@ public class ExecTestBase extends VfsTestBase {
 
     protected void debug(JvmProcess.Response response) {
         if (TEST_DEBUG_ENABLED) {
-            ReportWriter writer = REPORTER.getWriter(Level.DEBUG);
+            ReportWriter writer = reporter.getWriter(Level.DEBUG);
             if (!response.out.isBlank()) {
-                REPORTER.debug("JvmProcess.Response.out was:\n");
+                reporter.debug("JvmProcess.Response.out was:\n");
                 writer.write(2, response.out);
             }
             if (!response.err.isBlank()) {
-                REPORTER.debug("JvmProcess.Response.err was:\n");
+                reporter.debug("JvmProcess.Response.err was:\n");
                 writer.write(2, response.err);
             }
         }

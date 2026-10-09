@@ -13,36 +13,47 @@ import javax.management.remote.JMXServiceURL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.apache.logging.log4j.core.config.Configurator;
+
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
+import io.github.qishr.cascara.logging.log4j.Log4jLogger;
 import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.task.JmxTestTask;
+import org.apache.logging.log4j.core.config.Configurator;
 
 public class JmxTest extends JmxTestBase {
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
+
     }
 
     @Test
     void test_JMX() throws Exception {
-        REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
+        Configurator.setLevel("integration.test", org.apache.logging.log4j.Level.DEBUG);
+        GlobalReporter.globalInstance().addLogger(new Log4jLogger());
+        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
+        reporter.debug("CASC_HOME=" + getPhysicalHomePath());
         syncVfs();
 
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString(input);
 
+        boolean ipcDebug = false;
+
         Class<?> taskClass = JmxTestTask.class;
         GlobalReporter.forClass(taskClass).setLevel(Level.DEBUG);
-        IpcServer ipcServer = IpcServer.start(serializer, true, false);
+        IpcServer ipcServer = IpcServer.start(serializer, true, ipcDebug);
 
         int jmxPort = findFreePort();
 
@@ -53,6 +64,7 @@ public class JmxTest extends JmxTestBase {
             .setDebug(PROCESS_DEBUG_ENABLED)
             .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
             .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
+            .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
             .setEnv("CASC_HOME", getPhysicalHomePath());
 
         // Run sub-JVM process...
@@ -78,12 +90,14 @@ public class JmxTest extends JmxTestBase {
         MBeanServerConnection mbsc = jmxConnector.getMBeanServerConnection();
 
         invokeOperation(mbsc, "test.interfaces.beans:type=CascaraControl", "test", null, null, false);
+        Thread.sleep(1000);
 
         invokeOperation(mbsc, "test.interfaces.beans:type=CascaraControl", "exit", null, null, false);
 
         List<Diagnostic> diagnostics = ipcServer.getMessages(Diagnostic.class);
         assertFalse(diagnostics.isEmpty());
 
+        // Thread.sleep(60000);
         Thread.sleep(1000);
     }
 }

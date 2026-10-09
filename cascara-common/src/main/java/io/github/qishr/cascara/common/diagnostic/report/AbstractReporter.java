@@ -32,46 +32,36 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.diagnostic.report;
 
-package io.github.qishr.cascara.common.diagnostic;
-
-import java.io.PrintStream;
 import java.net.URI;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableException;
+import io.github.qishr.cascara.common.diagnostic.exception.LocatableException;
+import io.github.qishr.cascara.common.diagnostic.format.ColoredLogFormatter;
+import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
+import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
+import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
+import io.github.qishr.cascara.common.diagnostic.log.Logger;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.token.Token;
-import io.github.qishr.cascara.common.util.JreUtils;
-import io.github.qishr.cascara.common.util.TermUtils;
 
 public abstract class AbstractReporter<T extends AbstractReporter<?>> implements Reporter {
 
     protected static final ZoneId UTC = ZoneId.of("UTC");
 
-    protected static final boolean CAN_USE_ANSI_COLORING = (
-        JreUtils.isRunningInTerminal() ||
-        JreUtils.isRunningViaEclipse() ||
-        JreUtils.isRunningViaGradle()
-        // TODO: A JDK21 way of telling if output is being redirected
-    );
 
-    protected static final String[] levelColors = new String[7];
-    {
-        // levelColors[Level.DEFAULT.ordinal()] = ANSI_WHITE;
-        levelColors[Level.ERROR.ordinal()] = TermUtils.ANSI_RED;
-        levelColors[Level.WARN.ordinal()] = TermUtils.ANSI_YELLOW;
-        levelColors[Level.INFO.ordinal()] = TermUtils.ANSI_BLUE;
-        // levelColors[Level.DEBUG.ordinal()] = TermUtils.ANSI_WHITE;
-        // levelColors[Level.TRACE.ordinal()] = TermUtils.ANSI_WHITE;
-    }
-
-    protected boolean ansiColoringEnabled;
 
     protected Level level = Level.INFO;
 
@@ -80,6 +70,11 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected Serializer<?> serializer;
 
+    // TODO:
+    protected List<Logger> loggers = new ArrayList<>();
+    protected ConsoleLogger consoleLogger; // = new ConsoleLogger();
+    protected LineLogger lineLogger; // = new LineLogger();
+
     /// Consumes diagnostics included in the current Level or more
     /// important, with ERROR being the most important.
     protected Consumer<Diagnostic> diagnosticConsumer;
@@ -87,8 +82,8 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     /// Consumes ERROR, WARN, and INFO diagnostics.
     protected Consumer<Diagnostic> problemConsumer;
 
-    /// Consumes every line of diagnostic output as a String.
-    protected Consumer<String> lineConsumer;
+    // /// Consumes every line of diagnostic output as a String.
+    // protected Consumer<String> lineConsumer;
 
     protected boolean flushEnabled = false;
     protected boolean systemOutputEnabled = true;
@@ -96,24 +91,24 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     protected boolean stackTraceEnabled = false;
     protected boolean showProblemCodes = false;
     protected boolean prefixEveryLine = true;
+    protected boolean ansiColoringEnabled;
 
     protected ReportWriter[] writers = new ReportWriter[7];
 
     protected AbstractReporter() {
-        this(null);
-    }
-
-    protected AbstractReporter(Consumer<String> logger) {
-        this.lineConsumer = logger;
         writers[Level.ERROR.ordinal()] = new ReportWriter(this, Level.ERROR);
         writers[Level.WARN.ordinal()] = new ReportWriter(this, Level.WARN);
         writers[Level.INFO.ordinal()] = new ReportWriter(this, Level.INFO);
         writers[Level.DEBUG.ordinal()] = new ReportWriter(this, Level.DEBUG);
         writers[Level.TRACE.ordinal()] = new ReportWriter(this, Level.TRACE);
-        setAnsiColoringEnabled(true);
     }
 
     protected abstract T self();
+
+    public T addLogger(Logger logger) {
+        loggers.add(logger);
+        return self();
+    }
 
     /// {@inheritDoc}
     @Override
@@ -130,26 +125,27 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     /// {@inheritDoc}
     @Override
-    public T setLineConsumer(Consumer<String> logger) {
-        this.lineConsumer = logger;
+    public T setLineConsumer(Consumer<String> consumer) {
+        lineLogger.setLineConsumer(consumer);
         return self();
     }
 
     /// {@inheritDoc}
     @Override
-    public T setDiagnosticConsumer(Consumer<Diagnostic> collector) {
-        diagnosticConsumer = collector;
+    public T setDiagnosticConsumer(Consumer<Diagnostic> consumer) {
+        diagnosticConsumer = consumer;
         return self();
     }
 
     /// {@inheritDoc}
     @Override
-    public T setProblemConsumer(Consumer<Diagnostic> collector) {
-        problemConsumer = collector;
+    public T setProblemConsumer(Consumer<Diagnostic> consumer) {
+        problemConsumer = consumer;
         return self();
     }
 
     public T setSystemOutputEnabled(boolean b) {
+        // TODO: Make this controllable via system properties, at least for GlobalReporter
         systemOutputEnabled = b;
         return self();
     }
@@ -160,17 +156,24 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     }
 
     public T setStackTraceEnabled(boolean b) {
+        // TODO: Make this controllable via system properties, at least for GlobalReporter
         stackTraceEnabled = b;
         return self();
     }
 
     public T setSystemErrorEnabled(boolean b) {
+        // TODO: Make this controllable via system properties, at least for GlobalReporter
         systemErrorEnabled = b;
         return self();
     }
 
     public T setAnsiColoringEnabled(boolean b) {
-        ansiColoringEnabled = CAN_USE_ANSI_COLORING && b;
+        // TODO: Allow this to be disabled via env var and/or system proeprty
+        if (b) {
+            consoleLogger.setFormatter(new ColoredLogFormatter());
+        } else {
+            consoleLogger.setFormatter(new PlainLogFormatter());
+        }
         return self();
     }
 
@@ -193,6 +196,14 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     @Override
     public boolean isSilent() {
         return false;
+    }
+
+    public boolean reportsDebug() {
+        return !isSilent() && level.includes(Level.DEBUG);
+    }
+
+    public boolean reportsTrace() {
+        return !isSilent() && level.includes(Level.TRACE);
     }
 
     public ReportWriter getWriter(Diagnostic.Level level) {
@@ -440,13 +451,13 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
     //
 
-    protected abstract String formatMessage(Diagnostic diagnostic, String line, int lineNumber, boolean ansiColoring);
+    // protected abstract String formatMessage(Diagnostic diagnostic, String line, int lineNumber, boolean ansiColoring);
 
     protected Consumer<Diagnostic> getDiagnosticConsumer() { return diagnosticConsumer; }
 
     protected Consumer<Diagnostic> getProblemConsumer() { return problemConsumer; }
 
-    protected Consumer<String> getLineConsumer() { return lineConsumer; }
+    // protected Consumer<String> getLineConsumer() { return lineConsumer; }
 
     protected boolean isSystemOutputEnabled() { return systemOutputEnabled; }
 
@@ -454,142 +465,60 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected boolean isStackTraceEnabled() { return stackTraceEnabled; }
 
+    protected boolean isProblem(Level level) {
+        return (level == Level.ERROR || level == Level.WARN || level == Level.INFO);
+    }
+
     //
     //
     //
+
 
     /// Central reporting method. All other rporting methods call this.
     protected void report(Diagnostic diagnostic) {
-        if (this.level.compareTo(diagnostic.getLevel()) >= 0) {
-            writeString(diagnostic);
-            if (getDiagnosticConsumer() != null) {
-                getDiagnosticConsumer().accept(diagnostic);
-            }
+        if (level.includes(diagnostic.getLevel())) {
+            reportAnyLevel(diagnostic);
         }
+    }
 
+    protected void reportAnyLevel(Diagnostic diagnostic) {
+        log(diagnostic);
+
+        // if (getLineConsumer() != null) {
+        //     String logLine = "[" + level.getLogPrefix() + "] " + msgLine;
+        //     getLineConsumer().accept(logLine);
+        // }
+        if (getDiagnosticConsumer() != null) {
+            getDiagnosticConsumer().accept(diagnostic);
+        }
         if (getProblemConsumer() != null && isProblem(level)) {
             getProblemConsumer().accept(diagnostic);
         }
     }
 
-    /// Reports a Diagnostic to the console and the line consumer if they are enabled.
-    protected void writeString(Diagnostic diagnostic) {
-        ReportWriter writer = writers[diagnostic.getLevel().ordinal()];
-        if (writer == null) {
-            return;
+    protected void log(Diagnostic diagnostic) {
+        if (isSystemOutputEnabled()) {
+            consoleLogger.log(diagnostic);
         }
 
-        String[] lines = diagnostic.getFormattedMessage().split("\n");
-        for (int i = 0; i < lines.length; i++) {
-            String logLine = formatMessage(diagnostic, lines[i], i, false).stripTrailing();
-            String consoleLine = ansiColoringEnabled
-                ? formatMessage(diagnostic, lines[i], i, true).stripTrailing()
-                : logLine;
-            writer.logLine(logLine);
-            writer.displayLine(consoleLine, i);
+        // TODO: All loggers
+
+        for (Logger logger : loggers) {
+            logger.log(diagnostic);
         }
 
-        if ((diagnostic.getCause() != null || diagnostic.getStackTrace() != null) && isStackTraceEnabled()) {
-            if (diagnostic.getCause() != null) {
-                writeStackTrace(diagnostic.getStackTrace(), diagnostic.getCause(), writer);
-            } else if (diagnostic.getStackTrace() != null) {
-                writeStackTrace(diagnostic.getStackTrace(), null, writer);
-            }
-        }
-    }
-
-    private void writeStackTrace(StackTraceElement[] stackTrace, Throwable t, ReportWriter writer) {
-        for (StackTraceElement frame : stackTrace) {
-            String msgLine = String.format(
-                "  at %s.%s(%s:%d)",
-                frame.getClassName(),
-                frame.getMethodName(),
-                frame.getFileName(),
-                frame.getLineNumber()
-            );
-            writer.logLine(msgLine);
-            writer.displayLine(msgLine, 1);
+        if (lineLogger != null) {
+            lineLogger.log(diagnostic);
         }
     }
 
     protected void logLine(Level level, String msgLine) {
-        if (getLineConsumer() != null) {
-            String logLine = "[" + level.getLogPrefix() + "] " + msgLine;
-            getLineConsumer().accept(logLine);
-        }
-    }
-
-    // LineConsumerAppener
-    // ConsoleAppener
-    // Log4jAppender
-
-    // LogFormatter
-    // ConsoleFormatter
-
-    // Both formatters needa way to configure fields
-    // Custom fiels and classes that extend DDiagnostic
-    // Customize fields  for specific source classes? or iagnostic sublasses?
-
-    protected void displayLine(Level diagnosticLevel, String msgLine, int msgLineNumber) {
-        if (isSystemOutputEnabled()) {
-            boolean indented = msgLine.startsWith(" ");
-            PrintStream stream = (diagnosticLevel == Level.ERROR && systemErrorEnabled) ? System.err : System.out;
-
-            if (prefixEveryLine || msgLineNumber == 0) {
-                stream.print("[");
-                if (ansiColoringEnabled) {
-                    String ansiCode = levelColors[diagnosticLevel.ordinal()];
-                    if (ansiCode != null) {
-                        stream.print(ansiCode);
-                        stream.print(diagnosticLevel.getLogPrefix());
-                        stream.print(TermUtils.ANSI_RESET);
-                    } else {
-                        stream.print(diagnosticLevel.getLogPrefix());
-                    }
-                } else {
-                    stream.print(diagnosticLevel.getLogPrefix());
-                }
-                stream.print("] ");
-            } else {
-                stream.print("        ");
-            }
-
-            if (indented && ansiColoringEnabled) {
-                stream.print(TermUtils.ANSI_GREEN);
-                stream.print(msgLine);
-                stream.print(TermUtils.ANSI_RESET);
-            } else {
-                stream.print(msgLine);
-            }
-            stream.print("\n");
-            if (isFlushEnabled()) {
-                stream.flush();
-            }
-        }
-    }
-
-
-
-    //
-    //
-    //
-
-    protected boolean isProblem(Level level) {
-        return (level == Level.ERROR || level == Level.WARN || level == Level.INFO);
-    }
-
-    public boolean reportsDebug() {
-        return !isSilent() && level.includes(Level.DEBUG);
-    }
-
-    public boolean reportsTrace() {
-        return !isSilent() && level.includes(Level.TRACE);
+        Diagnostic diagnostic = DiagnosticBuilder.build("", level, msgLine);
+        log(diagnostic);
     }
 
     private StackTraceElement[] getStackTrace() {
-        // TODO: Omit caller
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        StackTraceElement[] result = Arrays.copyOfRange(stackTrace, 3, stackTrace.length);
-        return result;
+        return Arrays.copyOfRange(stackTrace, 3, stackTrace.length);
     }
 }

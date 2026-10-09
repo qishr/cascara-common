@@ -47,7 +47,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.property.Properties;
 
 public class JarFile extends ArchiveFile {

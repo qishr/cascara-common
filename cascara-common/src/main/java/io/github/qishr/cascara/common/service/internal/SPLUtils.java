@@ -109,6 +109,8 @@ public class SPLUtils {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, providerClass);
         }
         try {
+            // TODO: What happens to neo-singletons? They don't have a public constructor.
+            // Document this.
             Constructor<?> constructor = providerClass.getDeclaredConstructor();
             if (constructor == null) {
                 throw new ServiceException(ServiceMessage.NOARGS_CONSTRUCTOR_REQUIRED, providerClass.getName());

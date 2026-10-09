@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 
 public class SimpleTreeNode implements TreeData<SimpleTreeNode,List<TabularData>> {
 

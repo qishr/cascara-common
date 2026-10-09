@@ -17,11 +17,15 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
 
+import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.Logger;
+import io.github.qishr.cascara.common.diagnostic.log.TimeSequencedAggregatorLogger;
+import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
@@ -30,6 +34,7 @@ import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
+import io.github.qishr.cascara.logging.log4j.Log4jLogger;
 import io.github.qishr.cascara.test.common.junit.util.TestModulePackager;
 import integration.test.fixtures.beans.SPLStatusMBean;
 import integration.test.fixtures.payload.ReporterTestInput;
@@ -42,9 +47,9 @@ public class SplJmxTest extends JmxTestBase {
     }
 
     private void displayBeanInfo(ClassLoadingMXBean classLoading) {
-        REPORTER.debug("Currently loaded: " + classLoading.getLoadedClassCount());
-        REPORTER.debug("Total loaded: " + classLoading.getTotalLoadedClassCount());
-        REPORTER.debug("Total unloaded: " + classLoading.getUnloadedClassCount());
+        reporter.debug("Currently loaded: " + classLoading.getLoadedClassCount());
+        reporter.debug("Total loaded: " + classLoading.getTotalLoadedClassCount());
+        reporter.debug("Total unloaded: " + classLoading.getUnloadedClassCount());
     }
 
     protected Path createModuleA() throws IOException {
@@ -86,7 +91,7 @@ public class SplJmxTest extends JmxTestBase {
 
     @Test
     void test_1() throws Exception {
-        REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
+        reporter.debug("CASC_HOME=" + getPhysicalHomePath());
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString(input);
@@ -125,7 +130,7 @@ public class SplJmxTest extends JmxTestBase {
         AtomicBoolean finished = new AtomicBoolean(false);
 
         // Run sub-JVM process...
-        REPORTER.debug("Starting new JVM in background");
+        reporter.debug("Starting new JVM in background");
         JvmProcess.forClass(taskClass)
             .setOptions(options)
             .runAsync(json)
@@ -157,6 +162,7 @@ public class SplJmxTest extends JmxTestBase {
 
         try {
 
+            @SuppressWarnings("null")
             ClassLoadingMXBean classLoading =
                     ManagementFactory.newPlatformMXBeanProxy(
                             connection,
@@ -190,7 +196,14 @@ public class SplJmxTest extends JmxTestBase {
 
     @Test
     void test_2() throws Exception {
-        REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
+        // TODO: Make this configurable at *TestBase level
+        // Configurator.setLevel("integration.test", org.apache.logging.log4j.Level.DEBUG);
+        TimeSequencedAggregatorLogger aggregator = new TimeSequencedAggregatorLogger(new Log4jLogger(), 800);
+        GlobalReporter.globalInstance().addLogger(aggregator);
+        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
+
+        reporter.debug("CASC_HOME=" + getPhysicalHomePath());
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString(input);
@@ -220,7 +233,7 @@ public class SplJmxTest extends JmxTestBase {
         AtomicBoolean finished = new AtomicBoolean(false);
 
         // Run sub-JVM process...
-        REPORTER.debug("Starting new JVM in background");
+        reporter.debug("Starting new JVM in background");
         JvmProcess.forClass(taskClass)
             .setOptions(options)
             .runAsync(json)
@@ -246,7 +259,9 @@ public class SplJmxTest extends JmxTestBase {
         try {
 
             invokeOperation(connection, "test.interfaces.beans:type=SPLStatus", "test", null, null, true);
+            aggregator.flush();
 
+            @SuppressWarnings("null")
             SPLStatusMBean statusProxy = JMX.newMBeanProxy(
                 connection,
                 new ObjectName("test.interfaces.beans:type=SPLStatus"),
@@ -254,10 +269,10 @@ public class SplJmxTest extends JmxTestBase {
             );
 
             List<String> providers = statusProxy.getRegisteredServiceProviders();
-            Thread.sleep(1000); //Tried removing this sleep
+            // Thread.sleep(1000); //Tried removing this sleep
 
             for (String provieder : providers) {
-                REPORTER.debug("Provider: " + provieder);
+                reporter.debug("Provider: " + provieder);
             }
 
         } catch (Exception e) {
@@ -269,5 +284,6 @@ public class SplJmxTest extends JmxTestBase {
         while (!finished.get()) {
             Thread.sleep(500);
         }
+        aggregator.flush();
     }
 }

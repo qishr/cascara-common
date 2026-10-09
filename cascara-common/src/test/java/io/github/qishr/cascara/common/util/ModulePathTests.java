@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-public class MoudlePathTests {
+public class ModulePathTests {
     public static abstract class TestBase {
         public String x;
     }

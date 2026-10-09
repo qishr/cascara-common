@@ -33,37 +33,42 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.diagnostic.exception;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
-import io.github.qishr.cascara.common.diagnostic.Reporter;
+public class LocalizableRuntimeException extends RuntimeException implements LocalizableException {
+    // private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
 
-public class DateTimeDescriptor extends AbstractScalarDescriptor<ZonedDateTime> {
-    public DateTimeDescriptor() {
-        super(ZonedDateTime.class, PrimitiveType.STRING, "date-time");
+    private final DiagnosticMessage diagnosticMessage;
+    private final Object[] details;
+
+    // public static void setLocalizer(DiagnosticLocalizer customLocalizer) {
+    //     localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
+    // }
+
+    public LocalizableRuntimeException(DiagnosticMessage code, Object... details) {
+        super(AbstractLocalizableException.getLocalizer().format(code, details));
+        this.diagnosticMessage = code;
+        this.details = details != null ? details : new Object[0];
     }
+
+    public LocalizableRuntimeException(Throwable cause, DiagnosticMessage code, Object... details) {
+        super(AbstractLocalizableException.getLocalizer().format(code, details), cause);
+        this.diagnosticMessage = code;
+        this.details = details != null ? details : new Object[0];
+    }
+
+	public DiagnosticMessage getDiagnosticMessage() {
+		return diagnosticMessage;
+	}
+
+	public Object[] getDetails() {
+		return details;
+	}
 
     @Override
-    public ZonedDateTime toJvmType(String text) {
-        return ZonedDateTime.parse(text);
+    public String getLocalizedMessage() {
+        return AbstractLocalizableException.getLocalizer().format(diagnosticMessage, details);
     }
-
-    @Override
-    public Object toPrimitive(ZonedDateTime jvmInstance) {
-        return jvmInstance.toString();
-    }
-
-    @Override
-    public boolean validate(String text, Reporter collector) {
-        try {
-            ZonedDateTime.parse(text);
-            return true;
-        } catch (DateTimeParseException e) {
-            formatError(text, collector);
-            return false;
-        }
-    }
-
 }

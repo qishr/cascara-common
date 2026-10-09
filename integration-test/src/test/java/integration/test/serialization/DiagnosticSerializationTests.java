@@ -10,7 +10,7 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
-import io.github.qishr.cascara.common.diagnostic.StandardReporter;
+import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 
 public class DiagnosticSerializationTests extends SerializationTestBase {
 
@@ -20,7 +20,7 @@ public class DiagnosticSerializationTests extends SerializationTestBase {
         Exception cause = new IllegalArgumentException("Invalid argument value");
         RuntimeException original = new RuntimeException("Outer execution failed", cause);
 
-        serializer.setReporter(new StandardReporter().setLevel(Level.DEBUG));
+        serializer.setReporter(new LocalReporter().setLevel(Level.DEBUG));
 
         String json = serializer.toString(original);
 
@@ -49,7 +49,7 @@ public class DiagnosticSerializationTests extends SerializationTestBase {
     void test_serializeStackTraceElement() {
         StackTraceElement original = new StackTraceElement("className1", "methodName1", "fileName1", 1);
 
-        serializer.setReporter(new StandardReporter().setLevel(Level.DEBUG));
+        serializer.setReporter(new LocalReporter().setLevel(Level.DEBUG));
 
         String json = serializer.toString(original);
 

@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 
 /// A reference implementation of TreeData
 public class ReferenceTreeData implements TreeData<ReferenceTreeData,List<TabularData>> {

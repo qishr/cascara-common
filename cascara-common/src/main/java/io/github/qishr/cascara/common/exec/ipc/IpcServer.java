@@ -20,7 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Phaser;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.ExecutionException;
 import io.github.qishr.cascara.common.exec.ExecutionMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
@@ -50,7 +50,7 @@ public class IpcServer implements AutoCloseable {
     }
 
     public static IpcServer start(Serializer<?> serializer, boolean diagnosticForwarding, boolean ipcDebugEnabled) throws IOException {
-        Path tempSocket = Files.createTempFile("spl-ipc-", ".sock");
+        Path tempSocket = Files.createTempFile("cascara-ipc-", ".sock");
         Files.deleteIfExists(tempSocket);
 
         IpcServer server = new IpcServer(tempSocket, serializer, diagnosticForwarding, ipcDebugEnabled);

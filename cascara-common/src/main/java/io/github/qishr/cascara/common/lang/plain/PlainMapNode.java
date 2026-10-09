@@ -44,7 +44,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.lang.ast.*;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
@@ -209,13 +209,21 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<PlainNod
     }
 
     @Override
+    @Nullable
     public PlainMapNode getMap(Object key) {
-        throw new UnsupportedOperationException("Unimplemented method 'getMap'");
+        if (get(key) instanceof PlainMapNode map) {
+            return map;
+        }
+        return null;
     }
 
     @Override
+    @Nullable
     public PlainSequenceNode getSequence(Object key) {
-        throw new UnsupportedOperationException("Unimplemented method 'getSequence'");
+        if (get(key) instanceof PlainSequenceNode seq) {
+            return seq;
+        }
+        return null;
     }
 
     @Override

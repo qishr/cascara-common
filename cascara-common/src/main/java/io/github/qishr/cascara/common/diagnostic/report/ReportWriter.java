@@ -1,7 +1,9 @@
-package io.github.qishr.cascara.common.diagnostic;
+package io.github.qishr.cascara.common.diagnostic.report;
 
 import java.io.IOException;
 import java.io.Writer;
+
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 
 public class ReportWriter extends Writer {
     private final AbstractReporter<?> reporter;
@@ -54,26 +56,24 @@ public class ReportWriter extends Writer {
     //
 
     private void flushLines(boolean force) {
-        int msgLineNumber = 0;
         int newlineIdx;
         while ((newlineIdx = buffer.indexOf("\n")) != -1) {
             String line = buffer.substring(0, newlineIdx).replace("\r", "");
-            reporter.displayLine(level, line, msgLineNumber);
+            // reporter.displayLine(level, line, msgLineNumber);
             reporter.logLine(level, line);
             buffer.delete(0, newlineIdx + 1);
-            msgLineNumber++;
         }
         if (force && buffer.length() > 0) {
-            reporter.displayLine(level, buffer.toString(), msgLineNumber);
+            // reporter.displayLine(level, buffer.toString(), msgLineNumber);
             reporter.logLine(level, buffer.toString());
             buffer.setLength(0);
         }
     }
 
-    void displayLine(String msgLine, int msgLineNumber) {
-        flush();
-        reporter.displayLine(level, msgLine, msgLineNumber);
-    }
+    // void displayLine(String msgLine, int msgLineNumber) {
+    //     flush();
+    //     reporter.displayLine(level, msgLine, msgLineNumber);
+    // }
 
     void logLine(String msgLine) {
         flush();

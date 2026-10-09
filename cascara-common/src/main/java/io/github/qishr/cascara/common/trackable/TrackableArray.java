@@ -37,7 +37,7 @@ package io.github.qishr.cascara.common.trackable;
 import java.util.*;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.trackable.tracker.ArrayChangeTracker;
 import io.github.qishr.cascara.common.trackable.tracker.ArrayTracker;
 

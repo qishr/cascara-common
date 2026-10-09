@@ -51,7 +51,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import sun.misc.Unsafe;
 
 import io.github.qishr.cascara.common.annotation.AnyGetter;
 import io.github.qishr.cascara.common.annotation.AnySetter;
@@ -59,12 +58,12 @@ import io.github.qishr.cascara.common.annotation.DataField;
 import io.github.qishr.cascara.common.annotation.DataIgnore;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
-import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.diagnostic.UnexpectedNullParameterException;
-import io.github.qishr.cascara.common.diagnostic.UnexpectedNullReturnException;
+import io.github.qishr.cascara.common.diagnostic.report.NoOpReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.AstNodeFactory;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
@@ -112,17 +111,6 @@ public abstract class AbstractSerializer<
     private Set<String> previousWarnings = new HashSet<>();
 
     private final AstConverter<?> astConverter;
-    private static final Unsafe UNSAFE;
-
-    static {
-        try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            UNSAFE = (Unsafe) field.get(null);
-        } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
 
     protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, LanguageOptions<?> options) {
         this(contentType, astFactory, null, options);
@@ -382,34 +370,6 @@ public abstract class AbstractSerializer<
     /// @param targetType The class type to convert to.
     @SuppressWarnings("unchecked")
     protected <C> C deserialize(AstNode node, Type targetType) throws SerializerException {
-    //     // If the node is null, or it's a scalar representing a null value, we return null immediately.
-    //     if (node == null || (node instanceof ScalarAstNode scalar && scalar.getPrimitive() == null)) {
-    //         return null;
-    //     }
-
-    //     // 1. SHORTCUT: If the target is a standard Collection, bypass POJO logic
-    //     if (ReflectionUtils.canAssign(jvmType, Map.class)) {
-    //         if (node instanceof MapAstNode mapNode) {
-    //             return (C) convertAstMapToStandardMap(mapNode);
-    //         }
-    //         return (C) new LinkedHashMap<>();
-    //     }
-
-    //     if (ReflectionUtils.canAssign(jvmType, List.class)) {
-    //         if (node instanceof SequenceAstNode seqNode) {
-    //             return (C) convertAstSequenceToStandardList(seqNode);
-    //         }
-    //         return (C) new ArrayList<>();
-    //     }
-
-    //     C jvmInstance = newTypeInstance(node, jvmType);
-    //     return deserializeObject(node, jvmInstance);
-    // }
-
-    // /// Dispatches to the correct deserialization logic based on target type.
-    // /// @param node The AST node to convert.
-    // /// @param targetType The class type to convert to.
-    // private Object deserializeType(AstNode node, Type targetType) throws SerializerException {
         // If the node is null, or it's a scalar representing a null value, we return null immediately.
         if (node == null || (node instanceof ScalarAstNode s && s.getPrimitive() == null)) {
             return null;
@@ -854,15 +814,6 @@ public abstract class AbstractSerializer<
         return best;
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> T allocateInstanceUnsafe(Class<T> clazz) {
-        try {
-            return (T) UNSAFE.allocateInstance(clazz);
-        } catch (InstantiationException e) {
-            throw new RuntimeException("Failed to allocate instance of " + clazz.getName(), e);
-        }
-    }
-
     private <C> C newTypeInstance(AstNode node, Type jvmType) throws SerializerException {
         Class<C> baseClass = ReflectionUtils.getRawClass(jvmType);
         Class<? extends C> targetClass;
@@ -872,19 +823,10 @@ public abstract class AbstractSerializer<
             throw new SerializerException(node, e, LangMessage.NO_CLASS_DEF_FOUND_ERROR , ReflectionUtils.getTypeName(jvmType)); // This is line 804
         }
         try {
-            // Class<C> baseClass = ReflectionUtils.getRawClass(jvmType);
-            // Class<? extends C> targetClass = resolvePolymorphicTarget(node, baseClass);
-            C jvmInstance = targetClass.getConstructor().newInstance();
-            return jvmInstance;
-        } catch (NoSuchMethodException e) {
-            try {
-                // Fall back to Unsafe-style allocation without invoking a constructor
-                return allocateInstanceUnsafe(targetClass);
-            } catch (Exception ex) {
-                throw new SerializerException(node, e, LangMessage.NO_SUCH_CONSTRUCTOR, ReflectionUtils.getTypeName(jvmType)); // This is line 804
-            }
+            C instance = ReflectionUtils.createInstance(targetClass);
+            return instance;
         } catch (Exception e) {
-            throw error(e, ReflectionUtils.getTypeName(jvmType));
+            throw error(e, targetClass.getTypeName());
         }
     }
 

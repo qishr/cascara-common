@@ -35,9 +35,9 @@
 
 package io.github.qishr.cascara.common.lang.type;
 
-import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.diagnostic.UnimplementedMethodException;
+import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public class DiagnosticMessageDescriptor extends AbstractScalarDescriptor<DiagnosticMessage> {
 

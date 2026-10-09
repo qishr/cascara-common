@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 
 public abstract class AbstractLibraryScanner {
     protected static final String DOT_CLASS = ".class";

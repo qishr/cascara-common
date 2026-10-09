@@ -37,7 +37,7 @@ package io.github.qishr.cascara.common.exec;
 import java.util.List;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public class ExecutionException extends LocalizableRuntimeException {

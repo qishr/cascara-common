@@ -39,6 +39,8 @@ import java.net.URI;
 import java.text.MessageFormat;
 import java.time.Instant;
 
+import io.github.qishr.cascara.common.annotation.SchemaDefinition;
+import io.github.qishr.cascara.common.annotation.SchemaProperty;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.lang.token.Token;
 
@@ -48,29 +50,37 @@ import io.github.qishr.cascara.common.lang.token.Token;
 /// Each diagnostic encapsulates precise positioning boundaries, metadata strings,
 /// structural tracking indicators like thread name and execution timestamps, and
 /// an optional underlying exception cause.
+@SchemaDefinition(
+    title = "Diagnostic Event",
+    description = """
+        Represents a discrete event, log entry, or syntax/semantic problem identified
+        during system runtime or source compilation.
+        Each diagnostic encapsulates precise positioning boundaries, metadata strings,
+        structural tracking indicators like thread name and execution timestamps, and
+        an optional underlying exception cause.
+        """
+)
 public class Diagnostic {
     public static final int UNKNOWN_COORD = -1;
 
-    private URI uri;
-    private int line;
-    private final int column;
-    private final int startOffset;
-    private final int endOffset;
+    @SchemaProperty private URI uri;
+    @SchemaProperty private int line;
+    @SchemaProperty private final int column;
+    @SchemaProperty private final int startOffset;
+    @SchemaProperty private final int endOffset;
 
-    private final String source;
-    private final Level level;
+    @SchemaProperty private final String source;
+    @SchemaProperty private final Level level;
+    @SchemaProperty private final StackTraceElement[] stackTrace;
+    @SchemaProperty private final Throwable cause;
 
-    private final DiagnosticMessage message;
+    @SchemaProperty private final DiagnosticMessage message;
+    @SchemaProperty private final Object[] details;
 
-    private final String formattedMessage;
-    private final Object[] details;
-    private final Throwable cause;
-    private final StackTraceElement[] stackTrace;
-
-    private final String thread;    // This can be taken from the Thread class. No param needed.
-    private final long processId;
-    private final Instant timestamp;
-    // private final ZonedDateTime timestamp;
+    @SchemaProperty private final String formattedMessage;
+    @SchemaProperty private final String thread;    // This can be taken from the Thread class. No param needed.
+    @SchemaProperty private final long processId;
+    @SchemaProperty private final Instant timestamp;
 
     /// Constructs a fully qualified [Diagnostic] entry with absolute location indicators.
     ///
@@ -104,7 +114,6 @@ public class Diagnostic {
 
         this.thread = Thread.currentThread().getName();
         this.processId = ProcessHandle.current().pid();
-        // this.timestamp = ZonedDateTime.now(ZoneOffset.UTC);
         this.timestamp = Instant.now();
 
         String formattedMessage;

@@ -33,23 +33,26 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic;
+package io.github.qishr.cascara.common.diagnostic.exception;
 
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
-public class UnimplementedMethodException extends LocalizableRuntimeException {
+public class UnexpectedNullParameterException extends LocalizableRuntimeException {
 
-    public UnimplementedMethodException() {
-        super(GenericMessage.UNSUPPORTED_OPERATION, buildMethoDetails());
+    public UnexpectedNullParameterException(String paramName) {
+        super(GenericMessage.UNEXPECTED_NULL_PARAMETER, buildMethoDetails(paramName));
     }
 
-    private static Object[] buildMethoDetails() {
+    // TODO: Consistency with UnimplementedMethodException
+    private static Object[] buildMethoDetails(String paramName) {
         Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
+        String className = caller.getL().getName();
+        String methodName = caller.getR();
         Object[] details = new Object[2];
-        details[0] = caller.getL().getName();  //+ "." + caller.getR();
-        details[1] = caller.getR();
+        details[0] = className + "." + methodName;
+        details[1] = paramName;
         return details;
     }
 }

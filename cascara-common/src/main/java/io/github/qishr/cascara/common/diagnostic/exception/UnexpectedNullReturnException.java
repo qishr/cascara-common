@@ -33,61 +33,24 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic;
+package io.github.qishr.cascara.common.diagnostic.exception;
 
-import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 
-public class SilentCollectingReporter extends AbstractReporter<SilentCollectingReporter>  {
+public class UnexpectedNullReturnException extends LocalizableRuntimeException {
 
-    private boolean hasErrors;
-
-    public SilentCollectingReporter() {
-        // Nothing to see here
+    public UnexpectedNullReturnException(String instanceName, String instanceMethod) {
+        super(GenericMessage.UNEXPECTED_NULL_RETURN, instanceName, buildMethoDetails(instanceName, instanceMethod));
     }
 
-    public boolean hasErrors() { return hasErrors; }
-
-    @Override
-    protected SilentCollectingReporter self() { return this; }
-
-    @Override
-    public boolean collectsProblems() {
-        // Returning true here means the parser won't throw exceptions
-        return true;
-    }
-
-    @Override
-    public boolean isSilent() {
-        return true;
-    }
-
-    //
-    //
-    //
-
-    @Override
-    protected void report(Diagnostic diagnostic) {
-        if (this.level.compareTo(diagnostic.getLevel()) >= 0) {
-            if (getDiagnosticConsumer() != null) {
-                getDiagnosticConsumer().accept(diagnostic);
-            }
-        }
-
-        if (getProblemConsumer() != null && isProblem(diagnostic.getLevel())) {
-            getProblemConsumer().accept(diagnostic);
-        }
-
-        if (diagnostic.getLevel() == Level.ERROR) {
-            hasErrors = true;
-        }
-    }
-
-    @Override
-    protected void writeString(Diagnostic diagnostic) {
-    }
-
-    @Override
-    protected String formatMessage(Diagnostic diagnostic, String line, int lineNumber, boolean useColoring) {
-        return "";
+    // TODO: Consistency with UnimplementedMethodException
+    private static Object[] buildMethoDetails(String instanceName, String instanceMethod) {
+        // Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
+        // String className = caller.getL().getName();
+        // String methodName = caller.getR();
+        Object[] details = new Object[2];
+        details[0] = instanceName;
+        details[1] = instanceMethod;
+        return details;
     }
 }

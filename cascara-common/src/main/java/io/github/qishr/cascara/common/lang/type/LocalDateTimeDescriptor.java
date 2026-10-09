@@ -38,7 +38,7 @@ package io.github.qishr.cascara.common.lang.type;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 
-import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public class LocalDateTimeDescriptor extends AbstractScalarDescriptor<LocalDateTime> {
     public LocalDateTimeDescriptor() {

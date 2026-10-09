@@ -37,7 +37,7 @@ package io.github.qishr.cascara.common.lang.type;
 
 import java.util.UUID;
 
-import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public class UuidDescriptor extends AbstractScalarDescriptor<UUID> {
     public UuidDescriptor() {

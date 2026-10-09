@@ -38,7 +38,7 @@ package io.github.qishr.cascara.common.lang.type;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
-import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public class PathDescriptor extends AbstractScalarDescriptor<Path> {
     public PathDescriptor() {

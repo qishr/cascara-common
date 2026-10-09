@@ -33,42 +33,34 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic;
+package io.github.qishr.cascara.common.diagnostic.report;
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.diagnostic.format.LocalLogFormatter;
+import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
+import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 
-public class LocalizableRuntimeException extends RuntimeException implements LocalizableException {
-    // private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
+public class LocalReporter extends AbstractReporter<LocalReporter> {
 
-    private final DiagnosticMessage diagnosticMessage;
-    private final Object[] details;
+    private LocalLogFormatter consoleFormatter = new LocalLogFormatter();
 
-    // public static void setLocalizer(DiagnosticLocalizer customLocalizer) {
-    //     localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
-    // }
+    public LocalReporter() {
+        // Nothing to see here
+        consoleLogger = new ConsoleLogger();
+        consoleLogger.setFormatter(consoleFormatter);
 
-    public LocalizableRuntimeException(DiagnosticMessage code, Object... details) {
-        super(AbstractLocalizableException.getLocalizer().format(code, details));
-        this.diagnosticMessage = code;
-        this.details = details != null ? details : new Object[0];
+        lineLogger = new LineLogger();
+        lineLogger.setFormatter(new LocalLogFormatter());
+
     }
-
-    public LocalizableRuntimeException(Throwable cause, DiagnosticMessage code, Object... details) {
-        super(AbstractLocalizableException.getLocalizer().format(code, details), cause);
-        this.diagnosticMessage = code;
-        this.details = details != null ? details : new Object[0];
-    }
-
-	public DiagnosticMessage getDiagnosticMessage() {
-		return diagnosticMessage;
-	}
-
-	public Object[] getDetails() {
-		return details;
-	}
 
     @Override
-    public String getLocalizedMessage() {
-        return AbstractLocalizableException.getLocalizer().format(diagnosticMessage, details);
+    protected LocalReporter self() { return this; }
+
+    @Experimental
+    public LocalReporter setPrefixEveryLine(boolean b) {
+        prefixEveryLine = b;
+        consoleFormatter.setPrefixEveryLine(b);
+        return this;
     }
 }

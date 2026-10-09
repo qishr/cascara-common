@@ -7,11 +7,11 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.StandardReporter;
+import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 
 public class ClassHierarchyTestBase {
     protected void outputHierarchy(Map<String, Set<String>> hierarchy) {
-        StandardReporter reporter = new StandardReporter()
+        LocalReporter reporter = new LocalReporter()
             .setLevel(Level.DEBUG);
 
         hierarchy.keySet().stream().sorted().forEach(className -> {
@@ -23,7 +23,7 @@ public class ClassHierarchyTestBase {
     }
 
     protected void outputClasses(Map<String, Set<String>> hierarchy) {
-        StandardReporter reporter = new StandardReporter()
+        LocalReporter reporter = new LocalReporter()
             .setLevel(Level.DEBUG);
 
         StringBuilder sb = new StringBuilder();

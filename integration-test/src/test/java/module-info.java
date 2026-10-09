@@ -34,23 +34,28 @@
 
 module integration.test {
     requires java.management;
-
     requires transitive cascara.common;
+
+    // IPC / Serialization
+    requires java.rmi;
+    requires cascara.lang.json;
+
+    // Logging
+    requires cascara.logging.log4j;
+    requires org.apache.logging.log4j.core;
+
+    // Test
+    requires org.junit.jupiter.api;
     requires cascara.test.common.junit;
     requires transitive integration.test.fixtures;
 
-    // requires test.task;
-    requires cascara.lang.json;
-
-    requires org.junit.jupiter.api;
-    requires java.rmi;
-
+    // Exports
     exports integration.test.exec;
-    opens integration.test.exec to org.junit.platform.commons;
-
     exports integration.test.spl;
-    opens integration.test.spl to org.junit.platform.commons;
-
     exports integration.test.serialization;
+
+    // For JUnit
+    opens integration.test.exec to org.junit.platform.commons;
+    opens integration.test.spl to org.junit.platform.commons;
     opens integration.test.serialization to org.junit.platform.commons;
 }

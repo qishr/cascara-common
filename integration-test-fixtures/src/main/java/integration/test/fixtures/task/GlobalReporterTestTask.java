@@ -3,7 +3,7 @@ package integration.test.fixtures.task;
 import integration.test.fixtures.VmInfo;
 import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.payload.ReporterTestOutput;
-import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.AbstractExecutionTask;
 
 public class GlobalReporterTestTask extends AbstractExecutionTask<ReporterTestInput, ReporterTestOutput> {

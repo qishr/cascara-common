@@ -37,7 +37,7 @@ package io.github.qishr.cascara.common.lang.type;
 
 import java.net.URI;
 
-import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public class UriDescriptor extends AbstractScalarDescriptor<URI> {
     public UriDescriptor() {

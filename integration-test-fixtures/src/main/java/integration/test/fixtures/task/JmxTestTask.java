@@ -10,7 +10,7 @@ import integration.test.fixtures.beans.CascaraControl;
 import integration.test.fixtures.beans.SPLStatus;
 import integration.test.fixtures.payload.JmxTestInput;
 import integration.test.fixtures.payload.JmxTestOutput;
-import io.github.qishr.cascara.common.diagnostic.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.AbstractExecutionTask;
 import io.github.qishr.cascara.common.util.Cascara;
 

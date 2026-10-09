@@ -36,7 +36,7 @@
 package io.github.qishr.cascara.common.lang.diagnostic;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.diagnostic.AbstractLocalizableException;
+import io.github.qishr.cascara.common.diagnostic.exception.AbstractLocalizableException;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 @Experimental

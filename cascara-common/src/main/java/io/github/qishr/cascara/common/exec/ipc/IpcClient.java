@@ -34,6 +34,7 @@ public final class IpcClient implements AutoCloseable {
     }
 
     public static IpcClient tryConnect(Serializer<?> serializer) {
+        // TODO: DEBUG_PROP shouldd be passed over in handshake rather than as env var.
         String ipcDebugStr = System.getProperty(DEBUG_PROP);
         boolean ipcDebugEnabled = "true".equalsIgnoreCase(ipcDebugStr);
 

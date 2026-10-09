@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
+
 public class ExceptionTests {
     @Test
     void test_unimplementedMethodException() {

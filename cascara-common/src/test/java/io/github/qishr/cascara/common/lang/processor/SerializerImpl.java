@@ -39,7 +39,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
 
-import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.plain.PlainMapEntryNode;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;

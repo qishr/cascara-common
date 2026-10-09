@@ -33,15 +33,9 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic;
+package io.github.qishr.cascara.common.diagnostic.report;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
-import java.net.URI;
-import java.nio.file.Path;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,7 +44,13 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
+import io.github.qishr.cascara.common.diagnostic.format.ColoredLogFormatter;
+import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
+import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
+import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.property.Properties;
@@ -58,8 +58,6 @@ import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
-import io.github.qishr.cascara.common.util.TermUtils;
-import io.github.qishr.cascara.common.util.UriScheme;
 
 public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     private static final String PROP_CASC_REPORT_LEVEL = "casc.report.level.";
@@ -67,7 +65,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
     public static final String SERIALIZATION_FORMAT = "application/json";
 
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
+    // private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
 
     private static GlobalReporter globalInstance = new GlobalReporter().init();
     private final Map<String,GlobalReporter> classInstances = new HashMap<>();
@@ -79,15 +77,21 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     private IpcClient ipcClient;
     private boolean ipcUnavailable = false;
     private List<Diagnostic> queue = new ArrayList<>();
-    private long processId;
+    // private long processId;
+
 
     private GlobalReporter() {
     }
 
     private GlobalReporter init() {
         globalInstance = this;
-        RuntimeMXBean rtmxb = ManagementFactory.getRuntimeMXBean();
-        globalInstance.processId = rtmxb.getPid();
+
+        consoleLogger = new ConsoleLogger();
+        consoleLogger.setFormatter(new ColoredLogFormatter());
+
+        lineLogger = new LineLogger();
+        lineLogger.setFormatter(new PlainLogFormatter());
+
 
         // TODO:
         // CASC_REPORT_CONFIG=/path/
@@ -130,8 +134,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
     public static void initSerializer(Serializer<?> serializer) {
         if (globalInstance().serializer == null) {
-            // System.out.println("GR: set serializer");
-            // globalInstance().diagnosticSerializer = ProcessorFactory.system().createSerializer(SERIALIZATION_FORMAT);
             globalInstance.serializer = serializer;
         }
     }
@@ -240,11 +242,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     @Override
-    protected Consumer<String> getLineConsumer() {
-        return this == globalInstance ? lineConsumer : globalInstance.getLineConsumer();
-    }
-
-    @Override
     protected boolean isSystemOutputEnabled() {
         return this == globalInstance ? systemOutputEnabled : globalInstance.isSystemOutputEnabled();
     }
@@ -277,16 +274,28 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     /// Central reporting method. All other rporting methods call this.
     @Override
     public void report(Diagnostic diagnostic) {
-        super.report(diagnostic);
-        if (this.level.includes(diagnostic.getLevel())) {
+        if (this == globalInstance) {
+            super.reportAnyLevel(diagnostic);
             if (SPL.isBooting()) {
-                // TODO: If SPL is still booting, Queue it
-                // If SPL has finished booting, discard it.
                 globalInstance.queue.add(diagnostic);
             } else {
                 globalInstance.sendDiagnostic(diagnostic);
             }
+        } else {
+            if (this.level.includes(diagnostic.getLevel())) {
+                globalInstance.report(diagnostic);
+            }
         }
+    }
+
+    @Override
+    protected void logLine(Level level, String msgLine) {
+        // if (getLineConsumer() != null) {
+        //     String logLine = "[" + level.getLogPrefix() + "] " + msgLine;
+        //     getLineConsumer().accept(logLine);
+        // }
+        Diagnostic diagnostic = DiagnosticBuilder.build("", level, msgLine);
+        globalInstance.log(diagnostic);
     }
 
     //
@@ -358,95 +367,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 e.printStackTrace();
             }
         }
-    }
-
-    @Override
-    protected String formatMessage(Diagnostic diagnostic, String msgLine, int msgLineNumber, boolean colorize) {
-        int diagnosticLineNumber = diagnostic.getLine();
-        boolean showLineNumber = diagnosticLineNumber > 0;
-        boolean showUri = false;
-
-        String resource = null;
-        URI diagnosticUri = diagnostic.getUri();
-        if (diagnosticUri != null) {
-            resource = UriScheme.of(diagnosticUri) == UriScheme.FILE
-                ? Path.of(diagnostic.getUri()).toString()
-                : diagnostic.getUri().toString();
-            showUri = true;
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        String timeStamp = ZonedDateTime.ofInstant(diagnostic.getTimestamp(), UTC).format(TIME_FORMAT);
-
-        if (msgLineNumber == 0) {
-
-            sb.append("[");
-            sb.append(timeStamp);
-            sb.append("] ");
-
-            sb.append("[");
-            if (colorize && diagnostic.getProcessId() != globalInstance.processId) {
-                sb.append(TermUtils.ANSI_CYAN);
-                sb.append(diagnostic.getProcessId());
-                sb.append(TermUtils.ANSI_RESET);
-            } else {
-                sb.append(diagnostic.getProcessId());
-            }
-            // sb.append(diagnostic.getProcessId());
-            sb.append("] ");
-
-            sb.append("[");
-            sb.append(diagnostic.getSource());
-            sb.append("] ");
-
-            if (showProblemCodes && diagnostic.getLevel().isProblem()) {
-                String msgCode = diagnostic.getMessage().getCode();
-                sb.append("[");
-                if (colorize) {
-                    sb.append(TermUtils.ANSI_WHITE);
-                    sb.append(msgCode);
-                    sb.append(TermUtils.ANSI_RESET);
-                } else {
-                    sb.append(msgCode);
-                }
-                sb.append("] ");
-            }
-        }
-
-        sb.append(msgLine);
-
-        if (showUri) {
-            if (showLineNumber) {
-                sb.append(" at ");
-                sb.append(resource);
-                sb.append(':');
-                sb.append(diagnosticLineNumber);
-            } else {
-                sb.append(" in file ");
-                sb.append(resource);
-            }
-        } else {
-            if (showLineNumber) {
-                if (diagnostic.getColumn() > 0) {
-                    sb.append(" at ");
-                    sb.append(diagnosticLineNumber);
-                    sb.append(":");
-                    sb.append(diagnostic.getColumn());
-                } else {
-                    sb.append(" at line ");
-                    sb.append(diagnosticLineNumber);
-                }
-            }
-        }
-
-        if (colorize) {
-            sb.append(TermUtils.ANSI_RESET);
-        }
-
-        sb.append('\n');
-
-        return sb.toString();
     }
 
     private void setLevelsForAll(Level level) {

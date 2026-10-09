@@ -19,6 +19,7 @@ import org.junit.jupiter.api.parallel.Resources;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.StringProperty;
 

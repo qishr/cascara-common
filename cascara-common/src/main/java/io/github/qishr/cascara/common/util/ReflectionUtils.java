@@ -37,6 +37,7 @@ package io.github.qishr.cascara.common.util;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -48,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import sun.misc.Unsafe;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.Nullable;
@@ -55,6 +57,31 @@ import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 
 public class ReflectionUtils {
+    private static final Unsafe UNSAFE;
+
+    static {
+        try {
+            Field field = Unsafe.class.getDeclaredField("theUnsafe");
+            field.setAccessible(true);
+            UNSAFE = (Unsafe) field.get(null);
+        } catch (Exception e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T createInstanceUnsafe(Class<T> clazz) throws InstantiationException {
+        return (T) UNSAFE.allocateInstance(clazz);
+    }
+
+    public static <C> C createInstance(Class<C> targetClass) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, SecurityException {
+        try {
+            C jvmInstance = targetClass.getConstructor().newInstance();
+            return jvmInstance;
+        } catch (NoSuchMethodException e) {
+            return createInstanceUnsafe(targetClass);
+        }
+    }
 
     public static boolean isInstance(Object thisInstance, Type thatType) {
         if (thisInstance == null || thatType == null) {

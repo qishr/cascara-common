@@ -36,11 +36,17 @@
 package io.github.qishr.cascara.common.lang.type;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
-import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public class InstantDescriptor extends AbstractScalarDescriptor<Instant> {
+    protected static final ZoneId UTC = ZoneId.of("UTC");
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
+
     public InstantDescriptor() {
         super(Instant.class, PrimitiveType.STRING, "timestamp"); // TODO: is timestamp correct?
     }
@@ -52,7 +58,8 @@ public class InstantDescriptor extends AbstractScalarDescriptor<Instant> {
 
     @Override
     public Object toPrimitive(Instant jvmInstance) {
-        return jvmInstance.toEpochMilli();
+        // return jvmInstance.toEpochMilli();
+        return ZonedDateTime.ofInstant(jvmInstance, UTC).format(TIME_FORMAT);
     }
 
     @Override

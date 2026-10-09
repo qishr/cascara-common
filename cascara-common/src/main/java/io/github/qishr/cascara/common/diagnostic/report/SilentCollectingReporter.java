@@ -32,38 +32,53 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.diagnostic.report;
 
-package io.github.qishr.cascara.common.diagnostic;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
+public class SilentCollectingReporter extends AbstractReporter<SilentCollectingReporter>  {
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+    private boolean hasErrors;
 
-public interface LocalizableException {
+    public SilentCollectingReporter() {
+        // Nothing to see here
+    }
 
-    /// Returns a diagnostic message for the error.
-	DiagnosticMessage getDiagnosticMessage();
+    public boolean hasErrors() { return hasErrors; }
 
-    /// Returns the details, if any, to be used in formatting the error message.
-	Object[] getDetails();
+    @Override
+    protected SilentCollectingReporter self() { return this; }
 
-    /// Returns a localized, formatted error message.
-    String getLocalizedMessage();
+    @Override
+    public boolean collectsProblems() {
+        // Returning true here means the parser won't throw exceptions
+        return true;
+    }
 
-    /// Returns a localized, formatted error message.
-    String getMessage();
+    @Override
+    public boolean isSilent() {
+        return true;
+    }
 
-    Throwable getCause();
+    //
+    //
+    //
 
-    String toString();
+    @Override
+    protected void report(Diagnostic diagnostic) {
+        if (this.level.compareTo(diagnostic.getLevel()) >= 0) {
+            if (getDiagnosticConsumer() != null) {
+                getDiagnosticConsumer().accept(diagnostic);
+            }
+        }
 
-    void printStackTrace();
+        if (getProblemConsumer() != null && isProblem(diagnostic.getLevel())) {
+            getProblemConsumer().accept(diagnostic);
+        }
 
-    void printStackTrace(PrintStream s);
-
-    void printStackTrace(PrintWriter s);
-
-    StackTraceElement[] getStackTrace();
-
+        if (diagnostic.getLevel() == Level.ERROR) {
+            hasErrors = true;
+        }
+    }
 }
