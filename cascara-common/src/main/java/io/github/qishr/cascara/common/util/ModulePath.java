@@ -144,7 +144,8 @@ public class ModulePath extends AbstractLibraryScanner {
     //     return REPORTER;
     // }
 
-    protected String scanDirectoryUrl(Path directory, URL[] urls, String moduleName) {
+    public String scanDirectoryUrl(Path directory, URL[] urls, String moduleName) {
+        // This is called from ModulePathTests
         Set<String> discovered = new HashSet<>();
         try (URLClassLoader classLoader = new URLClassLoader(urls)) {
             try(Stream<Path> classFiles = Files.walk(directory)) {

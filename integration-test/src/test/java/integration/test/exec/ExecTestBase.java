@@ -7,7 +7,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.ReportWriter;
+import io.github.qishr.cascara.common.diagnostic.report.ReportWriter;
 import io.github.qishr.cascara.common.exec.ArtifactResolver;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmProcess;

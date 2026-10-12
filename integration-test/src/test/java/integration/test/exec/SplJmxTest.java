@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
-import io.github.qishr.cascara.common.diagnostic.Logger;
+import io.github.qishr.cascara.common.diagnostic.log.Logger;
 import io.github.qishr.cascara.common.diagnostic.log.TimeSequencedAggregatorLogger;
 import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.exec.JvmOptions;

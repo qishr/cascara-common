@@ -114,7 +114,7 @@ public abstract class AbstractLibraryScanner {
 
     protected abstract String scanDirectoryUrl(Path directory, URL[] urls, String moduleName);
 
-    protected String scanClassFile(Path directory, Path file, URLClassLoader classLoader, String moduleName, Set<String> discovered) throws LocalizableIOException {
+    public String scanClassFile(Path directory, Path file, URLClassLoader classLoader, String moduleName, Set<String> discovered) throws LocalizableIOException {
         String className = "";
         String relativePath = "";
         try {
