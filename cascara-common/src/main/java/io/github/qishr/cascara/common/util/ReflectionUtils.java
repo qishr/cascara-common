@@ -50,7 +50,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import sun.misc.Unsafe;
-
+import io.github.qishr.cascara.common.annotation.DataField;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
@@ -259,6 +259,16 @@ public class ReflectionUtils {
         return null;
     }
 
+    public static String getEffectiveName(Field field) {
+        String keyName = field.isAnnotationPresent(DataField.class)
+            ? field.getAnnotation(DataField.class).key()
+            : field.getName();
+        if (keyName == null || keyName.isEmpty()) {
+            keyName = field.getName();
+        }
+        return keyName;
+    }
+
     public static List<Field> getAllFields(Class<?> clazz) {
         return getAllFields(clazz, null);
     }
@@ -463,6 +473,15 @@ public class ReflectionUtils {
             }
         }
         return methods;
+    }
+
+    @Experimental
+    public static boolean isScalarType(Class<?> type) {
+        return type.isPrimitive()
+            || type == Boolean.class
+            || Number.class.isAssignableFrom(type)
+            || type == String.class
+            || type.isEnum();
     }
 }
 

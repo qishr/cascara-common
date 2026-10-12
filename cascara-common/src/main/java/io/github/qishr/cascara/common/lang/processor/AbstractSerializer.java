@@ -229,17 +229,32 @@ public abstract class AbstractSerializer<
 
         reporter.debug("serializeObject " + jvmInstance);
 
+        // getAllSerializableFields filters out fields with @DataIgnore
         for (Field field : getAllSerializableFields(jvmType)) {
+            String fieldName = ReflectionUtils.getEffectiveName(field);
+            int fieldModifiers = field.getModifiers();
+
+            // TODO: AbstractSerializer and SchemaGenerator have this in common.
+            // Perhaps it's time to move it to ReflectionUtils...
+            if (Modifier.isTransient(fieldModifiers)) {
+                continue;
+            }
+
+            if (Modifier.isStatic(fieldModifiers)) {
+                // A static String field "SCHEMA" is used to indicate the "$schema" property
+                if (fieldName.equals("SCHEMA")) {
+                    // TODO: Should this be able to be disabled? Or should it require an annotation?
+                    fieldName = "$schema";
+                } else {
+                    continue;
+                }
+            }
+
             // Try to make the field accessible. If this fails, continue to the next field.
             try {
                 field.setAccessible(true);
             } catch (InaccessibleObjectException e) {
                 warnInaccessible(jvmType, field, e);
-                continue;
-            }
-
-            int fieldModifiers = field.getModifiers();
-            if (Modifier.isStatic(fieldModifiers)) {
                 continue;
             }
 
@@ -267,11 +282,7 @@ public abstract class AbstractSerializer<
                 throw new SerializerException(e, LangMessage.FIELD_NOT_ACCESSIBLE, field.getName());
 			}
             if (value != null) {
-                String keyName = field.isAnnotationPresent(DataField.class)
-                    ? field.getAnnotation(DataField.class).key() : field.getName();
-                if (keyName == null || keyName.isEmpty()) keyName = field.getName();
-
-                K keyNode = astFactory.createKey(keyName);
+                K keyNode = astFactory.createKey(fieldName);
                 N valueNode = serialize(value);
                 objectMap.put(keyNode, valueNode);
             }
@@ -315,15 +326,6 @@ public abstract class AbstractSerializer<
         for (int i = 0; i < length; i++) {
             Object item = Array.get(jvmInstance, i);
             N element = item == null ? null : serialize(item);
-            // if (element instanceof MapAstNode m) {
-            //     System.out.println("i=" + item.getClass());
-            //     for (Object o : m.entrySet()) {
-            //         System.out.println("o=" + o.getClass());
-            //         if (o instanceof MapEntryAstNode e) {
-            //             System.out.println("k:" + e.getKeyString() + " v:" + e.getValue());
-            //         }
-            //     }
-            // }
             sequence.add(element);
         }
         return sequence;
@@ -403,7 +405,7 @@ public abstract class AbstractSerializer<
 
         // 3. Scalar node with scalar targetType
         if (targetType instanceof Class<?> cls) {
-            if (isScalarType(cls)) {
+            if (ReflectionUtils.isScalarType(cls)) {
                 if (node instanceof ScalarAstNode scalar) {
                     if (typeDescriptor instanceof ScalarDescriptor descriptor) {
                         return (C) deserializeScalarWithDescriptor(scalar, descriptor);
@@ -546,6 +548,12 @@ public abstract class AbstractSerializer<
 
         // 3. Process Declared Fields
         for (Field field : getAllSerializableFields(jvmType)) {
+            // Skip static or transient fields
+            int fieldModifiers = field.getModifiers();
+            if (Modifier.isStatic(fieldModifiers) || Modifier.isTransient(fieldModifiers)) {
+                continue;
+            }
+
             // Try to make the field accessible. If this fails, continue to the next field.
             try {
                 field.setAccessible(true);
@@ -555,18 +563,12 @@ public abstract class AbstractSerializer<
             }
 
             // Determine the key for this field
-            String key = field.getName();
-            if (field.isAnnotationPresent(DataField.class)) {
-                String annotatedKey = field.getAnnotation(DataField.class).key();
-                if (annotatedKey != null && !annotatedKey.isEmpty()) {
-                    key = annotatedKey;
-                }
-            }
+            String keyName = ReflectionUtils.getEffectiveName(field);
 
-            claimedKeys.add(key);
+            claimedKeys.add(keyName);
 
             // Use the new generic 'get' method
-            AstNode valueNode = mapNode.get(key);
+            AstNode valueNode = mapNode.get(keyName);
 
             if (valueNode != null) {
                 // We pass field.getType() so it knows this is a List, a String, etc.
@@ -983,14 +985,6 @@ public abstract class AbstractSerializer<
             jvmInstance instanceof Byte ||
             jvmInstance instanceof Character ||
             jvmInstance instanceof Boolean);
-    }
-
-    private boolean isScalarType(Class<?> t) {
-        return t.isPrimitive()
-            || t == String.class
-            || Number.class.isAssignableFrom(t)
-            || t == Boolean.class
-            || t.isEnum();
     }
 
     @Nullable
