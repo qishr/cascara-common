@@ -17,6 +17,8 @@ public abstract class SerializerTestBase {
         REPORTER.setLevel(Level.DEBUG);
 
         serializer = ProcessorFactory.system().createSerializer("application/json");
-        serializer.setUseProviderFactory(false);
+
+        // For diagnostics
+        serializer.setUseProviderFactory(true);
     }
 }

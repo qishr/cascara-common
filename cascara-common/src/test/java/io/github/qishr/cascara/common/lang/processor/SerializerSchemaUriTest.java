@@ -4,10 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
+@Disabled("Deprecated")
 public class SerializerSchemaUriTest extends SerializerTestBase {
     public static class SchemaFieldTestClass {
         public static final String SCHEMA = "cascara://core/schema-service/draft/cascara.common/schema-field-test/0.1.0";

@@ -52,10 +52,6 @@ import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
-import io.github.qishr.cascara.common.annotation.Nullable;
-
-
-
 
 import java.util.Collections;
 
@@ -80,20 +76,13 @@ public class ClassHierarchy {
     private static Map<String, Set<String>> ensureHierarchy() {
         Map<String, Set<String>> map = HIERARCHY_REF.get();
         if (map == null) {
-            // System.out.println("ensureHierarchy-1");
             synchronized (LOCK) {
-                // System.out.println("ensureHierarchy-2");
                 map = HIERARCHY_REF.get();
                 if (map == null) {
-                    // System.out.println("ensureHierarchy-3");
                     Map<String, Set<String>> newMap = new ConcurrentHashMap<>();
                     scanSystemPackages(newMap);
-                    // System.out.println("ensureHierarchy-4");
                     scanClassPath(newMap);
-                    // System.out.println("ensureHierarchy-5");
                     scanModulePath(newMap);
-                    // System.out.println("ensureHierarchy-6");
-
                     HIERARCHY_REF.set(newMap);
                     map = newMap;
                 }

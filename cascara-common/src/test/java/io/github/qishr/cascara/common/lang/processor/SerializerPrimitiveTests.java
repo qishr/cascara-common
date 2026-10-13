@@ -52,4 +52,26 @@ public class SerializerPrimitiveTests extends SerializerTestBase {
         Double r = serializer.fromAst(root, Double.class);
         assertEquals(o, r);
     }
+
+    @Test
+    void test_Short() {
+        Short o = Short.valueOf("4");
+
+        AstNode root = serializer.toAst(o);
+        assertInstanceOf(ScalarAstNode.class, root);
+
+        Short r = serializer.fromAst(root, Short.class);
+        assertEquals(o, r);
+    }
+
+    @Test
+    void test_Byte() {
+        Byte o = Byte.valueOf("1");
+
+        AstNode root = serializer.toAst(o);
+        assertInstanceOf(ScalarAstNode.class, root);
+
+        Byte r = serializer.fromAst(root, Byte.class);
+        assertEquals(o, r);
+    }
 }

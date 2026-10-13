@@ -37,18 +37,22 @@ package integration.test.serialization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.util.CascaraSchemaUri;
+import io.github.qishr.cascara.common.annotation.PolymorphicType;
+import io.github.qishr.cascara.common.annotation.SubType;
+import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 
 public class SerializerSubclassOfAbstractClassTestsSameFields extends SerializerTestBase {
 
+    @PolymorphicType(property = "type")
     public static abstract class BaseTestClass {
         protected BaseTestClass() {}
     }
 
+    @SubType(name = "c0")
     public static class TestClass0 extends BaseTestClass {
         public String field0;
         public String field1;
@@ -57,6 +61,7 @@ public class SerializerSubclassOfAbstractClassTestsSameFields extends Serializer
         }
     }
 
+    @SubType(name = "c1")
     public static class TestClass1 extends BaseTestClass {
         public String field0;
         public String field1;
@@ -68,30 +73,14 @@ public class SerializerSubclassOfAbstractClassTestsSameFields extends Serializer
     @Test
     void test_subclassDeserializationToUnspecifiedConcreteType() {
         String json0 = "{\"field0\":\"foo\"}";
-        String json1 = "{\"field0\":\"bar\"}";
-
-        BaseTestClass c0 = serializer.fromString(json0, BaseTestClass.class);
-        assertInstanceOf(TestClass0.class, c0);
-
-        TestClass0 tc0 = (TestClass0) c0;
-        assertEquals("foo", tc0.field0);
-
-        BaseTestClass c1 = serializer.fromString(json1, BaseTestClass.class);
-
-        // Expect the serializer to use TestClass0 again
-        assertInstanceOf(TestClass0.class, c1);
-
-        TestClass1 tc1 = (TestClass1) c1;
-        assertEquals("bar", tc1.field0);
+        assertThrows(SerializerException.class, () -> serializer.fromString(json0, BaseTestClass.class));
     }
 
-    @Disabled
     @Test
     void test_subclassDeserializationToSpecifiedConcreteType() {
-        String json0 = "{\"field0\":\"foo\"}";
+        String json0 = "{\"type\":\"c0\",\"field0\":\"foo\"}";
 
-        CascaraSchemaUri schema0 = CascaraSchemaUri.of(TestClass1.class);
-        String json1 = "{\"$schema\": \"" + schema0 + "\", \"field0\":\"bar\"}";
+        String json1 = "{\"type\": \"c1\", \"field0\":\"bar\"}";
 
         BaseTestClass c0 = serializer.fromString(json0, BaseTestClass.class);
         assertInstanceOf(TestClass0.class, c0);

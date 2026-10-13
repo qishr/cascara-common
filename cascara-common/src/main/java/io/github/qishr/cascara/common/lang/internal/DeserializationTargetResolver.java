@@ -105,51 +105,57 @@ public class DeserializationTargetResolver {
     }
 
     private Set<Class<?>> getPermittedSubclasses(Class<?> baseClass) {
-        return permittedSubclassesCache.computeIfAbsent(baseClass, c -> {
-            Class<?>[] permitted = baseClass.getPermittedSubclasses();
-            Set<Class<?>> subclasses = new HashSet<>();
-            for (Class<?> clazz : permitted) {
-                if (baseClass.isAssignableFrom(clazz)) {
-                    subclasses.add((Class<?>)clazz);
+        synchronized (permittedSubclassesCache) {
+            return permittedSubclassesCache.computeIfAbsent(baseClass, c -> {
+                Class<?>[] permitted = baseClass.getPermittedSubclasses();
+                Set<Class<?>> subclasses = new HashSet<>();
+                for (Class<?> clazz : permitted) {
+                    if (baseClass.isAssignableFrom(clazz)) {
+                        subclasses.add((Class<?>)clazz);
+                    }
                 }
-            }
-            return subclasses;
-        });
+                return subclasses;
+            });
+        }
     }
 
     private Set<Class<?>> getAllSubclasses(Class<?> baseClass) {
-        return allSubclassesCache.computeIfAbsent(baseClass, c -> {
-            List<String> subclassNames = ClassHierarchy.getSubclasses(baseClass.getName());
-            Set<Class<?>> subclasses = new HashSet<>();
-            for (String fqcn : subclassNames) {
-                Class<?> candidate;
-                try {
-                    candidate = Class.forName(fqcn);
-                    subclasses.add(candidate);
-                } catch (ClassNotFoundException ignored) {}
-            }
-            return subclasses;
-        });
+        synchronized (allSubclassesCache) {
+            return allSubclassesCache.computeIfAbsent(baseClass, c -> {
+                List<String> subclassNames = ClassHierarchy.getSubclasses(baseClass.getName());
+                Set<Class<?>> subclasses = new HashSet<>();
+                for (String fqcn : subclassNames) {
+                    Class<?> candidate;
+                    try {
+                        candidate = Class.forName(fqcn);
+                        subclasses.add(candidate);
+                    } catch (ClassNotFoundException ignored) {}
+                }
+                return subclasses;
+            });
+        }
     }
 
     @SuppressWarnings("unchecked")
     @Nullable
     private <C> Class<? extends C> getSubclass(Class<C> baseClass, String specifiedSubType, Set<Class<?>> candidates) {
-        String key = baseClass.getName() + "#" + specifiedSubType;
-        return (Class<C>) specificSubclassCache.computeIfAbsent(key, k -> {
-            for (Class<?> candidate : candidates) {
-                SubType subTypeAnno = candidate.getAnnotation(SubType.class);
-                if (subTypeAnno != null) {
-                    String name = subTypeAnno.name();
-                    if (name.equals(specifiedSubType)) {
-                        if (baseClass.isAssignableFrom(candidate)) {
-                            return (Class<C>) candidate;
+        synchronized(specificSubclassCache) {
+            String key = baseClass.getName() + "#" + specifiedSubType;
+            return (Class<C>) specificSubclassCache.computeIfAbsent(key, k -> {
+                for (Class<?> candidate : candidates) {
+                    SubType subTypeAnno = candidate.getAnnotation(SubType.class);
+                    if (subTypeAnno != null) {
+                        String name = subTypeAnno.name();
+                        if (name.equals(specifiedSubType)) {
+                            if (baseClass.isAssignableFrom(candidate)) {
+                                return (Class<C>) candidate;
+                            }
                         }
                     }
                 }
-            }
-            return null;
-        });
+                return null;
+            });
+        }
     }
 
     @NonNull
