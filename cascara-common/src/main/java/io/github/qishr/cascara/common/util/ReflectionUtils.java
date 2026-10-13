@@ -44,6 +44,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -233,8 +234,8 @@ public class ReflectionUtils {
     }
 
     @Nullable
-    public static Type getGenericElementTypeFromListType(Type listType) {
-        if (canAssign(listType, List.class)) {
+    public static Type getGenericElementTypeFromCollectionType(Type listType) {
+        if (canAssign(listType, Collection.class)) {
             return getParameterTypeFromGenericType(listType, 0);
         }
         return null;

@@ -123,8 +123,10 @@ public class SerializerTests extends SerializerTestBase {
 
         PackageJsonFile pjf = serializer.fromAst(map, PackageJsonFile.class);
 
+        Map<String,List<Contribution>> contributes = pjf.contributes;
+
         assertNotNull(pjf);
-        List<Contribution> themes =  pjf.contributes.get("themes");
+        List<Contribution> themes =  contributes.get("themes");
 
         assertNotNull(themes);
         assertFalse(themes.isEmpty());
@@ -162,6 +164,23 @@ public class SerializerTests extends SerializerTestBase {
         ScalarAstNode<?> nameNode = theme.getScalar("name");
         assertNotNull(nameNode);
         assertEquals("TestName", nameNode.asString());
+    }
 
+    public static class ObjectTestClass {
+        public Object obj;
+    }
+
+    /// When the target type is just Object:
+    /// - SequenceAstNodes become Lists
+    /// - MapAstNodes become Maps
+    @Test
+    void test_Object() {
+        PlainMapNode map = new PlainMapNode()
+            .put("obj", new PlainMapNode()
+                .put("name", "TestName")
+            );
+
+        ObjectTestClass r = serializer.fromAst(map, ObjectTestClass.class);
+        assertInstanceOf(Map.class, r.obj);
     }
 }
