@@ -9,20 +9,20 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.lang.ast.AstNode;
-import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
+import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
 
 public class SerializerSetTest extends SerializerTestBase {
     // TODO
     @Test
-    void test_set() {
+    void test_serializeSet() {
         Set<String> o = new HashSet<>();
+        o.add("hello");
 
         AstNode root = serializer.toAst(o);
-        assertInstanceOf(ScalarAstNode.class, root);
+        assertInstanceOf(SequenceAstNode.class, root);
 
         Set<String> r = serializer.fromAst(root, new TypeReference<Set<String>>(){});
         assertEquals(o, r);
-
     }
 }

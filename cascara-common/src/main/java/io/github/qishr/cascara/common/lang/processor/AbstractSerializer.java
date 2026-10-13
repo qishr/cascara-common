@@ -225,9 +225,9 @@ public abstract class AbstractSerializer<
                 return (N) serializeArray(jvmInstance);
             }
 
-            // Lists
-            if (jvmInstance instanceof List<?> list) {
-                return (N) serializeList(list);
+            // Lists, Sets, etc
+            if (jvmInstance instanceof Collection<?> list) {
+                return (N) serializeCollection(list);
             }
 
             // Maps
@@ -337,9 +337,8 @@ public abstract class AbstractSerializer<
         return sequence;
     }
 
-    /// Serializes a List into a Sequence.
-    protected L serializeList(List<?> list) {
-        // TODO: Other SequencedCollection classes; Sets
+    /// Serializes a collection into a Sequence.
+    protected L serializeCollection(Collection<?> list) {
         L sequence = astFactory.createSequenceNode();
         for (Object item : list) {
             N element = item == null ? null : serialize(item);
@@ -402,22 +401,35 @@ public abstract class AbstractSerializer<
             // }
         }
 
+
+
+
+
+
         // 2. Collection targetType
-        if (ReflectionUtils.canAssign(targetType, List.class)) {
+        if (ReflectionUtils.canAssign(targetType, Collection.class)) {
+            System.out.println("Debug: seq: " + targetType);
+            if (node instanceof SequenceAstNode seqNode) {
+                // TODO: BUG: This MIGHT BE discarding type information
+                return (C) convertAstSequenceToStandardCollection(seqNode, targetType);
+            }
+            return (C) deserializeMap(node, targetType);
+        }
+
+        // 3. Map targetType
+        if (ReflectionUtils.canAssign(targetType, Map.class)) {
+            System.out.println("Debug: map: " + targetType);
             if (node instanceof MapAstNode mapNode) {
+                // TODO: BUG: This **IS** discarding type information
                 return (C) convertAstMapToStandardMap(mapNode);
             }
             return (C) deserializeList(node, targetType);
         }
-        if (ReflectionUtils.canAssign(targetType, Map.class)) {
-            if (node instanceof SequenceAstNode seqNode) {
-                return (C) convertAstSequenceToStandardList(seqNode);
-            }
-            return (C) deserializeMap(node, targetType);
-        }
-        // TODO: What about Sets?
 
-        // 3. Scalar node with scalar targetType
+
+
+
+        // 4. Scalar node with scalar targetType
         if (targetType instanceof Class<?> cls) {
             if (ReflectionUtils.isScalarType(cls)) {
                 if (node instanceof ScalarAstNode scalar) {
@@ -440,7 +452,7 @@ public abstract class AbstractSerializer<
             }
         }
 
-        // 4. Scalar node with non-scalar targetType
+        // 5. Scalar node with non-scalar targetType
         // This handles the cases like byte[]
         if (node instanceof ScalarAstNode scalar) {
             if (typeDescriptor instanceof ScalarDescriptor descriptor) {
@@ -460,12 +472,12 @@ public abstract class AbstractSerializer<
             );
         }
 
-        // 5. Parametersized types
+        // 6. Parametersized types
         if (targetType instanceof ParameterizedType pt) {
             return (C) deserializeParameterized(node, pt);
         }
 
-        // 6. Wildcards / type variables: fall back to upper bound or Object
+        // 7. Wildcards / type variables: fall back to upper bound or Object
         // TODO: These are recursive. Add tests to ensure they can't get stuck in a loop.
         if (targetType instanceof java.lang.reflect.WildcardType wt) {
             Type[] upper = wt.getUpperBounds();
@@ -486,7 +498,7 @@ public abstract class AbstractSerializer<
             // TODO: What if node is seqNode but targetType is not a list?
             // TODO: What if targetType is a set?
             if (node instanceof SequenceAstNode seqNode) {
-                return (C) convertAstSequenceToStandardList(seqNode);
+                return (C) convertAstSequenceToStandardCollection(seqNode, targetType);
             }
             if (node instanceof ScalarAstNode scalar) {
                 return (C) scalar.getPrimitive();
@@ -513,7 +525,6 @@ public abstract class AbstractSerializer<
             throw new SerializerException(node, LangMessage.EXPECTED_MAP_STRUCTURE, targetType); //jvmType.getName());
         }
 
-        // TODO: Subclasses
         C jvmInstance = newTypeInstance(mapNode, targetType);
         return deserializeObject(mapNode, jvmInstance);
     }
@@ -842,6 +853,7 @@ public abstract class AbstractSerializer<
         for (MapEntryAstNode<?,?> entry : mapNode.getEntries()) {
             String key = entry.getKeyString();
             // Recursively convert the value
+            // TODO: BUG: This is **LIKELY** discarding type information
             Object value = deserialize(entry.getValue(), Object.class);
             result.put(key, value);
         }
@@ -849,10 +861,20 @@ public abstract class AbstractSerializer<
     }
 
     @NonNull
-    private List<Object> convertAstSequenceToStandardList(SequenceAstNode<?> seqNode) {
-        List<Object> result = new ArrayList<>();
+    private Collection<Object> convertAstSequenceToStandardCollection(SequenceAstNode<?> seqNode, Type targetType) {
+        Collection<Object> result = null;
+        if (ReflectionUtils.canAssign(targetType, List.class)) {
+            result = new ArrayList<>();
+        }
+        else if (ReflectionUtils.canAssign(targetType, Set.class)) {
+            result = new HashSet<>();
+        } else {
+            result = new ArrayList<>();
+        }
+
         for (AstNode child : seqNode.getChildren()) {
             // Recursively convert each item in the list
+            // TODO: BUG: This is **LIKELY** discarding type information
             result.add(deserialize(child, Object.class));
         }
         return result;
@@ -893,7 +915,7 @@ public abstract class AbstractSerializer<
                         } else if (valueNode instanceof MapAstNode map) {
                             value = convertAstMapToStandardMap(map);
                         } else if (valueNode instanceof SequenceAstNode seq) {
-                            value = convertAstSequenceToStandardList(seq);
+                            value = convertAstSequenceToStandardCollection(seq, null);
                         } else {
                             // If it's a complex object (Map/List), for now we pass the AST node
                             // or we'd need a recursive "astToMap" helper.
