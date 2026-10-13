@@ -49,6 +49,10 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.AnyGetter;
@@ -110,6 +114,7 @@ public abstract class AbstractSerializer<
     protected int depth = 0;
     private Set<String> previousWarnings = new HashSet<>();
 
+    private Set<String> classesWithNoTypeDescriptors = new HashSet<>();
     private DeserializationTargetResolver targetResolver = new DeserializationTargetResolver();
     private final AstConverter<?> astConverter;
 
@@ -150,6 +155,10 @@ public abstract class AbstractSerializer<
 
         if (jvmInstance == null) {
             return null;
+        }
+
+        if (isOptional(jvmInstance)) {
+            return serialize(unwrapOptional(jvmInstance));
         }
 
         depth++;
@@ -385,6 +394,12 @@ public abstract class AbstractSerializer<
         Class<?> rawClass = ReflectionUtils.getRawClass(targetType);
         if (rawClass.isArray()) {
             return (C) deserializeArray(node, targetType);
+        }
+
+        if (isOptionalType(rawClass)) {
+            // if (node instanceof ScalarAstNode scalar) {
+                return (C) wrapOptional(node, targetType);
+            // }
         }
 
         // 2. Collection targetType
@@ -915,9 +930,86 @@ public abstract class AbstractSerializer<
         return "$schema".equals(key) || "$id".equals(key);
     }
 
+    private boolean isOptionalType(Class<?> jvmType) {
+        return Optional.class == jvmType ||
+               OptionalInt.class == jvmType ||
+               OptionalLong.class == jvmType ||
+               OptionalDouble.class == jvmType;
+    }
+
+    private Type getWrappedType(Type jvmType) {
+        Class<?> rawClass = ReflectionUtils.getRawClass(jvmType);
+        if (Optional.class.equals(rawClass)) {
+            Type paramType = ReflectionUtils.getParameterTypeFromGenericType(jvmType, 0);
+            return paramType;
+        }
+        if (OptionalInt.class.equals(rawClass)) {
+            return Integer.class;
+        }
+        if (OptionalLong.class.equals(rawClass)) {
+            return Long.class;
+        }
+        if (OptionalDouble.class.equals(rawClass)) {
+            return Double.class;
+        }
+        // This point cannot be reached due to the isOptionalType check
+        throw new IllegalArgumentException("Unsupported optional type: " + rawClass.getName());
+    }
+
+    private Object wrapOptional(AstNode node, Type jvmType) {
+        Type wrappedType = getWrappedType(jvmType);
+        Object wrappedValue = deserialize(node, wrappedType);
+        Class<?> rawClass = ReflectionUtils.getRawClass(jvmType);
+        if (Optional.class.equals(rawClass)) {
+            return Optional.of(wrappedValue);
+        }
+        if (OptionalInt.class.equals(rawClass) && wrappedValue instanceof Integer value) {
+            return OptionalInt.of(value);
+        }
+        if (OptionalLong.class.equals(rawClass) && wrappedValue instanceof Long value) {
+            return OptionalLong.of(value);
+        }
+        if (OptionalDouble.class.equals(rawClass) && wrappedValue instanceof Double value) {
+            return OptionalDouble.of(value);
+        }
+        // This point cannot be reached due to the isOptionalType check
+        throw new IllegalArgumentException("Unsupported optional type: " + rawClass.getName());
+    }
+
     //
     // Serialization Helpers
     //
+
+    private boolean isOptional(Object jvmInstance) {
+        return jvmInstance instanceof Optional<?> ||
+               jvmInstance instanceof OptionalInt ||
+               jvmInstance instanceof OptionalLong ||
+               jvmInstance instanceof OptionalDouble;
+    }
+
+    @Nullable
+    private Object unwrapOptional(Object jvmInstance) {
+        if (jvmInstance instanceof Optional<?> optional) {
+            return optional.orElse(null);
+        }
+        if (jvmInstance instanceof OptionalInt optional) {
+            return optional.isPresent()
+                ? optional.getAsInt()
+                : null;
+        }
+        if (jvmInstance instanceof OptionalLong optional) {
+            return optional.isPresent()
+                ? optional.getAsLong()
+                : null;
+        }
+        if (jvmInstance instanceof OptionalDouble optional) {
+            return optional.isPresent()
+                ? optional.getAsDouble()
+                : null;
+        }
+        // This point cannot be reached due to the isOptionalType check
+        throw new IllegalArgumentException("Unsupported optional type: " + jvmInstance.getClass().getName());
+    }
 
     /// Retrieves all declared fields for a class and all its superclasses (excluding Object).
     @NonNull
@@ -931,10 +1023,6 @@ public abstract class AbstractSerializer<
         return (N) node;
     }
 
-    //
-    //
-    //
-
     private boolean isScalar(Object jvmInstance) {
         return (jvmInstance instanceof String ||
             jvmInstance instanceof Number ||
@@ -943,6 +1031,10 @@ public abstract class AbstractSerializer<
             jvmInstance instanceof Boolean);
     }
 
+    //
+    //
+    //
+
     @Nullable
     protected TypeDescriptor<?> getTypeDescriptor(Type jvmType) {
         if (jvmType instanceof Class<?> c) {
@@ -950,8 +1042,6 @@ public abstract class AbstractSerializer<
         }
         return null;
     }
-
-    private Set<String> classesWithNoTypeDescriptors = new HashSet<>();
 
     @Nullable
     protected TypeDescriptor<?> getTypeDescriptor(Class<?> jvmType) {
