@@ -7,7 +7,7 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 
-public abstract class SerializationTestBase {
+public abstract class SerializerTestBase {
     protected GlobalReporter REPORTER;
     protected Serializer<?> serializer;
 
@@ -17,5 +17,6 @@ public abstract class SerializationTestBase {
         REPORTER.setLevel(Level.DEBUG);
 
         serializer = ProcessorFactory.system().createSerializer("application/json");
+        serializer.setUseProviderFactory(false);
     }
 }

@@ -71,6 +71,12 @@ public enum GenericMessage implements DiagnosticMessage {
     MESSAGE_FORMATTING_ERROR("ERROR-405", "Problem encountered while formatting message with key {0}: {1}"),
     DIAGNOSTIC_FORMATTING_ERROR("ERROR-406", "Problem encountered while formatting error with code {0}: {1}"),
 
+    INVALID_SCHEMA_URI("SCHEMA-103", "Not a valid schema URI: {0}."),
+    UNRECOGNIZED_LIFECYCLE("SCHEMA-104", "Unrecognized schema lifecycle: {0}."),
+    MISSING_MODULE_NAME("SCHEMA-105", "Missing module name"),
+    MISSING_SCHEMA_NAME("SCHEMA-106", "Missing schema name"),
+    MISSING_VERSION("SCHEMA-107", "Missing version"),
+
     // Resource Errors
     NO_RESOURCE_PROVIDER("ERROR-501", "No resource provider for \"{0}\" URI scheme");
 

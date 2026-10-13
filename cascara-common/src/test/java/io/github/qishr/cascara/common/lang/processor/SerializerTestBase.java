@@ -39,7 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 
 public abstract class SerializerTestBase {
-    protected SerializerImpl serializer;
+    protected Serializer<?> serializer;
 
     @BeforeEach
     void setup() {

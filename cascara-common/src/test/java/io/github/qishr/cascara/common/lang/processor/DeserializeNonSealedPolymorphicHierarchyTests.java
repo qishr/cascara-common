@@ -44,27 +44,28 @@ import org.junit.jupiter.api.Test;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 
-public class SerializerSubclassOfSealedClassTests extends SerializerTestBase {
+public class DeserializeNonSealedPolymorphicHierarchyTests extends SerializerTestBase {
 
     public static class ContainerTestClass {
         public BaseTestClass v;
         public ContainerTestClass() {}
     }
 
-    public static abstract sealed class BaseTestClass permits TestClass0, TestClass1 {
-        protected BaseTestClass() {}
+    public static class BaseTestClass {
+        public BaseTestClass() {}
     }
 
-    public static final class TestClass0 extends BaseTestClass {
+    public static class TestClass0 extends BaseTestClass {
         public String field0;
         public TestClass0() {}
     }
 
-    public static final class TestClass1 extends BaseTestClass {
+    public static class TestClass1 extends BaseTestClass {
         public String field1;
         public TestClass1() {}
     }
 
+    // polymorphic deserialization
     @Test
     void test_subclassDeserialization() {
         PlainMapNode map0 = new PlainMapNode()

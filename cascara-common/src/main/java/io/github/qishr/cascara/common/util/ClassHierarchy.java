@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 
 
@@ -101,11 +102,11 @@ public class ClassHierarchy {
         return map;
     }
 
-    @Nullable
+    @NonNull
     public static List<String> getSubclasses(String className) {
         Set<String> classes = ensureHierarchy().get(className);
         return classes == null
-            ? null
+            ? List.of()
             : classes.stream().sorted().toList();
     }
 

@@ -12,7 +12,7 @@ import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
 import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 
-public class DiagnosticSerializationTests extends SerializationTestBase {
+public class DiagnosticSerializerTests extends SerializerTestBase {
 
 @Test
     void test_serializeThrowable() {

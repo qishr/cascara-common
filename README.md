@@ -27,3 +27,18 @@
 ```
  ./gradlew -x javadoc -x :cascara-common:test :cascara-common:testJarClasspath --tests "*test_commonBehaviorWorkOnBoth" --rerun-tasks
  ```
+
+### Integration
+
+All tests
+
+```
+ ./gradlew :integration-test:test
+```
+
+Specific test
+
+```
+./gradlew :integration-test:test --tests "*test_subclassDeserializationSameFields"
+```
+

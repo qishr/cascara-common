@@ -35,20 +35,26 @@
 
 package io.github.qishr.cascara.common.lang.type;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
 public interface ScalarDescriptor<T> extends TypeDescriptor<T> {
     /// Converts the `text` into the JVM type specified by this TypeDescriptor.
+    @NonNull
     T toJvmType(String text);
 
     /// Converts the JVM type specified by this TypeDescriptor into a JSON Schema primitive type.
     /// @return One of: null, string, integer (JVM Long), number (JVM Double), boolean.
+    @NonNull
     Object toPrimitive(T jvmInstance);
 
     /// Retuns the JSON Schema `format` used by this TypeDescriptor.
+    @Nullable
     String getFormat();
 
     /// Returns the JSON Schema `contentEncoding` use by this TypeDescriptor.
+    @Nullable
     String getContentEncoding();
 
     @Override

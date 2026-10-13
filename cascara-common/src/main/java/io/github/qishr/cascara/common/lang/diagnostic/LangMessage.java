@@ -58,6 +58,7 @@ public enum LangMessage implements DiagnosticMessage {
     EXPECTED_SEQUENCE("LANG-311", "Expected a sequence for field: {0}"),
     EXPECTED_SCALAR("LANG-312", "Expected a scalar for field: {0}"),
     FIELD_NOT_ACCESSIBLE_REASON("LANG-313", "Field {0} is not accessible: {1}"),
+    AMBIGUOUS_POLYMORPHIC("LANG-314", "Ambiguous polymorphic type resolution for base class {0}"),
 
     // JRE Exceptions
     CLASS_NOT_SERIALIZABLE("LANG-402", "Class {0} is not serializable"),
