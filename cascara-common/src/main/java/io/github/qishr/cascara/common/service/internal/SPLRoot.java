@@ -86,89 +86,10 @@ public class SPLRoot extends SPLBranch {
         contentTypes = new HashSet<>();
         loadPreferences();
         displayEnvironmentInformation();
-        REPORTER.debug("Discovering providers");
-        discoverClasses();
-
-        try {
-            contentTypeStore = SPL.load(ContentTypeResolver.class);
-            // TODO: use addAll
-            if (contentTypeStore != null) {
-                for (ContentType contentType : contentTypes) {
-                    contentTypeStore.add(contentType);
-                }
-            }
-        } catch (ServiceException e) {
-            // Ignore
+        if (isAutoDiscoverEnabled()) {
+            autoDiscover();
         }
-
-        // Set up the GlobalReporter serializer.
-        // This is done here rather than in GlobalReporter because GlobalReporter
-        // is used by SPL, and only SPL knows when the serializer becomes available.
-        try {
-            Serializer<?> serializer = ProcessorFactory.system().createSerializer(GlobalReporter.SERIALIZATION_FORMAT);
-            if (serializer != null) {
-                // Prevent the serializer from using SPL to find TypeDescriptor and
-                // TypeSerializer providers to avoid infinite recursion:
-                //     SPL -> GlobalReporter -> Serializer -> SPL
-                serializer.setProviderFactoryEnabled(false);
-
-                // Instead of letting the Serializer use SPL, give it the type
-                // descriptors and type serializers it needs for Diagnostic serialization.
-                serializer.registerTypeDescriptor(new InstantDescriptor());
-                serializer.registerTypeDescriptor(new ZonedDateTimeDescriptor());
-                serializer.registerTypeDescriptor(new DiagnosticMessageDescriptor());
-                serializer.registerTypeDescriptor(new StackTraceElementSerializer());
-
-                GlobalReporter.initSerializer(serializer);
-            }
-        } catch (ServiceException e) {
-            // Ignore
-        }
-
         isBooting = false;
-    }
-
-    private void discoverClasses() {
-        Set<String> excludePackages = new HashSet<>();
-        excludePackages.add("net.bytebuddy");
-        excludePackages.add("org.mockito");
-        excludePackages.add("org.junit");
-        excludePackages.add("org.objenesis");
-        excludePackages.add("org.opentest4j");
-        excludePackages.add("worker.org.gradle");
-
-        Set<String> classes = new HashSet<>();
-        long start = System.currentTimeMillis();
-
-        // Discover classes on the module path
-        ModulePath modulePath = new ModulePath(null, excludePackages, null);
-        classes.addAll(modulePath.getClasses());
-
-        // Get the set of modulepath entries
-        Set<String> modulePathSet = pathSet(System.getProperty("jdk.module.path"));
-
-        // Get the set of classpath entries
-        Set<String> classPathSet = pathSet(System.getProperty("java.class.path"));
-
-        // Remove entries from the classpath set that are covered by the modulepath
-        classPathSet.removeAll(modulePathSet);
-
-        // Discover classes in the abridged classpath set
-        ClassPath classPath = new ClassPath(classPathSet, excludePackages);
-        classes.addAll(classPath.getClasses());
-
-        if (REPORTER.getLevel().includes(Level.TRACE)) {
-            REPORTER.trace("classes: ");
-            classes.stream().sorted().forEach(s -> REPORTER.trace("  " + s));
-        }
-
-        long finish = System.currentTimeMillis();
-        long timeElapsed = finish - start;
-        REPORTER.debug("Discovered %d classes in %d ms", classes.size(), (int)timeElapsed);
-
-        enumerateProviders(classes, null, null, true);
-
-        modules.addAll(modulePath.getModules());
     }
 
     /// Retrieves the root Service Provider Layer.
@@ -224,6 +145,95 @@ public class SPLRoot extends SPLBranch {
     //
     // Private Methods
     //
+
+    private void autoDiscover() {
+        REPORTER.debug("Discovering providers");
+        discoverClasses();
+
+        try {
+            contentTypeStore = SPL.load(ContentTypeResolver.class);
+            // TODO: use addAll
+            if (contentTypeStore != null) {
+                for (ContentType contentType : contentTypes) {
+                    contentTypeStore.add(contentType);
+                }
+            }
+        } catch (ServiceException e) {
+            // Ignore
+        }
+
+        // Set up the GlobalReporter serializer.
+        // This is done here rather than in GlobalReporter because GlobalReporter
+        // is used by SPL, and only SPL knows when the serializer becomes available.
+        try {
+            Serializer<?> serializer = ProcessorFactory.system().createSerializer(GlobalReporter.SERIALIZATION_FORMAT);
+            if (serializer != null) {
+                // Prevent the serializer from using SPL to find TypeDescriptor and
+                // TypeSerializer providers to avoid infinite recursion:
+                //     SPL -> GlobalReporter -> Serializer -> SPL
+                serializer.setProviderFactoryEnabled(false);
+
+                // Instead of letting the Serializer use SPL, give it the type
+                // descriptors and type serializers it needs for Diagnostic serialization.
+                serializer.registerTypeDescriptor(new InstantDescriptor());
+                serializer.registerTypeDescriptor(new ZonedDateTimeDescriptor());
+                serializer.registerTypeDescriptor(new DiagnosticMessageDescriptor());
+                serializer.registerTypeDescriptor(new StackTraceElementSerializer());
+
+                GlobalReporter.initSerializer(serializer);
+            }
+        } catch (ServiceException e) {
+            // Ignore
+        }
+    }
+
+    private void discoverClasses() {
+        Set<String> excludePackages = new HashSet<>();
+        excludePackages.add("net.bytebuddy");
+        excludePackages.add("org.mockito");
+        excludePackages.add("org.junit");
+        excludePackages.add("org.objenesis");
+        excludePackages.add("org.opentest4j");
+        excludePackages.add("worker.org.gradle");
+
+        Set<String> classes = new HashSet<>();
+        long start = System.currentTimeMillis();
+
+        // Discover classes on the module path
+        ModulePath modulePath = new ModulePath(null, excludePackages, null);
+        classes.addAll(modulePath.getClasses());
+
+        // Get the set of modulepath entries
+        Set<String> modulePathSet = pathSet(System.getProperty("jdk.module.path"));
+
+        // Get the set of classpath entries
+        Set<String> classPathSet = pathSet(System.getProperty("java.class.path"));
+
+        // Remove entries from the classpath set that are covered by the modulepath
+        classPathSet.removeAll(modulePathSet);
+
+        // Discover classes in the abridged classpath set
+        ClassPath classPath = new ClassPath(classPathSet, excludePackages);
+        classes.addAll(classPath.getClasses());
+
+        if (REPORTER.getLevel().includes(Level.TRACE)) {
+            REPORTER.trace("classes: ");
+            classes.stream().sorted().forEach(s -> REPORTER.trace("  " + s));
+        }
+
+        long finish = System.currentTimeMillis();
+        long timeElapsed = finish - start;
+        REPORTER.debug("Discovered %d classes in %d ms", classes.size(), (int)timeElapsed);
+
+        enumerateProviders(classes, null, null, true);
+
+        modules.addAll(modulePath.getModules());
+    }
+
+    private boolean isAutoDiscoverEnabled() {
+        String autoDiscover = System.getenv("cascara.spl.discover");
+        return !"false".equalsIgnoreCase(autoDiscover);
+    }
 
     private Set<String> pathSet(String paths) {
         Set<String> pathSet = new HashSet<>();

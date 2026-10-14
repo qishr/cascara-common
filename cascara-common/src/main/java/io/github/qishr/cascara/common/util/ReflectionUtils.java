@@ -403,6 +403,31 @@ public class ReflectionUtils {
         return null;
     }
 
+    public static List<Method> getMethodsByName(Class<?> clazz, String name) {
+        List<Method> methods = new ArrayList<>();
+        for (Method method : clazz.getMethods()){
+            if(method.getName().equals(name)){
+                // System.out.println("Possible match : " + method);
+                methods.add(method);
+            }
+        }
+        for (Method method : clazz.getDeclaredMethods()){
+            if(method.getName().equals(name)){
+                // System.out.println("Possible match : " + method);
+                methods.add(method);
+            }
+        }
+        return methods;
+    }
+
+    public static boolean isScalarType(Class<?> type) {
+        return type.isPrimitive()
+            || type == Boolean.class
+            || Number.class.isAssignableFrom(type)
+            || type == String.class
+            || type.isEnum();
+    }
+
     //
     // Private Methods
     //
@@ -458,32 +483,6 @@ public class ReflectionUtils {
             }
         }
         return false;
-    }
-
-    private static List<Method> getMethodsByName(Class<?> clazz, String name) {
-        List<Method> methods = new ArrayList<>();
-        for (Method method : clazz.getMethods()){
-            if(method.getName().equals(name)){
-                // System.out.println("Possible match : " + method);
-                methods.add(method);
-            }
-        }
-        for (Method method : clazz.getDeclaredMethods()){
-            if(method.getName().equals(name)){
-                // System.out.println("Possible match : " + method);
-                methods.add(method);
-            }
-        }
-        return methods;
-    }
-
-    @Experimental
-    public static boolean isScalarType(Class<?> type) {
-        return type.isPrimitive()
-            || type == Boolean.class
-            || Number.class.isAssignableFrom(type)
-            || type == String.class
-            || type.isEnum();
     }
 }
 

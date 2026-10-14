@@ -481,9 +481,6 @@ public abstract class AbstractSerializer<
         //   - Is a POJO
         //   - Is in a package that's not opened to cascara.common
 
-        // The POJO path...
-        reporter.debug("Calling POJO Path from deserializeType");
-
         if (!(node instanceof MapAstNode mapNode)) {
             throw new SerializerException(node, LangMessage.EXPECTED_MAP_STRUCTURE, targetType);
         }
