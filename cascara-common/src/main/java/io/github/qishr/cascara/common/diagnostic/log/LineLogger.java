@@ -10,6 +10,8 @@ public class LineLogger implements  Logger {
     /// Consumes every line of diagnostic output as a String.
     protected Consumer<String> lineConsumer;
 
+    protected boolean stackTraceEnabled = false;
+
     private LogFormatter formatter;
 
     public LineLogger() {
@@ -21,12 +23,17 @@ public class LineLogger implements  Logger {
 
     }
 
+    public LineLogger setStackTraceEnabled(boolean b) {
+        stackTraceEnabled = b;
+        return this;
+    }
+
     @Override
     public void log(Diagnostic diagnostic) {
         if (formatter == null || lineConsumer == null) {
             return;
         }
-        String[] lines = formatter.format(diagnostic).split("\n");
+        String[] lines = formatter.format(diagnostic, stackTraceEnabled).split("\n");
         for (int i = 0; i < lines.length; i++) {
             lineConsumer.accept(lines[i]);
         }

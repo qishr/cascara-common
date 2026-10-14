@@ -113,7 +113,7 @@ public class ConsoleLogger implements Logger, ServiceProvider {
         PrintStream stream = (level == Level.ERROR && systemErrorEnabled) ? System.err : System.out;
         // PrintWriter writer = new PrintWriter(stream);
 
-        String[] lines = formatter.format(diagnostic).split("\n");
+        String[] lines = formatter.format(diagnostic, stackTraceEnabled).split("\n");
         for (int i = 0; i < lines.length; i++) {
             displayLine(stream, level, lines[i], i);
         }

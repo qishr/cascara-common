@@ -58,6 +58,12 @@ public enum LangMessage implements DiagnosticMessage {
     EXPECTED_SEQUENCE("LANG-311", "Expected a sequence for field: {0}"),
     EXPECTED_SCALAR("LANG-312", "Expected a scalar for field: {0}"),
     FIELD_NOT_ACCESSIBLE_REASON("LANG-313", "Field {0} is not accessible: {1}"),
+    AMBIGUOUS_POLYMORPHIC("LANG-314", "Ambiguous polymorphic type resolution for base class {0}"),
+    NON_SCALAR_KEY("LANG-315", "Non-scalar key not supported {0}"),
+    AST_FACTORY_FAIL_SCALAR("LANG-316", "AST factory failed to create scalar"),
+    AST_FACTORY_FAIL_MAP("LANG-317", "AST factory failed to create map"),
+    AST_FACTORY_FAIL_SEQUENCE("LANG-318", "AST factory failed to create sequence"),
+    AST_FACTORY_FAIL_KEY("LANG-319", "AST factory failed to create key"),
 
     // JRE Exceptions
     CLASS_NOT_SERIALIZABLE("LANG-402", "Class {0} is not serializable"),
@@ -74,13 +80,7 @@ public enum LangMessage implements DiagnosticMessage {
     SECURITY_EXCEPTION("LANG-414", "Security exception: {0}"),
     ILLEGAL_ACCESS_EXCEPTION("LANG-415", "Illegal access exception: {0}"),
 
-    UNKNOWN_GENERIC_TYPE("LANG-501", "Could not resolve generic type argument for {0}"),
-
-    // TODO: Where are these used?
-    NOT_ARRAY_OR_OBJECT("LANG-601", "Value {0} is not an array or object therefore its key {1} cannot be resolved"),
-    OUT_OF_BOUNDS("LANG-602", "index {0} is out of bounds - the array has {1} elements"),
-    ERROR_READING_VALUE_AT("LANG-603", "Error reading value at index position {0"),
-    NOT_AN_ARRAY_INDEX("LANG-604", "{0} is not an array index");
+    UNKNOWN_GENERIC_TYPE("LANG-501", "Could not resolve generic type argument for {0}");
 
     private final String code;
     private final String format;

@@ -40,6 +40,7 @@ import java.io.Reader;
 import java.io.Writer;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.plain.PlainMapEntryNode;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
@@ -62,7 +63,8 @@ public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,
         return this;
     }
 
-    public SerializerImpl setUseTypeDescriptorFactory(boolean b) {
+    @Override
+    public SerializerImpl setProviderFactoryEnabled(boolean b) {
         return this;
     }
 
@@ -132,11 +134,11 @@ public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,
     /// {@inheritDoc}
     @SuppressWarnings("unchecked")
 	@Override
-    public <C> C fromAst(PlainNode astNode, Class<C> jvmType) {
+    public <C> C fromAst(AstNode astNode, Class<C> jvmType) {
         return (C) deserialize(astNode, jvmType);
     }
 
-    public <C> C fromAst(PlainNode astNode, TypeReference<C> typeRef) {
+    public <C> C fromAst(AstNode astNode, TypeReference<C> typeRef) {
         return (C) deserialize(astNode, typeRef);
     }
 

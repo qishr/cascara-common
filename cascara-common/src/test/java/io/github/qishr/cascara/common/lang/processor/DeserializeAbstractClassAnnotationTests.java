@@ -32,68 +32,69 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.lang.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
+import io.github.qishr.cascara.common.annotation.PolymorphicType;
+import io.github.qishr.cascara.common.annotation.SubType;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 
-public class SerializerSubclassOfAbstractClassTests extends SerializerTestBase {
+public class DeserializeAbstractClassAnnotationTests extends SerializerTestBase {
 
-    public static class ContainerTestClass {
-        public BaseTestClass v;
-        public ContainerTestClass() {}
-    }
-
+    @PolymorphicType(property = "type")
     public static abstract class BaseTestClass {
         protected BaseTestClass() {}
     }
 
+    @SubType(name = "c0")
     public static class TestClass0 extends BaseTestClass {
         public String field0;
-        public TestClass0() {}
+        public String field1;
+        public TestClass0() {
+            field1 = "TestClass0";
+        }
     }
 
+    @SubType(name = "c1")
     public static class TestClass1 extends BaseTestClass {
+        public String field0;
         public String field1;
-        public TestClass1() {}
+        public TestClass1() {
+            field1 = "TestClass1";
+        }
     }
 
     @Test
-    void test_subclassDeserialization() {
+    void test_subclassDeserializationOfClassWithAnnotation() {
         PlainMapNode map0 = new PlainMapNode()
-            .put("v", new PlainMapNode()
-                .put("field0",
-                    new PlainScalarNode("foo")
-                )
+            .put("type",
+                new PlainScalarNode("c0")
+            )
+            .put("field0",
+                new PlainScalarNode("foo")
             );
 
         PlainMapNode map1 = new PlainMapNode()
-            .put("v", new PlainMapNode()
-                .put("field1",
-                    new PlainScalarNode("bar")
-                )
+            .put("type",
+                new PlainScalarNode("c1")
+            )
+            .put("field0",
+                new PlainScalarNode("bar")
             );
 
-
-        ContainerTestClass c0 = serializer.fromAst(map0, ContainerTestClass.class);
+        BaseTestClass c0 = serializer.fromAst(map0, BaseTestClass.class);
         assertNotNull(c0);
-        assertNotNull(c0.v);
-        assertInstanceOf(TestClass0.class, c0.v);
-        TestClass0 tc0 = (TestClass0) c0.v;
+        TestClass0 tc0 = (TestClass0) c0;
         assertEquals("foo", tc0.field0);
 
-        ContainerTestClass c1 = serializer.fromAst(map1, ContainerTestClass.class);
+        BaseTestClass c1 = serializer.fromAst(map1, BaseTestClass.class);
         assertNotNull(c1);
-        assertNotNull(c1.v);
-        assertInstanceOf(TestClass1.class, c1.v);
-        TestClass1 tc1 = (TestClass1) c1.v;
-        assertEquals("bar", tc1.field1);
+        TestClass1 tc1 = (TestClass1) c1;
+        assertEquals("bar", tc1.field0);
     }
 }

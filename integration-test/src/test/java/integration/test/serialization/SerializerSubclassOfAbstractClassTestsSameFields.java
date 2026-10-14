@@ -33,68 +33,67 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.processor;
+package integration.test.serialization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
+import io.github.qishr.cascara.common.annotation.PolymorphicType;
+import io.github.qishr.cascara.common.annotation.SubType;
+import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 
-public class SerializerNonSealedPolymorphicHierarchyTests extends SerializerTestBase {
+public class SerializerSubclassOfAbstractClassTestsSameFields extends SerializerTestBase {
 
-    public static class ContainerTestClass {
-        public BaseTestClass v;
-        public ContainerTestClass() {}
+    @PolymorphicType(property = "type")
+    public static abstract class BaseTestClass {
+        protected BaseTestClass() {}
     }
 
-    public static class BaseTestClass {
-        public BaseTestClass() {}
-    }
-
+    @SubType(name = "c0")
     public static class TestClass0 extends BaseTestClass {
         public String field0;
-        public TestClass0() {}
-    }
-
-    public static class TestClass1 extends BaseTestClass {
         public String field1;
-        public TestClass1() {}
+        public TestClass0() {
+            field1 = "TestClass0";
+        }
     }
 
-    // polymorphic deserialization
+    @SubType(name = "c1")
+    public static class TestClass1 extends BaseTestClass {
+        public String field0;
+        public String field1;
+        public TestClass1() {
+            field1 = "TestClass1";
+        }
+    }
+
     @Test
-    void test_subclassDeserialization() {
-        PlainMapNode map0 = new PlainMapNode()
-            .put("v", new PlainMapNode()
-                .put("field0",
-                    new PlainScalarNode("foo")
-                )
-            );
+    void test_subclassDeserializationToUnspecifiedConcreteType() {
+        String json0 = "{\"field0\":\"foo\"}";
+        assertThrows(SerializerException.class, () -> serializer.fromString(json0, BaseTestClass.class));
+    }
 
-        PlainMapNode map1 = new PlainMapNode()
-            .put("v", new PlainMapNode()
-                .put("field1",
-                    new PlainScalarNode("bar")
-                )
-            );
+    @Test
+    void test_subclassDeserializationToSpecifiedConcreteType() {
+        String json0 = "{\"type\":\"c0\",\"field0\":\"foo\"}";
 
+        String json1 = "{\"type\": \"c1\", \"field0\":\"bar\"}";
 
-        ContainerTestClass c0 = serializer.fromAst(map0, ContainerTestClass.class);
-        assertNotNull(c0);
-        assertNotNull(c0.v);
-        assertInstanceOf(TestClass0.class, c0.v);
-        TestClass0 tc0 = (TestClass0) c0.v;
+        BaseTestClass c0 = serializer.fromString(json0, BaseTestClass.class);
+        assertInstanceOf(TestClass0.class, c0);
+
+        TestClass0 tc0 = (TestClass0) c0;
         assertEquals("foo", tc0.field0);
 
-        ContainerTestClass c1 = serializer.fromAst(map1, ContainerTestClass.class);
-        assertNotNull(c1);
-        assertNotNull(c1.v);
-        assertInstanceOf(TestClass1.class, c1.v);
-        TestClass1 tc1 = (TestClass1) c1.v;
-        assertEquals("bar", tc1.field1);
+        BaseTestClass c1 = serializer.fromString(json1, BaseTestClass.class);
+
+        // Expect the serializer to use TestClass1
+        assertInstanceOf(TestClass1.class, c1);
+
+        TestClass1 tc1 = (TestClass1) c1;
+        assertEquals("bar", tc1.field0);
     }
 }

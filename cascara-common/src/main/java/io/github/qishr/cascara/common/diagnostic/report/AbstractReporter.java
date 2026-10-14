@@ -158,12 +158,24 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     public T setStackTraceEnabled(boolean b) {
         // TODO: Make this controllable via system properties, at least for GlobalReporter
         stackTraceEnabled = b;
+
+        if (consoleLogger != null) {
+            consoleLogger.setStackTraceEnabled(b);
+        }
+        if (lineLogger != null) {
+            lineLogger.setStackTraceEnabled(b);
+        }
+
         return self();
     }
 
     public T setSystemErrorEnabled(boolean b) {
         // TODO: Make this controllable via system properties, at least for GlobalReporter
         systemErrorEnabled = b;
+        if (consoleLogger != null) {
+            consoleLogger.setSystemErrorEnabled(b);
+            // TODO: There are loads of other options that need passed down
+        }
         return self();
     }
 

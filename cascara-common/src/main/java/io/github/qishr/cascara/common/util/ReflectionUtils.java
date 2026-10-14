@@ -44,14 +44,16 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import sun.misc.Unsafe;
-
+import io.github.qishr.cascara.common.annotation.DataField;
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
@@ -216,31 +218,31 @@ public class ReflectionUtils {
         throw new SerializerException(GenericMessage.ERROR, "Failed to classify type: " + jvmType);
     }
 
-    @Nullable
-    public static Type getGenericKeyTypeFromMapType(Type mapType) {
+    @NonNull
+    public static Type getKeyTypeArgumentTypeOfMapType(Type mapType) {
         if (canAssign(mapType, Map.class)) {
-            return getParameterTypeFromGenericType(mapType, 0);
+            return getTypeArgumentTypeOfGenericType(mapType, 0);
         }
-        return null;
+        return Object.class;
     }
 
-    @Nullable
-    public static Type getGenericValueTypeFromMapType(Type mapType) {
+    @NonNull
+    public static Type getValueTypeArgumentTypeOfMapType(Type mapType) {
         if (canAssign(mapType, Map.class)) {
-            return getParameterTypeFromGenericType(mapType, 1);
+            return getTypeArgumentTypeOfGenericType(mapType, 1);
         }
-        return null;
+        return Object.class;
     }
 
-    @Nullable
-    public static Type getGenericElementTypeFromListType(Type listType) {
-        if (canAssign(listType, List.class)) {
-            return getParameterTypeFromGenericType(listType, 0);
+    @NonNull
+    public static Type getTypeArgumentTypeOfCollectionType(Type listType) {
+        if (canAssign(listType, Collection.class)) {
+            return getTypeArgumentTypeOfGenericType(listType, 0);
         }
-        return null;
+        return Object.class;
     }
 
-    public static Type getParameterTypeFromGenericType(Type collectionType, int paramIndex) {
+    public static Type getTypeArgumentTypeOfGenericType(Type collectionType, int paramIndex) {
         if (collectionType instanceof ParameterizedType parameterizedType) {
             Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
             if (actualTypeArguments.length > paramIndex) {
@@ -257,6 +259,16 @@ public class ReflectionUtils {
             return rawClass.componentType();
         }
         return null;
+    }
+
+    public static String getEffectiveName(Field field) {
+        String keyName = field.isAnnotationPresent(DataField.class)
+            ? field.getAnnotation(DataField.class).key()
+            : field.getName();
+        if (keyName == null || keyName.isEmpty()) {
+            keyName = field.getName();
+        }
+        return keyName;
     }
 
     public static List<Field> getAllFields(Class<?> clazz) {
@@ -391,6 +403,31 @@ public class ReflectionUtils {
         return null;
     }
 
+    public static List<Method> getMethodsByName(Class<?> clazz, String name) {
+        List<Method> methods = new ArrayList<>();
+        for (Method method : clazz.getMethods()){
+            if(method.getName().equals(name)){
+                // System.out.println("Possible match : " + method);
+                methods.add(method);
+            }
+        }
+        for (Method method : clazz.getDeclaredMethods()){
+            if(method.getName().equals(name)){
+                // System.out.println("Possible match : " + method);
+                methods.add(method);
+            }
+        }
+        return methods;
+    }
+
+    public static boolean isScalarType(Class<?> type) {
+        return type.isPrimitive()
+            || type == Boolean.class
+            || Number.class.isAssignableFrom(type)
+            || type == String.class
+            || type.isEnum();
+    }
+
     //
     // Private Methods
     //
@@ -446,23 +483,6 @@ public class ReflectionUtils {
             }
         }
         return false;
-    }
-
-    private static List<Method> getMethodsByName(Class<?> clazz, String name) {
-        List<Method> methods = new ArrayList<>();
-        for (Method method : clazz.getMethods()){
-            if(method.getName().equals(name)){
-                // System.out.println("Possible match : " + method);
-                methods.add(method);
-            }
-        }
-        for (Method method : clazz.getDeclaredMethods()){
-            if(method.getName().equals(name)){
-                // System.out.println("Possible match : " + method);
-                methods.add(method);
-            }
-        }
-        return methods;
     }
 }
 
