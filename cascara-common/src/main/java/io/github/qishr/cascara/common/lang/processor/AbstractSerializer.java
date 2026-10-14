@@ -102,20 +102,20 @@ public abstract class AbstractSerializer<
 
     // Options
     protected Reporter reporter = new NoOpReporter();
-    private LanguageOptions<?> options;
     protected int depthLimit = 500;
-    private final AstNodeFactory<N,S,L,M,E,K> astFactory;
-    private final Map<Class<?>,TypeDescriptor<?>> typeDescriptors = new HashMap<>();
-    private final ServiceProviderFactory providerFactory = new ServiceProviderFactory();
-    private boolean useProviderFactory = true;
-    private boolean useHeuristicMatch = true;
+    private LanguageOptions<?> options;
+    private boolean providerFactoryEnabled = true;
+    private boolean heuristicMatchEnabled = true;
 
     // State
     protected int depth = 0;
     private Set<String> previousWarnings = new HashSet<>();
 
-    private Set<String> classesWithNoTypeDescriptors = new HashSet<>();
-    private DeserializationTargetResolver targetResolver = new DeserializationTargetResolver();
+    private final DeserializationTargetResolver targetResolver = new DeserializationTargetResolver();
+    private final Map<Class<?>,TypeDescriptor<?>> typeDescriptors = new HashMap<>();
+    private final Set<String> classesWithNoTypeDescriptors = new HashSet<>();
+    private final ServiceProviderFactory providerFactory = new ServiceProviderFactory();
+    private final AstNodeFactory<N,S,L,M,E,K> astFactory;
     private final AstConverter<?> astConverter;
 
     protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, LanguageOptions<?> options) {
@@ -129,13 +129,17 @@ public abstract class AbstractSerializer<
         this.options = options;
     }
 
-    public T setUseProviderFactory(boolean b) {
-        useProviderFactory = b;
+    @Override
+    @NonNull
+    public T setProviderFactoryEnabled(boolean b) {
+        providerFactoryEnabled = b;
         return self();
     }
 
-    public T setUseHeuristicMatch(boolean b) {
-        useHeuristicMatch = b;
+    @Override
+    @NonNull
+    public T setHeuristicMatchEnabled(boolean b) {
+        heuristicMatchEnabled = b;
         return self();
     }
 
@@ -149,12 +153,11 @@ public abstract class AbstractSerializer<
 
     /// Creates the appropriate AstNode (Scalar, Sequence, or Map) based on the Java value type.
     @SuppressWarnings("unchecked")
+    @NonNull
     protected N serialize(Object jvmInstance) {
-        // TODO: Should this be able to return a null scalar value instead of null?
-        // TODO: Update its interface to @NonNull or @Nullable
 
         if (jvmInstance == null) {
-            return null;
+            return createScalar(null);
         }
 
         if (isOptional(jvmInstance)) {
@@ -168,12 +171,8 @@ public abstract class AbstractSerializer<
 
         try {
             // JVM primitive -> scalar
-            if (isScalar(jvmInstance)) {
-                return (N) astFactory.createScalarNode(
-                    jvmInstance,
-                    QuoteStyle.UNDETERMINED, // Only the ScalarAstNode implementation knows what it should be.
-                    options
-                );
+            if (isStandardScalar(jvmInstance)) {
+                return createScalar(jvmInstance);
             }
 
             TypeDescriptor<?> typeDescriptor = getTypeDescriptor(jvmInstance.getClass());
@@ -203,22 +202,13 @@ public abstract class AbstractSerializer<
                             e.getMessage()
                         );
                     }
-
-                    return (N) astFactory.createScalarNode(
-                        scalarValue,
-                        QuoteStyle.UNDETERMINED,
-                        options
-                    );
+                    return createScalar(scalarValue);
                 }
             }
 
             if (jvmInstance instanceof Enum e) {
                 String value = e.name();
-                return (N) astFactory.createScalarNode(
-                    value,
-                    QuoteStyle.UNDETERMINED, // Only the ScalarAstNode implementation knows what it should be.
-                    options
-                );
+                return createScalar(value);
             }
 
             if (jvmInstance.getClass().isArray()) {
@@ -241,11 +231,13 @@ public abstract class AbstractSerializer<
         }
     }
 
+    @NonNull
     protected M serializeObject(Object jvmInstance) {
         Class<?> jvmType = jvmInstance.getClass();
         M objectMap = astFactory.createMapNode();
-
-        reporter.debug("serializeObject " + jvmInstance);
+        if (objectMap == null) {
+            throw new SerializerException(LangMessage.AST_FACTORY_FAIL_MAP);
+        }
 
         // getAllSerializableFields filters out fields with @DataIgnore
         for (Field field : getAllSerializableFields(jvmType)) {
@@ -289,6 +281,9 @@ public abstract class AbstractSerializer<
 			}
             if (value != null) {
                 K keyNode = astFactory.createKey(fieldName);
+                if (keyNode == null) {
+                    throw new SerializerException(LangMessage.AST_FACTORY_FAIL_KEY);
+                }
                 N valueNode = serialize(value);
                 objectMap.put(keyNode, valueNode);
             }
@@ -326,8 +321,12 @@ public abstract class AbstractSerializer<
         return objectMap;
     }
 
+    @NonNull
     protected L serializeArray(Object jvmInstance) {
         L sequence = astFactory.createSequenceNode();
+        if (sequence == null) {
+            throw new SerializerException(LangMessage.AST_FACTORY_FAIL_SEQUENCE);
+        }
         int length = Array.getLength(jvmInstance);
         for (int i = 0; i < length; i++) {
             Object item = Array.get(jvmInstance, i);
@@ -338,8 +337,12 @@ public abstract class AbstractSerializer<
     }
 
     /// Serializes a collection into a Sequence.
+    @NonNull
     protected L serializeCollection(Collection<?> list) {
         L sequence = astFactory.createSequenceNode();
+        if (sequence == null) {
+            throw new SerializerException(LangMessage.AST_FACTORY_FAIL_SEQUENCE);
+        }
         for (Object item : list) {
             N element = item == null ? null : serialize(item);
             sequence.add(element);
@@ -347,14 +350,22 @@ public abstract class AbstractSerializer<
         return sequence;
     }
 
+    @NonNull
     protected M serializeMap(Map<?, ?> map) {
         M mapNode = astFactory.createMapNode();
+        if (mapNode == null) {
+            throw new SerializerException(LangMessage.AST_FACTORY_FAIL_MAP);
+        }
         for (Map.Entry<?, ?> entry : map.entrySet()) {
-            if (entry.getKey() == null) continue;
-
+            if (entry.getKey() == null) {
+                continue;
+            }
             K keyNode = astFactory.createKey(entry.getKey());
+            if (keyNode == null) {
+                throw new SerializerException(LangMessage.AST_FACTORY_FAIL_KEY);
+            }
             N valueNode = (entry.getValue() == null)
-                ? castToNode(astFactory.createScalarNode(null))
+                ? createScalar(null)
                 : serialize(entry.getValue());
 
             mapNode.put(keyNode, valueNode);
@@ -483,12 +494,10 @@ public abstract class AbstractSerializer<
                 return (C) scalar.getPrimitive();
             }
 
-            // TODO: It's only possible to reach here if the node
+            // It's only possible to reach here if the node
             // was not scalar, map, or sequence. That means the node
             // is not YAML or JSON and we don't know how to handle it.
-            // Should we throw an exception?
-            reporter.debug("#7: node is " + node.getClass().getName());
-            return (C) node;
+            throw new SerializerException(node, LangMessage.FAILED_TO_MAP_AST, node, targetType);
         }
 
         // Likely cause of arriving here is that the target type either:
@@ -499,7 +508,7 @@ public abstract class AbstractSerializer<
         reporter.debug("Calling POJO Path from deserializeType");
 
         if (!(node instanceof MapAstNode mapNode)) {
-            throw new SerializerException(node, LangMessage.EXPECTED_MAP_STRUCTURE, targetType); //jvmType.getName());
+            throw new SerializerException(node, LangMessage.EXPECTED_MAP_STRUCTURE, targetType);
         }
 
         C jvmInstance = newTypeInstance(mapNode, targetType);
@@ -707,10 +716,8 @@ public abstract class AbstractSerializer<
             } else if (entry.getKey() instanceof String string) {
                 key = string;
             } else {
-                // TODO: Improve error handling
-                throw new SerializerException(node, GenericMessage.ERROR, "Non-scalar key not implemented: " + entry.getKey());
+                throw new SerializerException(node, LangMessage.NON_SCALAR_KEY, entry.getKey());
             }
-
             Object val = deserialize(entry.getValue(), valType);
             if (key != null) result.put(key, val);
         }
@@ -781,7 +788,7 @@ public abstract class AbstractSerializer<
 
     @NonNull
     private <C> C newTypeInstance(MapAstNode<?,?,?> node, Type jvmType) throws SerializerException {
-        Class<? extends C> targetClass = targetResolver.resolveTarget(node, jvmType, useHeuristicMatch);
+        Class<? extends C> targetClass = targetResolver.resolveTarget(node, jvmType, heuristicMatchEnabled);
         try {
             C instance = ReflectionUtils.createInstance(targetClass);
             return instance;
@@ -863,8 +870,7 @@ public abstract class AbstractSerializer<
             if (jvmClass == double.class) return Double.class;
             return jvmClass;
         }
-        // TODO: Improve error handling, test for this
-        throw new SerializerException(GenericMessage.ERROR, "not a class: " + jvmType);
+        throw new SerializerException(LangMessage.UNSUPPORTED_TYPE, ReflectionUtils.getTypeName(jvmType));
     }
 
     private void processAnySetter(Object instance, M rootMap, Set<String> claimedKeys, Class<?> jvmType) {
@@ -1019,7 +1025,21 @@ public abstract class AbstractSerializer<
         return (N) node;
     }
 
-    private boolean isScalar(Object jvmInstance) {
+    @SuppressWarnings("unchecked")
+    @NonNull
+    private N createScalar(Object jvmInstance) {
+        N scalarNode = (N) astFactory.createScalarNode(
+            jvmInstance,
+            QuoteStyle.UNDETERMINED, // Only the ScalarAstNode implementation knows what it should be.
+            options
+        );
+        if (scalarNode == null) {
+            throw new SerializerException(LangMessage.AST_FACTORY_FAIL_SCALAR);
+        }
+        return scalarNode;
+    }
+
+    private boolean isStandardScalar(Object jvmInstance) {
         return (jvmInstance instanceof String ||
             jvmInstance instanceof Number ||
             jvmInstance instanceof Byte ||
@@ -1054,7 +1074,7 @@ public abstract class AbstractSerializer<
             return typeDescriptors.get(jvmType);
         }
 
-        if (!useProviderFactory) {
+        if (!providerFactoryEnabled) {
             return null;
         }
 

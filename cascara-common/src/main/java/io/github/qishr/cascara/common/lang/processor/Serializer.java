@@ -119,5 +119,8 @@ public interface Serializer<N extends AstNode> extends Processor {
     Serializer<N> setParser(AstParser<N,?,?> parser);
 
     @NonNull
-    Serializer<N> setUseProviderFactory(boolean b);
+    Serializer<N> setProviderFactoryEnabled(boolean b);
+
+    @NonNull
+    Serializer<N> setHeuristicMatchEnabled(boolean b);
 }

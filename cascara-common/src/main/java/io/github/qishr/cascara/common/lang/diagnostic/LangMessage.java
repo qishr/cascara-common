@@ -59,6 +59,11 @@ public enum LangMessage implements DiagnosticMessage {
     EXPECTED_SCALAR("LANG-312", "Expected a scalar for field: {0}"),
     FIELD_NOT_ACCESSIBLE_REASON("LANG-313", "Field {0} is not accessible: {1}"),
     AMBIGUOUS_POLYMORPHIC("LANG-314", "Ambiguous polymorphic type resolution for base class {0}"),
+    NON_SCALAR_KEY("LANG-315", "Non-scalar key not supported {0}"),
+    AST_FACTORY_FAIL_SCALAR("LANG-316", "AST factory failed to create scalar"),
+    AST_FACTORY_FAIL_MAP("LANG-317", "AST factory failed to create map"),
+    AST_FACTORY_FAIL_SEQUENCE("LANG-318", "AST factory failed to create sequence"),
+    AST_FACTORY_FAIL_KEY("LANG-319", "AST factory failed to create key"),
 
     // JRE Exceptions
     CLASS_NOT_SERIALIZABLE("LANG-402", "Class {0} is not serializable"),

@@ -110,7 +110,7 @@ public class SPLRoot extends SPLBranch {
                 // Prevent the serializer from using SPL to find TypeDescriptor and
                 // TypeSerializer providers to avoid infinite recursion:
                 //     SPL -> GlobalReporter -> Serializer -> SPL
-                serializer.setUseProviderFactory(false);
+                serializer.setProviderFactoryEnabled(false);
 
                 // Instead of letting the Serializer use SPL, give it the type
                 // descriptors and type serializers it needs for Diagnostic serialization.

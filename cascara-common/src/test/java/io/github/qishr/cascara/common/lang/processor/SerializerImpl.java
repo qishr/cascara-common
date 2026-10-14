@@ -64,7 +64,7 @@ public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,
     }
 
     @Override
-    public SerializerImpl setUseProviderFactory(boolean b) {
+    public SerializerImpl setProviderFactoryEnabled(boolean b) {
         return this;
     }
 
