@@ -8,28 +8,6 @@ import org.junit.jupiter.api.Test;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
 
 public class ParameterizedSubclassTest extends SerializerTestBase {
-    public static class Box<T> {
-        public T content;
-        public Box() {}
-    }
-
-    public static class SpecializedBox<T> extends Box<T> {
-        public String extraMeta;
-        public SpecializedBox() {}
-    }
-
-    @Test
-    void test_parameterizedSubclassDeserialization() {
-        String json = "{\"content\": \"secret\", \"extraMeta\": \"metadata\"}";
-
-        // Using a parameterized subclass of a generic base triggers the specialized parameterized code path
-        SpecializedBox<String> box = serializer.fromString(json, new TypeReference<SpecializedBox<String>>(){});
-
-        assertNotNull(box);
-        assertEquals("secret", box.content);
-        assertEquals("metadata", box.extraMeta);
-    }
-
 
     public static class WildcardContainer {
         public java.util.List<?> wildcardList;

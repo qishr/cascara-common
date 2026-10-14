@@ -53,6 +53,7 @@ import java.util.function.Function;
 import sun.misc.Unsafe;
 import io.github.qishr.cascara.common.annotation.DataField;
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
@@ -217,31 +218,31 @@ public class ReflectionUtils {
         throw new SerializerException(GenericMessage.ERROR, "Failed to classify type: " + jvmType);
     }
 
-    @Nullable
-    public static Type getKeyTypeArgumentTypeFromMapType(Type mapType) {
+    @NonNull
+    public static Type getKeyTypeArgumentTypeOfMapType(Type mapType) {
         if (canAssign(mapType, Map.class)) {
-            return getTypeArgumentTypeFromGenericType(mapType, 0);
+            return getTypeArgumentTypeOfGenericType(mapType, 0);
         }
-        return null;
+        return Object.class;
     }
 
-    @Nullable
-    public static Type getValueTypeArgumentTypeFromMapType(Type mapType) {
+    @NonNull
+    public static Type getValueTypeArgumentTypeOfMapType(Type mapType) {
         if (canAssign(mapType, Map.class)) {
-            return getTypeArgumentTypeFromGenericType(mapType, 1);
+            return getTypeArgumentTypeOfGenericType(mapType, 1);
         }
-        return null;
+        return Object.class;
     }
 
-    @Nullable
-    public static Type getTypeArgumentTypeFromCollectionType(Type listType) {
+    @NonNull
+    public static Type getTypeArgumentTypeOfCollectionType(Type listType) {
         if (canAssign(listType, Collection.class)) {
-            return getTypeArgumentTypeFromGenericType(listType, 0);
+            return getTypeArgumentTypeOfGenericType(listType, 0);
         }
-        return null;
+        return Object.class;
     }
 
-    public static Type getTypeArgumentTypeFromGenericType(Type collectionType, int paramIndex) {
+    public static Type getTypeArgumentTypeOfGenericType(Type collectionType, int paramIndex) {
         if (collectionType instanceof ParameterizedType parameterizedType) {
             Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
             if (actualTypeArguments.length > paramIndex) {

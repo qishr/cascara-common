@@ -58,11 +58,7 @@ public class DeserializationTargetResolver {
 
             // 4. Polymorphic inference / discrimination / heuristics
             if (targetClass == null && useHeuristicMatch) {
-                try {
-                    targetClass = resolvePolymorphicTarget(node, baseClass, candidates);
-                } catch (Throwable e) {
-                    throw new SerializerException(node, e, LangMessage.NO_CLASS_DEF_FOUND_ERROR, ReflectionUtils.getTypeName(jvmType)); // This is line 804
-                }
+                targetClass = resolvePolymorphicTarget(node, baseClass, candidates);
             }
         }
 
@@ -83,17 +79,21 @@ public class DeserializationTargetResolver {
         boolean hasTie = false;
 
         for (Class<?> candidate : candidates) {
-            if (baseClass.isAssignableFrom(candidate)) {
-                Set<String> candidateFields = getSerializableFieldNames(candidate);
-                int score = intersectionSize(keys, candidateFields);
+            try {
+                if (baseClass.isAssignableFrom(candidate)) {
+                    Set<String> candidateFields = getSerializableFieldNames(candidate);
+                    int score = intersectionSize(keys, candidateFields);
 
-                if (score > bestScore) {
-                    bestScore = score;
-                    best = (Class<C>) candidate;
-                    hasTie = false; // New leader found, reset tie flag
-                } else if (score == bestScore && score > 0) {
-                    hasTie = true; // Duplicate highest score encountered
+                    if (score > bestScore) {
+                        bestScore = score;
+                        best = (Class<C>) candidate;
+                        hasTie = false; // New leader found, reset tie flag
+                    } else if (score == bestScore && score > 0) {
+                        hasTie = true; // Duplicate highest score encountered
+                    }
                 }
+            } catch (Exception e) {
+                // Ignore and continue
             }
         }
 
