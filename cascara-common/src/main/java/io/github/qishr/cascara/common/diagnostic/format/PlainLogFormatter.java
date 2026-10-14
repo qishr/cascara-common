@@ -32,13 +32,13 @@ public class PlainLogFormatter implements LogFormatter {
         return this;
     }
 
-    public String format(Diagnostic diagnostic) {
+    public String format(Diagnostic diagnostic, boolean stackTraceEnabled) {
         StringBuilder sb = new StringBuilder();
         String[] lines = diagnostic.getFormattedMessage().split("\n");
         for (int i = 0; i < lines.length; i++) {
             formatLine(sb, diagnostic, lines[i], i);
         }
-        if (diagnostic.getStackTrace() != null && diagnostic.getStackTrace().length > 0) {
+        if (stackTraceEnabled && diagnostic.getStackTrace() != null && diagnostic.getStackTrace().length > 0) {
             sb.append(formatStackTrace(diagnostic.getLevel(), diagnostic.getStackTrace(), diagnostic.getCause()));
         }
         return sb.toString();

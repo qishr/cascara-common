@@ -29,22 +29,25 @@ public class LocalReporterTests {
 
     @Test
     void test_reportHasStackTrace() {
-        LocalReporter reporter = new LocalReporter();
         AtomicBoolean lineHasException = new AtomicBoolean();
         AtomicBoolean lineHasStackTrace = new AtomicBoolean();
-        reporter.setLineConsumer(line -> {
-            if (line.contains("قشر")) {
-                lineHasException.set(true);
-            }
-            if (line.contains(".java")) {
-                lineHasStackTrace.set(true);
-            }
-        });
 
-        Throwable cause = new IllegalAccessError("قشر");;
+        LocalReporter reporter = new LocalReporter()
+            .setStackTraceEnabled(true)
+            .setSystemOutputEnabled(false)
+            .setLineConsumer(line -> {
+                if (line.contains("قشر")) {
+                    lineHasException.set(true);
+                }
+                if (line.contains(".java")) {
+                    lineHasStackTrace.set(true);
+                }
+            }
+        );
 
-        reporter.setSystemOutputEnabled(false);
+        Throwable cause = new IllegalAccessError("قشر");
         reporter.error(cause, GenericMessage.ERROR, cause.getMessage());
+
         assertTrue(lineHasException.get());
         assertTrue(lineHasStackTrace.get());
     }

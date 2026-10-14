@@ -19,6 +19,6 @@ public abstract class SerializerTestBase {
         serializer = ProcessorFactory.system().createSerializer("application/json");
 
         // For diagnostics
-        serializer.setUseProviderFactory(true);
+        serializer.setProviderFactoryEnabled(true);
     }
 }

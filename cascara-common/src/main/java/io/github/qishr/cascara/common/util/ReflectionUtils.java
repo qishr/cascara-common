@@ -218,30 +218,30 @@ public class ReflectionUtils {
     }
 
     @Nullable
-    public static Type getGenericKeyTypeFromMapType(Type mapType) {
+    public static Type getKeyTypeArgumentTypeFromMapType(Type mapType) {
         if (canAssign(mapType, Map.class)) {
-            return getParameterTypeFromGenericType(mapType, 0);
+            return getTypeArgumentTypeFromGenericType(mapType, 0);
         }
         return null;
     }
 
     @Nullable
-    public static Type getGenericValueTypeFromMapType(Type mapType) {
+    public static Type getValueTypeArgumentTypeFromMapType(Type mapType) {
         if (canAssign(mapType, Map.class)) {
-            return getParameterTypeFromGenericType(mapType, 1);
+            return getTypeArgumentTypeFromGenericType(mapType, 1);
         }
         return null;
     }
 
     @Nullable
-    public static Type getGenericElementTypeFromCollectionType(Type listType) {
+    public static Type getTypeArgumentTypeFromCollectionType(Type listType) {
         if (canAssign(listType, Collection.class)) {
-            return getParameterTypeFromGenericType(listType, 0);
+            return getTypeArgumentTypeFromGenericType(listType, 0);
         }
         return null;
     }
 
-    public static Type getParameterTypeFromGenericType(Type collectionType, int paramIndex) {
+    public static Type getTypeArgumentTypeFromGenericType(Type collectionType, int paramIndex) {
         if (collectionType instanceof ParameterizedType parameterizedType) {
             Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
             if (actualTypeArguments.length > paramIndex) {
