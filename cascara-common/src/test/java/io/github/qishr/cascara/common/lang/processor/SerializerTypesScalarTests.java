@@ -40,7 +40,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
     }
 
     @Test
-    void test_primitiveClassMembers() {
+    void test_lang_primitiveClassMembers() {
         JavaPrimitiveTest types = new JavaPrimitiveTest();
         types.p_long = 42L;
         types.p_int = 53;
@@ -78,7 +78,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
     }
 
     @Test
-    void test_referenceClassMembers() {
+    void test_lang_referenceClassMembers() {
         JavaReferenceTest types = new JavaReferenceTest();
         types.p_long = 42L;
         types.p_integer = 53;
@@ -116,7 +116,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
     }
 
     @Test
-    void test_primitiveArrayTypeDescriptors() {
+    void test_lang_primitiveArray_TypeDescriptors() {
         JavaPrimitiveArrayTypeDescriptorTest types = new JavaPrimitiveArrayTypeDescriptorTest();
         types.p_byte = new byte[]{0x3};
         types.p_char = new char[]{'c'};
@@ -144,7 +144,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
     }
 
     @Test
-    void test_referenceArrayTypeDescriptors() {
+    void test_lang_referenceArray_typeDescriptors() {
         JavaReferenceArrayTypeDescriptorTest types = new JavaReferenceArrayTypeDescriptorTest();
         types.p_byte = new Byte[]{0x3};
         types.p_character = new Character[]{'c'};
@@ -166,45 +166,53 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
         assertEquals(types.p_character[0], r.p_character[0]);
     }
 
-    // public static class JavaReferenceTypeDescriptorTest {
-    //     public Instant p_instant;
-    //     public LocalDateTime p_localDateTime;
-    //     public Path p_path;
-    //     public URI p_uri;
-    //     public UUID p_uuid;
-    //     public ZonedDateTime p_zonedDateTime;
-    // }
+    public static class JavaNetTypeDescriptorTest {
+        public URI p_uri;
+    }
 
-    // @Test
-    // void test_referenceTypeDescriptors() {
-    //     JavaReferenceTypeDescriptorTest types = new JavaReferenceTypeDescriptorTest();
-    //     types.p_instant = Instant.now();
-    //     types.p_localDateTime = LocalDateTime.now();
-    //     types.p_path = Path.of("/tmp");
-    //     types.p_uri = URI.create("http://example.com");
-    //     types.p_uuid = UUID.randomUUID();
-    //     types.p_zonedDateTime = ZonedDateTime.now();
+    @Test
+    void test_net_typeDescriptors() {
+        JavaNetTypeDescriptorTest types = new JavaNetTypeDescriptorTest();
+        types.p_uri = URI.create("http://example.com");
 
-    //     AstNode root = serializer.toAst(types);
-    //     assertInstanceOf(MapAstNode.class, root);
-    //     MapAstNode<?, ?, ?> mapNode = (MapAstNode<?, ?, ?>) root;
+        AstNode root = serializer.toAst(types);
+        assertInstanceOf(MapAstNode.class, root);
+        MapAstNode<?, ?, ?> mapNode = (MapAstNode<?, ?, ?>) root;
 
-    //     for (MapEntryAstNode<?,?> entry : mapNode.entrySet()) {
-    //         String fieldName = entry.getKeyString();
-    //         AstNode value = entry.getValue();
-    //         assertInstanceOf(ScalarAstNode.class, value, fieldName + " should serialize to a scalar");
-    //     }
+        for (MapEntryAstNode<?,?> entry : mapNode.entrySet()) {
+            String fieldName = entry.getKeyString();
+            AstNode value = entry.getValue();
+            assertInstanceOf(ScalarAstNode.class, value, fieldName + " should serialize to a scalar");
+        }
 
-    //     JavaReferenceTypeDescriptorTest r = serializer.fromAst(root, JavaReferenceTypeDescriptorTest.class);
-    //     assertEquals(types.p_instant, r.p_instant);
-    //     assertEquals(types.p_localDateTime, r.p_localDateTime);
-    //     assertEquals(types.p_path, r.p_path);
-    //     assertEquals(types.p_uri, r.p_uri);
-    //     assertEquals(types.p_uuid, r.p_uuid);
-    //     assertEquals(types.p_zonedDateTime, r.p_zonedDateTime);
-    // }
+        JavaNetTypeDescriptorTest r = serializer.fromAst(root, JavaNetTypeDescriptorTest.class);
+        assertEquals(types.p_uri, r.p_uri);
+    }
 
-public static class JavaReferenceTypeDescriptorTest {
+    public static class JavaNioTypeDescriptorTest {
+        public Path p_path;
+    }
+
+    @Test
+    void test_nio_typeDescriptors() {
+        JavaNioTypeDescriptorTest types = new JavaNioTypeDescriptorTest();
+        types.p_path = Path.of("/tmp");
+
+        AstNode root = serializer.toAst(types);
+        assertInstanceOf(MapAstNode.class, root);
+        MapAstNode<?, ?, ?> mapNode = (MapAstNode<?, ?, ?>) root;
+
+        for (MapEntryAstNode<?,?> entry : mapNode.entrySet()) {
+            String fieldName = entry.getKeyString();
+            AstNode value = entry.getValue();
+            assertInstanceOf(ScalarAstNode.class, value, fieldName + " should serialize to a scalar");
+        }
+
+        JavaNioTypeDescriptorTest r = serializer.fromAst(root, JavaNioTypeDescriptorTest.class);
+        assertEquals(types.p_path, r.p_path);
+    }
+
+    public static class JavaTimeTypeDescriptorTest {
         public Instant p_instant;
         public LocalDateTime p_localDateTime;
         public ZonedDateTime p_zonedDateTime;
@@ -217,14 +225,11 @@ public static class JavaReferenceTypeDescriptorTest {
         public OffsetTime p_offsetTime;
         public ZoneId p_zoneId;
         public ZoneOffset p_zoneOffset;
-        public Path p_path;
-        public URI p_uri;
-        public UUID p_uuid;
     }
 
     @Test
-    void test_referenceTypeDescriptors() {
-        JavaReferenceTypeDescriptorTest types = new JavaReferenceTypeDescriptorTest();
+    void test_time_typeDescriptors() {
+        JavaTimeTypeDescriptorTest types = new JavaTimeTypeDescriptorTest();
         types.p_instant = Instant.now();
         types.p_localDateTime = LocalDateTime.now();
         types.p_zonedDateTime = ZonedDateTime.now();
@@ -237,9 +242,6 @@ public static class JavaReferenceTypeDescriptorTest {
         types.p_offsetTime = OffsetTime.now();
         types.p_zoneId = ZoneId.of("Europe/London");
         types.p_zoneOffset = ZoneOffset.ofHours(1);
-        types.p_path = Path.of("/tmp");
-        types.p_uri = URI.create("http://example.com");
-        types.p_uuid = UUID.randomUUID();
 
         AstNode root = serializer.toAst(types);
         assertInstanceOf(MapAstNode.class, root);
@@ -251,7 +253,7 @@ public static class JavaReferenceTypeDescriptorTest {
             assertInstanceOf(ScalarAstNode.class, value, fieldName + " should serialize to a scalar");
         }
 
-        JavaReferenceTypeDescriptorTest r = serializer.fromAst(root, JavaReferenceTypeDescriptorTest.class);
+        JavaTimeTypeDescriptorTest r = serializer.fromAst(root, JavaTimeTypeDescriptorTest.class);
         assertEquals(types.p_instant, r.p_instant);
         assertEquals(types.p_localDateTime, r.p_localDateTime);
         assertEquals(types.p_zonedDateTime, r.p_zonedDateTime);
@@ -264,8 +266,28 @@ public static class JavaReferenceTypeDescriptorTest {
         assertEquals(types.p_offsetTime, r.p_offsetTime);
         assertEquals(types.p_zoneId, r.p_zoneId);
         assertEquals(types.p_zoneOffset, r.p_zoneOffset);
-        assertEquals(types.p_path, r.p_path);
-        assertEquals(types.p_uri, r.p_uri);
+    }
+
+    public static class JavaUtilTypeDescriptorTest {
+        public UUID p_uuid;
+    }
+
+    @Test
+    void test_util_typeDescriptors() {
+        JavaUtilTypeDescriptorTest types = new JavaUtilTypeDescriptorTest();
+        types.p_uuid = UUID.randomUUID();
+
+        AstNode root = serializer.toAst(types);
+        assertInstanceOf(MapAstNode.class, root);
+        MapAstNode<?, ?, ?> mapNode = (MapAstNode<?, ?, ?>) root;
+
+        for (MapEntryAstNode<?,?> entry : mapNode.entrySet()) {
+            String fieldName = entry.getKeyString();
+            AstNode value = entry.getValue();
+            assertInstanceOf(ScalarAstNode.class, value, fieldName + " should serialize to a scalar");
+        }
+
+        JavaUtilTypeDescriptorTest r = serializer.fromAst(root, JavaUtilTypeDescriptorTest.class);
         assertEquals(types.p_uuid, r.p_uuid);
     }
 }
