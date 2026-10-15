@@ -33,37 +33,57 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type.lang;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
+import java.util.Base64;
 
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
-public class LocalDateTimeDescriptor extends AbstractScalarDescriptor<LocalDateTime> {
-    public LocalDateTimeDescriptor() {
-        super(LocalDateTime.class, PrimitiveType.STRING);
+public class ByteReferenceArrayDescriptor extends AbstractScalarDescriptor<Byte[]> {
+    public ByteReferenceArrayDescriptor() {
+        super(Byte[].class, PrimitiveType.STRING, null, "base64");
     }
 
     @Override
-    public LocalDateTime toJvmType(String text) {
-        return LocalDateTime.parse(text);
+    public Byte[] toJvmType(String text) {
+        if (text == null) {
+            return new Byte[]{};
+        }
+        try {
+            byte[] bytes = Base64.getDecoder().decode(text);
+            Byte[] result = new Byte[bytes.length];
+            for (int i = 0; i < bytes.length; i++) {
+                result[i] = bytes[i];
+            }
+            return result;
+        } catch (IllegalArgumentException e) {
+            throw new LocalizableRuntimeException(e, GenericMessage.MALFORMED_BASE64);
+        }
     }
 
     @Override
-    public String toPrimitive(LocalDateTime jvmInstance) {
-        return jvmInstance.toString();
+    public String toPrimitive(Byte[] jvmInstance) {
+        if (jvmInstance == null) return "";
+        byte[] bytes = new byte[jvmInstance.length];
+        for (int i = 0; i < jvmInstance.length; i++) {
+            bytes[i] = jvmInstance[i] != null ? jvmInstance[i] : 0x00;
+        }
+        return Base64.getEncoder().encodeToString(bytes);
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
         try {
-            LocalDateTime.parse(text);
+            Base64.getDecoder().decode(text);
             return true;
-        } catch (DateTimeParseException e) {
+        } catch (IllegalArgumentException e) {
             formatError(text, collector);
             return false;
         }
     }
-
 }
+

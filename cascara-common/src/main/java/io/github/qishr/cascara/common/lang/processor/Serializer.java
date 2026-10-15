@@ -44,8 +44,8 @@ import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
-import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
-import io.github.qishr.cascara.common.lang.type.TypeReference;
+import io.github.qishr.cascara.common.type.TypeDescriptor;
+import io.github.qishr.cascara.common.type.TypeReference;
 
 /// Handles the transformation between Java Objects (POJOs) and the AST or textual formats.
 ///

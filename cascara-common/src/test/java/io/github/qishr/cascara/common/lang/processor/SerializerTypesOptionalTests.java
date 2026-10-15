@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
-import io.github.qishr.cascara.common.lang.type.TypeReference;
+import io.github.qishr.cascara.common.type.TypeReference;
 
 public class SerializerTypesOptionalTests extends SerializerTestBase {
     @Test

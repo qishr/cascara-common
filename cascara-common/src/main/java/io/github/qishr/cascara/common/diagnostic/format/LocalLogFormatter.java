@@ -3,7 +3,6 @@ package io.github.qishr.cascara.common.diagnostic.format;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
@@ -32,7 +31,7 @@ public class LocalLogFormatter implements  LogFormatter {
     }
 
     protected static final ZoneId UTC = ZoneId.of("UTC");
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
+    // private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
 
     protected boolean prefixEveryLine = true;
     protected boolean ansiColoringEnabled = false;

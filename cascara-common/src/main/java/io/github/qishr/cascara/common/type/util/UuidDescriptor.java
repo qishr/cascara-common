@@ -33,45 +33,37 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type.util;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.util.UUID;
 
-/// References a generic type.
-/// @author crazybob@google.com (Bob Lee)
-public class TypeReference<T> {
-    private final Type type;
-    private volatile Constructor<?> constructor;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
-    protected TypeReference() {
-        Type superclass = getClass().getGenericSuperclass();
-        if (superclass instanceof Class) {
-            throw new RuntimeException("Missing type parameter.");
-        }
-        this.type = ((ParameterizedType) superclass).getActualTypeArguments()[0];
+public class UuidDescriptor extends AbstractScalarDescriptor<UUID> {
+    public UuidDescriptor() {
+        super(UUID.class, PrimitiveType.STRING, "uuid");
     }
 
-    /// Instantiates a new instance of {@code T} using the default, no-arg
-    /// constructor.
-    @SuppressWarnings("unchecked")
-    public T newInstance()
-            throws NoSuchMethodException, IllegalAccessException,
-                   InvocationTargetException, InstantiationException {
-        if (constructor == null) {
-            Class<?> rawType = type instanceof Class<?>
-                ? (Class<?>) type
-                : (Class<?>) ((ParameterizedType) type).getRawType();
-            constructor = rawType.getConstructor();
-        }
-        return (T) constructor.newInstance();
+    @Override
+    public UUID toJvmType(String text) {
+        return UUID.fromString(text);
     }
 
-    /// Gets the referenced type.
-    public Type getType() {
-        return this.type;
+    @Override
+    public String toPrimitive(UUID jvmInstance) {
+        return jvmInstance.toString();
+    }
+
+    @Override
+    public boolean validate(String text, Reporter collector) {
+        try {
+            UUID.fromString(text);
+            return true;
+        } catch (IllegalArgumentException e) {
+            formatError(text, collector);
+            return false;
+        }
     }
 }
-

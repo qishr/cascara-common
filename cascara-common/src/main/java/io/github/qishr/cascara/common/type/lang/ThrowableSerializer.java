@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type.lang;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +9,9 @@ import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
+import io.github.qishr.cascara.common.type.TypeSerializer;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 
 /// Handles serialization and deserialization of [Throwable] instances across AST nodes,

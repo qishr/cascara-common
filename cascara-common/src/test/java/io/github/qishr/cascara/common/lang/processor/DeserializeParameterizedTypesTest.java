@@ -12,7 +12,7 @@ import io.github.qishr.cascara.common.annotation.SubType;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
-import io.github.qishr.cascara.common.lang.type.TypeReference;
+import io.github.qishr.cascara.common.type.TypeReference;
 
 public class DeserializeParameterizedTypesTest extends SerializerTestBase {
 

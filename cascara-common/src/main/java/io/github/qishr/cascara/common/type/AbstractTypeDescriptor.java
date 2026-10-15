@@ -33,36 +33,47 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type;
 
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
+import io.github.qishr.cascara.common.lang.ast.MapAstNode;
+import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.service.SPL;
 
-import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
+    public static final String KEYWORD_TYPE = "type";
 
-public class PathDescriptor extends AbstractScalarDescriptor<Path> {
-    public PathDescriptor() {
-        super(Path.class, PrimitiveType.STRING, "path");
-    }
+    protected Properties properties = new Properties();
 
-    @Override
-    public Path toJvmType(String text) {
-        return Path.of(text);
-    }
+    private Class<T> jvmType;
+    private PrimitiveType schemaType;
 
-    @Override
-    public String toPrimitive(Path jvmInstance) {
-        return jvmInstance.toString();
-    }
-
-    @Override
-    public boolean validate(String text, Reporter collector) {
-        try {
-            Path.of(text);
-            return true;
-        } catch (InvalidPathException e) {
-            formatError(text, collector);
-            return false;
+    protected AbstractTypeDescriptor(Class<T> jvmType, PrimitiveType schemaType) {
+        this.jvmType = jvmType;
+        this.schemaType = schemaType;
+        properties.set(SPL.JVM_TYPE, jvmType.getName());
+        if (schemaType != null) {
+            properties.set(KEYWORD_TYPE, schemaType.asString());
         }
+    }
+
+    @Override
+    public Properties getServiceProperties() {
+        return properties;
+    }
+
+    @Override
+    public Class<T> getJvmType() {
+        return jvmType;
+    }
+
+    @Override
+    public PrimitiveType getSchemaType() {
+        return schemaType;
+    }
+
+    @Override
+    public void populateSchema(MapAstNode<?,?,?> node) {
+        // Automatically inject the type property every JSON Schema definition requires.
+        node.put(KEYWORD_TYPE, getSchemaType().asString());
     }
 }

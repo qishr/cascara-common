@@ -33,46 +33,30 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type;
 
-import java.util.Base64;
-
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.lang.ast.AstNode;
+import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 
-public class ByteArrayDescriptor extends AbstractScalarDescriptor<byte[]> {
-    public ByteArrayDescriptor() {
-        super(byte[].class, PrimitiveType.STRING, null, "base64");
-    }
+public interface TypeSerializer<T> extends TypeDescriptor<T> {
+    /// Transforms a concrete Java object into its structural AST representation.
+    ///
+    /// @param jvmInstance The live runtime object instance to serialize.
+    /// @return            The matching structural AstNode graph.
+    AstNode serialize(T jvmInstance) throws SerializerException;
 
-    @Override
-    public byte[] toJvmType(String text) {
-        if (text == null) {
-            return new byte[]{};
-        }
-        try {
-            return Base64.getDecoder().decode(text);
-        } catch (IllegalArgumentException e) {
-            throw new LocalizableRuntimeException(e, GenericMessage.MALFORMED_BASE64);
-        }
-    }
+    /// Deserializes an AST node into a strongly-typed Java object.
+    ///
+    /// @param astNode The structural AST node being parsed (e.g., YamlScalarNode, YamlMapNode).
+    /// @return        The fully constructed Java object instance.
+    /// @throws SerializerException If the node structure violates the type constraints.
+    public abstract T deserialize(AstNode astNode) throws SerializerException;
 
-    @Override
-    public String toPrimitive(byte[] jvmInstance) {
-        if (jvmInstance == null) return "";
-        return Base64.getEncoder().encodeToString(jvmInstance);
-    }
-
-    @Override
-    public boolean validate(String text, Reporter collector) {
-        try {
-            Base64.getDecoder().decode(text);
-            return true;
-        } catch (IllegalArgumentException e) {
-            formatError(text, collector);
-            return false;
-        }
+    /// Type serializers don't need to validate, but they do
+    /// everything else a type descriptor does, so we provide a
+    /// default validate method here so implementations don't need to.
+    default boolean validate(String text, Reporter collector) {
+        return true;
     }
 }
-

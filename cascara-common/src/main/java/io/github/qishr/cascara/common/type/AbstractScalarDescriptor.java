@@ -33,7 +33,7 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;

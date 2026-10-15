@@ -58,7 +58,6 @@ module cascara.common {
     exports io.github.qishr.cascara.common.lang.processor;
     exports io.github.qishr.cascara.common.lang.semantic;
     exports io.github.qishr.cascara.common.lang.token;
-    exports io.github.qishr.cascara.common.lang.type;
     exports io.github.qishr.cascara.common.lang.util;
     exports io.github.qishr.cascara.common.property;
     exports io.github.qishr.cascara.common.semver;
@@ -66,6 +65,12 @@ module cascara.common {
     exports io.github.qishr.cascara.common.trackable;
     exports io.github.qishr.cascara.common.trackable.property;
     exports io.github.qishr.cascara.common.trackable.tracker;
+    exports io.github.qishr.cascara.common.type;
+    exports io.github.qishr.cascara.common.type.cascara;
+    exports io.github.qishr.cascara.common.type.lang;
+    exports io.github.qishr.cascara.common.type.net;
+    exports io.github.qishr.cascara.common.type.nio;
+    exports io.github.qishr.cascara.common.type.time;
     exports io.github.qishr.cascara.common.util;
 
     opens io.github.qishr.cascara.common.data;           // For tests
@@ -77,13 +82,13 @@ module cascara.common {
     opens io.github.qishr.cascara.common.util;           // For tests and SchmeaGenerator
 
     provides io.github.qishr.cascara.common.service.ServiceProvider
-        with io.github.qishr.cascara.common.lang.type.ByteArrayDescriptor,
-             io.github.qishr.cascara.common.lang.type.InstantDescriptor,
-             io.github.qishr.cascara.common.lang.type.ZonedDateTimeDescriptor,
-             io.github.qishr.cascara.common.lang.type.LocalDateTimeDescriptor,
-             io.github.qishr.cascara.common.lang.type.PathDescriptor,
-             io.github.qishr.cascara.common.lang.type.UriDescriptor,
-             io.github.qishr.cascara.common.lang.type.UuidDescriptor,
+        with io.github.qishr.cascara.common.type.lang.ByteArrayDescriptor,
+             io.github.qishr.cascara.common.type.time.InstantDescriptor,
+             io.github.qishr.cascara.common.type.time.ZonedDateTimeDescriptor,
+             io.github.qishr.cascara.common.type.time.LocalDateTimeDescriptor,
+             io.github.qishr.cascara.common.type.nio.PathDescriptor,
+             io.github.qishr.cascara.common.type.net.UriDescriptor,
+             io.github.qishr.cascara.common.type.util.UuidDescriptor,
              io.github.qishr.cascara.common.lang.util.SourceStringBuffer,
              io.github.qishr.cascara.common.lang.util.SourceInputStreamBuffer;
 }

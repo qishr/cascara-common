@@ -36,8 +36,8 @@
 package io.github.qishr.cascara.common.lang.ast;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.lang.type.PrimitiveType;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
 public interface ScalarAstNode<T extends AstNode> extends AstNode {
     /// Returns the [QuoteStyle] used by a node: PLAIN, SINGLE, DOUBLE, LITERAL, or FOLDED.

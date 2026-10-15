@@ -40,7 +40,7 @@ import java.util.Map;
 
 
 import io.github.qishr.cascara.common.data.TabularData;
-import io.github.qishr.cascara.common.lang.type.PrimitiveType;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
 public class Property<T> implements TabularData {
     private static final String TABULAR_NAME_FIELD = "name";

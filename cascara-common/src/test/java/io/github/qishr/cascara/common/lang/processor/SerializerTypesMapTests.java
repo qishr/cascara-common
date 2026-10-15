@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
-import io.github.qishr.cascara.common.lang.type.TypeReference;
+import io.github.qishr.cascara.common.type.TypeReference;
 
 /// Testing of Serialier with JRE Map types that map to JSON Schema objects
 public class SerializerTypesMapTests extends SerializerTestBase {

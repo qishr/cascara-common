@@ -33,55 +33,34 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type.lang;
 
-import java.util.Base64;
-
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
-public class ByteReferenceArrayDescriptor extends AbstractScalarDescriptor<Byte[]> {
-    public ByteReferenceArrayDescriptor() {
-        super(Byte[].class, PrimitiveType.STRING, null, "base64");
+public class CharArrayDescriptor extends AbstractScalarDescriptor<char[]> {
+    public CharArrayDescriptor() {
+        super(char[].class, PrimitiveType.STRING);
     }
 
     @Override
-    public Byte[] toJvmType(String text) {
+    public char[] toJvmType(String text) {
         if (text == null) {
-            return new Byte[]{};
+            return new char[]{};
         }
-        try {
-            byte[] bytes = Base64.getDecoder().decode(text);
-            Byte[] result = new Byte[bytes.length];
-            for (int i = 0; i < bytes.length; i++) {
-                result[i] = bytes[i];
-            }
-            return result;
-        } catch (IllegalArgumentException e) {
-            throw new LocalizableRuntimeException(e, GenericMessage.MALFORMED_BASE64);
-        }
+        return text.toCharArray();
     }
 
     @Override
-    public String toPrimitive(Byte[] jvmInstance) {
+    public String toPrimitive(char[] jvmInstance) {
         if (jvmInstance == null) return "";
-        byte[] bytes = new byte[jvmInstance.length];
-        for (int i = 0; i < jvmInstance.length; i++) {
-            bytes[i] = jvmInstance[i] != null ? jvmInstance[i] : 0x00;
-        }
-        return Base64.getEncoder().encodeToString(bytes);
+        return new String(jvmInstance);
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
-        try {
-            Base64.getDecoder().decode(text);
-            return true;
-        } catch (IllegalArgumentException e) {
-            formatError(text, collector);
-            return false;
-        }
+        return true;
     }
 }
 

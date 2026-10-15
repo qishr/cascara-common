@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
-import io.github.qishr.cascara.common.lang.type.TypeReference;
+import io.github.qishr.cascara.common.type.TypeReference;
 
 /// Testing of Serialier with JRE Collection types that map to JSON Schema arrays
 public class SerializerTypesCollectionTests extends SerializerTestBase {

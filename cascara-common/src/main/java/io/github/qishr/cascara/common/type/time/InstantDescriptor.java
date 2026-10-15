@@ -33,37 +33,44 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type.time;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
-public class ZonedDateTimeDescriptor extends AbstractScalarDescriptor<ZonedDateTime> {
-    public ZonedDateTimeDescriptor() {
-        super(ZonedDateTime.class, PrimitiveType.STRING, "date-time");
+public class InstantDescriptor extends AbstractScalarDescriptor<Instant> {
+    protected static final ZoneId UTC = ZoneId.of("UTC");
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
+
+    public InstantDescriptor() {
+        super(Instant.class, PrimitiveType.STRING, "timestamp"); // TODO: is timestamp correct?
     }
 
     @Override
-    public ZonedDateTime toJvmType(String text) {
-        return ZonedDateTime.parse(text);
+    public Instant toJvmType(String text) {
+        return Instant.parse(text);
     }
 
     @Override
-    public String toPrimitive(ZonedDateTime jvmInstance) {
-        return jvmInstance.toString();
+    public String toPrimitive(Instant jvmInstance) {
+        return ZonedDateTime.ofInstant(jvmInstance, UTC).format(TIME_FORMAT);
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
         try {
-            ZonedDateTime.parse(text);
+            Instant.parse(text);
             return true;
         } catch (DateTimeParseException e) {
             formatError(text, collector);
             return false;
         }
     }
-
 }

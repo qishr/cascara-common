@@ -74,15 +74,15 @@ import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.internal.DeserializationTargetResolver;
-import io.github.qishr.cascara.common.lang.type.PrimitiveType;
-import io.github.qishr.cascara.common.lang.type.ScalarDescriptor;
-import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
-import io.github.qishr.cascara.common.lang.type.TypeReference;
-import io.github.qishr.cascara.common.lang.type.TypeSerializer;
 import io.github.qishr.cascara.common.lang.util.LanguageOptions;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceProviderFactory;
+import io.github.qishr.cascara.common.type.PrimitiveType;
+import io.github.qishr.cascara.common.type.ScalarDescriptor;
+import io.github.qishr.cascara.common.type.TypeDescriptor;
+import io.github.qishr.cascara.common.type.TypeReference;
+import io.github.qishr.cascara.common.type.TypeSerializer;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public abstract class AbstractSerializer<

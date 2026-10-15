@@ -48,8 +48,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.lang.type.PrimitiveType;
-import io.github.qishr.cascara.common.lang.type.ScalarDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
+import io.github.qishr.cascara.common.type.ScalarDescriptor;
 import io.github.qishr.cascara.common.lang.util.SourceBuffer;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProviderFactory;

@@ -33,40 +33,35 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type.net;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import java.net.URI;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
-public class InstantDescriptor extends AbstractScalarDescriptor<Instant> {
-    protected static final ZoneId UTC = ZoneId.of("UTC");
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
-
-    public InstantDescriptor() {
-        super(Instant.class, PrimitiveType.STRING, "timestamp"); // TODO: is timestamp correct?
+public class UriDescriptor extends AbstractScalarDescriptor<URI> {
+    public UriDescriptor() {
+        super(URI.class, PrimitiveType.STRING, "uri");
     }
 
     @Override
-    public Instant toJvmType(String text) {
-        return Instant.parse(text);
+    public URI toJvmType(String text) {
+        return URI.create(text);
     }
 
     @Override
-    public String toPrimitive(Instant jvmInstance) {
-        return ZonedDateTime.ofInstant(jvmInstance, UTC).format(TIME_FORMAT);
+    public String toPrimitive(URI jvmInstance) {
+        return jvmInstance.toString();
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
         try {
-            Instant.parse(text);
+            URI.create(text);
             return true;
-        } catch (DateTimeParseException e) {
+        } catch (IllegalArgumentException | NullPointerException e) {
             formatError(text, collector);
             return false;
         }

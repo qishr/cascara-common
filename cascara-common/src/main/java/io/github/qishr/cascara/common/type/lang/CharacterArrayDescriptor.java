@@ -33,47 +33,43 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type.lang;
 
-import io.github.qishr.cascara.common.lang.ast.MapAstNode;
-import io.github.qishr.cascara.common.property.Properties;
-import io.github.qishr.cascara.common.service.SPL;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
-public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
-    public static final String KEYWORD_TYPE = "type";
+public class CharacterArrayDescriptor extends AbstractScalarDescriptor<Character[]> {
+    public CharacterArrayDescriptor() {
+        super(Character[].class, PrimitiveType.STRING);
+    }
 
-    protected Properties properties = new Properties();
-
-    private Class<T> jvmType;
-    private PrimitiveType schemaType;
-
-    protected AbstractTypeDescriptor(Class<T> jvmType, PrimitiveType schemaType) {
-        this.jvmType = jvmType;
-        this.schemaType = schemaType;
-        properties.set(SPL.JVM_TYPE, jvmType.getName());
-        if (schemaType != null) {
-            properties.set(KEYWORD_TYPE, schemaType.asString());
+    @Override
+    public Character[] toJvmType(String text) {
+        if (text == null) {
+            return new Character[]{};
         }
+        char[] chars = text.toCharArray();
+        Character[] result = new Character[chars.length];
+        for (int i = 0; i < chars.length; i++) {
+            result[i] = chars[i];
+        }
+        return result;
     }
 
     @Override
-    public Properties getServiceProperties() {
-        return properties;
+    public String toPrimitive(Character[] jvmInstance) {
+        if (jvmInstance == null) return "";
+        char[] chars = new char[jvmInstance.length];
+        for (int i = 0; i < jvmInstance.length; i++) {
+            chars[i] = jvmInstance[i] != null ? jvmInstance[i] : '\0';
+        }
+        return new String(chars);
     }
 
     @Override
-    public Class<T> getJvmType() {
-        return jvmType;
-    }
-
-    @Override
-    public PrimitiveType getSchemaType() {
-        return schemaType;
-    }
-
-    @Override
-    public void populateSchema(MapAstNode<?,?,?> node) {
-        // Automatically inject the type property every JSON Schema definition requires.
-        node.put(KEYWORD_TYPE, getSchemaType().asString());
+    public boolean validate(String text, Reporter collector) {
+        return true;
     }
 }
+

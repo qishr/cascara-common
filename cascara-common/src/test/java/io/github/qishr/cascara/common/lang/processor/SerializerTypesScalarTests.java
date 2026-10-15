@@ -3,12 +3,19 @@ package io.github.qishr.cascara.common.lang.processor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
+import java.net.URI;
 import java.nio.CharBuffer;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
+import io.github.qishr.cascara.common.lang.ast.MapEntryAstNode;
 import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 
 /// Testing of Serialier with JVM types that map directly to JSON Schema scalars
@@ -94,14 +101,14 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
         assertEquals(types.p_stringBuilder, r.p_stringBuilder);
     }
 
-    public static class JavaPrimitiveTypeDescriptorTest {
-        public char[]    p_char;
-        public byte[]    p_byte;
+    public static class JavaPrimitiveArrayTypeDescriptorTest {
+        public char[] p_char;
+        public byte[] p_byte;
     }
 
     @Test
-    void test_primitiveTypeDescriptors() {
-        JavaPrimitiveTypeDescriptorTest types = new JavaPrimitiveTypeDescriptorTest();
+    void test_primitiveArrayTypeDescriptors() {
+        JavaPrimitiveArrayTypeDescriptorTest types = new JavaPrimitiveArrayTypeDescriptorTest();
         types.p_byte = new byte[]{0x3};
         types.p_char = new char[]{'c'};
 
@@ -116,20 +123,20 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
         assertInstanceOf(ScalarAstNode.class, byteNode, "p_byte should serialize to a scalar (Base64 string)");
         assertInstanceOf(ScalarAstNode.class, charNode, "p_char should serialize to a scalar string");
 
-        JavaPrimitiveTypeDescriptorTest r = serializer.fromAst(root, JavaPrimitiveTypeDescriptorTest.class);
+        JavaPrimitiveArrayTypeDescriptorTest r = serializer.fromAst(root, JavaPrimitiveArrayTypeDescriptorTest.class);
 
         assertEquals(types.p_byte[0], r.p_byte[0]);
         assertEquals(types.p_char[0], r.p_char[0]);
     }
 
-    public static class JavaReferenceTypeDescriptorTest {
-        public Byte[]    p_byte;
+    public static class JavaReferenceArrayTypeDescriptorTest {
+        public Byte[] p_byte;
         public Character[] p_character;
     }
 
     @Test
-    void test_referenceTypeDescriptors() {
-        JavaReferenceTypeDescriptorTest types = new JavaReferenceTypeDescriptorTest();
+    void test_referenceArrayTypeDescriptors() {
+        JavaReferenceArrayTypeDescriptorTest types = new JavaReferenceArrayTypeDescriptorTest();
         types.p_byte = new Byte[]{0x3};
         types.p_character = new Character[]{'c'};
 
@@ -144,9 +151,47 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
         assertInstanceOf(ScalarAstNode.class, byteNode, "p_byte should serialize to a scalar (Base64 string)");
         assertInstanceOf(ScalarAstNode.class, charNode, "p_character should serialize to a scalar string");
 
-        JavaReferenceTypeDescriptorTest r = serializer.fromAst(root, JavaReferenceTypeDescriptorTest.class);
+        JavaReferenceArrayTypeDescriptorTest r = serializer.fromAst(root, JavaReferenceArrayTypeDescriptorTest.class);
 
         assertEquals(types.p_byte[0], r.p_byte[0]);
         assertEquals(types.p_character[0], r.p_character[0]);
+    }
+
+    public static class JavaReferenceTypeDescriptorTest {
+        public Instant p_instant;
+        public LocalDateTime p_localDateTime;
+        public Path p_path;
+        public URI p_uri;
+        public UUID p_uuid;
+        public ZonedDateTime p_zonedDateTime;
+    }
+
+    @Test
+    void test_referenceTypeDescriptors() {
+        JavaReferenceTypeDescriptorTest types = new JavaReferenceTypeDescriptorTest();
+        types.p_instant = Instant.now();
+        types.p_localDateTime = LocalDateTime.now();
+        types.p_path = Path.of("/tmp");
+        types.p_uri = URI.create("http://example.com");
+        types.p_uuid = UUID.randomUUID();
+        types.p_zonedDateTime = ZonedDateTime.now();
+
+        AstNode root = serializer.toAst(types);
+        assertInstanceOf(MapAstNode.class, root);
+        MapAstNode<?, ?, ?> mapNode = (MapAstNode<?, ?, ?>) root;
+
+        for (MapEntryAstNode<?,?> entry : mapNode.entrySet()) {
+            String fieldName = entry.getKeyString();
+            AstNode value = entry.getValue();
+            assertInstanceOf(ScalarAstNode.class, value, fieldName + " should serialize to a scalar");
+        }
+
+        JavaReferenceTypeDescriptorTest r = serializer.fromAst(root, JavaReferenceTypeDescriptorTest.class);
+        assertEquals(types.p_instant, r.p_instant);
+        assertEquals(types.p_localDateTime, r.p_localDateTime);
+        assertEquals(types.p_path, r.p_path);
+        assertEquals(types.p_uri, r.p_uri);
+        assertEquals(types.p_uuid, r.p_uuid);
+        assertEquals(types.p_zonedDateTime, r.p_zonedDateTime);
     }
 }

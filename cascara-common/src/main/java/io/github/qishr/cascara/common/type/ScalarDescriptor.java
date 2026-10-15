@@ -33,35 +33,43 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type;
 
-import java.net.URI;
+import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
-import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+public interface ScalarDescriptor<T> extends TypeDescriptor<T> {
+    /// Converts the `text` into the JVM type specified by this TypeDescriptor.
+    @NonNull
+    T toJvmType(String text);
 
-public class UriDescriptor extends AbstractScalarDescriptor<URI> {
-    public UriDescriptor() {
-        super(URI.class, PrimitiveType.STRING, "uri");
-    }
+    /// Converts the JVM type specified by this TypeDescriptor into a JSON Schema primitive type.
+    /// @return One of: null, string, integer (JVM Long), number (JVM Double), boolean.
+    @NonNull
+    Object toPrimitive(T jvmInstance);
+
+    /// Retuns the JSON Schema `format` used by this TypeDescriptor.
+    @Nullable
+    String getFormat();
+
+    /// Returns the JSON Schema `contentEncoding` use by this TypeDescriptor.
+    @Nullable
+    String getContentEncoding();
 
     @Override
-    public URI toJvmType(String text) {
-        return URI.create(text);
-    }
+    default void populateSchema(MapAstNode<?,?,?> node) {
+        // Automatically inject the core properties every scalar might declare.
+        node.put("type", getSchemaType().asString());
 
-    @Override
-    public String toPrimitive(URI jvmInstance) {
-        return jvmInstance.toString();
-    }
+        String format = getFormat();
+        if (format != null && !format.isEmpty()) {
+            node.put("format", format);
+        }
 
-    @Override
-    public boolean validate(String text, Reporter collector) {
-        try {
-            URI.create(text);
-            return true;
-        } catch (IllegalArgumentException | NullPointerException e) {
-            formatError(text, collector);
-            return false;
+        String encoding = getContentEncoding();
+        if (encoding != null && !encoding.isEmpty()) {
+            node.put("contentEncoding", encoding);
         }
     }
 }

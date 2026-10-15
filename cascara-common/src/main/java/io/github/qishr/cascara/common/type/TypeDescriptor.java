@@ -33,54 +33,22 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type;
 
-import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.lang.ast.MapAstNode;
+import io.github.qishr.cascara.common.service.ServiceProvider;
 
-public class DiagnosticMessageDescriptor extends AbstractScalarDescriptor<DiagnosticMessage> {
+public interface TypeDescriptor<T> extends ServiceProvider {
+    /// Returns the JVM type handled by this TypeDescriptor.
+    Class<T> getJvmType();
 
-    public DiagnosticMessageDescriptor() {
-        super(DiagnosticMessage.class, PrimitiveType.STRING);
-    }
+    /// Returns the JSON Schema primitive type handled by this TypeDescriptor.
+    PrimitiveType getSchemaType();
 
-    @Override
-    public DiagnosticMessage toJvmType(String text) {
-        if (text == null || text.isBlank()) {
-            return null;
-        }
-        int dot = text.lastIndexOf(".");
-        if (dot == -1) {
-            return null;
-        }
-        String className = text.substring(0, dot);
-        String enumVal = text.substring(dot + 1);
+    /// Adds JSON Schema keywords and values to a map representing a
+    /// JSON schema for the JSON type handled by this TypeDescriptor.
+    void populateSchema(MapAstNode<?,?,?> schema);
 
-        Class<?> msgClass;
-        try {
-            msgClass = Class.forName(className);
-        } catch (ClassNotFoundException e) {
-            return null;
-        }
-
-        if (!msgClass.isEnum()) {
-            return null;
-        }
-
-        @SuppressWarnings({ "rawtypes", "unchecked" })
-        Enum<?> value = Enum.valueOf((Class<Enum>) msgClass, enumVal);
-        return (DiagnosticMessage)value;
-    }
-
-    @Override
-    public Object toPrimitive(DiagnosticMessage jvmInstance) {
-        return jvmInstance.getClass().getName() + "." + jvmInstance.name();
-    }
-
-    @Override
-    public boolean validate(String text, Reporter collector) {
-        // TODO
-        throw new UnimplementedMethodException();
-    }
+    boolean validate(String text, Reporter collector);
 }

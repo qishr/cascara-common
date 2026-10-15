@@ -36,9 +36,9 @@ package io.github.qishr.cascara.common.service;
 
 import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.lang.type.TypeDescriptor;
 import io.github.qishr.cascara.common.lang.util.SourceBuffer;
 import io.github.qishr.cascara.common.lang.util.SourceBufferOptions;
+import io.github.qishr.cascara.common.type.TypeDescriptor;
 import io.github.qishr.cascara.common.util.ContentTypeResolver;
 
 ///

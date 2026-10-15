@@ -33,32 +33,39 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type.time;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
-public class CharArrayDescriptor extends AbstractScalarDescriptor<char[]> {
-    public CharArrayDescriptor() {
-        super(char[].class, PrimitiveType.STRING);
+public class LocalDateTimeDescriptor extends AbstractScalarDescriptor<LocalDateTime> {
+    public LocalDateTimeDescriptor() {
+        super(LocalDateTime.class, PrimitiveType.STRING);
     }
 
     @Override
-    public char[] toJvmType(String text) {
-        if (text == null) {
-            return new char[]{};
-        }
-        return text.toCharArray();
+    public LocalDateTime toJvmType(String text) {
+        return LocalDateTime.parse(text);
     }
 
     @Override
-    public String toPrimitive(char[] jvmInstance) {
-        if (jvmInstance == null) return "";
-        return new String(jvmInstance);
+    public String toPrimitive(LocalDateTime jvmInstance) {
+        return jvmInstance.toString();
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
-        return true;
+        try {
+            LocalDateTime.parse(text);
+            return true;
+        } catch (DateTimeParseException e) {
+            formatError(text, collector);
+            return false;
+        }
     }
-}
 
+}

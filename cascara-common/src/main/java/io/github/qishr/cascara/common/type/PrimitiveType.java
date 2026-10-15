@@ -32,7 +32,7 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type;
 
 import java.lang.reflect.Type;
 import java.util.Collection;

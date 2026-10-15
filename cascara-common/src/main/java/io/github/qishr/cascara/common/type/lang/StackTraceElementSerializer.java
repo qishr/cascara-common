@@ -33,13 +33,16 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type.lang;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
+import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
+import io.github.qishr.cascara.common.type.TypeSerializer;
 
 public class StackTraceElementSerializer extends AbstractTypeDescriptor<StackTraceElement> implements TypeSerializer<StackTraceElement> {
 

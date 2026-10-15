@@ -33,49 +33,48 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type.lang;
 
-import io.github.qishr.cascara.common.annotation.Beta;
-import io.github.qishr.cascara.common.service.AbstractServiceProviderFactory;
-import io.github.qishr.cascara.common.service.CapabilityQueries;
-import io.github.qishr.cascara.common.service.ServiceException;
-import io.github.qishr.cascara.common.service.SPL;
+import java.util.Base64;
 
-@Beta
-public class TypeDescriptorFactory extends AbstractServiceProviderFactory {
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
-    public TypeDescriptorFactory() {
-        super();
+public class ByteArrayDescriptor extends AbstractScalarDescriptor<byte[]> {
+    public ByteArrayDescriptor() {
+        super(byte[].class, PrimitiveType.STRING, null, "base64");
     }
 
-    public TypeDescriptorFactory(SPL layer) {
-        super(layer);
+    @Override
+    public byte[] toJvmType(String text) {
+        if (text == null) {
+            return new byte[]{};
+        }
+        try {
+            return Base64.getDecoder().decode(text);
+        } catch (IllegalArgumentException e) {
+            throw new LocalizableRuntimeException(e, GenericMessage.MALFORMED_BASE64);
+        }
     }
 
-    public TypeDescriptor<?> createTypeDescriptor(Class<?> jvmType) throws ServiceException {
-        return createServiceProvider(
-            TypeDescriptor.class,
-            CapabilityQueries.allOf(
-                CapabilityQueries.supportsJvmType(jvmType)
-            )
-        );
+    @Override
+    public String toPrimitive(byte[] jvmInstance) {
+        if (jvmInstance == null) return "";
+        return Base64.getEncoder().encodeToString(jvmInstance);
     }
 
-    public ScalarDescriptor<?> createScalarDescriptor(Class<?> jvmType) throws ServiceException {
-        return createServiceProvider(
-            ScalarDescriptor.class,
-            CapabilityQueries.allOf(
-                CapabilityQueries.supportsJvmType(jvmType)
-            )
-        );
-    }
-
-    public ScalarDescriptor<?> createScalarDescriptor(String schemaFormat) throws ServiceException {
-        return createServiceProvider(
-            ScalarDescriptor.class,
-            CapabilityQueries.allOf(
-                CapabilityQueries.hasExactValue(AbstractScalarDescriptor.KEYWORD_FORMAT, schemaFormat)
-            )
-        );
+    @Override
+    public boolean validate(String text, Reporter collector) {
+        try {
+            Base64.getDecoder().decode(text);
+            return true;
+        } catch (IllegalArgumentException e) {
+            formatError(text, collector);
+            return false;
+        }
     }
 }
+

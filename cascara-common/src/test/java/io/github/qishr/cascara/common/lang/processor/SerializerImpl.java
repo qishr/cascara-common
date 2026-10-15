@@ -48,8 +48,8 @@ import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
 import io.github.qishr.cascara.common.lang.plain.PlainNode;
 import io.github.qishr.cascara.common.lang.plain.PlainNodeFactory;
-import io.github.qishr.cascara.common.lang.type.TypeReference;
 import io.github.qishr.cascara.common.lang.util.LanguageOptions;
+import io.github.qishr.cascara.common.type.TypeReference;
 import io.github.qishr.cascara.common.util.ContentType;
 
 public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,PlainScalarNode,PlainSequenceNode,PlainMapNode,PlainMapEntryNode,PlainNode> {

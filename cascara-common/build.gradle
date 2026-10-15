@@ -111,7 +111,7 @@ tasks.register('testJarClasspath', Test) {
 }
 
 
-// Ensure running `gradle check` triggers both test modes
+// Ensure running `gradle check` triggers all test modes
 tasks.named('check') {
     dependsOn tasks.named('test'), tasks.named('testClasspath'), tasks.named('testJarClasspath')
 }

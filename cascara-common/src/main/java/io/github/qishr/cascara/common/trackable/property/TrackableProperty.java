@@ -38,10 +38,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.lang.type.PrimitiveType;
 import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.trackable.Trackable;
 import io.github.qishr.cascara.common.trackable.tracker.InvalidationTracker;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
 @Experimental
 public class TrackableProperty<T> extends Property<T> implements Trackable {

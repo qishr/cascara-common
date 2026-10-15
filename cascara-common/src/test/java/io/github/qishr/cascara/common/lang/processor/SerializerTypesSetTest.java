@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
-import io.github.qishr.cascara.common.lang.type.TypeReference;
+import io.github.qishr.cascara.common.type.TypeReference;
 
 /// Testing of Serialier with JRE Set types that map to JSON Schema arrays
 public class SerializerTypesSetTest extends SerializerTestBase {

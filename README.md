@@ -10,10 +10,16 @@
 
 ## Testing
 
+### All Tests
+
+```
+./gradlew -x javadoc :cascara-common:check :integration-test:test
+```
+
 ### All Unit Tests
 
 ```
-./gradlew -x javadoc test -x testClasspath -x testJarClasspath
+./gradlew -x javadoc :cascara-common:test
 ```
 
 ### Modular: Class Files in JPMS Environment

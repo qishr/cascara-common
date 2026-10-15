@@ -33,41 +33,38 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.type;
+package io.github.qishr.cascara.common.type.nio;
+
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
 
-public class CharacterArrayDescriptor extends AbstractScalarDescriptor<Character[]> {
-    public CharacterArrayDescriptor() {
-        super(Character[].class, PrimitiveType.STRING);
+public class PathDescriptor extends AbstractScalarDescriptor<Path> {
+    public PathDescriptor() {
+        super(Path.class, PrimitiveType.STRING, "path");
     }
 
     @Override
-    public Character[] toJvmType(String text) {
-        if (text == null) {
-            return new Character[]{};
-        }
-        char[] chars = text.toCharArray();
-        Character[] result = new Character[chars.length];
-        for (int i = 0; i < chars.length; i++) {
-            result[i] = chars[i];
-        }
-        return result;
+    public Path toJvmType(String text) {
+        return Path.of(text);
     }
 
     @Override
-    public String toPrimitive(Character[] jvmInstance) {
-        if (jvmInstance == null) return "";
-        char[] chars = new char[jvmInstance.length];
-        for (int i = 0; i < jvmInstance.length; i++) {
-            chars[i] = jvmInstance[i] != null ? jvmInstance[i] : '\0';
-        }
-        return new String(chars);
+    public String toPrimitive(Path jvmInstance) {
+        return jvmInstance.toString();
     }
 
     @Override
     public boolean validate(String text, Reporter collector) {
-        return true;
+        try {
+            Path.of(text);
+            return true;
+        } catch (InvalidPathException e) {
+            formatError(text, collector);
+            return false;
+        }
     }
 }
-
