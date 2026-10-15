@@ -6,9 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import java.net.URI;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Date;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -157,13 +166,60 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
         assertEquals(types.p_character[0], r.p_character[0]);
     }
 
-    public static class JavaReferenceTypeDescriptorTest {
+    // public static class JavaReferenceTypeDescriptorTest {
+    //     public Instant p_instant;
+    //     public LocalDateTime p_localDateTime;
+    //     public Path p_path;
+    //     public URI p_uri;
+    //     public UUID p_uuid;
+    //     public ZonedDateTime p_zonedDateTime;
+    // }
+
+    // @Test
+    // void test_referenceTypeDescriptors() {
+    //     JavaReferenceTypeDescriptorTest types = new JavaReferenceTypeDescriptorTest();
+    //     types.p_instant = Instant.now();
+    //     types.p_localDateTime = LocalDateTime.now();
+    //     types.p_path = Path.of("/tmp");
+    //     types.p_uri = URI.create("http://example.com");
+    //     types.p_uuid = UUID.randomUUID();
+    //     types.p_zonedDateTime = ZonedDateTime.now();
+
+    //     AstNode root = serializer.toAst(types);
+    //     assertInstanceOf(MapAstNode.class, root);
+    //     MapAstNode<?, ?, ?> mapNode = (MapAstNode<?, ?, ?>) root;
+
+    //     for (MapEntryAstNode<?,?> entry : mapNode.entrySet()) {
+    //         String fieldName = entry.getKeyString();
+    //         AstNode value = entry.getValue();
+    //         assertInstanceOf(ScalarAstNode.class, value, fieldName + " should serialize to a scalar");
+    //     }
+
+    //     JavaReferenceTypeDescriptorTest r = serializer.fromAst(root, JavaReferenceTypeDescriptorTest.class);
+    //     assertEquals(types.p_instant, r.p_instant);
+    //     assertEquals(types.p_localDateTime, r.p_localDateTime);
+    //     assertEquals(types.p_path, r.p_path);
+    //     assertEquals(types.p_uri, r.p_uri);
+    //     assertEquals(types.p_uuid, r.p_uuid);
+    //     assertEquals(types.p_zonedDateTime, r.p_zonedDateTime);
+    // }
+
+public static class JavaReferenceTypeDescriptorTest {
         public Instant p_instant;
         public LocalDateTime p_localDateTime;
+        public ZonedDateTime p_zonedDateTime;
+        public Date p_date;
+        public TimeZone p_timeZone;
+        public Duration p_duration;
+        public Period p_period;
+        public LocalTime p_localTime;
+        public OffsetDateTime p_offsetDateTime;
+        public OffsetTime p_offsetTime;
+        public ZoneId p_zoneId;
+        public ZoneOffset p_zoneOffset;
         public Path p_path;
         public URI p_uri;
         public UUID p_uuid;
-        public ZonedDateTime p_zonedDateTime;
     }
 
     @Test
@@ -171,10 +227,19 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
         JavaReferenceTypeDescriptorTest types = new JavaReferenceTypeDescriptorTest();
         types.p_instant = Instant.now();
         types.p_localDateTime = LocalDateTime.now();
+        types.p_zonedDateTime = ZonedDateTime.now();
+        types.p_date = new Date();
+        types.p_timeZone = TimeZone.getTimeZone("UTC");
+        types.p_duration = Duration.ofHours(2);
+        types.p_period = Period.ofDays(5);
+        types.p_localTime = LocalTime.of(13, 45);
+        types.p_offsetDateTime = OffsetDateTime.now();
+        types.p_offsetTime = OffsetTime.now();
+        types.p_zoneId = ZoneId.of("Europe/London");
+        types.p_zoneOffset = ZoneOffset.ofHours(1);
         types.p_path = Path.of("/tmp");
         types.p_uri = URI.create("http://example.com");
         types.p_uuid = UUID.randomUUID();
-        types.p_zonedDateTime = ZonedDateTime.now();
 
         AstNode root = serializer.toAst(types);
         assertInstanceOf(MapAstNode.class, root);
@@ -189,9 +254,18 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
         JavaReferenceTypeDescriptorTest r = serializer.fromAst(root, JavaReferenceTypeDescriptorTest.class);
         assertEquals(types.p_instant, r.p_instant);
         assertEquals(types.p_localDateTime, r.p_localDateTime);
+        assertEquals(types.p_zonedDateTime, r.p_zonedDateTime);
+        assertEquals(types.p_date, r.p_date);
+        assertEquals(types.p_timeZone, r.p_timeZone);
+        assertEquals(types.p_duration, r.p_duration);
+        assertEquals(types.p_period, r.p_period);
+        assertEquals(types.p_localTime, r.p_localTime);
+        assertEquals(types.p_offsetDateTime, r.p_offsetDateTime);
+        assertEquals(types.p_offsetTime, r.p_offsetTime);
+        assertEquals(types.p_zoneId, r.p_zoneId);
+        assertEquals(types.p_zoneOffset, r.p_zoneOffset);
         assertEquals(types.p_path, r.p_path);
         assertEquals(types.p_uri, r.p_uri);
         assertEquals(types.p_uuid, r.p_uuid);
-        assertEquals(types.p_zonedDateTime, r.p_zonedDateTime);
     }
 }
