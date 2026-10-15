@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.service.ServiceMessage;
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;
@@ -50,6 +51,7 @@ import io.github.qishr.cascara.common.trackable.TrackableArray;
 public class SPLUtils {
 
     /// Returns an instance of a specific service provider.
+    @NonNull
     public static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, serviceType);
@@ -60,6 +62,7 @@ public class SPLUtils {
 
     /// Returns an instance of a service provider.
     @SuppressWarnings({ "unchecked", "rawtypes" })
+    @NonNull
     public static <T> T loadDefault(Class<T> serviceType) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, serviceType);
@@ -85,6 +88,7 @@ public class SPLUtils {
     /// If the provider is a neo-singleton, the singleton instance is returned.
     /// Otherwise, a new instance of the provider is returned.
     /// @param providerClass The class of the provider to instantiate.
+    @NonNull
     public static <T> T getInstance(Class<T> providerClass, ServiceMetadata serviceMeta) {
         if (!ServiceProvider.class.isAssignableFrom(providerClass)) {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, providerClass);
@@ -104,6 +108,7 @@ public class SPLUtils {
     /// Instantiates a service provider
     /// @param providerClass The class of the provider to instantiate.
     @SuppressWarnings("unchecked")
+    @NonNull
     public static <T> T instantiate(Class<T> providerClass) {
         if (!ServiceProvider.class.isAssignableFrom(providerClass)) {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, providerClass);

@@ -1,6 +1,7 @@
 package io.github.qishr.cascara.common.lang.internal;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,45 +27,60 @@ public class DeserializationTargetResolver {
 
     public DeserializationTargetResolver() {}
 
+    @SuppressWarnings("unchecked")
     @NonNull
     public <C> Class<? extends C> resolveTarget(MapAstNode<?,?,?> node, Type jvmType, boolean useHeuristicMatch) {
-        Class<C> baseClass = ReflectionUtils.getRawClass(jvmType);
+        Class<C> rawClass = ReflectionUtils.getRawClass(jvmType);
         Class<? extends C> targetClass = null;
         Set<Class<?>> candidates = null;
         String specifiedSubType = null;
 
+        // 0. Overrides specified by AbstractTypeRegistry
+        if (rawClass.isInterface() || Modifier.isAbstract(rawClass.getModifiers())) {
+            Class<?> concreteClass = AbstractTypeRegistry.resolve(rawClass);
+            if (concreteClass != null && !Modifier.isAbstract(concreteClass.getModifiers())) {
+                targetClass = (Class<C>) concreteClass;
+            }
+        }
+
         // 1. Check if the base class has an @AbstractType annotation
-        PolymorphicType abstractTypeAnno = baseClass.getAnnotation(PolymorphicType.class);
-        if (abstractTypeAnno != null) {
-            String typeFieldName = abstractTypeAnno.property();
-            specifiedSubType = node.getString(typeFieldName);
+        if (targetClass == null && node != null) {
+            PolymorphicType abstractTypeAnno = rawClass.getAnnotation(PolymorphicType.class);
+            if (abstractTypeAnno != null) {
+                String typeFieldName = abstractTypeAnno.property();
+                specifiedSubType = node.getString(typeFieldName);
+            }
         }
 
         // 2. Annotations on concrete subclasses of sealed class.
-        if (specifiedSubType != null) {
-            if (baseClass.isSealed()) {
-                candidates = getPermittedSubclasses(baseClass);
-                targetClass = getSubclass(baseClass, specifiedSubType, candidates);
+        if (targetClass == null && specifiedSubType != null) {
+            if (rawClass.isSealed()) {
+                candidates = getPermittedSubclasses(rawClass);
+                targetClass = getSubclass(rawClass, specifiedSubType, candidates);
             }
         }
 
         if (targetClass == null) {
-            candidates = getAllSubclasses(baseClass);
+            candidates = getAllSubclasses(rawClass);
 
             // 3. Annotations on concrete subclasses of non-sealed subclasses.
             if (specifiedSubType != null) {
-                targetClass = getSubclass(baseClass, specifiedSubType, candidates);
+                targetClass = getSubclass(rawClass, specifiedSubType, candidates);
             }
 
             // 4. Polymorphic inference / discrimination / heuristics
             if (targetClass == null && useHeuristicMatch) {
-                targetClass = resolvePolymorphicTarget(node, baseClass, candidates);
+                targetClass = resolvePolymorphicTarget(node, rawClass, candidates);
             }
         }
 
         // 5. If no subclass was found, return the base class
         if (targetClass == null) {
-            targetClass = baseClass;
+            targetClass = rawClass;
+        }
+
+        if (Modifier.isAbstract(targetClass.getModifiers())) {
+            throw new SerializerException(LangMessage.AMBIGUOUS_POLYMORPHIC, rawClass);
         }
 
         return targetClass;
@@ -73,6 +89,10 @@ public class DeserializationTargetResolver {
     @SuppressWarnings("unchecked")
     @NonNull
     private <C> Class<? extends C> resolvePolymorphicTarget(MapAstNode<?,?,?> map, Class<C> baseClass, Set<Class<?>> candidates) {
+        if (map == null) {
+            return null;
+        }
+
         Set<String> keys = map.keyStringSet();
         Class<? extends C> best = baseClass;
         int bestScore = -1;

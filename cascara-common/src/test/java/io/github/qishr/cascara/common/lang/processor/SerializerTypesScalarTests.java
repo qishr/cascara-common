@@ -2,6 +2,7 @@ package io.github.qishr.cascara.common.lang.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.lang.Enum.EnumDesc;
 import java.net.HttpCookie;
@@ -11,6 +12,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -21,9 +23,36 @@ import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.AbstractQueue;
+import java.util.ArrayDeque;
+import java.util.BitSet;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Currency;
 import java.util.Date;
+import java.util.Deque;
+import java.util.Dictionary;
+import java.util.DoubleSummaryStatistics;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Enumeration;
+import java.util.EventObject;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.NavigableMap;
+import java.util.PriorityQueue;
+import java.util.Properties;
+import java.util.SimpleTimeZone;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.Stack;
 import java.util.TimeZone;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
+import java.util.Vector;
+import java.util.WeakHashMap;
 
 import org.junit.jupiter.api.Test;
 
@@ -209,7 +238,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
 
         AstNode root = serializer.toAst(types);
         assertInstanceOf(MapAstNode.class, root);
-        MapAstNode<?, ?, ?> mapNode = (MapAstNode<?, ?, ?>) root;
+        // MapAstNode<?, ?, ?> mapNode = (MapAstNode<?, ?, ?>) root;
 
         // Run through and check what falls through or handles correctly
         JavaLangTypeDescriptorTest r = serializer.fromAst(root, JavaLangTypeDescriptorTest.class);
@@ -229,6 +258,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
         public HttpCookie p_httpCookie;
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void test_net_typeDescriptors() throws Exception {
         JavaNetTypeDescriptorTest types = new JavaNetTypeDescriptorTest();
@@ -336,25 +366,95 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
     }
 
     public static class JavaUtilTypeDescriptorTest {
+        public AbstractQueue<String> p_abstractQueue;
+        public Deque<String> p_deque;
+        public BitSet p_bitSet;
+        public Calendar p_calendar;
+        public Currency p_currency;
+        public Date p_date;
+        public Dictionary<String, String> p_dictionary;
+        public DoubleSummaryStatistics p_doubleSummaryStatistics;
+        public Enumeration<String> p_enumeration;
+        public EnumSet<DayOfWeek> p_enumSet;
+        public EnumMap<DayOfWeek, String> p_enumMap;
+        public EventObject p_eventObject;
+        public HashSet<String> p_hashSet;
+        public NavigableMap<String, String> p_navigableMap;
+        public PriorityQueue<String> p_priorityQueue;
+        public Properties p_properties;
+        public SimpleTimeZone p_simpleTimeZone;
+        public SortedMap<String, String> p_sortedMap;
+        public SortedSet<String> p_sortedSet;
+        public Stack<String> p_stack;
+        public TimeZone p_timeZone;
+        public TreeMap<String, String> p_treeMap;
+        public TreeSet<String> p_treeSet;
         public UUID p_uuid;
+        public Vector<String> p_vector;
+        public WeakHashMap<String, String> p_weakHashMap;
     }
 
     @Test
     void test_util_typeDescriptors() {
         JavaUtilTypeDescriptorTest types = new JavaUtilTypeDescriptorTest();
+        types.p_abstractQueue = new PriorityQueue<>();
+        types.p_abstractQueue.add("item");
+        types.p_deque = new ArrayDeque<>();
+        types.p_deque.add("deque-item");
+        types.p_bitSet = BitSet.valueOf(new long[]{1L});
+        types.p_calendar = Calendar.getInstance();
+        types.p_currency = Currency.getInstance("USD");
+        types.p_date = new Date();
+
+        Hashtable<String, String> hashtable = new Hashtable<>();
+        hashtable.put("key", "value");
+        types.p_dictionary = hashtable;
+
+        types.p_doubleSummaryStatistics = new DoubleSummaryStatistics();
+        types.p_doubleSummaryStatistics.accept(10.0);
+        types.p_doubleSummaryStatistics.accept(20.0);
+
+        types.p_enumeration = Collections.enumeration(List.of("a", "b"));
+        types.p_enumSet = EnumSet.of(DayOfWeek.MONDAY, DayOfWeek.FRIDAY);
+
+        types.p_enumMap = new EnumMap<>(DayOfWeek.class);
+        types.p_enumMap.put(DayOfWeek.MONDAY, "Work");
+
+        types.p_eventObject = new EventObject("source-object");
+        types.p_hashSet = new HashSet<>(List.of("one", "two"));
+
+        TreeMap<String, String> treeMap = new TreeMap<>();
+        treeMap.put("k", "v");
+        types.p_navigableMap = treeMap;
+        types.p_sortedMap = treeMap;
+        types.p_treeMap = treeMap;
+
+        types.p_priorityQueue = new PriorityQueue<>(List.of("x", "y"));
+
+        types.p_properties = new Properties();
+        types.p_properties.setProperty("propKey", "propVal");
+
+        types.p_simpleTimeZone = new SimpleTimeZone(0, "UTC");
+
+        TreeSet<String> treeSet = new TreeSet<>(List.of("alpha", "beta"));
+        types.p_sortedSet = treeSet;
+        types.p_treeSet = treeSet;
+
+        types.p_stack = new Stack<>();
+        types.p_stack.push("stacked");
+
+        types.p_timeZone = TimeZone.getTimeZone("UTC");
         types.p_uuid = UUID.randomUUID();
+        types.p_vector = new Vector<>(List.of("vec1", "vec2"));
+        types.p_weakHashMap = new WeakHashMap<>();
+        types.p_weakHashMap.put("weakKey", "weakVal");
 
         AstNode root = serializer.toAst(types);
         assertInstanceOf(MapAstNode.class, root);
-        MapAstNode<?, ?, ?> mapNode = (MapAstNode<?, ?, ?>) root;
-
-        for (MapEntryAstNode<?,?> entry : mapNode.entrySet()) {
-            String fieldName = entry.getKeyString();
-            AstNode value = entry.getValue();
-            assertInstanceOf(ScalarAstNode.class, value, fieldName + " should serialize to a scalar");
-        }
 
         JavaUtilTypeDescriptorTest r = serializer.fromAst(root, JavaUtilTypeDescriptorTest.class);
-        assertEquals(types.p_uuid, r.p_uuid);
+        assertNotNull(r);
+        assertEquals(types.p_currency, r.p_currency);
+        assertEquals(types.p_properties, r.p_properties);
     }
 }

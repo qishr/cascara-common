@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.data.TreeNode;
 import io.github.qishr.cascara.common.service.internal.SPLRoot;
 import io.github.qishr.cascara.common.service.internal.SPLUtils;
@@ -55,6 +56,7 @@ public interface SPL extends TreeNode<SPL> {
     public static final String CONTENT_TYPE = "contentType";
 
     /// Retrieves the root Service Provider Layer.
+    @NonNull
     static SPL getRoot() {
         return SPLRoot.instance();
     }
@@ -64,11 +66,13 @@ public interface SPL extends TreeNode<SPL> {
     }
 
     /// Returns an instance of a specific service provider.
+    @NonNull
     static <T> T load(Class<T> serviceType, ServiceMetadata metadata) {
         return SPLUtils.loadProvider(serviceType, metadata);
     }
 
     /// Returns an instance of a service provider.
+    @NonNull
     static <T> T load(Class<T> serviceType) {
         return SPLUtils.loadDefault(serviceType);
     }

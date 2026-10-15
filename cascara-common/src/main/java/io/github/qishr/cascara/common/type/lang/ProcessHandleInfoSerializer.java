@@ -1,5 +1,6 @@
 package io.github.qishr.cascara.common.type.lang;
 
+import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -44,7 +45,7 @@ public class ProcessHandleInfoSerializer extends AbstractTypeDescriptor<ProcessH
     }
 
     @Override
-    public ProcessHandle.Info deserialize(AstNode astNode) throws SerializerException {
+    public ProcessHandle.Info deserialize(AstNode astNode, Type targetType) throws SerializerException {
         if (!(astNode instanceof MapAstNode map)) {
             return null;
         }

@@ -66,7 +66,6 @@ public class DeserializeParameterizedTypesTest extends SerializerTestBase {
         PlainSequenceNode ast = new PlainSequenceNode()
             .add(new PlainScalarNode("item"));
 
-        // TODO: How can the serializer interpret this as a SpecializedList?
         SpecializedList<String> list = serializer.fromAst(ast, new TypeReference<SpecializedList<String>>(){});
 
         assertInstanceOf(SpecializedList.class, list);

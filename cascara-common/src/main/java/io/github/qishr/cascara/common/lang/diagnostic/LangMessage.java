@@ -81,6 +81,7 @@ public enum LangMessage implements DiagnosticMessage {
     SERVICE_CONFIG_ERROR("LANG-413", "Service configuration error: {0}"),
     SECURITY_EXCEPTION("LANG-414", "Security exception: {0}"),
     ILLEGAL_ACCESS_EXCEPTION("LANG-415", "Illegal access exception: {0}"),
+    CLASS_CAST_EXCEPTION("LANG-416", "Class cast exception: {0}"),
 
     UNKNOWN_GENERIC_TYPE("LANG-501", "Could not resolve generic type argument for {0}");
 

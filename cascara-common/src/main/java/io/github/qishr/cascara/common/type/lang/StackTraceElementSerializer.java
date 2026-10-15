@@ -35,6 +35,8 @@
 
 package io.github.qishr.cascara.common.type.lang;
 
+import java.lang.reflect.Type;
+
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
@@ -63,7 +65,7 @@ public class StackTraceElementSerializer extends AbstractTypeDescriptor<StackTra
     }
 
     @Override
-    public StackTraceElement deserialize(AstNode astNode) throws SerializerException {
+    public StackTraceElement deserialize(AstNode astNode, Type targetType) throws SerializerException {
         if (astNode instanceof MapAstNode map) {
             // String classLoaderName = map.getString("classLoaderName");
             // String moduleName = map.getString("moduleName");

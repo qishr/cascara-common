@@ -379,7 +379,7 @@ public abstract class AbstractSerializer<
     /// Converts an AST structure back into a Java object of the generic type referenced by typeRef.
     @SuppressWarnings("unchecked")
     @Nullable
-    protected <C> C deserialize(AstNode node, TypeReference<C> typeRef) throws SerializerException {
+    protected <C> C deserialize(AstNode node, TypeReference<C> typeRef) {
         return (C) deserialize(node, typeRef.getType(), null);
     }
 
@@ -387,7 +387,7 @@ public abstract class AbstractSerializer<
     /// @param node The AST node to convert.
     /// @param targetType The class type to convert to.
     @Nullable
-    protected <C> C deserialize(AstNode node, Type targetType) throws SerializerException {
+    protected <C> C deserialize(AstNode node, Type targetType) {
         return deserialize(node, targetType, null);
     }
 
@@ -397,7 +397,7 @@ public abstract class AbstractSerializer<
     /// @param fieldName Field name for use in error reporting
     @SuppressWarnings("unchecked")
     @Nullable
-    private <C> C deserialize(AstNode node, Type targetType, String fieldName) throws SerializerException {
+    private <C> C deserialize(AstNode node, Type targetType, String fieldName) {
         // If the node is null, or it's a scalar representing a null value, we return null immediately.
         if (node == null || (node instanceof ScalarAstNode s && s.getPrimitive() == null)) {
             return null;
@@ -408,7 +408,7 @@ public abstract class AbstractSerializer<
 
         // 1. Custom type serializers
         if (typeDescriptor instanceof TypeSerializer<?> typeSerializer) {
-            return (C) typeSerializer.deserialize(node);
+            return (C) typeSerializer.deserialize(node, targetType);
         }
 
         // 2. Scalar type descriptor with potentially non-scalar targetType
@@ -619,7 +619,7 @@ public abstract class AbstractSerializer<
     @NonNull
     private Collection<?> deserializeCollection(AstNode node, Type targetType) {
         Class<?> rawClass = ReflectionUtils.getRawClass(targetType);
-        Collection<Object> result = newCollectionInstance(rawClass);
+        Collection<Object> result = newTypeInstance(null, rawClass);
 
         if (node == null) {
             return result;
@@ -641,7 +641,6 @@ public abstract class AbstractSerializer<
             throw new SerializerException(node, LangMessage.EXPECTED_SEQUENCE, ReflectionUtils.getTypeName(targetType));
         }
 
-        // List<Object> result = new ArrayList<>();
         for (AstNode item : sequence.getChildren()) {
             Object val = deserialize(item, itemIype, null);
             // YAML sequences can have null entries (- ), we should decide if we allow them.
@@ -657,15 +656,12 @@ public abstract class AbstractSerializer<
         @SuppressWarnings("unchecked")
 		M mapNode = (M)node;
         Class<?> rawClass = ReflectionUtils.getRawClass(targetType);
-        Map<Object, Object> result = newMapInstance(rawClass);
-
-        // Type keyType = ReflectionUtils.getKeyTypeArgumentTypeOfMapType(targetType);
+        Map<Object, Object> result = newTypeInstance(null, rawClass);
         Type valType = ReflectionUtils.getValueTypeArgumentTypeOfMapType(targetType);
 
         for (E entry : mapNode.getEntries()) {
             String key;
             if (entry.getKey() instanceof ScalarAstNode) {
-                // key = deserializeScalar(scalarKey, keyType);
                 key = entry.getKeyString();
             } else if (entry.getKey() instanceof String string) {
                 key = string;
@@ -673,7 +669,11 @@ public abstract class AbstractSerializer<
                 throw new SerializerException(node, LangMessage.NON_SCALAR_KEY, entry.getKey());
             }
             Object val = deserialize(entry.getValue(), valType, key);
-            if (key != null) result.put(key, val);
+            try {
+                if (key != null) result.put(key, val);
+            } catch(ClassCastException e) {
+                throw new SerializerException(node, e, LangMessage.CLASS_CAST_EXCEPTION, ReflectionUtils.getTypeName(targetType));
+            }
         }
 
         return result;
@@ -682,7 +682,7 @@ public abstract class AbstractSerializer<
     /// Converts a primitive value (already inferred by the AST) or a raw string into the target Java type.
     @SuppressWarnings({"rawtypes", "unchecked" })
     @Nullable
-    private Object deserializeScalar(ScalarAstNode scalar, Type targetType) throws SerializerException {
+    private Object deserializeScalar(ScalarAstNode scalar, Type targetType) {
         Object jvmInstance = scalar.getPrimitive();
 
         if (jvmInstance == null) return null;
@@ -754,40 +754,12 @@ public abstract class AbstractSerializer<
     //
 
     @NonNull
-    private <C> C newInstance(Class<C> rawClass) {
-        try {
-            return ReflectionUtils.createInstance(rawClass);
-        } catch (Exception e) {
-            throw error(e, rawClass.getTypeName());
-        }
-    }
-
-    @NonNull
-    private <C> C newTypeInstance(MapAstNode<?,?,?> node, Type jvmType) throws SerializerException {
+    private <C> C newTypeInstance(MapAstNode<?,?,?> node, Type jvmType) {
         Class<? extends C> targetClass = targetResolver.resolveTarget(node, jvmType, heuristicMatchEnabled);
-        return newInstance(targetClass);
-    }
-
-    @SuppressWarnings("unchecked")
-    @NonNull
-    private Collection<Object> newCollectionInstance(Class<?> rawClass) {
-        if (rawClass.isInterface()) {
-            if (List.class.isAssignableFrom(rawClass)) return new ArrayList<>();
-            if (Set.class.isAssignableFrom(rawClass))  return new HashSet<>();
-            return new ArrayList<>();
-        } else {
-            return (Collection<Object>) newInstance(rawClass);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @NonNull
-    private Map<Object,Object> newMapInstance(Class<?> rawClass) {
-        if (rawClass.isInterface()) {
-            if (LinkedHashMap.class.isAssignableFrom(rawClass)) return new LinkedHashMap<>();
-            return new LinkedHashMap<>();
-        } else {
-            return (Map<Object,Object>) newInstance(rawClass);
+        try {
+            return ReflectionUtils.createInstance(targetClass);
+        } catch (Exception e) {
+            throw error(e, targetClass.getTypeName());
         }
     }
 
@@ -995,11 +967,6 @@ public abstract class AbstractSerializer<
 
     private boolean isStandardScalar(Object jvmInstance) {
         return !jvmInstance.getClass().isEnum() && PrimitiveType.of(jvmInstance).isScalar();
-        // return (jvmInstance instanceof String ||
-        //     jvmInstance instanceof Number ||
-        //     jvmInstance instanceof Byte ||
-        //     jvmInstance instanceof Character ||
-        //     jvmInstance instanceof Boolean);
     }
 
     //
@@ -1008,40 +975,8 @@ public abstract class AbstractSerializer<
 
     @Nullable
     private TypeDescriptor<?> getTypeDescriptor(Type jvmType) {
-        if (jvmType instanceof Class<?> c) {
-            return getTypeDescriptor(c);
-        }
-        return null;
+        return getTypeDescriptor(ReflectionUtils.getRawClass(jvmType));
     }
-
-    // @Nullable
-    // private TypeDescriptor<?> getTypeDescriptor(Class<?> jvmType) {
-    //     // The only two places this is call from ensure jvmType is not null
-
-    //     if (classesWithNoTypeDescriptors.contains(jvmType.getName())) {
-    //         return null;
-    //     }
-
-    //     // 1. First check if one has been registered locally
-    //     if (typeDescriptors.containsKey(jvmType)) {
-    //         return typeDescriptors.get(jvmType);
-    //     }
-
-    //     if (!providerFactoryEnabled) {
-    //         return null;
-    //     }
-
-    //     // 2. Use service provider layer to get one
-    //     TypeDescriptor<?> descriptor = providerFactory.createTypeDescriptor(jvmType);
-    //     if (descriptor == null) {
-    //         classesWithNoTypeDescriptors.add(jvmType.getName());
-    //         reporter.debug("No type desciptor for " + jvmType.getName());
-    //         return null;
-    //     }
-    //     typeDescriptors.put(jvmType, descriptor);
-
-    //     return descriptor;
-    // }
 
     @Nullable
     private TypeDescriptor<?> getTypeDescriptor(Class<?> jvmType) {
@@ -1067,23 +1002,24 @@ public abstract class AbstractSerializer<
             return null;
         }
 
-        // 2. Check superclasses and interfaces up the hierarchy
-        TypeDescriptor<?> descriptor = findDescriptorInHierarchy(jvmType);
+        // 3. PRIORITIZE EXACT MATCH: Use service provider layer for the exact class first
+        TypeDescriptor<?> descriptor = providerFactory.createTypeDescriptor(jvmType);
         if (descriptor != null) {
-            typeDescriptors.put(jvmType, descriptor); // Cache for future lookups
+            typeDescriptors.put(jvmType, descriptor);
             return descriptor;
         }
 
-        // 3. Use service provider layer to get one for the exact class
-        descriptor = providerFactory.createTypeDescriptor(jvmType);
-        if (descriptor == null) {
-            classesWithNoTypeDescriptors.add(jvmType.getName());
-            reporter.debug("No type descriptor for " + jvmType.getName());
-            return null;
+        // 4. FALLBACK: Check superclasses and interfaces up the hierarchy only if no exact match exists
+        descriptor = findDescriptorInHierarchy(jvmType);
+        if (descriptor != null) {
+            typeDescriptors.put(jvmType, descriptor);
+            return descriptor;
         }
-        typeDescriptors.put(jvmType, descriptor);
 
-        return descriptor;
+        // 5. No descriptor found anywhere
+        classesWithNoTypeDescriptors.add(jvmType.getName());
+        reporter.debug("No type descriptor for " + jvmType.getName());
+        return null;
     }
 
     @Nullable
@@ -1161,7 +1097,7 @@ public abstract class AbstractSerializer<
         if (d == null) {
             return new SerializerException(t, GenericMessage.ERROR, t.getMessage());
         } else {
-            return new SerializerException(d, details);
+            return new SerializerException(t, d, details);
         }
     }
 

@@ -27,7 +27,6 @@ import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.logging.log4j.Log4jLogger;
 import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.task.JmxTestTask;
-import org.apache.logging.log4j.core.config.Configurator;
 
 public class JmxTest extends JmxTestBase {
     @BeforeEach

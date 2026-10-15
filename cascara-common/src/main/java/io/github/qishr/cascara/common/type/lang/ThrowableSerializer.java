@@ -1,5 +1,6 @@
 package io.github.qishr.cascara.common.type.lang;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,7 +61,7 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
     }
 
     @Override
-    public Throwable deserialize(AstNode astNode) throws SerializerException {
+    public Throwable deserialize(AstNode astNode, Type targetType) throws SerializerException {
         if (!(astNode instanceof MapAstNode map)) {
             return null;
         }
@@ -74,7 +75,7 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
         if (map.get("stackTrace") instanceof SequenceAstNode stackArray) {
             List<StackTraceElement> elements = new ArrayList<>();
             for (AstNode elementNode : stackArray.getChildren()) {
-                StackTraceElement ste = stackTraceSerializer.deserialize(elementNode);
+                StackTraceElement ste = stackTraceSerializer.deserialize(elementNode, targetType);
                 if (ste != null) {
                     elements.add(ste);
                 }
@@ -84,13 +85,13 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
 
         // Deserialize cause
         if (map.get("cause") instanceof MapAstNode causeNode) {
-            throwable.initCause(deserialize(causeNode));
+            throwable.initCause(deserialize(causeNode, targetType));
         }
 
         // Deserialize suppressed
         if (map.get("suppressed") instanceof SequenceAstNode suppressedArray) {
             for (AstNode sNode : suppressedArray.getChildren()) {
-                Throwable s = deserialize(sNode);
+                Throwable s = deserialize(sNode, targetType);
                 if (s != null) {
                     throwable.addSuppressed(s);
                 }

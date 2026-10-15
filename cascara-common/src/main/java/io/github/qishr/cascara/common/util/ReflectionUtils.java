@@ -189,6 +189,7 @@ public class ReflectionUtils {
     }
 
     @SuppressWarnings("unchecked")
+    @NonNull
     public static <C> C getRawClass(Type jvmType) {
         if (jvmType instanceof Class<?> cls) {
             return (C)cls;

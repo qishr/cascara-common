@@ -1,5 +1,7 @@
 package io.github.qishr.cascara.common.type.lang;
 
+import java.lang.reflect.Type;
+
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
@@ -31,7 +33,7 @@ public class ServicesCatalogSerializer extends AbstractTypeDescriptor<Object> im
     }
 
     @Override
-    public Object deserialize(AstNode astNode) throws SerializerException {
+    public Object deserialize(AstNode astNode, Type targetType) throws SerializerException {
         return null;
     }
 

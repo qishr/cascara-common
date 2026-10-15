@@ -12,6 +12,7 @@ import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
 
 import java.lang.module.Configuration;
 import java.lang.module.ResolvedModule;
+import java.lang.reflect.Type;
 
 public class ConfigurationSerializer extends AbstractTypeDescriptor<Configuration> implements TypeSerializer<Configuration> {
 
@@ -45,7 +46,7 @@ public class ConfigurationSerializer extends AbstractTypeDescriptor<Configuratio
     }
 
     @Override
-    public Configuration deserialize(AstNode astNode) throws SerializerException {
+    public Configuration deserialize(AstNode astNode, Type targetType) throws SerializerException {
         // Configurations are tied to live JVM module layers and cannot be directly
         // reconstructed from scratch without the original module finder/layer context.
         // Return null or a lightweight proxy/holder if needed.
