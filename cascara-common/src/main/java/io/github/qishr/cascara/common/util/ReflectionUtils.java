@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+
 import sun.misc.Unsafe;
 import io.github.qishr.cascara.common.annotation.DataField;
 import io.github.qishr.cascara.common.annotation.Experimental;
@@ -420,14 +421,6 @@ public class ReflectionUtils {
         return methods;
     }
 
-    public static boolean isScalarType(Class<?> type) {
-        return type.isPrimitive()
-            || type == Boolean.class
-            || Number.class.isAssignableFrom(type)
-            || type == String.class
-            || type.isEnum();
-    }
-
     //
     // Private Methods
     //
@@ -440,18 +433,6 @@ public class ReflectionUtils {
     private static void collectReferencedClasses(Class<?> clazz, Function<Class<?>,Boolean> excludeFunction, Set<Class<?>> visited, Set<Class<?>> collected) {
         for (Field field : getAllFields(clazz)) {
             Type type = field.getGenericType();
-
-            // TODO:
-            // PlainMapNode node = new PlainMapNode();
-            // applyTypeAnalysis(field, node);
-            // String analyzedType = node.getString(SchemaKeyword.TYPE.asString());
-            // if (isStandardScalarType(type) ||
-            //     (analyzedType != null && !PrimitiveType.ARRAY.asString().equals(analyzedType) && !PrimitiveType.OBJECT.asString().equals(analyzedType))
-            // ) {
-            //     // It doesn't need a schema
-            //     continue;
-            // }
-
             if (type instanceof ParameterizedType paramaterizedType) {
                 Type[] paramTypes = paramaterizedType.getActualTypeArguments();
                 for (Type paramType : paramTypes) {

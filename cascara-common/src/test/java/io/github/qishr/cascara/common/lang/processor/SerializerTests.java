@@ -174,7 +174,7 @@ public class SerializerTests extends SerializerTestBase {
     /// - SequenceAstNodes become Lists
     /// - MapAstNodes become Maps
     @Test
-    void test_Object() {
+    void test_deserializeMapToObject() {
         PlainMapNode map = new PlainMapNode()
             .put("obj", new PlainMapNode()
                 .put("name", "TestName")

@@ -15,19 +15,13 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.jar.JarEntry;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Disabled;
-import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-
-import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 
 public class ModulePathTests {
     public static abstract class TestBase {
@@ -129,54 +123,4 @@ public class ModulePathTests {
             Files.deleteIfExists(tempDir);
         }
     }
-
-	// Helper method to create a mock enumeration of JarEntries
-    private Enumeration<JarEntry> createMockEnumeration(JarEntry... entries) {
-        return Collections.enumeration(java.util.Arrays.asList(entries));
-    }
-
-    // Helper method to create a mock JarEntry
-    private JarEntry createMockJarEntry(String name) {
-        JarEntry entry = Mockito.mock(JarEntry.class);
-        Mockito.when(entry.getName()).thenReturn(name);
-        return entry;
-    }
-
-    // @Test
-    // void testProcessJarFileWithModuleInfoAndClasses() throws IOException {
-    //     JarFile mockJarFile = Mockito.mock(JarFile.class);
-
-    //     // Arrange
-    //     String moduleName = "com.example.module";
-
-    //     // Create a mock ModuleDescriptor object
-    //     ModuleDescriptor mockDescriptor = Mockito.mock(ModuleDescriptor.class);
-    //     Mockito.when(mockDescriptor.name()).thenReturn(moduleName);
-
-    //     // Mock the JarFile entries
-    //     JarEntry moduleInfoEntry = createMockJarEntry("module-info.class");
-    //     JarEntry class1Entry = createMockJarEntry("com/example/module/MyClass.class");
-    //     JarEntry class2Entry = createMockJarEntry("com/example/module/AnotherClass.class");
-    //     Mockito.when(mockJarFile.entries()).thenReturn(createMockEnumeration(moduleInfoEntry, class1Entry, class2Entry));
-
-    //     // Use a dummy InputStream for the module-info entry
-    //     Mockito.when(mockJarFile.getInputStream(moduleInfoEntry)).thenReturn(new ByteArrayInputStream(new byte[0]));
-
-    //     // Make the module "external"
-    //     // Configuration.setAddModules(moduleName);
-
-    //     // Act & Assert
-    //     // Use Mockito.mockStatic to mock the static ModuleDescriptor.read() method
-    //     try (MockedStatic<ModuleDescriptor> mockedStatic = Mockito.mockStatic(ModuleDescriptor.class)) {
-    //         // Corrected line: specify the InputStream.class to resolve ambiguity
-    //         mockedStatic.when(() -> ModuleDescriptor.read(Mockito.any(InputStream.class))).thenReturn(mockDescriptor);
-
-    //         // Call the method under test
-    //         ModulePath mp = new ModulePath("");
-
-    //         String modName = mp.processJarFile(mockJarFile, null);
-    //         assertEquals("com.example.module", modName);
-    //     }
-    // }
-
 }

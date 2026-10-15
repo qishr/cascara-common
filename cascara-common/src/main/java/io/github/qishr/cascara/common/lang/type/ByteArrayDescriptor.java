@@ -48,6 +48,9 @@ public class ByteArrayDescriptor extends AbstractScalarDescriptor<byte[]> {
 
     @Override
     public byte[] toJvmType(String text) {
+        if (text == null) {
+            return new byte[]{};
+        }
         try {
             return Base64.getDecoder().decode(text);
         } catch (IllegalArgumentException e) {
@@ -56,7 +59,8 @@ public class ByteArrayDescriptor extends AbstractScalarDescriptor<byte[]> {
     }
 
     @Override
-    public Object toPrimitive(byte[] jvmInstance) {
+    public String toPrimitive(byte[] jvmInstance) {
+        if (jvmInstance == null) return "";
         return Base64.getEncoder().encodeToString(jvmInstance);
     }
 

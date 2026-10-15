@@ -51,7 +51,7 @@ public class LocalDateTimeDescriptor extends AbstractScalarDescriptor<LocalDateT
     }
 
     @Override
-    public Object toPrimitive(LocalDateTime jvmInstance) {
+    public String toPrimitive(LocalDateTime jvmInstance) {
         return jvmInstance.toString();
     }
 

@@ -51,7 +51,7 @@ public class PathDescriptor extends AbstractScalarDescriptor<Path> {
     }
 
     @Override
-    public Object toPrimitive(Path jvmInstance) {
+    public String toPrimitive(Path jvmInstance) {
         return jvmInstance.toString();
     }
 

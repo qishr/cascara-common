@@ -51,7 +51,7 @@ public class ZonedDateTimeDescriptor extends AbstractScalarDescriptor<ZonedDateT
     }
 
     @Override
-    public Object toPrimitive(ZonedDateTime jvmInstance) {
+    public String toPrimitive(ZonedDateTime jvmInstance) {
         return jvmInstance.toString();
     }
 

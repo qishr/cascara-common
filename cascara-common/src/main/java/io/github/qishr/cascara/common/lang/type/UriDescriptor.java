@@ -50,7 +50,7 @@ public class UriDescriptor extends AbstractScalarDescriptor<URI> {
     }
 
     @Override
-    public Object toPrimitive(URI jvmInstance) {
+    public String toPrimitive(URI jvmInstance) {
         return jvmInstance.toString();
     }
 

@@ -16,7 +16,7 @@ import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
 
-public class SerializerOptionalTests extends SerializerTestBase {
+public class SerializerTypesOptionalTests extends SerializerTestBase {
     @Test
     void test_optionalInt() {
         OptionalInt o = OptionalInt.of(42);

@@ -38,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -59,11 +58,10 @@ import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
-import io.github.qishr.cascara.common.util.ClassPath;
 import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.ContentTypeResolver;
 import io.github.qishr.cascara.common.util.JreUtils;
-import io.github.qishr.cascara.common.util.ModulePath;
+import io.github.qishr.cascara.common.util.Pair;
 
 public class SPLRoot extends SPLBranch {
     private static final Properties EMPTY_PROPERTIES = new Properties();
@@ -196,38 +194,24 @@ public class SPLRoot extends SPLBranch {
         excludePackages.add("org.opentest4j");
         excludePackages.add("worker.org.gradle");
 
-        Set<String> classes = new HashSet<>();
         long start = System.currentTimeMillis();
+        Pair<Set<String>,Set<String>> discovered = Discoverer.discoverModulesAndClasses(excludePackages);
+        Set<String> modules = discovered.getL();
+        Set<String> classes = discovered.getR();
 
-        // Discover classes on the module path
-        ModulePath modulePath = new ModulePath(null, excludePackages, null);
-        classes.addAll(modulePath.getClasses());
-
-        // Get the set of modulepath entries
-        Set<String> modulePathSet = pathSet(System.getProperty("jdk.module.path"));
-
-        // Get the set of classpath entries
-        Set<String> classPathSet = pathSet(System.getProperty("java.class.path"));
-
-        // Remove entries from the classpath set that are covered by the modulepath
-        classPathSet.removeAll(modulePathSet);
-
-        // Discover classes in the abridged classpath set
-        ClassPath classPath = new ClassPath(classPathSet, excludePackages);
-        classes.addAll(classPath.getClasses());
+        long finish = System.currentTimeMillis();
+        long timeElapsed = finish - start;
 
         if (REPORTER.getLevel().includes(Level.TRACE)) {
             REPORTER.trace("classes: ");
             classes.stream().sorted().forEach(s -> REPORTER.trace("  " + s));
         }
 
-        long finish = System.currentTimeMillis();
-        long timeElapsed = finish - start;
         REPORTER.debug("Discovered %d classes in %d ms", classes.size(), (int)timeElapsed);
 
         enumerateProviders(classes, null, null, true);
 
-        modules.addAll(modulePath.getModules());
+        modules.addAll(modules);
     }
 
     private boolean isAutoDiscoverEnabled() {
@@ -235,13 +219,13 @@ public class SPLRoot extends SPLBranch {
         return !"false".equalsIgnoreCase(autoDiscover);
     }
 
-    private Set<String> pathSet(String paths) {
-        Set<String> pathSet = new HashSet<>();
-        if (paths != null) {
-            Collections.addAll(pathSet, paths.split(File.pathSeparator, -1));
-        }
-        return pathSet;
-    }
+    // private Set<String> pathSet(String paths) {
+    //     Set<String> pathSet = new HashSet<>();
+    //     if (paths != null) {
+    //         Collections.addAll(pathSet, paths.split(File.pathSeparator, -1));
+    //     }
+    //     return pathSet;
+    // }
 
     private void collectLayers(SPLBranch layer, Set<SPLBranch> collected) {
         collected.add(layer);

@@ -13,7 +13,8 @@ import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
 
-public class SerializerMapTests extends SerializerTestBase {
+/// Testing of Serialier with JRE Map types that map to JSON Schema objects
+public class SerializerTypesMapTests extends SerializerTestBase {
     @Test
     void test_mapOfStringTo_Integer() {
         PlainMapNode map = new PlainMapNode()

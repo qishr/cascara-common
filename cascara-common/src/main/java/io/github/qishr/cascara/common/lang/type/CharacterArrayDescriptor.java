@@ -35,7 +35,39 @@
 
 package io.github.qishr.cascara.common.lang.type;
 
-public record ScalarValue(
-    Object nativeValue,
-    PrimitiveType type
-) {}
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+
+public class CharacterArrayDescriptor extends AbstractScalarDescriptor<Character[]> {
+    public CharacterArrayDescriptor() {
+        super(Character[].class, PrimitiveType.STRING);
+    }
+
+    @Override
+    public Character[] toJvmType(String text) {
+        if (text == null) {
+            return new Character[]{};
+        }
+        char[] chars = text.toCharArray();
+        Character[] result = new Character[chars.length];
+        for (int i = 0; i < chars.length; i++) {
+            result[i] = chars[i];
+        }
+        return result;
+    }
+
+    @Override
+    public String toPrimitive(Character[] jvmInstance) {
+        if (jvmInstance == null) return "";
+        char[] chars = new char[jvmInstance.length];
+        for (int i = 0; i < jvmInstance.length; i++) {
+            chars[i] = jvmInstance[i] != null ? jvmInstance[i] : '\0';
+        }
+        return new String(chars);
+    }
+
+    @Override
+    public boolean validate(String text, Reporter collector) {
+        return true;
+    }
+}
+

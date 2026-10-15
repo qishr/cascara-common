@@ -4,19 +4,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.util.List;
-import java.util.Map;
 import java.util.SequencedCollection;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
-import io.github.qishr.cascara.common.lang.processor.SerializerTests.PackageJsonFile;
 import io.github.qishr.cascara.common.lang.type.TypeReference;
 
-public class SerializerCollectionTests extends SerializerTestBase {
+/// Testing of Serialier with JRE Collection types that map to JSON Schema arrays
+public class SerializerTypesCollectionTests extends SerializerTestBase {
     PlainSequenceNode intSequence;
 
     @BeforeEach

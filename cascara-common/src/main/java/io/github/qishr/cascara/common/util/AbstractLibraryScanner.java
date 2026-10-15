@@ -130,6 +130,7 @@ public abstract class AbstractLibraryScanner {
                 addModuleLocation(moduleName, file.getParent());
             } else {
                 Class<?> clazz = classLoader.loadClass(className);
+                discovered.add(clazz.getName());
                 for (Class<?> declaredClass : clazz.getDeclaredClasses()) {
                     discovered.add(declaredClass.getName());
                 }

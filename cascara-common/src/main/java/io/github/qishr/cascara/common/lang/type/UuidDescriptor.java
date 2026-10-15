@@ -50,7 +50,7 @@ public class UuidDescriptor extends AbstractScalarDescriptor<UUID> {
     }
 
     @Override
-    public Object toPrimitive(UUID jvmInstance) {
+    public String toPrimitive(UUID jvmInstance) {
         return jvmInstance.toString();
     }
 

@@ -32,21 +32,32 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.lang.type;
 
-import java.util.SequencedCollection;
+import java.lang.reflect.Type;
+import java.util.Collection;
 
+/// Represents JSON Schema primitive types.
 /// Based on [JSON Schema: core definitions and terminology §3.5](https://json-schema.org/draft-04/json-schema-core#rfc.section.3.5)
 public enum PrimitiveType {
-    ANY,
-    ARRAY,
-    BOOLEAN,
-    INTEGER,
-    NUMBER,
-    NULL,
-    OBJECT,
-    STRING;
+    ANY(false),
+    ARRAY(false),
+    BOOLEAN(true),
+    INTEGER(true),
+    NUMBER(true),
+    NULL(true),
+    OBJECT(false),
+    STRING(true);
+
+    private final boolean isScalar;
+
+    PrimitiveType(boolean isScalar) {
+        this.isScalar = isScalar;
+    }
+
+    public boolean isScalar() {
+        return isScalar;
+    }
 
     public static PrimitiveType fromString(String type) {
         try {
@@ -56,34 +67,45 @@ public enum PrimitiveType {
         }
     }
 
-    /// Return the JSON Schema type name
+    /// Returns the JSON Schema type name
     public String asString() {
         return toString().toLowerCase();
     }
 
-    public static PrimitiveType of(Object jvmType) {
-        if (jvmType instanceof String || jvmType instanceof Character) {
-            return STRING;
-        }
-        else if (jvmType instanceof Integer || jvmType instanceof Long || jvmType instanceof Short || jvmType instanceof Byte) {
-            return INTEGER;
-        }
-        else if (jvmType instanceof Double || jvmType instanceof Float) {
-            return NUMBER;
-        }
-        else if (jvmType instanceof Boolean) {
-            return BOOLEAN;
-        }
-        else if (jvmType instanceof Number) {
-            return NUMBER;
-        }
-        if (jvmType instanceof SequencedCollection) {
-            return ARRAY;
-        }
-        else if (jvmType == null) {
+    public static PrimitiveType of(Object jvmInstance) {
+        if (jvmInstance == null) {
             return NULL;
+        } else if (jvmInstance instanceof Type type) {
+            return ofJvmType(type);
         } else {
-            return OBJECT;
+            return ofJvmType(jvmInstance.getClass());
         }
+    }
+
+    public static PrimitiveType ofJvmType(Type jvmType) {
+        if (jvmType instanceof Class<?> jvmClass) {
+            if (CharSequence.class.isAssignableFrom(jvmClass) ||
+                Character.class.isAssignableFrom(jvmClass) ||
+                char.class.isAssignableFrom(jvmClass)) {
+                return STRING;
+            }
+            else if (Integer.class.isAssignableFrom(jvmClass) || int.class.isAssignableFrom(jvmClass) ||
+                     Long.class.isAssignableFrom(jvmClass) || long.class.isAssignableFrom(jvmClass) ||
+                     Short.class.isAssignableFrom(jvmClass) || short.class.isAssignableFrom(jvmClass) ||
+                     Byte.class.isAssignableFrom(jvmClass) || byte.class.isAssignableFrom(jvmClass)) {
+                return INTEGER;
+            } else if (Boolean.class.isAssignableFrom(jvmClass) || boolean.class.isAssignableFrom(jvmClass)) {
+                return BOOLEAN;
+            } else if (Number.class.isAssignableFrom(jvmClass) ||
+                       float.class.isAssignableFrom(jvmClass) ||
+                       double.class.isAssignableFrom(jvmClass)) {
+                return NUMBER;
+            } else if (Collection.class.isAssignableFrom(jvmClass)) {
+                return ARRAY;
+            } else if (jvmClass.isEnum()) {
+                return STRING;
+            }
+        }
+        return OBJECT;
     }
 }

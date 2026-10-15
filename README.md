@@ -10,6 +10,12 @@
 
 ## Testing
 
+### All Unit Tests
+
+```
+./gradlew -x javadoc test -x testClasspath -x testJarClasspath
+```
+
 ### Modular: Class Files in JPMS Environment
 
 ```
@@ -28,9 +34,7 @@
  ./gradlew -x javadoc -x :cascara-common:test :cascara-common:testJarClasspath --tests "*test_commonBehaviorWorkOnBoth" --rerun-tasks
  ```
 
-### Integration
-
-All tests
+### All Integration Tests
 
 ```
  ./gradlew :integration-test:test

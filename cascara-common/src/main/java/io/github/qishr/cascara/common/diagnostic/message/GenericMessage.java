@@ -40,15 +40,15 @@ public enum GenericMessage implements DiagnosticMessage {
 
     // Warnings
     WARN("WARN-101", "{0}"),
-    UNIMPLEMENTED_METHOD("WARN-102", "Unimplemented method: {0}.{1}"),
 
     // Errors
     ERROR("ERROR-101", "{0}."),
-    UNEXPECTED_NULL_PARAMETER("ERROR-102","Unexpected null paramter \"{1}\" in {0}"),
-    UNEXPECTED_NULL_RETURN("ERROR-103", "Unexpected null return value from {0}.{1}"),
-    MANIFEST_NOT_FOUND("ERROR-104", "Manifest not found for {0}"),
-    MANIFEST_READ("ERROR-105", "Failed to read manifest for {0}"),
-    RESOURCE_INACCESSIBLE("ERROR-106", "Resource '{0}' cannot be loaded. Module " +
+    UNIMPLEMENTED_METHOD("ERROR-102", "Unimplemented method: {0}.{1}"),
+    UNEXPECTED_NULL_PARAMETER("ERROR-103","Unexpected null paramter \"{1}\" in {0}"),
+    UNEXPECTED_NULL_RETURN("ERROR-104", "Unexpected null return value from {0}.{1}"),
+    MANIFEST_NOT_FOUND("ERROR-105", "Manifest not found for {0}"),
+    MANIFEST_READ("ERROR-106", "Failed to read manifest for {0}"),
+    RESOURCE_INACCESSIBLE("ERROR-107", "Resource '{0}' cannot be loaded. Module " +
         "'{1}' does not open package '{2}' to module '{3}'. " +
         "To fix this, add 'opens {4} to {5};' to the module-info.java of '{6}'."),
 
@@ -71,11 +71,11 @@ public enum GenericMessage implements DiagnosticMessage {
     MESSAGE_FORMATTING_ERROR("ERROR-405", "Problem encountered while formatting message with key {0}: {1}"),
     DIAGNOSTIC_FORMATTING_ERROR("ERROR-406", "Problem encountered while formatting error with code {0}: {1}"),
 
-    INVALID_SCHEMA_URI("SCHEMA-103", "Not a valid schema URI: {0}."),
-    UNRECOGNIZED_LIFECYCLE("SCHEMA-104", "Unrecognized schema lifecycle: {0}."),
-    MISSING_MODULE_NAME("SCHEMA-105", "Missing module name"),
-    MISSING_SCHEMA_NAME("SCHEMA-106", "Missing schema name"),
-    MISSING_VERSION("SCHEMA-107", "Missing version"),
+    // INVALID_SCHEMA_URI("SCHEMA-103", "Not a valid schema URI: {0}."),
+    // UNRECOGNIZED_LIFECYCLE("SCHEMA-104", "Unrecognized schema lifecycle: {0}."),
+    // MISSING_MODULE_NAME("SCHEMA-105", "Missing module name"),
+    // MISSING_SCHEMA_NAME("SCHEMA-106", "Missing schema name"),
+    // MISSING_VERSION("SCHEMA-107", "Missing version"),
 
     // Resource Errors
     NO_RESOURCE_PROVIDER("ERROR-501", "No resource provider for \"{0}\" URI scheme");

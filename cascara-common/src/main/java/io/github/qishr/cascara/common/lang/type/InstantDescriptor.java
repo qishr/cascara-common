@@ -57,8 +57,7 @@ public class InstantDescriptor extends AbstractScalarDescriptor<Instant> {
     }
 
     @Override
-    public Object toPrimitive(Instant jvmInstance) {
-        // return jvmInstance.toEpochMilli();
+    public String toPrimitive(Instant jvmInstance) {
         return ZonedDateTime.ofInstant(jvmInstance, UTC).format(TIME_FORMAT);
     }
 
