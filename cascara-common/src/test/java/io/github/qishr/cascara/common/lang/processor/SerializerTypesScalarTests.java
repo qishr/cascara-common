@@ -3,6 +3,7 @@ package io.github.qishr.cascara.common.lang.processor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
+import java.lang.Enum.EnumDesc;
 import java.net.HttpCookie;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -168,6 +169,56 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
 
         assertEquals(types.p_byte[0], r.p_byte[0]);
         assertEquals(types.p_character[0], r.p_character[0]);
+    }
+
+    public static class JavaLangTypeDescriptorTest {
+        public Character p_character;
+        public Character.Subset p_characterSubset;
+        public Character.UnicodeBlock p_unicodeBlock;
+        public Character.UnicodeScript p_unicodeScript;
+        public CharSequence p_charSequence;
+        public EnumDesc<?> p_enumDesc;
+        public Module p_module;
+        public ModuleLayer p_moduleLayer;
+        public Package p_package;
+        public ProcessHandle.Info p_processHandleInfo;
+        public Runtime.Version p_runtimeVersion;
+        public StringBuffer p_stringBuffer;
+        public StringBuilder p_stringBuilder;
+        public Void p_void;
+    }
+
+    @Test
+    void test_lang_typeDescriptors() {
+        JavaLangTypeDescriptorTest types = new JavaLangTypeDescriptorTest();
+        types.p_character = 'a';
+        types.p_characterSubset = Character.UnicodeBlock.BASIC_LATIN; // Subset implementation
+        types.p_unicodeBlock = Character.UnicodeBlock.BASIC_LATIN;
+        types.p_unicodeScript = Character.UnicodeScript.LATIN;
+        types.p_charSequence = "hello cascara";
+        // Note: EnumDesc, Module, ModuleLayer, Package, ProcessHandle.Info, Runtime.Version
+        // can be populated with live runtime references to test their default serialization behavior.
+        types.p_module = JavaLangTypeDescriptorTest.class.getModule();
+        types.p_moduleLayer = ModuleLayer.boot();
+        types.p_package = JavaLangTypeDescriptorTest.class.getPackage();
+        types.p_processHandleInfo = ProcessHandle.current().info();
+        types.p_runtimeVersion = Runtime.version();
+        types.p_stringBuffer = new StringBuffer("buffer");
+        types.p_stringBuilder = new StringBuilder("builder");
+        types.p_void = null; // Void instances are inherently null
+
+        AstNode root = serializer.toAst(types);
+        assertInstanceOf(MapAstNode.class, root);
+        MapAstNode<?, ?, ?> mapNode = (MapAstNode<?, ?, ?>) root;
+
+        // Run through and check what falls through or handles correctly
+        JavaLangTypeDescriptorTest r = serializer.fromAst(root, JavaLangTypeDescriptorTest.class);
+
+        assertEquals(types.p_character, r.p_character);
+        assertEquals(types.p_charSequence.toString(), r.p_charSequence.toString());
+        assertEquals(types.p_stringBuffer.toString(), r.p_stringBuffer.toString());
+        assertEquals(types.p_stringBuilder.toString(), r.p_stringBuilder.toString());
+        assertEquals(types.p_runtimeVersion, r.p_runtimeVersion);
     }
 
     public static class JavaNetTypeDescriptorTest {
