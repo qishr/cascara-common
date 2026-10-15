@@ -3,7 +3,11 @@ package io.github.qishr.cascara.common.lang.processor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
+import java.net.HttpCookie;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.URL;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -168,12 +172,20 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
 
     public static class JavaNetTypeDescriptorTest {
         public URI p_uri;
+        public URL p_url;
+        public InetAddress p_inetAddress;
+        public Inet4Address p_inet4Address;
+        public HttpCookie p_httpCookie;
     }
 
     @Test
-    void test_net_typeDescriptors() {
+    void test_net_typeDescriptors() throws Exception {
         JavaNetTypeDescriptorTest types = new JavaNetTypeDescriptorTest();
         types.p_uri = URI.create("http://example.com");
+        types.p_url = new URL("http://example.com");
+        types.p_inetAddress = InetAddress.getByName("127.0.0.1");
+        types.p_inet4Address = (Inet4Address) InetAddress.getByName("192.168.1.1");
+        types.p_httpCookie = new HttpCookie("sessionid", "abc123xyz");
 
         AstNode root = serializer.toAst(types);
         assertInstanceOf(MapAstNode.class, root);
@@ -187,6 +199,10 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
 
         JavaNetTypeDescriptorTest r = serializer.fromAst(root, JavaNetTypeDescriptorTest.class);
         assertEquals(types.p_uri, r.p_uri);
+        assertEquals(types.p_url, r.p_url);
+        assertEquals(types.p_inetAddress, r.p_inetAddress);
+        assertEquals(types.p_inet4Address, r.p_inet4Address);
+        assertEquals(types.p_httpCookie, r.p_httpCookie);
     }
 
     public static class JavaNioTypeDescriptorTest {
