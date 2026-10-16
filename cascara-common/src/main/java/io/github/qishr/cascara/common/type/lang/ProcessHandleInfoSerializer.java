@@ -46,6 +46,7 @@ import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.type.TypeSerializer;
@@ -57,7 +58,7 @@ public class ProcessHandleInfoSerializer extends AbstractTypeDescriptor<ProcessH
     }
 
     @Override
-    public PlainMapNode serialize(ProcessHandle.Info jvmInstance) throws SerializerException {
+    public PlainMapNode serialize(ProcessHandle.Info jvmInstance, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
@@ -79,7 +80,7 @@ public class ProcessHandleInfoSerializer extends AbstractTypeDescriptor<ProcessH
     }
 
     @Override
-    public ProcessHandle.Info deserialize(AstNode astNode, Type targetType) throws SerializerException {
+    public ProcessHandle.Info deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException {
         if (!(astNode instanceof MapAstNode map)) {
             return null;
         }

@@ -40,13 +40,14 @@ import java.lang.reflect.Type;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
+import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 public interface TypeSerializer<T> extends TypeDescriptor<T> {
     /// Transforms a concrete Java object into its structural AST representation.
     ///
     /// @param jvmInstance The live runtime object instance to serialize.
     /// @return            The matching structural AstNode graph.
-    AstNode serialize(T jvmInstance) throws SerializerException;
+    AstNode serialize(T jvmInstance, Serializer.Context ctx) throws SerializerException;
 
     /// Deserializes an AST node into a strongly-typed Java object.
     ///
@@ -54,7 +55,7 @@ public interface TypeSerializer<T> extends TypeDescriptor<T> {
     /// @param targetType Type information about the target type (useful when it's parameterized)
     /// @return        The fully constructed Java object instance.
     /// @throws SerializerException If the node structure violates the type constraints.
-    public abstract T deserialize(AstNode astNode, Type targetType) throws SerializerException;
+    public abstract T deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException;
 
     /// Type serializers don't need to validate, but they do
     /// everything else a type descriptor does, so we provide a

@@ -43,6 +43,7 @@ import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -56,7 +57,7 @@ public class EnumSetSerializer extends AbstractTypeDescriptor<EnumSet> implement
     }
 
     @Override
-    public PlainSequenceNode serialize(EnumSet jvmInstance) throws SerializerException {
+    public PlainSequenceNode serialize(EnumSet jvmInstance, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
@@ -69,7 +70,7 @@ public class EnumSetSerializer extends AbstractTypeDescriptor<EnumSet> implement
 
     @Override
     @SuppressWarnings("unchecked")
-    public EnumSet deserialize(AstNode astNode, Type targetType) throws SerializerException {
+    public EnumSet deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException {
         if (!(astNode instanceof SequenceAstNode seqNode)) {
             return null;
         }

@@ -42,6 +42,7 @@ import io.github.qishr.cascara.common.type.TypeSerializer;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
+import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -56,7 +57,7 @@ public class EnumMapSerializer extends AbstractTypeDescriptor<EnumMap> implement
     }
 
     @Override
-    public PlainMapNode serialize(EnumMap jvmInstance) throws SerializerException {
+    public PlainMapNode serialize(EnumMap jvmInstance, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
@@ -64,9 +65,16 @@ public class EnumMapSerializer extends AbstractTypeDescriptor<EnumMap> implement
         for (Object obj : jvmInstance.entrySet()) {
             if (obj instanceof Map.Entry<?, ?> entry) {
                 if (entry.getKey() != null) {
+
                     // TODO: This is probably wrong
                     String value = String.valueOf(entry.getValue());
                     node.put(entry.getKey().toString(), value);
+
+                    // Should be more like:
+                    // AstNode keyNode = ctx.serialize(entry.getKey());
+                    // AstNode valueNode = ctx.serialize(entry.getValue());
+                    // node.put(keyNode, valueNode);
+                    // TODO: Plain* noes shoul accept generic AstNodes and convert them to Plain noes or just store them as generic noes internally
                 }
             }
         }
@@ -75,7 +83,7 @@ public class EnumMapSerializer extends AbstractTypeDescriptor<EnumMap> implement
 
     @Override
     @SuppressWarnings("unchecked")
-    public EnumMap deserialize(AstNode astNode, Type targetType) throws SerializerException {
+    public EnumMap deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException {
         if (!(astNode instanceof MapAstNode<?, ?, ?> mapNode)) {
             return null;
         }
@@ -91,23 +99,7 @@ public class EnumMapSerializer extends AbstractTypeDescriptor<EnumMap> implement
             try {
                 Enum enumKey = Enum.valueOf(keyEnumClass, keyStr);
                 AstNode valueNode = mapNode.get(keyStr);
-
-                // Value deserialization can delegate to the standard value deserializer processor
-                // or handle basic scalar conversions.
-
-                //--------------------------------------------------
-                // TODO: TypeSerializers need access to the AbstractSerializer methods.
-                // See comment in SerializerTypesCascaraTests:
-                //
-                //     This gets close to the idea that AbstractSerializer should just be a
-                //     TypeSerializer<Object>, but thats a philosophical discussion for another day.
-                //     The mere existence of a TypeSerializer<Object> is likely to break everything downstream.
-                //
-                //--------------------------------------------------
-
-                // TODO: This needs to be implemented correctly
-                // Object deserializedVal = valueNode != null ? valueNode.getValue() : null;
-                Object deserializedVal = valueNode != null ? valueNode : null;
+                Object deserializedVal = ctx.deserialize(valueNode, Object.class);
                 enumMap.put(enumKey, deserializedVal);
             } catch (IllegalArgumentException e) {
                 // Handle or ignore unknown enum keys

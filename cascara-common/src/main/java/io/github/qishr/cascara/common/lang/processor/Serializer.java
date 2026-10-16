@@ -39,9 +39,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.Type;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.type.TypeDescriptor;
@@ -123,4 +126,42 @@ public interface Serializer<N extends AstNode> extends Processor {
 
     @NonNull
     Serializer<N> setHeuristicMatchEnabled(boolean b);
+
+    @Experimental
+    public interface SerializeMethod {
+        AstNode serialize(Object jvmInstance);
+    }
+
+    @Experimental
+    public interface DeserializeMethod {
+        <C> C deserialize(AstNode node, Type targetType);
+    }
+
+    @Experimental
+    public static class Context {
+        private final SerializeMethod serialize;
+        private final DeserializeMethod deserialize;
+        private final Reporter reporter;
+
+        public Context(SerializeMethod serialize, DeserializeMethod deserialize, Reporter reporter) {
+            this.serialize = serialize;
+            this.deserialize = deserialize;
+            this.reporter = reporter;
+        }
+
+        @NonNull
+        public AstNode serialize(Object jvmInstance) {
+            return serialize.serialize(jvmInstance);
+        }
+
+        @Nullable
+        public <C> C deserialize(AstNode node, Type targetType) {
+            return deserialize.deserialize(node, targetType);
+        }
+
+        @NonNull
+        public Reporter getReporter() {
+            return reporter;
+        }
+    }
 }

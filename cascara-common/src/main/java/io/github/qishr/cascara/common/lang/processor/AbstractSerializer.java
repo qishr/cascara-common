@@ -107,6 +107,7 @@ public abstract class AbstractSerializer<
     private boolean heuristicMatchEnabled = true;
 
     // State
+    private Context context;
     protected int depth = 0;
     private Set<String> previousWarnings = new HashSet<>();
 
@@ -128,6 +129,10 @@ public abstract class AbstractSerializer<
         this.options = options;
     }
 
+    protected abstract T self();
+
+    protected abstract K serializeKey(Object key);
+
     @Override
     @NonNull
     public T setProviderFactoryEnabled(boolean b) {
@@ -142,9 +147,13 @@ public abstract class AbstractSerializer<
         return self();
     }
 
-    protected abstract T self();
-
-    protected abstract K serializeKey(Object key);
+    @NonNull
+    private Context getContext() {
+        if (context == null) {
+            context = new Context(this::serialize, this::deserialize, reporter);
+        }
+        return context;
+    }
 
     //
     // Serialization Methods
@@ -180,7 +189,7 @@ public abstract class AbstractSerializer<
 
                 // Custom serializer
                 if (typeDescriptor instanceof TypeSerializer typeSerializer) {
-                    AstNode rawNode = typeSerializer.serialize(jvmInstance);
+                    AstNode rawNode = typeSerializer.serialize(jvmInstance, getContext());
                     if (astConverter == null) {
                         return castToNode(rawNode);
                     } else {
@@ -408,7 +417,7 @@ public abstract class AbstractSerializer<
 
         // 1. Custom type serializers
         if (typeDescriptor instanceof TypeSerializer<?> typeSerializer) {
-            return (C) typeSerializer.deserialize(node, targetType);
+            return (C) typeSerializer.deserialize(node, targetType, getContext());
         }
 
         // 2. Scalar type descriptor with potentially non-scalar targetType
@@ -970,7 +979,7 @@ public abstract class AbstractSerializer<
     }
 
     //
-    //
+    // Type Descriptors
     //
 
     @Nullable

@@ -43,6 +43,7 @@ import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.TypeSerializer;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
+import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 // Note: Using FQCN since jdk.internal.module.ServicesCatalog
 // is internal to java.base.
@@ -54,7 +55,7 @@ public class ServicesCatalogSerializer extends AbstractTypeDescriptor<Object> im
     }
 
     @Override
-    public PlainMapNode serialize(Object jvmInstance) throws SerializerException {
+    public PlainMapNode serialize(Object jvmInstance, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
@@ -67,7 +68,7 @@ public class ServicesCatalogSerializer extends AbstractTypeDescriptor<Object> im
     }
 
     @Override
-    public Object deserialize(AstNode astNode, Type targetType) throws SerializerException {
+    public Object deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException {
         return null;
     }
 

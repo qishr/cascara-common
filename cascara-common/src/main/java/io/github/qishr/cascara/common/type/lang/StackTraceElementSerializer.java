@@ -42,6 +42,7 @@ import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
+import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.type.TypeSerializer;
@@ -53,7 +54,7 @@ public class StackTraceElementSerializer extends AbstractTypeDescriptor<StackTra
     }
 
     @Override
-    public PlainMapNode serialize(StackTraceElement jvmInstance) throws SerializerException {
+    public PlainMapNode serialize(StackTraceElement jvmInstance, Serializer.Context ctx) throws SerializerException {
         return new PlainMapNode()
             .put("classLoaderName", jvmInstance.getClassLoaderName())
             .put("moduleName", jvmInstance.getModuleName())
@@ -65,7 +66,7 @@ public class StackTraceElementSerializer extends AbstractTypeDescriptor<StackTra
     }
 
     @Override
-    public StackTraceElement deserialize(AstNode astNode, Type targetType) throws SerializerException {
+    public StackTraceElement deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException {
         if (astNode instanceof MapAstNode map) {
             // String classLoaderName = map.getString("classLoaderName");
             // String moduleName = map.getString("moduleName");

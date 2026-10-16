@@ -128,7 +128,7 @@ public final class PlainSequenceNode extends PlainNode implements SequenceAstNod
     }
 
     @Override
-    public List<? extends AstNode> getChildren() {
+    public List<PlainNode> getChildren() {
         return elements;
     }
 

@@ -43,6 +43,7 @@ import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
 import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 import java.lang.module.Configuration;
 import java.lang.module.ResolvedModule;
@@ -55,7 +56,7 @@ public class ConfigurationSerializer extends AbstractTypeDescriptor<Configuratio
     }
 
     @Override
-    public PlainMapNode serialize(Configuration jvmInstance) throws SerializerException {
+    public PlainMapNode serialize(Configuration jvmInstance, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
@@ -80,7 +81,7 @@ public class ConfigurationSerializer extends AbstractTypeDescriptor<Configuratio
     }
 
     @Override
-    public Configuration deserialize(AstNode astNode, Type targetType) throws SerializerException {
+    public Configuration deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException {
         // Configurations are tied to live JVM module layers and cannot be directly
         // reconstructed from scratch without the original module finder/layer context.
         // Return null or a lightweight proxy/holder if needed.
