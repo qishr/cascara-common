@@ -116,45 +116,32 @@ tasks.named('check') {
     dependsOn tasks.named('test'), tasks.named('testClasspath'), tasks.named('testJarClasspath')
 }
 
-tasks.named('processResources', ProcessResources) {
-    inputs.property "version", project.version
+
+tasks.named('processResources', ProcessResources) { task ->
+    // Capture configuration-phase values into local final variables
+    def cascaraVersionVal = project.hasProperty('cascara_version') ? project.cascara_version.toString() : project.version.toString()
+    def projectVersionVal = project.version.toString()
+
+    // Capture destinationDir and classesDirs safely during configuration phase
+    def destDir = task.destinationDir
+    def classesDirs = sourceSets.main.output.classesDirs
+
+    inputs.property("cascaraVersion", cascaraVersionVal)
+    inputs.property("projectVersion", projectVersionVal)
 
     doLast {
-        def versionText = "Manifest-Version: 1.0\r\nCascara-Version: ${project.cascara_version}\r\nImplementation-Version: ${project.version}\r\n"
+        def versionText = "Manifest-Version: 1.0\r\nCascara-Version: ${cascaraVersionVal}\r\nImplementation-Version: ${projectVersionVal}\r\n"
 
-        // Write to resources directory
-        def resManifest = file("${destinationDir}/META-INF/MANIFEST.MF")
+        // Write to resources directory using the captured destination directory File object
+        def resManifest = new File(destDir, "META-INF/MANIFEST.MF")
         resManifest.parentFile.mkdirs()
         resManifest.write(versionText, 'UTF-8')
 
-        // Write to compiled classes directories so codeSource location finds it in exploded builds
-        sourceSets.main.output.classesDirs.each { dir ->
-            def classManifest = file("${dir}/META-INF/MANIFEST.MF")
+        // Write to compiled classes directories
+        classesDirs.each { dir ->
+            def classManifest = new File(dir, "META-INF/MANIFEST.MF")
             classManifest.parentFile.mkdirs()
             classManifest.write(versionText, 'UTF-8')
         }
     }
 }
-
-// jacocoTestReport {
-//     dependsOn tasks.named('test')
-//     dependsOn ':cascara-common-test:test' // Ensure tests run first
-
-//     // Combine execution data (.exec) from both common and common-test
-//     executionData.setFrom(files(
-//         "$buildDir/jacoco/test.exec",
-//         "${project(':cascara-common-test').buildDir}/jacoco/test.exec"
-//     ))
-
-//     // Ensure all internal packages (including service.internal) are included
-//     classDirectories.setFrom(files(classDirectories.files.collect {
-//         fileTree(dir: it, include: [
-//             'io/github/qishr/cascara/common/**'
-//         ])
-//     }))
-
-//     reports {
-//         xml.required = true
-//         html.required = true
-//     }
-// }

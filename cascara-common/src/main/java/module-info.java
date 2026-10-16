@@ -32,6 +32,7 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+/// Cascara common APIs and utilities.
 module cascara.common {
     requires java.management;
     requires java.base;
