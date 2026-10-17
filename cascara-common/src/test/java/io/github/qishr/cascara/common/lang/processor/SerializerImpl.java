@@ -42,21 +42,20 @@ import java.io.Writer;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
-import io.github.qishr.cascara.common.lang.plain.PlainMapEntryNode;
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
-import io.github.qishr.cascara.common.lang.plain.PlainNode;
-import io.github.qishr.cascara.common.lang.plain.PlainNodeFactory;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMapEntry;
+import io.github.qishr.cascara.common.lang.generic.GenericAstNodeFactory;
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
 import io.github.qishr.cascara.common.lang.util.LanguageOptions;
 import io.github.qishr.cascara.common.type.TypeReference;
 import io.github.qishr.cascara.common.util.ContentType;
 
 // public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,ScalarAstNode<PlainNode>,SequenceAstNode<PlainNode>,MapAstNode<PlainNode,PlainNode,MapEntryAstNode<PlainNode,PlainNode>,MapEntryAstNode<PlainNode,PlainNode>,PlainNode> {
-public class SerializerImpl extends AbstractSerializer<SerializerImpl,AstNode,PlainScalarNode,PlainSequenceNode,PlainMapNode,PlainMapEntryNode,AstNode> {
+public class SerializerImpl extends AbstractSerializer<SerializerImpl,AstNode,GenericAstScalar,GenericAstSequence,GenericAstMap,GenericAstMapEntry,AstNode> {
 
     public SerializerImpl() {
-        super("", new PlainNodeFactory(), null);
+        super("", new GenericAstNodeFactory(), null);
     }
 
     @Override

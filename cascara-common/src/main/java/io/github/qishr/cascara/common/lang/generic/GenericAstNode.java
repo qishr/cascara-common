@@ -32,22 +32,24 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.lang.plain;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+package io.github.qishr.cascara.common.lang.generic;
 
-import java.util.Set;
+import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.lang.ast.*;
+import io.github.qishr.cascara.common.lang.token.Token;
 
-import org.junit.jupiter.api.Test;
+public abstract class GenericAstNode implements AstNode {
+    @Override
+    public int getStartLine() { return 0; }
+    @Override
+    public int getStartColumn() { return 0; }
+    @Override
+    public int getEndLine() { return 0; }
+    @Override
+    public int getEndColumn() { return 0; }
 
-public class PlainMapNodeTests {
-    @Test
-    void test() {
-        PlainMapNode map = new PlainMapNode();
-        PlainScalarNode key = new PlainScalarNode("key");
-        PlainScalarNode value = new PlainScalarNode("value");
-        map.put(key, value);
-        Set<PlainMapEntryNode> set = map.entrySet();
-        assertNotNull(set);
-    }
+    @Nullable
+    @Override
+    public Token getToken() { return null; }
 }

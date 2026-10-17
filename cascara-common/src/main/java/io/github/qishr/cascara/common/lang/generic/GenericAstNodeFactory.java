@@ -33,23 +33,42 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.plain;
+package io.github.qishr.cascara.common.lang.generic;
 
-import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.lang.ast.*;
-import io.github.qishr.cascara.common.lang.token.Token;
+import io.github.qishr.cascara.common.lang.ast.AstNode;
+import io.github.qishr.cascara.common.lang.ast.AstNodeFactory;
+import io.github.qishr.cascara.common.lang.util.LanguageOptions;
+import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
-public abstract class PlainNode implements AstNode {
-    @Override
-    public int getStartLine() { return 0; }
-    @Override
-    public int getStartColumn() { return 0; }
-    @Override
-    public int getEndLine() { return 0; }
-    @Override
-    public int getEndColumn() { return 0; }
+public class GenericAstNodeFactory implements AstNodeFactory<AstNode,GenericAstScalar,GenericAstSequence,GenericAstMap,GenericAstMapEntry,AstNode> {
 
-    @Nullable
     @Override
-    public Token getToken() { return null; }
+    public GenericAstScalar createScalarNode(Object jvmValue) {
+        return new GenericAstScalar(jvmValue);
+    }
+
+    @Override
+    public GenericAstScalar createScalarNode(Object jvmValue, QuoteStyle quoteStyle) {
+        return new GenericAstScalar(jvmValue, quoteStyle);
+    }
+
+	@Override
+	public GenericAstScalar createScalarNode(Object jvmValue, QuoteStyle quoteStyle, LanguageOptions<?> options) {
+        return new GenericAstScalar(jvmValue, quoteStyle);
+	}
+
+    @Override
+    public GenericAstScalar createKey(Object key) {
+        return new GenericAstScalar(key);
+    }
+
+    @Override
+    public GenericAstSequence createSequenceNode() {
+        return new GenericAstSequence();
+    }
+
+    @Override
+    public GenericAstMap createMapNode() {
+        return new GenericAstMap();
+    }
 }

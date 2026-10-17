@@ -32,6 +32,24 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package integration.test.ast;
 
-/// A intermediate implementation of the AST API
-package io.github.qishr.cascara.common.lang.plain;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
+
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
+import io.github.qishr.cascara.lang.json.ast.JsonScalar;
+
+public class GenericAstTests {
+    @Test
+    void test_plain() {
+        GenericAstSequence seq = new GenericAstSequence();
+        seq.add(new JsonScalar("cucumber"));
+        seq.add(new GenericAstScalar("banana"));
+
+        assertEquals("cucumber", seq.getString(0));
+        assertEquals("banana", seq.getString(1));
+    }
+}

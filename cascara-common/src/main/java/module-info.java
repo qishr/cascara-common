@@ -52,7 +52,7 @@ module cascara.common {
     exports io.github.qishr.cascara.common.exec;
     exports io.github.qishr.cascara.common.exec.ipc;
     exports io.github.qishr.cascara.common.filewatcher;
-    exports io.github.qishr.cascara.common.lang.plain;
+    exports io.github.qishr.cascara.common.lang.generic;
     exports io.github.qishr.cascara.common.lang.ast;
     exports io.github.qishr.cascara.common.lang.streaming;
     exports io.github.qishr.cascara.common.lang.diagnostic;
@@ -77,7 +77,7 @@ module cascara.common {
 
     opens io.github.qishr.cascara.common.data;           // For tests
     opens io.github.qishr.cascara.common.diagnostic;     // For tests and SchmeaGenerator
-    opens io.github.qishr.cascara.common.lang.plain;     // For tests
+    opens io.github.qishr.cascara.common.lang.generic;   // For tests
     opens io.github.qishr.cascara.common.lang.processor; // For tests
     opens io.github.qishr.cascara.common.property;       // For tests and SchmeaGenerator
     opens io.github.qishr.cascara.common.trackable;      // For tests and SchmeaGenerator

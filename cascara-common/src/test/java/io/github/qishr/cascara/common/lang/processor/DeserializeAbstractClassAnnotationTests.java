@@ -41,8 +41,8 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.annotation.PolymorphicType;
 import io.github.qishr.cascara.common.annotation.SubType;
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
 
 public class DeserializeAbstractClassAnnotationTests extends SerializerTestBase {
 
@@ -71,20 +71,20 @@ public class DeserializeAbstractClassAnnotationTests extends SerializerTestBase 
 
     @Test
     void test_subclassDeserializationOfClassWithAnnotation() {
-        PlainMapNode map0 = new PlainMapNode()
+        GenericAstMap map0 = new GenericAstMap()
             .put("type",
-                new PlainScalarNode("c0")
+                new GenericAstScalar("c0")
             )
             .put("field0",
-                new PlainScalarNode("foo")
+                new GenericAstScalar("foo")
             );
 
-        PlainMapNode map1 = new PlainMapNode()
+        GenericAstMap map1 = new GenericAstMap()
             .put("type",
-                new PlainScalarNode("c1")
+                new GenericAstScalar("c1")
             )
             .put("field0",
-                new PlainScalarNode("bar")
+                new GenericAstScalar("bar")
             );
 
         BaseTestClass c0 = serializer.fromAst(map0, BaseTestClass.class);

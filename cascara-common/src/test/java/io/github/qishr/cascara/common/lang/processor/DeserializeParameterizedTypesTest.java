@@ -8,10 +8,9 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.annotation.PolymorphicType;
 import io.github.qishr.cascara.common.annotation.SubType;
-
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
 import io.github.qishr.cascara.common.type.TypeReference;
 
 public class DeserializeParameterizedTypesTest extends SerializerTestBase {
@@ -37,7 +36,7 @@ public class DeserializeParameterizedTypesTest extends SerializerTestBase {
     @Test
     void test_parameterizedSubclassDeserialization() {
 
-        PlainMapNode ast0 = new PlainMapNode()
+        GenericAstMap ast0 = new GenericAstMap()
             .put("type", "specialized1")
             .put("content", "secret")
             .put("extraMeta", "metadata");
@@ -63,8 +62,8 @@ public class DeserializeParameterizedTypesTest extends SerializerTestBase {
     @Test
     void test_parameterizedSubclassOfArrayListDeserialization() {
 
-        PlainSequenceNode ast = new PlainSequenceNode()
-            .add(new PlainScalarNode("item"));
+        GenericAstSequence ast = new GenericAstSequence()
+            .add(new GenericAstScalar("item"));
 
         SpecializedList<String> list = serializer.fromAst(ast, new TypeReference<SpecializedList<String>>(){});
 

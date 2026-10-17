@@ -35,13 +35,13 @@
 package io.github.qishr.cascara.common.type.util;
 
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.TypeSerializer;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 import java.lang.reflect.ParameterizedType;
@@ -57,11 +57,11 @@ public class EnumMapSerializer extends AbstractTypeDescriptor<EnumMap> implement
     }
 
     @Override
-    public PlainMapNode serialize(EnumMap jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstMap serialize(EnumMap jvmInstance, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
-        PlainMapNode node = new PlainMapNode();
+        GenericAstMap node = new GenericAstMap();
         for (Object obj : jvmInstance.entrySet()) {
             if (obj instanceof Map.Entry<?, ?> entry) {
                 if (entry.getKey() != null) {

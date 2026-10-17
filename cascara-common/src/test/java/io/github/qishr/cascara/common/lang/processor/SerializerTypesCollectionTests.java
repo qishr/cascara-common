@@ -9,21 +9,21 @@ import java.util.SequencedCollection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
 import io.github.qishr.cascara.common.type.TypeReference;
 
 /// Testing of Serialier with JRE Collection types that map to JSON Schema arrays
 public class SerializerTypesCollectionTests extends SerializerTestBase {
-    PlainSequenceNode intSequence;
+    GenericAstSequence intSequence;
 
     @BeforeEach
     protected void setUp() {
         super.setUp();
-        intSequence = new PlainSequenceNode()
-            .add(new PlainScalarNode(42))
-            .add(new PlainScalarNode(53))
-            .add(new PlainScalarNode(86));
+        intSequence = new GenericAstSequence()
+            .add(new GenericAstScalar(42))
+            .add(new GenericAstScalar(53))
+            .add(new GenericAstScalar(86));
     }
 
     @Test

@@ -35,14 +35,14 @@
 package io.github.qishr.cascara.common.type.lang;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
-import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
-import io.github.qishr.cascara.common.type.TypeSerializer;
-import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
+import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
+import io.github.qishr.cascara.common.type.PrimitiveType;
+import io.github.qishr.cascara.common.type.TypeSerializer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 import java.lang.module.Configuration;
@@ -56,24 +56,24 @@ public class ConfigurationSerializer extends AbstractTypeDescriptor<Configuratio
     }
 
     @Override
-    public PlainMapNode serialize(Configuration jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstMap serialize(Configuration jvmInstance, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
 
-        PlainMapNode node = new PlainMapNode();
+        GenericAstMap node = new GenericAstMap();
 
         // Serialize parent configuration names/presence
-        PlainSequenceNode parentsSeq = new PlainSequenceNode();
+        GenericAstSequence parentsSeq = new GenericAstSequence();
         for (Configuration parent : jvmInstance.parents()) {
-            parentsSeq.add(new PlainScalarNode(parent.toString()));
+            parentsSeq.add(new GenericAstScalar(parent.toString()));
         }
         node.put("parents", parentsSeq);
 
         // Serialize resolved module names within this configuration
-        PlainSequenceNode modulesSeq = new PlainSequenceNode();
+        GenericAstSequence modulesSeq = new GenericAstSequence();
         for (ResolvedModule mod : jvmInstance.modules()) {
-            modulesSeq.add(new PlainScalarNode(mod.reference().descriptor().name()));
+            modulesSeq.add(new GenericAstScalar(mod.reference().descriptor().name()));
         }
         node.put("modules", modulesSeq);
 

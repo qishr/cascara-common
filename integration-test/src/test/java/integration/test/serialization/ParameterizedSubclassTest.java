@@ -37,10 +37,10 @@ public class ParameterizedSubclassTest extends SerializerTestBase {
         //     java.lang.reflect.Field field = GenericHolder.class.getField("value");
         //     Type wildcardFieldType = field.getGenericType(); // This is a TypeVariable (T)
 
-        //     PlainMapNode node = new PlainMapNode().put("value", new PlainScalarNode("hello-wildcard"));
+        //     GenericAstMap node = new GenericAstMap().put("value", new GenericAstScalar("hello-wildcard"));
 
         //     // This exercises the TypeVariable / WildcardType branch in deserialize()
-        //     Object result = serializer.fromAst(new PlainScalarNode("direct-wildcard"), wildcardFieldType);
+        //     Object result = serializer.fromAst(new GenericAstScalar("direct-wildcard"), wildcardFieldType);
         //     assertEquals("direct-wildcard", result);
         // }
 
@@ -49,7 +49,7 @@ public class ParameterizedSubclassTest extends SerializerTestBase {
         //     java.lang.reflect.Method method = this.getClass().getMethod("dummyMethod", java.util.List.class);
         //     Type wildcardType = method.getGenericParameterTypes()[0]; // List<?> contains a WildcardType
 
-        //     PlainSequenceNode seq = new PlainSequenceNode().add(new PlainScalarNode("item"));
+        //     GenericAstSequence seq = new GenericAstSequence().add(new GenericAstScalar("item"));
         //     Object res = serializer.fromAst(seq, wildcardType);
         //     assertNotNull(res);
         // }

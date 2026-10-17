@@ -41,7 +41,7 @@ import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -54,8 +54,8 @@ public class StackTraceElementSerializer extends AbstractTypeDescriptor<StackTra
     }
 
     @Override
-    public PlainMapNode serialize(StackTraceElement jvmInstance, Serializer.Context ctx) throws SerializerException {
-        return new PlainMapNode()
+    public GenericAstMap serialize(StackTraceElement jvmInstance, Serializer.Context ctx) throws SerializerException {
+        return new GenericAstMap()
             .put("classLoaderName", jvmInstance.getClassLoaderName())
             .put("moduleName", jvmInstance.getModuleName())
             .put("moduleVersion", jvmInstance.getModuleVersion())

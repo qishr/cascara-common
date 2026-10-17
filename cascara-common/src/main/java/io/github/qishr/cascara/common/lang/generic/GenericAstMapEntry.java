@@ -32,24 +32,61 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package integration.test.ast;
+package io.github.qishr.cascara.common.lang.generic;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import io.github.qishr.cascara.common.lang.ast.*;
+import java.util.Collections;
+import java.util.List;
 
-import org.junit.jupiter.api.Test;
+public final class GenericAstMapEntry extends GenericAstNode implements MapEntryAstNode<AstNode,AstNode> {
 
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
-import io.github.qishr.cascara.lang.json.ast.JsonScalar;
+    private final AstNode key;
+    private AstNode value;
 
-public class PlainAstTests {
-    @Test
-    void test_plain() {
-        PlainSequenceNode seq = new PlainSequenceNode();
-        seq.add(new JsonScalar("cucumber"));
-        seq.add(new PlainScalarNode("banana"));
+    public GenericAstMapEntry(AstNode key, AstNode value) {
+        this.key = key;
+        this.value = value;
+    }
 
-        assertEquals("cucumber", seq.getString(0));
-        assertEquals("banana", seq.getString(1));
+    public GenericAstMapEntry(String key, AstNode value) {
+        this.key = new GenericAstScalar(key);
+        this.value = value;
+    }
+
+    public GenericAstMapEntry(String key, String value) {
+        this.key = new GenericAstScalar(key);
+        this.value = new GenericAstScalar(value);
+    }
+
+    @Override
+    public AstNode getKey() {
+        return key;
+    }
+
+    @Override
+    public AstNode getValue() {
+        return value;
+    }
+
+    @Override
+    public GenericAstMapEntry setRaw(AstNode value) {
+        this.value = value;
+        return this;
+    }
+
+    @Override
+    public List<AstNode> getChildren() {
+        return List.of(key, value);
+    }
+
+    @Override
+    public List<CommentAstNode> getComments() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public GenericAstMapEntry setValue(AstNode value) {
+        this.value = value;
+        return this;
     }
 }

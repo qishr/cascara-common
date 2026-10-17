@@ -34,15 +34,15 @@
 
 package io.github.qishr.cascara.common.type.util;
 
+import io.github.qishr.cascara.common.lang.ast.AstNode;
+import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.TypeSerializer;
-import io.github.qishr.cascara.common.lang.ast.AstNode;
-import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 import java.lang.reflect.ParameterizedType;
@@ -57,13 +57,13 @@ public class EnumSetSerializer extends AbstractTypeDescriptor<EnumSet> implement
     }
 
     @Override
-    public PlainSequenceNode serialize(EnumSet jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstSequence serialize(EnumSet jvmInstance, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
-        PlainSequenceNode seq = new PlainSequenceNode();
+        GenericAstSequence seq = new GenericAstSequence();
         for (Object enumVal : jvmInstance) {
-            seq.add(new PlainScalarNode(enumVal.toString()));
+            seq.add(new GenericAstScalar(enumVal.toString()));
         }
         return seq;
     }

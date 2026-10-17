@@ -51,9 +51,9 @@ import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
 import io.github.qishr.cascara.common.type.TypeReference;
 
 public class SerializerTests extends SerializerTestBase {
@@ -61,10 +61,10 @@ public class SerializerTests extends SerializerTestBase {
     @Test
     void test_simpleTypeReference() {
 
-        PlainScalarNode s1 = new PlainScalarNode("one");
-        PlainScalarNode s2 = new PlainScalarNode("two");
+        GenericAstScalar s1 = new GenericAstScalar("one");
+        GenericAstScalar s2 = new GenericAstScalar("two");
 
-        PlainSequenceNode swq = new PlainSequenceNode()
+        GenericAstSequence swq = new GenericAstSequence()
             .add(s1)
             .add(s2);
 
@@ -80,11 +80,11 @@ public class SerializerTests extends SerializerTestBase {
 
     @Test
     void test_fromAst_nestedGenerics() {
-        PlainMapNode map = new PlainMapNode()
-            .put("contributes", new PlainMapNode()
-                .put("themes", new PlainSequenceNode()
+        GenericAstMap map = new GenericAstMap()
+            .put("contributes", new GenericAstMap()
+                .put("themes", new GenericAstSequence()
                     .add(
-                        new PlainScalarNode(0.1)
+                        new GenericAstScalar(0.1)
                     )
                 )
             );
@@ -112,10 +112,10 @@ public class SerializerTests extends SerializerTestBase {
 
     @Test
     void test_fromAst_nestedGenerics2() {
-        PlainMapNode map = new PlainMapNode()
-            .put("contributes", new PlainMapNode()
-                .put("themes", new PlainSequenceNode()
-                    .add(new PlainMapNode()
+        GenericAstMap map = new GenericAstMap()
+            .put("contributes", new GenericAstMap()
+                .put("themes", new GenericAstSequence()
+                    .add(new GenericAstMap()
                         .put("name", "TestName")
                     )
                 )
@@ -175,8 +175,8 @@ public class SerializerTests extends SerializerTestBase {
     /// - MapAstNodes become Maps
     @Test
     void test_deserializeMapToObject() {
-        PlainMapNode map = new PlainMapNode()
-            .put("obj", new PlainMapNode()
+        GenericAstMap map = new GenericAstMap()
+            .put("obj", new GenericAstMap()
                 .put("name", "TestName")
             );
 

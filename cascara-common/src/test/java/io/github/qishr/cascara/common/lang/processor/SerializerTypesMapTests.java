@@ -8,17 +8,17 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
 import io.github.qishr.cascara.common.type.TypeReference;
 
 /// Testing of Serialier with JRE Map types that map to JSON Schema objects
 public class SerializerTypesMapTests extends SerializerTestBase {
     @Test
     void test_mapOfStringTo_Integer() {
-        PlainMapNode map = new PlainMapNode()
-            .put("k", new PlainScalarNode(42));
+        GenericAstMap map = new GenericAstMap()
+            .put("k", new GenericAstScalar(42));
 
         Map<String,Integer> r = serializer.fromAst(map, new TypeReference<Map<String,Integer>>(){});
         assertInstanceOf(Map.class, r);
@@ -26,10 +26,10 @@ public class SerializerTypesMapTests extends SerializerTestBase {
 
     @Test
     void test_mapOfStringTo_ListOfInteger() {
-        PlainMapNode map = new PlainMapNode()
-            .put("k", new PlainSequenceNode()
+        GenericAstMap map = new GenericAstMap()
+            .put("k", new GenericAstSequence()
                 .add(
-                    new PlainScalarNode(0.1)
+                    new GenericAstScalar(0.1)
                 ));
 
         Map<String,List<Integer>> r = serializer.fromAst(map, new TypeReference<Map<String,List<Integer>>>(){});
@@ -40,9 +40,9 @@ public class SerializerTypesMapTests extends SerializerTestBase {
 
     @Test
     void test_mapOfStringTo_ListOfMap() {
-        PlainMapNode map = new PlainMapNode()
-            .put("k", new PlainSequenceNode()
-                .add(new PlainMapNode()
+        GenericAstMap map = new GenericAstMap()
+            .put("k", new GenericAstSequence()
+                .add(new GenericAstMap()
                     .put("name", "TestName")
                 )
             );
@@ -62,9 +62,9 @@ public class SerializerTypesMapTests extends SerializerTestBase {
 
     @Test
     void test_mapOfStringTo_ListOfObject() {
-        PlainMapNode map = new PlainMapNode()
-            .put("k", new PlainSequenceNode()
-                .add(new PlainMapNode()
+        GenericAstMap map = new GenericAstMap()
+            .put("k", new GenericAstSequence()
+                .add(new GenericAstMap()
                     .put("name", "TestName")
                 )
             );

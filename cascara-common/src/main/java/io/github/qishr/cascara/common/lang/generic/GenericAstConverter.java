@@ -33,7 +33,7 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.plain;
+package io.github.qishr.cascara.common.lang.generic;
 
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.annotation.Experimental;
@@ -51,23 +51,23 @@ import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.lang.util.LanguageOptions;
 
 @Experimental
-public class PlainAstConverter implements AstConverter<PlainNode> {
+public class GenericAstConverter implements AstConverter<GenericAstNode> {
     @Nullable
-    public PlainNode fromAst(AstNode ast) {
+    public GenericAstNode fromAst(AstNode ast) {
         if (ast == null) return null;
 
         if (ast instanceof MapAstNode astMap) {
-            PlainMapNode yamlMap = new PlainMapNode();
+            GenericAstMap yamlMap = new GenericAstMap();
             for (Object entry : astMap.getEntries()) {
                 if (entry instanceof MapEntryAstNode astMapEntry) {
                     String key = astMapEntry.getKeyString();
-                    PlainNode yamlValue = fromAst(astMapEntry.getValue());
+                    GenericAstNode yamlValue = fromAst(astMapEntry.getValue());
                     yamlMap.put(key, yamlValue);
                 }
             }
             return yamlMap;
         } else if (ast instanceof SequenceAstNode astSeq) {
-            PlainSequenceNode yamlSeq = new PlainSequenceNode();
+            GenericAstSequence yamlSeq = new GenericAstSequence();
             for (Object element : astSeq.getElements()) {
                 if (element instanceof AstNode astElement) {
                     yamlSeq.add(fromAst(astElement));
@@ -75,7 +75,7 @@ public class PlainAstConverter implements AstConverter<PlainNode> {
             }
             return yamlSeq;
         } else if (ast instanceof ScalarAstNode astScalar) {
-            PlainScalarNode yamlScalar = new PlainScalarNode(astScalar.getPrimitive());
+            GenericAstScalar yamlScalar = new GenericAstScalar(astScalar.getPrimitive());
             return yamlScalar;
         } else {
             String name = (ast == null) ? "null" : ast.getClass().getSimpleName();
@@ -84,28 +84,28 @@ public class PlainAstConverter implements AstConverter<PlainNode> {
     }
 
     @Nullable
-    public PlainNode toPlainAst(AstNode node) {
+    public GenericAstNode toPlainAst(AstNode node) {
         if (node == null) return null;
 
-        if (node instanceof PlainMapNode map) {
-            PlainMapNode out = new PlainMapNode();
-            for (PlainMapEntryNode e : map.getEntries()) {
-                PlainNode key = toPlainAst(e.getKey());
-                PlainNode val = toPlainAst(e.getValue());
+        if (node instanceof GenericAstMap map) {
+            GenericAstMap out = new GenericAstMap();
+            for (GenericAstMapEntry e : map.getEntries()) {
+                GenericAstNode key = toPlainAst(e.getKey());
+                GenericAstNode val = toPlainAst(e.getValue());
                 out.put(key, val);
             }
             return out;
         }
 
-        if (node instanceof PlainSequenceNode seq) {
-            PlainSequenceNode out = new PlainSequenceNode();
+        if (node instanceof GenericAstSequence seq) {
+            GenericAstSequence out = new GenericAstSequence();
             for (AstNode child : seq.getChildren()) {
                 out.add(toPlainAst(child));
             }
             return out;
         }
 
-        if (node instanceof PlainScalarNode scalar) {
+        if (node instanceof GenericAstScalar scalar) {
             return convertScalar(scalar);   // tag logic goes here
         }
 
@@ -116,19 +116,19 @@ public class PlainAstConverter implements AstConverter<PlainNode> {
     }
 
     @Nullable
-    private PlainScalarNode convertScalar(PlainScalarNode scalar) {
+    private GenericAstScalar convertScalar(GenericAstScalar scalar) {
         if (scalar == null) return null;
         Object value = scalar.getPrimitive();
-        return new PlainScalarNode(value);
+        return new GenericAstScalar(value);
     }
 
     @Override
-    public PlainAstConverter setReporter(Reporter reporter) {
+    public GenericAstConverter setReporter(Reporter reporter) {
         return this;
     }
 
     @Override
-    public PlainAstConverter setOptions(LanguageOptions<?> options) {
+    public GenericAstConverter setOptions(LanguageOptions<?> options) {
         return this;
     }
 

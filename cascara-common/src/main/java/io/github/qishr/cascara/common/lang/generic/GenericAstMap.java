@@ -32,7 +32,7 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.lang.plain;
+package io.github.qishr.cascara.common.lang.generic;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -48,11 +48,11 @@ import io.github.qishr.cascara.common.lang.ast.*;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 
-public final class PlainMapNode extends PlainNode implements MapAstNode<AstNode, AstNode, PlainMapEntryNode> {
+public final class GenericAstMap extends GenericAstNode implements MapAstNode<AstNode, AstNode, GenericAstMapEntry> {
 
-    // private List<PlainMapEntryNode> entries = new ArrayList<>();
+    // private List<GenericAstMapEntry> entries = new ArrayList<>();
     // private final LinkedHashMap<PlainNode,PlainNode> entries = new LinkedHashMap<>();
-    private final LinkedHashMap<AstNode,PlainMapEntryNode> entriesByKey = new LinkedHashMap<>();
+    private final LinkedHashMap<AstNode,GenericAstMapEntry> entriesByKey = new LinkedHashMap<>();
 
     /// {@inheritDoc}
     @Override
@@ -68,7 +68,7 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<AstNode,
 
     @Override
     public boolean containsKey(Object key) {
-        if (key instanceof PlainNode node) {
+        if (key instanceof GenericAstNode node) {
             return getEntry(node) != null;
         } else if (key instanceof String string) {
             for (AstNode keyNode : entriesByKey.keySet()) {
@@ -88,8 +88,8 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<AstNode,
     @Override
     public AstNode get(Object key) {
         if (key instanceof String string) {
-            for (Map.Entry<AstNode,PlainMapEntryNode> entry : entriesByKey.entrySet()) {
-                PlainMapEntryNode entryNode = entry.getValue();
+            for (Map.Entry<AstNode,GenericAstMapEntry> entry : entriesByKey.entrySet()) {
+                GenericAstMapEntry entryNode = entry.getValue();
                 Object keyObj = entryNode.getKey();
                 String entryKey = null;
                 if (keyObj instanceof ScalarAstNode scalar) {
@@ -109,23 +109,23 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<AstNode,
     }
 
     @Override
-    public PlainMapEntryNode getEntry(Object key) {
+    public GenericAstMapEntry getEntry(Object key) {
         return entriesByKey.get(key);
     }
 
     @Override
-    public PlainMapEntryNode getEntry(int i) {
+    public GenericAstMapEntry getEntry(int i) {
         if (i < 0 || i > size()) throw new NoSuchElementException();
-        return entriesByKey.sequencedValues().toArray(new PlainMapEntryNode[]{})[i];
+        return entriesByKey.sequencedValues().toArray(new GenericAstMapEntry[]{})[i];
     }
 
     @Override
-    public List<PlainMapEntryNode> getEntries() {
+    public List<GenericAstMapEntry> getEntries() {
         return List.copyOf(entriesByKey.values());
     }
 
     @Override
-    public Set<PlainMapEntryNode> entrySet() {
+    public Set<GenericAstMapEntry> entrySet() {
         return new LinkedHashSet<>(entriesByKey.values());
     }
 
@@ -135,10 +135,10 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<AstNode,
     }
 
     @Override
-    public PlainMapNode put(AstNode key, AstNode value) {
-        PlainMapEntryNode entry = getEntry(key);
+    public GenericAstMap put(AstNode key, AstNode value) {
+        GenericAstMapEntry entry = getEntry(key);
         if (entry == null) {
-            entry = new PlainMapEntryNode(key, value);
+            entry = new GenericAstMapEntry(key, value);
             entriesByKey.put(key, entry);
             return this;
         }
@@ -147,46 +147,46 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<AstNode,
     }
 
     @Override
-    public PlainMapNode remove(AstNode key) {
+    public GenericAstMap remove(AstNode key) {
         entriesByKey.remove(key);
         return this;
     }
 
     @Override
-    public PlainMapNode put(String key, String value) {
-        PlainScalarNode scalarValue = new PlainScalarNode(value);
+    public GenericAstMap put(String key, String value) {
+        GenericAstScalar scalarValue = new GenericAstScalar(value);
         put(key, scalarValue);
         return this;
     }
 
-    public PlainMapNode put(String key, Number value) {
-        PlainScalarNode scalarValue = new PlainScalarNode(value);
+    public GenericAstMap put(String key, Number value) {
+        GenericAstScalar scalarValue = new GenericAstScalar(value);
         put(key, scalarValue);
         return this;
     }
 
     @Override
-    public PlainMapNode put(String key, AstNode value) {
-        for (PlainMapEntryNode entry : entriesByKey.values()) {
+    public GenericAstMap put(String key, AstNode value) {
+        for (GenericAstMapEntry entry : entriesByKey.values()) {
             AstNode kNode = entry.getKey();
             // Check if the existing key's string value matches the requested key
-            if (kNode instanceof PlainScalarNode scalar && key.equals(scalar.asString())) {
+            if (kNode instanceof GenericAstScalar scalar && key.equals(scalar.asString())) {
                 entry.setRaw(value);
                 return this;
             }
         }
 
         // Only if not found, create the new entry
-        AstNode keyNode = new PlainScalarNode(key, QuoteStyle.PLAIN);
-        PlainMapEntryNode entry = new PlainMapEntryNode(keyNode, value);
+        AstNode keyNode = new GenericAstScalar(key, QuoteStyle.PLAIN);
+        GenericAstMapEntry entry = new GenericAstMapEntry(keyNode, value);
         entriesByKey.put(entry.getKey(), entry);
         return this;
     }
 
     @Override
-    public PlainMapNode remove(String key) {
-        for (Map.Entry<AstNode,PlainMapEntryNode> entry : entriesByKey.entrySet()) {
-            if (entry.getKey() instanceof PlainScalarNode scalar) {
+    public GenericAstMap remove(String key) {
+        for (Map.Entry<AstNode,GenericAstMapEntry> entry : entriesByKey.entrySet()) {
+            if (entry.getKey() instanceof GenericAstScalar scalar) {
                 if (scalar.asString().equals(key)) {
                     entriesByKey.remove(scalar);
                     return this;
@@ -197,7 +197,7 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<AstNode,
     }
 
     @Override
-    public List<PlainMapEntryNode> getChildren() {
+    public List<GenericAstMapEntry> getChildren() {
         return List.copyOf(entriesByKey.values());
     }
 
@@ -212,8 +212,8 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<AstNode,
 
     @Override
     @Nullable
-    public PlainMapNode getMap(Object key) {
-        if (get(key) instanceof PlainMapNode map) {
+    public GenericAstMap getMap(Object key) {
+        if (get(key) instanceof GenericAstMap map) {
             return map;
         }
         return null;
@@ -222,7 +222,7 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<AstNode,
     @Override
     @Nullable
     public SequenceAstNode<AstNode> getSequence(Object key) {
-        if (get(key) instanceof PlainSequenceNode seq) {
+        if (get(key) instanceof GenericAstSequence seq) {
             return seq;
         }
         return null;
@@ -231,7 +231,7 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<AstNode,
     @Override
     @Nullable
     public ScalarAstNode<AstNode> getScalar(Object key) {
-        if (get(key) instanceof PlainScalarNode scalar) {
+        if (get(key) instanceof GenericAstScalar scalar) {
             return scalar;
         }
         return null;
@@ -243,7 +243,7 @@ public final class PlainMapNode extends PlainNode implements MapAstNode<AstNode,
 
     /// Returns Iterator instance
     @Override
-    public Iterator<PlainMapEntryNode> iterator() {
+    public Iterator<GenericAstMapEntry> iterator() {
         return entriesByKey.sequencedValues().iterator();
     }
 }

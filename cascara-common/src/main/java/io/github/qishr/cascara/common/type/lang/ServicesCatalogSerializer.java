@@ -36,13 +36,13 @@ package io.github.qishr.cascara.common.type.lang;
 
 import java.lang.reflect.Type;
 
+import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.TypeSerializer;
-import io.github.qishr.cascara.common.lang.ast.AstNode;
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 // Note: Using FQCN since jdk.internal.module.ServicesCatalog
@@ -55,12 +55,12 @@ public class ServicesCatalogSerializer extends AbstractTypeDescriptor<Object> im
     }
 
     @Override
-    public PlainMapNode serialize(Object jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstMap serialize(Object jvmInstance, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
 
-        PlainMapNode node = new PlainMapNode();
+        GenericAstMap node = new GenericAstMap();
         node.put("type", jvmInstance.getClass().getName());
         node.put("description", "Encapsulated JPMS ServicesCatalog");
         // Additional safe reflection or toString extraction can go here

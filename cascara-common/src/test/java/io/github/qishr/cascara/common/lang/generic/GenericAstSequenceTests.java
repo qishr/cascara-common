@@ -33,42 +33,22 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.plain;
+package io.github.qishr.cascara.common.lang.generic;
+
+import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.lang.ast.AstNode;
-import io.github.qishr.cascara.common.lang.ast.AstNodeFactory;
-import io.github.qishr.cascara.common.lang.util.LanguageOptions;
-import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
-public class PlainNodeFactory implements AstNodeFactory<AstNode,PlainScalarNode,PlainSequenceNode,PlainMapNode,PlainMapEntryNode,AstNode> {
+public class GenericAstSequenceTests {
+    @Test
+    public void test1() {
+        GenericAstSequence seq = new GenericAstSequence()
+            .add(new GenericAstScalar("one"))
+            .add(new GenericAstScalar("two"))
+            .add(new GenericAstScalar("three"));
 
-    @Override
-    public PlainScalarNode createScalarNode(Object jvmValue) {
-        return new PlainScalarNode(jvmValue);
-    }
-
-    @Override
-    public PlainScalarNode createScalarNode(Object jvmValue, QuoteStyle quoteStyle) {
-        return new PlainScalarNode(jvmValue, quoteStyle);
-    }
-
-	@Override
-	public PlainScalarNode createScalarNode(Object jvmValue, QuoteStyle quoteStyle, LanguageOptions<?> options) {
-        return new PlainScalarNode(jvmValue, quoteStyle);
-	}
-
-    @Override
-    public PlainScalarNode createKey(Object key) {
-        return new PlainScalarNode(key);
-    }
-
-    @Override
-    public PlainSequenceNode createSequenceNode() {
-        return new PlainSequenceNode();
-    }
-
-    @Override
-    public PlainMapNode createMapNode() {
-        return new PlainMapNode();
+        for (AstNode node : seq) {
+            System.out.println("Node: " + node);
+        }
     }
 }

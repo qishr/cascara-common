@@ -41,8 +41,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
 
 public class DeserializeNonSealedPolymorphicHierarchyTests extends SerializerTestBase {
 
@@ -68,17 +68,17 @@ public class DeserializeNonSealedPolymorphicHierarchyTests extends SerializerTes
     // polymorphic deserialization
     @Test
     void test_subclassDeserialization() {
-        PlainMapNode map0 = new PlainMapNode()
-            .put("v", new PlainMapNode()
+        GenericAstMap map0 = new GenericAstMap()
+            .put("v", new GenericAstMap()
                 .put("field0",
-                    new PlainScalarNode("foo")
+                    new GenericAstScalar("foo")
                 )
             );
 
-        PlainMapNode map1 = new PlainMapNode()
-            .put("v", new PlainMapNode()
+        GenericAstMap map1 = new GenericAstMap()
+            .put("v", new GenericAstMap()
                 .put("field1",
-                    new PlainScalarNode("bar")
+                    new GenericAstScalar("bar")
                 )
             );
 

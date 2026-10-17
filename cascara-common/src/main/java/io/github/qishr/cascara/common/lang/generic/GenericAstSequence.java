@@ -32,7 +32,7 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.lang.plain;
+package io.github.qishr.cascara.common.lang.generic;
 
 import io.github.qishr.cascara.common.lang.ast.*;
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-public final class PlainSequenceNode extends PlainNode implements SequenceAstNode<AstNode> {
+public final class GenericAstSequence extends GenericAstNode implements SequenceAstNode<AstNode> {
 
     private final List<AstNode> elements = new ArrayList<>();
 
@@ -56,25 +56,25 @@ public final class PlainSequenceNode extends PlainNode implements SequenceAstNod
     }
 
     @Override
-    public PlainSequenceNode clear() {
+    public GenericAstSequence clear() {
         elements.clear();
         return this;
     }
 
     @Override
-    public PlainSequenceNode add(AstNode node) {
+    public GenericAstSequence add(AstNode node) {
         elements.add(node);
         return this;
     }
 
     @Override
-    public PlainSequenceNode remove(AstNode node) {
+    public GenericAstSequence remove(AstNode node) {
         elements.remove(node);
         return this;
     }
 
     @Override
-    public PlainSequenceNode remove(int index) {
+    public GenericAstSequence remove(int index) {
         elements.remove(index);
         return this;
     }
@@ -105,7 +105,7 @@ public final class PlainSequenceNode extends PlainNode implements SequenceAstNod
     //
 
     @SuppressWarnings("unchecked")
-    public MapAstNode<AstNode, AstNode, PlainMapEntryNode> getMap(int i) {
+    public MapAstNode<AstNode, AstNode, GenericAstMapEntry> getMap(int i) {
         if (get(i) instanceof MapAstNode map) {
             return map;
         }
@@ -154,11 +154,11 @@ public final class PlainSequenceNode extends PlainNode implements SequenceAstNod
     }
 
     static class SequenceIterator<T> implements Iterator<AstNode> {
-        PlainSequenceNode list;
+        GenericAstSequence list;
         int currentIndex = 0;
 
         // initialize pointer to head of the list for iteration
-        public SequenceIterator(PlainSequenceNode list) {
+        public SequenceIterator(GenericAstSequence list) {
             this.list = list;
         }
 

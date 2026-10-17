@@ -43,12 +43,12 @@ import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.type.TypeSerializer;
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
 
 /// Handles serialization and deserialization of [Throwable] instances across AST nodes,
 /// preserving class names, cause chains, suppressed exceptions, and stack traces.
@@ -61,17 +61,17 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
     }
 
     @Override
-    public PlainMapNode serialize(Throwable jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstMap serialize(Throwable jvmInstance, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
 
-        PlainMapNode node = new PlainMapNode()
+        GenericAstMap node = new GenericAstMap()
             .put("type", jvmInstance.getClass().getName())
             .put("message", jvmInstance.getMessage());
 
         // Serialize stack trace elements
-        PlainSequenceNode stackArray = new PlainSequenceNode();
+        GenericAstSequence stackArray = new GenericAstSequence();
         for (StackTraceElement element : jvmInstance.getStackTrace()) {
             stackArray.add(stackTraceSerializer.serialize(element, ctx));
         }
@@ -85,7 +85,7 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
         // Suppressed exceptions
         Throwable[] suppressed = jvmInstance.getSuppressed();
         if (suppressed != null && suppressed.length > 0) {
-            PlainSequenceNode suppressedArray = new PlainSequenceNode();
+            GenericAstSequence suppressedArray = new GenericAstSequence();
             for (Throwable s : suppressed) {
                 suppressedArray.add(serialize(s, ctx));
             }

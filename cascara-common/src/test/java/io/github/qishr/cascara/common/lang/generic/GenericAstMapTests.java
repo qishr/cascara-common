@@ -32,61 +32,22 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.lang.plain;
+package io.github.qishr.cascara.common.lang.generic;
 
-import io.github.qishr.cascara.common.lang.ast.*;
-import java.util.Collections;
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public final class PlainMapEntryNode extends PlainNode implements MapEntryAstNode<AstNode,AstNode> {
+import java.util.Set;
 
-    private final AstNode key;
-    private AstNode value;
+import org.junit.jupiter.api.Test;
 
-    public PlainMapEntryNode(AstNode key, AstNode value) {
-        this.key = key;
-        this.value = value;
-    }
-
-    public PlainMapEntryNode(String key, AstNode value) {
-        this.key = new PlainScalarNode(key);
-        this.value = value;
-    }
-
-    public PlainMapEntryNode(String key, String value) {
-        this.key = new PlainScalarNode(key);
-        this.value = new PlainScalarNode(value);
-    }
-
-    @Override
-    public AstNode getKey() {
-        return key;
-    }
-
-    @Override
-    public AstNode getValue() {
-        return value;
-    }
-
-    @Override
-    public PlainMapEntryNode setRaw(AstNode value) {
-        this.value = value;
-        return this;
-    }
-
-    @Override
-    public List<AstNode> getChildren() {
-        return List.of(key, value);
-    }
-
-    @Override
-    public List<CommentAstNode> getComments() {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public PlainMapEntryNode setValue(AstNode value) {
-        this.value = value;
-        return this;
+public class GenericAstMapTests {
+    @Test
+    void test() {
+        GenericAstMap map = new GenericAstMap();
+        GenericAstScalar key = new GenericAstScalar("key");
+        GenericAstScalar value = new GenericAstScalar("value");
+        map.put(key, value);
+        Set<GenericAstMapEntry> set = map.entrySet();
+        assertNotNull(set);
     }
 }

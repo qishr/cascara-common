@@ -33,7 +33,7 @@
 // version.
 
 
-package io.github.qishr.cascara.common.lang.plain;
+package io.github.qishr.cascara.common.lang.generic;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
@@ -45,22 +45,22 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public final class PlainScalarNode extends PlainNode implements ScalarAstNode<AstNode> {
+public final class GenericAstScalar extends GenericAstNode implements ScalarAstNode<AstNode> {
 
     private Object value;
     private QuoteStyle quoteStyle = QuoteStyle.PLAIN;
 
-    public PlainScalarNode(Object value) {
+    public GenericAstScalar(Object value) {
         this.value = value;
     }
 
-    public PlainScalarNode(Object value, QuoteStyle quoteStyle) {
+    public GenericAstScalar(Object value, QuoteStyle quoteStyle) {
         this.value = value;
         this.quoteStyle = quoteStyle;
     }
 
     @Override
-    public PlainScalarNode setQuoteStyle(QuoteStyle style) {
+    public GenericAstScalar setQuoteStyle(QuoteStyle style) {
         this.quoteStyle = style;
         return this;
     }
@@ -100,7 +100,7 @@ public final class PlainScalarNode extends PlainNode implements ScalarAstNode<As
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PlainScalarNode that)) return false;
+        if (!(o instanceof GenericAstScalar that)) return false;
         return Objects.equals(value, that.value)
             && quoteStyle == that.quoteStyle;
     }

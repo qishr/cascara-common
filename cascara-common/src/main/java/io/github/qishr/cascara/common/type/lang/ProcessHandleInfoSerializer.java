@@ -43,9 +43,9 @@ import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
-import io.github.qishr.cascara.common.lang.plain.PlainMapNode;
-import io.github.qishr.cascara.common.lang.plain.PlainScalarNode;
-import io.github.qishr.cascara.common.lang.plain.PlainSequenceNode;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -58,17 +58,17 @@ public class ProcessHandleInfoSerializer extends AbstractTypeDescriptor<ProcessH
     }
 
     @Override
-    public PlainMapNode serialize(ProcessHandle.Info jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstMap serialize(ProcessHandle.Info jvmInstance, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
 
-        PlainMapNode node = new PlainMapNode();
+        GenericAstMap node = new GenericAstMap();
         jvmInstance.command().ifPresent(c -> node.put("command", c));
         jvmInstance.arguments().ifPresent(args -> {
-            PlainSequenceNode seq = new PlainSequenceNode();
+            GenericAstSequence seq = new GenericAstSequence();
             for (String arg : args) {
-                seq.add(new PlainScalarNode(arg));
+                seq.add(new GenericAstScalar(arg));
             }
             node.put("arguments", seq);
         });
