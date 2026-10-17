@@ -357,15 +357,8 @@ public class ReflectionUtils {
                 if (queryingClass == null) {
                     queryingClass = className;
                     queryingModule = moduleName;
-                } else if (moduleName == null) {
-                    try {
-                        Class<?> callingClass = Class.forName(className);
-                        return new Pair<>(callingClass, methodName);
-                    } catch (ClassNotFoundException e) {
-                        break;
-                    }
-                } else if (!ignoreQueryingModule || !moduleName.equals(queryingModule)) {
-                    if (!ignoreQueryingClass || !className.equals(queryingClass)) {
+                } else if (!ignoreQueryingClass || !className.equals(queryingClass)) {
+                    if (moduleName == null || !ignoreQueryingModule || !moduleName.equals(queryingModule)) {
                         try {
                             Class<?> callingClass = Class.forName(className);
                             return new Pair<>(callingClass, methodName);

@@ -84,14 +84,14 @@ public class GenericAstConverter implements AstConverter<GenericAstNode> {
     }
 
     @Nullable
-    public GenericAstNode toPlainAst(AstNode node) {
+    public GenericAstNode toGenericAst(AstNode node) {
         if (node == null) return null;
 
         if (node instanceof GenericAstMap map) {
             GenericAstMap out = new GenericAstMap();
             for (GenericAstMapEntry e : map.getEntries()) {
-                GenericAstNode key = toPlainAst(e.getKey());
-                GenericAstNode val = toPlainAst(e.getValue());
+                GenericAstNode key = toGenericAst(e.getKey());
+                GenericAstNode val = toGenericAst(e.getValue());
                 out.put(key, val);
             }
             return out;
@@ -100,7 +100,7 @@ public class GenericAstConverter implements AstConverter<GenericAstNode> {
         if (node instanceof GenericAstSequence seq) {
             GenericAstSequence out = new GenericAstSequence();
             for (AstNode child : seq.getChildren()) {
-                out.add(toPlainAst(child));
+                out.add(toGenericAst(child));
             }
             return out;
         }
