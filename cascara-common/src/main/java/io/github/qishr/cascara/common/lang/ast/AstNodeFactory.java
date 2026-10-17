@@ -40,10 +40,10 @@ import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 public interface AstNodeFactory<
     N extends AstNode,
-    S extends ScalarAstNode<N>,
-    L extends SequenceAstNode<N>,
-    M extends MapAstNode<K,N,E>,
-    E extends MapEntryAstNode<K,N>,
+    S extends ScalarAstNode<?>,
+    L extends SequenceAstNode<?>,
+    M extends MapAstNode<?,?,E>,
+    E extends MapEntryAstNode<?,?>,
     K
 > {
     S createScalarNode(Object jvmValue);

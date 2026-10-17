@@ -37,6 +37,8 @@ package io.github.qishr.cascara.common.lang.plain;
 
 import org.junit.jupiter.api.Test;
 
+import io.github.qishr.cascara.common.lang.ast.AstNode;
+
 public class PlainSequenceNodeTests {
     @Test
     public void test1() {
@@ -45,7 +47,7 @@ public class PlainSequenceNodeTests {
             .add(new PlainScalarNode("two"))
             .add(new PlainScalarNode("three"));
 
-        for (PlainNode node : seq) {
+        for (AstNode node : seq) {
             System.out.println("Node: " + node);
         }
     }

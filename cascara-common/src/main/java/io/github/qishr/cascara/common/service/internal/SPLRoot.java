@@ -211,21 +211,13 @@ public class SPLRoot extends SPLBranch {
 
         enumerateProviders(classes, null, null, true);
 
-        modules.addAll(modules);
+        this.modules.addAll(modules);
     }
 
     private boolean isAutoDiscoverEnabled() {
         String autoDiscover = System.getenv("cascara.spl.discover");
         return !"false".equalsIgnoreCase(autoDiscover);
     }
-
-    // private Set<String> pathSet(String paths) {
-    //     Set<String> pathSet = new HashSet<>();
-    //     if (paths != null) {
-    //         Collections.addAll(pathSet, paths.split(File.pathSeparator, -1));
-    //     }
-    //     return pathSet;
-    // }
 
     private void collectLayers(SPLBranch layer, Set<SPLBranch> collected) {
         collected.add(layer);

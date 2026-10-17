@@ -3,9 +3,28 @@
     "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true",
     "java.configuration.updateBuildConfiguration": "automatic",
 
-    "java.test.config": {
+    "java.test.config":  {
         "vmArgs": [
-            "--add-opens=java.base/java.lang=cascara.common"
-        ]
+            "--add-opens", "java.base/java.lang=cascara.common",
+            "--add-opens", "java.base/java.lang=integration.test",
+        ],
+        "modulePaths": [
+            // cascara-cpmmon requires sources and javadoc, so we can't use its libs folder
+            // as it contains sources and libs with the same module names.
+            "${workspaceFolder}/cascara-common/build/modulepath",
+
+            // For everything else we use libs rather than modulepath to avoid
+            // a duplicate cascara-common module.
+            "${workspaceFolder}/integration-test/build/libs",
+            "${workspaceFolder}/integration-test-fixtures/build/libs",
+        ],
+        "classPaths": [
+            "${workspaceFolder}/cascara-common/build/classes/java/main",
+            "${workspaceFolder}/cascara-common/build/resources/main",
+            "${workspaceFolder}/cascara-common/build/classes/java/test",
+            "${workspaceFolder}/cascara-common/build/resources/test",
+            "${workspaceFolder}/integration-test/build/classes/java/test",
+            "${workspaceFolder}/integration-test/build/resources/test",
+        ],
     }
 }

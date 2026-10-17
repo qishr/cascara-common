@@ -32,7 +32,6 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.lang.plain;
 
 import io.github.qishr.cascara.common.lang.ast.*;
@@ -42,9 +41,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-public final class PlainSequenceNode extends PlainNode implements SequenceAstNode<PlainNode> {
+public final class PlainSequenceNode extends PlainNode implements SequenceAstNode<AstNode> {
 
-    private final List<PlainNode> elements = new ArrayList<>();
+    private final List<AstNode> elements = new ArrayList<>();
 
     @Override
     public int size() {
@@ -63,13 +62,13 @@ public final class PlainSequenceNode extends PlainNode implements SequenceAstNod
     }
 
     @Override
-    public PlainSequenceNode add(PlainNode node) {
+    public PlainSequenceNode add(AstNode node) {
         elements.add(node);
         return this;
     }
 
     @Override
-    public PlainSequenceNode remove(PlainNode node) {
+    public PlainSequenceNode remove(AstNode node) {
         elements.remove(node);
         return this;
     }
@@ -81,12 +80,12 @@ public final class PlainSequenceNode extends PlainNode implements SequenceAstNod
     }
 
     @Override
-    public PlainNode get(int index) {
+    public AstNode get(int index) {
         return elements.get(index);
     }
 
     @Override
-    public PlainNode getFirst() {
+    public AstNode getFirst() {
         if (elements.isEmpty()) {
             throw new NoSuchElementException();
         }
@@ -94,41 +93,52 @@ public final class PlainSequenceNode extends PlainNode implements SequenceAstNod
     }
 
     @Override
-    public PlainNode getLast() {
+    public AstNode getLast() {
         if (elements.isEmpty()) {
             throw new NoSuchElementException();
         }
         return elements.getLast();
     }
 
-    public PlainMapNode getMap(int i) {
-        if (get(i) instanceof PlainMapNode map) {
+    //
+    // Convenience Getters
+    //
+
+    @SuppressWarnings("unchecked")
+    public MapAstNode<AstNode, AstNode, PlainMapEntryNode> getMap(int i) {
+        if (get(i) instanceof MapAstNode map) {
             return map;
         }
         return null;
     }
 
-    public PlainSequenceNode getSequence(int i) {
-        if (get(i) instanceof PlainSequenceNode seq) {
+    @SuppressWarnings("unchecked")
+    public SequenceAstNode<AstNode> getSequence(int i) {
+        if (get(i) instanceof SequenceAstNode seq) {
             return seq;
         }
         return null;
     }
 
-    public PlainScalarNode getScalar(int i) {
-        if (get(i) instanceof PlainScalarNode scalar) {
+    @SuppressWarnings("unchecked")
+    public ScalarAstNode<AstNode> getScalar(int i) {
+        if (get(i) instanceof ScalarAstNode scalar) {
             return scalar;
         }
         return null;
     }
 
+    //
+    //
+    //
+
     @Override
-    public List<PlainNode> getElements() {
+    public List<AstNode> getElements() {
         return elements;
     }
 
     @Override
-    public List<PlainNode> getChildren() {
+    public List<AstNode> getChildren() {
         return elements;
     }
 
@@ -139,11 +149,11 @@ public final class PlainSequenceNode extends PlainNode implements SequenceAstNod
 
     /// Returns Iterator instance
     @Override
-    public Iterator<PlainNode> iterator() {
-        return new SequenceIterator<PlainNode>(this);
+    public Iterator<AstNode> iterator() {
+        return new SequenceIterator<AstNode>(this);
     }
 
-    static class SequenceIterator<T> implements Iterator<PlainNode> {
+    static class SequenceIterator<T> implements Iterator<AstNode> {
         PlainSequenceNode list;
         int currentIndex = 0;
 
@@ -158,8 +168,8 @@ public final class PlainSequenceNode extends PlainNode implements SequenceAstNod
         }
 
         // return current data and update pointer
-        public PlainNode next() {
-            PlainNode data = list.get(currentIndex++);
+        public AstNode next() {
+            AstNode data = list.get(currentIndex++);
             return data;
         }
 

@@ -66,15 +66,14 @@ public class EnumMapSerializer extends AbstractTypeDescriptor<EnumMap> implement
             if (obj instanceof Map.Entry<?, ?> entry) {
                 if (entry.getKey() != null) {
 
-                    // TODO: This is probably wrong
-                    String value = String.valueOf(entry.getValue());
-                    node.put(entry.getKey().toString(), value);
+                    // TODO: This is probably wrong:
+                    // String value = String.valueOf(entry.getValue());
+                    // node.put(entry.getKey().toString(), value);
 
                     // Should be more like:
-                    // AstNode keyNode = ctx.serialize(entry.getKey());
-                    // AstNode valueNode = ctx.serialize(entry.getValue());
-                    // node.put(keyNode, valueNode);
-                    // TODO: Plain* noes shoul accept generic AstNodes and convert them to Plain noes or just store them as generic noes internally
+                    AstNode keyNode = ctx.serialize(entry.getKey());
+                    AstNode valueNode = ctx.serialize(entry.getValue());
+                    node.put(keyNode, valueNode);
                 }
             }
         }

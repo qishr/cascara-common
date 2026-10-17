@@ -84,10 +84,10 @@ public class PlainAstConverter implements AstConverter<PlainNode> {
     }
 
     @Nullable
-    public PlainNode toPlainAst(PlainNode yaml) {
-        if (yaml == null) return null;
+    public PlainNode toPlainAst(AstNode node) {
+        if (node == null) return null;
 
-        if (yaml instanceof PlainMapNode map) {
+        if (node instanceof PlainMapNode map) {
             PlainMapNode out = new PlainMapNode();
             for (PlainMapEntryNode e : map.getEntries()) {
                 PlainNode key = toPlainAst(e.getKey());
@@ -97,21 +97,21 @@ public class PlainAstConverter implements AstConverter<PlainNode> {
             return out;
         }
 
-        if (yaml instanceof PlainSequenceNode seq) {
+        if (node instanceof PlainSequenceNode seq) {
             PlainSequenceNode out = new PlainSequenceNode();
-            for (PlainNode child : seq.getChildren()) {
+            for (AstNode child : seq.getChildren()) {
                 out.add(toPlainAst(child));
             }
             return out;
         }
 
-        if (yaml instanceof PlainScalarNode scalar) {
+        if (node instanceof PlainScalarNode scalar) {
             return convertScalar(scalar);   // tag logic goes here
         }
 
         throw new LocalizableRuntimeException(
             LangMessage.UNKNOWN_NODE_TYPE,
-            yaml.getClass().getSimpleName()
+            node.getClass().getSimpleName()
         );
     }
 

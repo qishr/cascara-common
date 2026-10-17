@@ -32,24 +32,23 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.lang.plain;
 
 import io.github.qishr.cascara.common.lang.ast.*;
 import java.util.Collections;
 import java.util.List;
 
-public final class PlainMapEntryNode extends PlainNode implements MapEntryAstNode<PlainNode,PlainNode> {
+public final class PlainMapEntryNode extends PlainNode implements MapEntryAstNode<AstNode,AstNode> {
 
-    private final PlainNode key;
-    private PlainNode value;
+    private final AstNode key;
+    private AstNode value;
 
-    public PlainMapEntryNode(PlainNode key, PlainNode value) {
+    public PlainMapEntryNode(AstNode key, AstNode value) {
         this.key = key;
         this.value = value;
     }
 
-    public PlainMapEntryNode(String key, PlainNode value) {
+    public PlainMapEntryNode(String key, AstNode value) {
         this.key = new PlainScalarNode(key);
         this.value = value;
     }
@@ -60,32 +59,23 @@ public final class PlainMapEntryNode extends PlainNode implements MapEntryAstNod
     }
 
     @Override
-    public PlainNode getKey() {
+    public AstNode getKey() {
         return key;
     }
 
-    // @Override
-    // public String getKeyString() {
-    //     if (key instanceof ScalarAstNode scalar) {
-
-    //     } else {
-
-    //     }
-    // }
-
     @Override
-    public PlainNode getValue() {
+    public AstNode getValue() {
         return value;
     }
 
     @Override
-    public PlainMapEntryNode setRaw(PlainNode value) {
+    public PlainMapEntryNode setRaw(AstNode value) {
         this.value = value;
         return this;
     }
 
     @Override
-    public List<PlainNode> getChildren() {
+    public List<AstNode> getChildren() {
         return List.of(key, value);
     }
 
@@ -95,7 +85,7 @@ public final class PlainMapEntryNode extends PlainNode implements MapEntryAstNod
     }
 
     @Override
-    public PlainNode setValue(PlainNode value) {
+    public PlainMapEntryNode setValue(AstNode value) {
         this.value = value;
         return this;
     }

@@ -345,6 +345,10 @@ public class ReflectionUtils {
         String queryingClass = null;
         String queryingModule = null;
         StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
+
+        // System.out.println("\n---- getCaller ----");
+        // Thread.dumpStack();
+
         for (StackTraceElement frame : callStack) {
             String moduleName = frame.getModuleName();
             String className = frame.getClassName();
@@ -353,6 +357,13 @@ public class ReflectionUtils {
                 if (queryingClass == null) {
                     queryingClass = className;
                     queryingModule = moduleName;
+                } else if (moduleName == null) {
+                    try {
+                        Class<?> callingClass = Class.forName(className);
+                        return new Pair<>(callingClass, methodName);
+                    } catch (ClassNotFoundException e) {
+                        break;
+                    }
                 } else if (!ignoreQueryingModule || !moduleName.equals(queryingModule)) {
                     if (!ignoreQueryingClass || !className.equals(queryingClass)) {
                         try {

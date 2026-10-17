@@ -636,7 +636,9 @@ public class SPLBranch implements SPL {
                 ContentType contentType = null;
                 if (instance instanceof ContentTypeProvider ctp) {
                     contentType = ctp.getContentType();
-                    rootLayer.storeContentType(contentType);
+                    if (contentType != null) {
+                        rootLayer.storeContentType(contentType);
+                    }
                 }
 
                 boolean isSingleton = false;

@@ -63,16 +63,45 @@ public interface ScalarAstNode<T extends AstNode> extends AstNode {
 
     /// Returns the string form or the primitive.
     /// If the primitive is `null`, an empty string is returned.
-    String asString();
+    default String asString() {
+        return getPrimitive() == null ? null : getPrimitive().toString();
+    }
 
-    int asInteger();
-    int asInteger(int defaultValue);
-    double asDouble();
-    double asDouble(double defaultValue);
+    default int asInteger() {
+        return asInteger(0);
+    }
 
-    /// Returns the boolean value of the scalar, if there is one.
-    boolean asBoolean();
+    default int asInteger(int defaultValue) {
+        if (getPrimitive() instanceof Number n) return n.intValue();
+        try { return Integer.parseInt(asString()); } catch (Exception e) { return defaultValue; }
+    }
+
+    default long asLong() {
+        return asLong(0);
+    }
+
+    default long asLong(long defaultValue) {
+        if (getPrimitive() instanceof Number n) return n.longValue();
+        try { return Long.parseLong(asString()); } catch (Exception e) { return defaultValue; }
+    }
+
+    default double asDouble() {
+        return asLong(0);
+    }
+
+    default double asDouble(double defaultValue) {
+        if (getPrimitive() instanceof Number n) return n.doubleValue();
+        try { return Double.parseDouble(asString()); } catch (Exception e) { return defaultValue; }
+    }
+
+    /// Returns the boolean value of the scalar, if there is one, otherwise results false.
+    default boolean asBoolean() {
+        return asBoolean(false);
+    }
 
     /// Returns the boolean value of the scalar, if there is one, otherwise the specified default is returned.
-    boolean asBoolean(boolean defaultValue);
+    default boolean asBoolean(boolean defaultValue) {
+        if (getPrimitive() instanceof Boolean n) return n.booleanValue();
+        try { return Boolean.parseBoolean(asString()); } catch (Exception e) { return defaultValue; }
+    }
 }

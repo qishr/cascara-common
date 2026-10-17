@@ -50,11 +50,13 @@ module integration.test {
     requires transitive integration.test.fixtures;
 
     // Exports
+    exports integration.test.ast;
     exports integration.test.exec;
     exports integration.test.spl;
     exports integration.test.serialization;
 
     // For JUnit
+    opens integration.test.ast to org.junit.platform.commons;
     opens integration.test.exec to org.junit.platform.commons;
     opens integration.test.spl to org.junit.platform.commons;
     opens integration.test.serialization to org.junit.platform.commons;

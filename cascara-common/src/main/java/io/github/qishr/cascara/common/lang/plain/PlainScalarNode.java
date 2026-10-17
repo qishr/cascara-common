@@ -45,7 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public final class PlainScalarNode extends PlainNode implements ScalarAstNode<PlainNode> {
+public final class PlainScalarNode extends PlainNode implements ScalarAstNode<AstNode> {
 
     private Object value;
     private QuoteStyle quoteStyle = QuoteStyle.PLAIN;
@@ -71,55 +71,11 @@ public final class PlainScalarNode extends PlainNode implements ScalarAstNode<Pl
         return value == null ? null : value.toString();
     }
 
-    @Override
-    public String asString() {
-        return value == null ? null : value.toString();
-    }
-
-    @Override
-    public int asInteger() {
-        return asInteger(0);
-    }
-
-    @Override
-    public int asInteger(int defaultValue) {
-        if (value instanceof Number n) return n.intValue();
-        try { return Integer.parseInt(asString()); } catch (Exception e) { return defaultValue; }
-    }
-
-    @Override
-    public double asDouble() {
-        return asDouble(0);
-    }
-
-    @Override
-    public double asDouble(double defaultValue) {
-        if (value instanceof Number n) return n.doubleValue();
-        try { return Double.parseDouble(asString()); } catch (Exception e) { return defaultValue; }
-    }
-
-    @Override
-    public boolean asBoolean() {
-        return asBoolean(false);
-    }
-
-    @Override
-    public boolean asBoolean(boolean defaultValue) {
-        if (value instanceof Boolean b) return b;
-        return Boolean.parseBoolean(asString());
-    }
-
     @Nullable
     @Override
     public Object getPrimitive() {
         return value;
     }
-
-    // @Override
-    // public PlainScalarNode setPrimitive(Object value) {
-    //     this.value = value;
-    //     return this;
-    // }
 
     @Override
     public List<? extends AstNode> getChildren() {
@@ -160,7 +116,7 @@ public final class PlainScalarNode extends PlainNode implements ScalarAstNode<Pl
     }
 
     @Override
-    public ScalarAstNode<PlainNode> setPrimitive(Object jvmValue) {
+    public ScalarAstNode<AstNode> setPrimitive(Object jvmValue) {
 		throw new UnimplementedMethodException();
     }
 }

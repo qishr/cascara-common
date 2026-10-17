@@ -50,13 +50,16 @@ import java.util.stream.Stream;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.report.NoOpReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public abstract class AbstractLibraryScanner {
     protected static final String DOT_CLASS = ".class";
     protected static final String DOT_JAR = ".jar";
     protected static final String MODULE_INFO = "module-info";
 
-    // protected abstract Reporter getReporter();
+    protected Reporter reporter = new NoOpReporter();
     protected abstract void addModuleDescriptor(String moduleName, ModuleDescriptor descriptor);
     protected abstract void addModuleLocation(String moduleName, Path path);
     protected abstract void addClassToModule(String className, String moduleName);
@@ -86,13 +89,25 @@ public abstract class AbstractLibraryScanner {
             String jarModuleName = jar.getModuleName();
             Set<String> jarClassNames = jar.getClassNames();
             if (jarClassNames == null) {
-                // getReporter().trace("No classes found");
+                reporter.warn(GenericMessage.WARN, "No classes found in JAR " + path);
                 return null;
+            }
+            if (jarModuleName == null || jarModuleName.isEmpty()) {
+                reporter.warn(GenericMessage.WARN, "Scanning non-modular JAR: " + path);
+            } else {
+                reporter.warn(GenericMessage.WARN, "Scanning modular (" + jarModuleName + ") JAR: " + path);
             }
             for (String className : jarClassNames) {
                 if (!isExcluded(className)) {
+                    if (!(reporter instanceof NoOpReporter)) {
+                        reporter.debug("  Found class: " + className);
+                    }
                     addClassToModule(className, jarModuleName);
                     addClass(className);
+                } else {
+                    if (!(reporter instanceof NoOpReporter)) {
+                        reporter.trace("  Class excluded: " + className);
+                    }
                 }
             }
             if (jarModuleName == null) {
@@ -169,6 +184,8 @@ public abstract class AbstractLibraryScanner {
                     discovered.add(declaredClass.getName());
                 }
             }
+        } catch (IllegalAccessError e) {
+            error(e);
         } catch (java.lang.NoClassDefFoundError e) {
             error(e);
         } catch (Exception e) {
@@ -177,9 +194,10 @@ public abstract class AbstractLibraryScanner {
         return moduleName;
     }
 
-    // TODO: Find a way for this to work with GlobalReporter
     protected void error(Throwable t) {
-        System.err.println(t.getMessage());
-        // getReporter().debug(t.getClass().getName() + ": " + t.getMessage());
+        reporter.error(t, GenericMessage.ERROR, t.getMessage());
+        if (reporter instanceof NoOpReporter) {
+            System.err.println(t.getMessage());
+        }
     }
 }

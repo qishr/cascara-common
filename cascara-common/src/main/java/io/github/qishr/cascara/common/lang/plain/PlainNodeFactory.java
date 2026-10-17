@@ -35,11 +35,12 @@
 
 package io.github.qishr.cascara.common.lang.plain;
 
+import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.AstNodeFactory;
 import io.github.qishr.cascara.common.lang.util.LanguageOptions;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
-public class PlainNodeFactory implements AstNodeFactory<PlainNode,PlainScalarNode,PlainSequenceNode,PlainMapNode,PlainMapEntryNode,PlainNode> {
+public class PlainNodeFactory implements AstNodeFactory<AstNode,PlainScalarNode,PlainSequenceNode,PlainMapNode,PlainMapEntryNode,AstNode> {
 
     @Override
     public PlainScalarNode createScalarNode(Object jvmValue) {

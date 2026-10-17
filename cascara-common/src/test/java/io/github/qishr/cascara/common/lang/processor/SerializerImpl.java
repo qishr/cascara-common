@@ -52,7 +52,8 @@ import io.github.qishr.cascara.common.lang.util.LanguageOptions;
 import io.github.qishr.cascara.common.type.TypeReference;
 import io.github.qishr.cascara.common.util.ContentType;
 
-public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,PlainScalarNode,PlainSequenceNode,PlainMapNode,PlainMapEntryNode,PlainNode> {
+// public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,ScalarAstNode<PlainNode>,SequenceAstNode<PlainNode>,MapAstNode<PlainNode,PlainNode,MapEntryAstNode<PlainNode,PlainNode>,MapEntryAstNode<PlainNode,PlainNode>,PlainNode> {
+public class SerializerImpl extends AbstractSerializer<SerializerImpl,AstNode,PlainScalarNode,PlainSequenceNode,PlainMapNode,PlainMapEntryNode,AstNode> {
 
     public SerializerImpl() {
         super("", new PlainNodeFactory(), null);
@@ -69,7 +70,7 @@ public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,
     }
 
     @Override
-    protected PlainNode serializeKey(Object key) {
+    protected AstNode serializeKey(Object key) {
         return serialize(key);
     }
 
@@ -93,7 +94,7 @@ public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,
 
     /// {@inheritDoc}
     @Override
-    public SerializerImpl setParser(AstParser<PlainNode,?,?> parser) {
+    public SerializerImpl setParser(AstParser<AstNode,?,?> parser) {
         return this;
     }
 
@@ -105,7 +106,7 @@ public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,
 
     /// {@inheritDoc}
     @Override
-    public PlainNode toAst(Object jvmInstance) {
+    public AstNode toAst(Object jvmInstance) {
         return serialize(jvmInstance);
     }
 

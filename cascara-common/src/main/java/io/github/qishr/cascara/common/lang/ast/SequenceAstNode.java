@@ -50,4 +50,47 @@ public interface SequenceAstNode<T extends AstNode> extends AstNode, Iterable<T>
     T getLast();
     List<T> getElements();
     Iterator<T> iterator();
+
+    //
+    // Convenience Methods
+    //
+
+    SequenceAstNode<?> getSequence(int i);
+    MapAstNode<?,?,?> getMap(int i);
+    ScalarAstNode<?> getScalar(int i);
+
+    default String getString(int i) {
+        if (get(i) instanceof ScalarAstNode scalar) {
+            return scalar.asString();
+        }
+        return null;
+    }
+
+    default int getInteger(int i) {
+        if (get(i) instanceof ScalarAstNode scalar) {
+            return scalar.asInteger();
+        }
+        return 0;
+    }
+
+    default long getLong(int i) {
+        if (get(i) instanceof ScalarAstNode scalar) {
+            return scalar.asInteger();
+        }
+        return 0;
+    }
+
+    default Number getDouble(int i) {
+        if (get(i) instanceof ScalarAstNode scalar) {
+            return scalar.asDouble();
+        }
+        return 0;
+    }
+
+    default boolean getBoolean(int i) {
+        if (get(i) instanceof ScalarAstNode scalar) {
+            return scalar.asBoolean();
+        }
+        return false;
+    }
 }

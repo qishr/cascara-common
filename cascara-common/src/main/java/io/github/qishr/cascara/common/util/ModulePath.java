@@ -52,10 +52,11 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 @Experimental
 public class ModulePath extends AbstractLibraryScanner {
-    // private static final Reporter REPORTER = GlobalReporter.forClass(ModulePath.class);
     private static final String PATHS = System.getProperty("jdk.module.path");
 
     private Set<String> moduleNames = new HashSet<>();
@@ -64,24 +65,36 @@ public class ModulePath extends AbstractLibraryScanner {
     private Map<String, ModuleDescriptor> descriptors = new HashMap<>();
     private Map<String, Path> moduleToPath = new HashMap<>();
 
+    public ModulePath(Reporter reporter) {
+        this(reporter, null, null, null);
+        loadPatchedModules();
+    }
+
     public ModulePath() {
-        this(null, null, null);
+        this(null, null, null, null);
         loadPatchedModules();
     }
 
     public ModulePath(String modulePath) {
-        this(modulePath, null);
+        this(null, pathSet(modulePath), null, null);
     }
 
     public ModulePath(String modulePath, Path virtualReferencePath) {
-        this(pathSet(modulePath), null, virtualReferencePath);
+        this(null, pathSet(modulePath), null, virtualReferencePath);
     }
 
-    public ModulePath(Set<String> classPaths, Path virtualReferencePath) {
-        this(classPaths, null, virtualReferencePath);
+    public ModulePath(Set<String> modulePaths, Path virtualReferencePath) {
+        this(null, modulePaths, null, virtualReferencePath);
     }
 
     public ModulePath(Set<String> modulePaths, Set<String> excluded, Path virtualReferencePath) {
+        this(null, modulePaths, excluded, virtualReferencePath);
+    }
+
+    public ModulePath(Reporter reporter, Set<String> modulePaths, Set<String> excluded, Path virtualReferencePath) {
+        if (reporter != null) {
+            this.reporter = reporter;
+        }
         if (modulePaths == null || modulePaths.isEmpty()) {
             modulePaths = new HashSet<>();
             if (PATHS != null) {
@@ -122,6 +135,7 @@ public class ModulePath extends AbstractLibraryScanner {
     //
 
     private void loadPatchedModules() {
+        reporter.info(GenericMessage.INFO, "Scanning patched modules");
         List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
         for (int i = 0; i < inputArgs.size(); i++) {
             String arg = inputArgs.get(i);
@@ -138,11 +152,6 @@ public class ModulePath extends AbstractLibraryScanner {
             }
         }
     }
-
-    // @Override
-    // protected Reporter getReporter() {
-    //     return REPORTER;
-    // }
 
     public String scanDirectoryUrl(Path directory, URL[] urls, String moduleName) {
         // This is called from ModulePathTests
@@ -173,6 +182,8 @@ public class ModulePath extends AbstractLibraryScanner {
 
         String moduleName = option.substring(0, equalsIdx);
         String pathsString = option.substring(equalsIdx + 1);
+
+        reporter.info(GenericMessage.INFO, "Patch: " + moduleName + " = " + pathsString);
 
         String[] paths = pathsString.split(File.pathSeparator);
         for (String pathStr : paths) {
@@ -207,11 +218,17 @@ public class ModulePath extends AbstractLibraryScanner {
         moduleToClasses = new HashMap<>();
 
         if (modulePaths == null || modulePaths.isEmpty()) {
-            // REPORTER.debug("No module path");
+            reporter.warn(GenericMessage.WARN, "No module path");
             return;
         }
 
+        reporter.info(GenericMessage.INFO, "Scanning module path");
+
+        int size = modulePaths.size();
+        int n = 0;
         for (String modulePathString : modulePaths) {
+            n++;
+            reporter.info(GenericMessage.INFO, n + " of " + size + ": " + modulePathString);
             if (modulePathString.isBlank()) continue;
 
             // Parse path using virtual file system if provided, otherwise default OS file system
@@ -220,7 +237,7 @@ public class ModulePath extends AbstractLibraryScanner {
                     : Path.of(modulePathString);
 
             if (!Files.exists(path)) {
-                // REPORTER.debug("Non-existant module path: " + path);
+                reporter.warn(GenericMessage.WARN, "Non-existant module path: " + path);
                 continue;
             }
 
@@ -231,9 +248,9 @@ public class ModulePath extends AbstractLibraryScanner {
                 moduleName = scanJar(path, moduleName);
             }
 
-            if (moduleName != null && !moduleName.isEmpty()) {
-                moduleNames.add(moduleName);
-            }
+            // if (moduleName != null && !moduleName.isEmpty()) {
+            //     moduleNames.add(moduleName);
+            // }
         }
     }
 
@@ -257,6 +274,7 @@ public class ModulePath extends AbstractLibraryScanner {
         if (moduleClasses == null) {
             moduleClasses = new HashSet<>();
             moduleToClasses.put(moduleName, moduleClasses);
+            moduleNames.add(moduleName);
         }
         moduleClasses.add(className);
         classNames.add(className);

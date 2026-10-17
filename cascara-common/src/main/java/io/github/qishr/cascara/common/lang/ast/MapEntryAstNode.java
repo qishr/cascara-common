@@ -38,6 +38,8 @@ package io.github.qishr.cascara.common.lang.ast;
 import java.util.List;
 import java.util.Map;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
+
 // K The type of the key (usually String/ScalarAstNode)
 // V The type of the value node
 /// Represents the structural pairing of a key and a value in a Map.
@@ -60,7 +62,9 @@ public interface MapEntryAstNode<K, V extends AstNode> extends Map.Entry<K,V>, A
     /// Returns the value corresponding to this entry.
     V getValue();
 
+    // TODO: This seems like it should not be here
     /// Replaces the value corresponding to this entry with the specified value (optional operation).
+    @Experimental
     MapEntryAstNode<K,V> setRaw(V value);
 
     // An unmodifiable list of the child entries.
