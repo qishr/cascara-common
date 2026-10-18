@@ -55,7 +55,7 @@ public class ServicesCatalogSerializer extends AbstractTypeDescriptor<Object> im
     }
 
     @Override
-    public GenericAstMap serialize(Object jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstMap serialize(Object jvmInstance, Type jvmType, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }

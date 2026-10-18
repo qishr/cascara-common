@@ -41,13 +41,13 @@ import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 
 public class ServiceException extends LocalizableRuntimeException {
     /// Constructor for errors without an exception
-    public ServiceException(DiagnosticMessage code, Object... details) {
-        super(null, code, details);
+    public ServiceException(DiagnosticMessage message, Object... details) {
+        super(null, message, details);
     }
 
     /// Constructor for errors with an exception
-    public ServiceException(Throwable cause, DiagnosticMessage code, Object... details) {
-        super(cause, code, details);
+    public ServiceException(Throwable cause, DiagnosticMessage message, Object... details) {
+        super(cause, message, details);
     }
 
     /// @deprecated  As of release 1.1.0

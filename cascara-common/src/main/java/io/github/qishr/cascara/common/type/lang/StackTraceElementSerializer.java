@@ -54,7 +54,7 @@ public class StackTraceElementSerializer extends AbstractTypeDescriptor<StackTra
     }
 
     @Override
-    public GenericAstMap serialize(StackTraceElement jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstMap serialize(StackTraceElement jvmInstance, Type jvmType, Serializer.Context ctx) throws SerializerException {
         return new GenericAstMap()
             .put("classLoaderName", jvmInstance.getClassLoaderName())
             .put("moduleName", jvmInstance.getModuleName())

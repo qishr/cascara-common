@@ -324,8 +324,8 @@ public class SPLBranch implements SPL {
                     method.setAccessible(true);
                     method.invoke(instance);
                 } catch (Exception e) {
-                    DiagnosticMessage code = DiagnosticMessage.forException(e);
-                    if (code == null) {
+                    DiagnosticMessage message = DiagnosticMessage.forException(e);
+                    if (message == null) {
                         throw new ServiceException(
                             e,
                             GenericMessage.ERROR,
@@ -334,7 +334,7 @@ public class SPLBranch implements SPL {
                     } else {
                         throw new ServiceException(
                             e,
-                            code,
+                            message,
                             clazz.getSimpleName() + "." + method.getName()
                         );
                     }
@@ -887,12 +887,12 @@ public class SPLBranch implements SPL {
             (item.getJarPath() == null ? "" : ", jar=\"" + item.getJarPath() + "\""));
     }
 
-    protected static void bootError(Throwable e, ServiceMessage code, Object... details) {
-        REPORTER.error(e, code, details);
+    protected static void bootError(Throwable e, ServiceMessage message, Object... details) {
+        REPORTER.error(e, message, details);
     }
 
-    protected static void bootWarning(ServiceMessage code, Object... details) {
-        REPORTER.warn(code, details);
+    protected static void bootWarning(ServiceMessage message, Object... details) {
+        REPORTER.warn(message, details);
     }
 
     public void setParent(SPL parent) {

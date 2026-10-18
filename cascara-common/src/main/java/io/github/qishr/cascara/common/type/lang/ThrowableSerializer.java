@@ -61,7 +61,7 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
     }
 
     @Override
-    public GenericAstMap serialize(Throwable jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstMap serialize(Throwable jvmInstance, Type jvmType, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
@@ -73,13 +73,13 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
         // Serialize stack trace elements
         GenericAstSequence stackArray = new GenericAstSequence();
         for (StackTraceElement element : jvmInstance.getStackTrace()) {
-            stackArray.add(stackTraceSerializer.serialize(element, ctx));
+            stackArray.add(stackTraceSerializer.serialize(element, jvmType, ctx));
         }
         node.put("stackTrace", stackArray);
 
         // Recursive cause
         if (jvmInstance.getCause() != null && jvmInstance.getCause() != jvmInstance) {
-            node.put("cause", serialize(jvmInstance.getCause(), ctx));
+            node.put("cause", serialize(jvmInstance.getCause(), jvmType, ctx));
         }
 
         // Suppressed exceptions
@@ -87,7 +87,7 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
         if (suppressed != null && suppressed.length > 0) {
             GenericAstSequence suppressedArray = new GenericAstSequence();
             for (Throwable s : suppressed) {
-                suppressedArray.add(serialize(s, ctx));
+                suppressedArray.add(serialize(s, jvmType, ctx));
             }
             node.put("suppressed", suppressedArray);
         }
@@ -96,7 +96,7 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
     }
 
     @Override
-    public Throwable deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException {
+    public Throwable deserialize(AstNode astNode, Type jvmType, Serializer.Context ctx) throws SerializerException {
         if (!(astNode instanceof MapAstNode map)) {
             return null;
         }
@@ -110,7 +110,7 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
         if (map.get("stackTrace") instanceof SequenceAstNode stackArray) {
             List<StackTraceElement> elements = new ArrayList<>();
             for (AstNode elementNode : stackArray.getChildren()) {
-                StackTraceElement ste = stackTraceSerializer.deserialize(elementNode, targetType, ctx);
+                StackTraceElement ste = stackTraceSerializer.deserialize(elementNode, jvmType, ctx);
                 if (ste != null) {
                     elements.add(ste);
                 }
@@ -120,13 +120,13 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
 
         // Deserialize cause
         if (map.get("cause") instanceof MapAstNode causeNode) {
-            throwable.initCause(deserialize(causeNode, targetType, ctx));
+            throwable.initCause(deserialize(causeNode, jvmType, ctx));
         }
 
         // Deserialize suppressed
         if (map.get("suppressed") instanceof SequenceAstNode suppressedArray) {
             for (AstNode sNode : suppressedArray.getChildren()) {
-                Throwable s = deserialize(sNode, targetType, ctx);
+                Throwable s = deserialize(sNode, jvmType, ctx);
                 if (s != null) {
                     throwable.addSuppressed(s);
                 }

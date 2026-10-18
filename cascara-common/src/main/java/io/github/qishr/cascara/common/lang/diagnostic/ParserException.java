@@ -43,22 +43,22 @@ import io.github.qishr.cascara.common.lang.token.Token;
 public class ParserException extends LocatableException {
 
     /// Standard constructor for generic errors.
-    public ParserException(DiagnosticMessage code, Object... details) {
-        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, code, details);
+    public ParserException(DiagnosticMessage message, Object... details) {
+        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, message, details);
     }
 
     /// Standard constructor for parser-detected logic errors.
-    public ParserException(int line, int column, DiagnosticMessage code, Object... details) {
-        super(null, line, column, code, details);
+    public ParserException(int line, int column, DiagnosticMessage message, Object... details) {
+        super(null, line, column, message, details);
     }
 
     /// Standard constructor for parser-detected logic errors.
-    public ParserException(Token token, DiagnosticMessage code, Object... details) {
-        super(null, token.getStartLine(), token.getStartColumn(), code, details);
+    public ParserException(Token token, DiagnosticMessage message, Object... details) {
+        super(null, token.getStartLine(), token.getStartColumn(), message, details);
     }
 
     /// Constructor for I/O or Stream failures.
-    public ParserException(Throwable cause, DiagnosticMessage code, Object... details) {
-        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
+    public ParserException(Throwable cause, DiagnosticMessage message, Object... details) {
+        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, message, details);
     }
 }

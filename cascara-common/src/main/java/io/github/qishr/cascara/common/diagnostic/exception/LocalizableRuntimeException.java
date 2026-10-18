@@ -47,15 +47,15 @@ public class LocalizableRuntimeException extends RuntimeException implements Loc
     //     localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
     // }
 
-    public LocalizableRuntimeException(DiagnosticMessage code, Object... details) {
-        super(AbstractLocalizableException.getLocalizer().format(code, details));
-        this.diagnosticMessage = code;
+    public LocalizableRuntimeException(DiagnosticMessage message, Object... details) {
+        super(AbstractLocalizableException.getLocalizer().format(message, details));
+        this.diagnosticMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
-    public LocalizableRuntimeException(Throwable cause, DiagnosticMessage code, Object... details) {
-        super(AbstractLocalizableException.getLocalizer().format(code, details), cause);
-        this.diagnosticMessage = code;
+    public LocalizableRuntimeException(Throwable cause, DiagnosticMessage message, Object... details) {
+        super(AbstractLocalizableException.getLocalizer().format(message, details), cause);
+        this.diagnosticMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 

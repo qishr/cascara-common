@@ -42,12 +42,12 @@ import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 public class TokenizerException extends LocatableException {
 
     /// Standard constructor for tokenizer-detected logic errors.
-    public TokenizerException(int line, int column, DiagnosticMessage code, Object... details) {
-        super(null, line, column, code, details);
+    public TokenizerException(int line, int column, DiagnosticMessage message, Object... details) {
+        super(null, line, column, message, details);
     }
 
     /// Constructor for I/O or Stream failures.
-    public TokenizerException(Throwable cause, DiagnosticMessage code, Object... details) {
-        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
+    public TokenizerException(Throwable cause, DiagnosticMessage message, Object... details) {
+        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, message, details);
     }
 }

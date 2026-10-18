@@ -58,7 +58,7 @@ public class ProcessHandleInfoSerializer extends AbstractTypeDescriptor<ProcessH
     }
 
     @Override
-    public GenericAstMap serialize(ProcessHandle.Info jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstMap serialize(ProcessHandle.Info jvmInstance, Type jvmType, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }

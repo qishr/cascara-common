@@ -48,23 +48,23 @@ public abstract class LocatableException extends LocalizableRuntimeException {
     private final String rawMessage;
 
     /// Standard Constructor
-    public LocatableException(URI uri, int line, int column, Throwable cause, DiagnosticMessage code, Object... details) {
-        super(cause, code, details);
+    public LocatableException(URI uri, int line, int column, Throwable cause, DiagnosticMessage message, Object... details) {
+        super(cause, message, details);
         // this.message = messageWithLocation(code.getMessage(), line, uri);
-        this.rawMessage = code.getFormat();
+        this.rawMessage = message.getFormat(); // TODO: Format it
         this.line = line;
         this.column = column;
         this.uri = uri;
     }
 
     /// Standard constructor for parser-detected logic errors
-    public LocatableException(URI uri, int line, int column, DiagnosticMessage code, Object... details) {
-        this(uri, line, column, null, code, details);
+    public LocatableException(URI uri, int line, int column, DiagnosticMessage message, Object... details) {
+        this(uri, line, column, null, message, details);
     }
 
     /// Constructor for when we only have a URI but no line or column
-    public LocatableException(URI uri, Throwable cause, DiagnosticMessage code, Object... details) {
-        this(uri, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
+    public LocatableException(URI uri, Throwable cause, DiagnosticMessage message, Object... details) {
+        this(uri, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, message, details);
     }
 
     // private static String messageWithLocation(String message, int line, URI uri) {

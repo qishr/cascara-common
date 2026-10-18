@@ -44,23 +44,23 @@ public class ExecutionException extends LocalizableRuntimeException {
 
     private final List<Diagnostic> diagnostics;
 
-    public ExecutionException(DiagnosticMessage code, Object... details) {
-        super(code, details);
+    public ExecutionException(DiagnosticMessage message, Object... details) {
+        super(message, details);
         this.diagnostics = null;
     }
 
-    public ExecutionException(List<Diagnostic> diagnostics, DiagnosticMessage code, Object... details) {
-        super(code, details);
+    public ExecutionException(List<Diagnostic> diagnostics, DiagnosticMessage message, Object... details) {
+        super(message, details);
         this.diagnostics = diagnostics;
     }
 
-    public ExecutionException(Throwable cause, DiagnosticMessage code, Object... details) {
-        super(cause, code, details);
+    public ExecutionException(Throwable cause, DiagnosticMessage message, Object... details) {
+        super(cause, message, details);
         this.diagnostics = null;
     }
 
-    public ExecutionException(Throwable cause, List<Diagnostic> diagnostics, DiagnosticMessage code, Object... details) {
-        super(cause, code, details);
+    public ExecutionException(Throwable cause, List<Diagnostic> diagnostics, DiagnosticMessage message, Object... details) {
+        super(cause, message, details);
         this.diagnostics = diagnostics;
     }
 

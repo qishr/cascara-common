@@ -37,12 +37,12 @@ package io.github.qishr.cascara.common.type.util;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
-import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
 import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.TypeSerializer;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 import java.lang.reflect.ParameterizedType;
@@ -57,56 +57,66 @@ public class EnumSetSerializer extends AbstractTypeDescriptor<EnumSet> implement
     }
 
     @Override
-    public GenericAstSequence serialize(EnumSet jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstSequence serialize(EnumSet jvmInstance, Type jvmType, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
+        Type enumType = ReflectionUtils.getElementTypeOfCollectionType(jvmType);
+
         GenericAstSequence seq = new GenericAstSequence();
-        for (Object enumVal : jvmInstance) {
-            seq.add(new GenericAstScalar(enumVal.toString()));
+        for (Object obj : jvmInstance) {
+            if (obj instanceof Enum enumVal) {
+                AstNode element = ctx.serialize(enumVal, enumType);
+                seq.add(element);
+            }
         }
         return seq;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public EnumSet deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException {
+    public EnumSet deserialize(AstNode astNode, Type jvmType, Serializer.Context ctx) throws SerializerException {
         if (!(astNode instanceof SequenceAstNode seqNode)) {
             return null;
         }
 
-        // Extract the underlying Enum class from targetType (e.g. EnumSet<DayOfWeek> -> DayOfWeek.class)
-        Class<? extends Enum> enumClass = extractEnumClass(targetType);
+        // Extract the underlying Enum class from jvmType (e.g. EnumSet<DayOfWeek> -> DayOfWeek.class)
+        Class<? extends Enum> enumClass = extractEnumClass(seqNode, jvmType, ctx);
         if (enumClass == null) {
             return null;
         }
 
         EnumSet enumSet = EnumSet.noneOf(enumClass);
         for (AstNode child : seqNode.getChildren()) {
-            String val = child.asString();
-            if (val != null && !val.isBlank()) {
-                try {
-                    Enum enumValue = Enum.valueOf(enumClass, val);
-                    enumSet.add(enumValue);
-                } catch (IllegalArgumentException e) {
-                    // Handle or ignore unknown enum constants based on your error policy
-                }
+            Object rawObject = ctx.deserialize(child, enumClass);
+            if (rawObject instanceof Enum enumValue) {
+                enumSet.add(enumValue);
             }
         }
         return enumSet;
     }
 
     @SuppressWarnings("unchecked")
-    private Class<? extends Enum> extractEnumClass(Type targetType) {
-        if (targetType instanceof ParameterizedType pt) {
+    private Class<? extends Enum> extractEnumClass(SequenceAstNode seqNode, Type jvmType, Serializer.Context ctx) {
+        if (jvmType instanceof ParameterizedType pt) {
             Type[] actualArgs = pt.getActualTypeArguments();
             if (actualArgs.length > 0 && actualArgs[0] instanceof Class<?> cls && Enum.class.isAssignableFrom(cls)) {
+                // TODO: A test that reaches here
                 return (Class<? extends Enum>) cls;
             }
-        } else if (targetType instanceof Class<?>) {
+        } else if (jvmType instanceof Class<?>) {
             // If it's a raw EnumSet, check if we can inspect further or default
             // (Usually fields are parameterized like EnumSet<DayOfWeek>)
         }
+
+        if (!seqNode.isEmpty()) {
+            Type enumType = ReflectionUtils.getEnumType(jvmType);
+            Object element = ctx.deserialize(seqNode.getFirst(), enumType);
+            if (element != null && element.getClass().isEnum()) {
+                return (Class<? extends Enum>) element.getClass();
+            }
+        }
+
         return null;
     }
 

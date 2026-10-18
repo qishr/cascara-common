@@ -127,36 +127,52 @@ public interface Serializer<N extends AstNode> extends Processor {
     @NonNull
     Serializer<N> setHeuristicMatchEnabled(boolean b);
 
+    //
+    //
+    //
+
     @Experimental
-    public interface SerializeMethod {
-        AstNode serialize(Object jvmInstance);
+    public interface Serialize {
+        AstNode serialize(Object jvmInstance, Type jvmType);
     }
 
     @Experimental
-    public interface DeserializeMethod {
+    public interface Deserialize {
         <C> C deserialize(AstNode node, Type targetType);
     }
 
     @Experimental
+    public interface DeserializeEnum {
+        Enum<?> deserializeEnum(String text, Type targetType);
+    }
+
+    @Experimental
     public static class Context {
-        private final SerializeMethod serialize;
-        private final DeserializeMethod deserialize;
+        private final Serialize serialize;
+        private final Deserialize deserialize;
+        private final DeserializeEnum deserializeEnum;
         private final Reporter reporter;
 
-        public Context(SerializeMethod serialize, DeserializeMethod deserialize, Reporter reporter) {
+        public Context(Serialize serialize, Deserialize deserialize, DeserializeEnum deserializeEnum, Reporter reporter) {
             this.serialize = serialize;
             this.deserialize = deserialize;
+            this.deserializeEnum = deserializeEnum;
             this.reporter = reporter;
         }
 
         @NonNull
-        public AstNode serialize(Object jvmInstance) {
-            return serialize.serialize(jvmInstance);
+        public AstNode serialize(Object jvmInstance, Type jvmType) {
+            return serialize.serialize(jvmInstance, jvmType);
         }
 
         @Nullable
-        public <C> C deserialize(AstNode node, Type targetType) {
-            return deserialize.deserialize(node, targetType);
+        public <C> C deserialize(AstNode node, Type jvmType) {
+            return deserialize.deserialize(node, jvmType);
+        }
+
+
+        public Enum<?> deserializeEnum(String text, Type targetType) {
+            return deserializeEnum.deserializeEnum(text, targetType);
         }
 
         @NonNull

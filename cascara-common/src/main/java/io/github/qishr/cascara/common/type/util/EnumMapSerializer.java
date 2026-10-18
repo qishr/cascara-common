@@ -34,12 +34,14 @@
 
 package io.github.qishr.cascara.common.type.util;
 
+import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.TypeSerializer;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
@@ -57,22 +59,19 @@ public class EnumMapSerializer extends AbstractTypeDescriptor<EnumMap> implement
     }
 
     @Override
-    public GenericAstMap serialize(EnumMap jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstMap serialize(EnumMap jvmInstance, Type jvmType, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
+
+        Type keyType = ReflectionUtils.getKeyTypeOfMapType(jvmType);
+
         GenericAstMap node = new GenericAstMap();
         for (Object obj : jvmInstance.entrySet()) {
             if (obj instanceof Map.Entry<?, ?> entry) {
                 if (entry.getKey() != null) {
-
-                    // TODO: This is probably wrong:
-                    // String value = String.valueOf(entry.getValue());
-                    // node.put(entry.getKey().toString(), value);
-
-                    // Should be more like:
-                    AstNode keyNode = ctx.serialize(entry.getKey());
-                    AstNode valueNode = ctx.serialize(entry.getValue());
+                    AstNode keyNode = ctx.serialize(entry.getKey(), keyType);
+                    AstNode valueNode = ctx.serialize(entry.getValue(), null);
                     node.put(keyNode, valueNode);
                 }
             }
@@ -82,38 +81,72 @@ public class EnumMapSerializer extends AbstractTypeDescriptor<EnumMap> implement
 
     @Override
     @SuppressWarnings("unchecked")
-    public EnumMap deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException {
+    public EnumMap deserialize(AstNode astNode, Type jvmType, Serializer.Context ctx) throws SerializerException {
         if (!(astNode instanceof MapAstNode<?, ?, ?> mapNode)) {
             return null;
         }
 
-        Class<? extends Enum> keyEnumClass = extractKeyEnumClass(targetType);
+        Class<? extends Enum> keyEnumClass = extractKeyEnumClass(mapNode, jvmType, ctx);
         if (keyEnumClass == null) {
             return null;
         }
 
         EnumMap enumMap = new EnumMap(keyEnumClass);
-        for (Object keyObj : mapNode.keyStringSet()) {
-            String keyStr = (String) keyObj;
-            try {
-                Enum enumKey = Enum.valueOf(keyEnumClass, keyStr);
-                AstNode valueNode = mapNode.get(keyStr);
-                Object deserializedVal = ctx.deserialize(valueNode, Object.class);
-                enumMap.put(enumKey, deserializedVal);
-            } catch (IllegalArgumentException e) {
-                // Handle or ignore unknown enum keys
-            }
+        for (Object keyObj : mapNode.keySet()) {
+            Enum enumKey = deserializeKey(keyObj, keyEnumClass, ctx);
+            AstNode valueNode = mapNode.get(keyObj);
+            Object deserializedVal = ctx.deserialize(valueNode, Object.class);
+            enumMap.put(enumKey, deserializedVal);
         }
         return enumMap;
     }
 
     @SuppressWarnings("unchecked")
-    private Class<? extends Enum> extractKeyEnumClass(Type targetType) {
-        if (targetType instanceof ParameterizedType pt) {
+    private Class<? extends Enum> extractKeyEnumClass(MapAstNode<?, ?, ?> mapNode, Type jvmType, Serializer.Context ctx) {
+        if (jvmType instanceof ParameterizedType pt) {
             Type[] actualArgs = pt.getActualTypeArguments();
             if (actualArgs.length > 0 && actualArgs[0] instanceof Class<?> cls && Enum.class.isAssignableFrom(cls)) {
+                // TODO: A test that reaches here
                 return (Class<? extends Enum>) cls;
             }
+        }
+
+        if (!mapNode.isEmpty()) {
+
+            Type enumType;
+            if (jvmType instanceof ParameterizedType paramaterizedType) {
+                // "unbox" the enum type
+                Type[] paramTypes = paramaterizedType.getActualTypeArguments();
+                if (paramTypes != null && paramTypes.length == 2) {
+                    enumType = paramTypes[0];
+                } else {
+                    // TODO: This should not be possible
+                    throw new IllegalStateException("wrong parameter count");
+                }
+            } else {
+                enumType = jvmType;
+            }
+
+            Object key = mapNode.getEntry(0).getKey();
+            Enum keyEnum = deserializeKey(key, enumType, ctx);
+            if (keyEnum != null) {
+                return (Class<? extends Enum>) keyEnum.getClass();
+            }
+        }
+        throw new SerializerException(LangMessage.AMBIGUOUS_TARGET_TYPE, jvmType);
+    }
+
+    private Enum deserializeKey(Object key, Type enumType, Serializer.Context ctx) {
+        Object element;
+        if (key instanceof AstNode keyNode) {
+            element = ctx.deserialize(keyNode, enumType);
+        } else if (key != null) {
+            element = ctx.deserializeEnum(key.toString(), enumType);
+        } else {
+            return null;
+        }
+        if (element != null && element.getClass().isEnum()) {
+            return (Enum) element;
         }
         return null;
     }

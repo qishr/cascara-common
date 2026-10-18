@@ -39,6 +39,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -84,6 +85,24 @@ public class ReflectionUtils {
         } catch (NoSuchMethodException e) {
             return createInstanceUnsafe(targetClass);
         }
+    }
+
+    public static boolean isAbstract(Type jvmType) {
+        return (jvmType instanceof Class<?> cls) && Modifier.isAbstract(cls.getModifiers());
+    }
+
+    public static boolean isInterface(Type jvmType) {
+        return (jvmType instanceof Class<?> cls) && Modifier.isInterface(cls.getModifiers());
+    }
+
+    public static boolean isWildcard(Type jvmType) {
+        return jvmType instanceof WildcardType;
+    }
+
+    public static boolean isConcreteType(Type jvmType) {
+        return  !isWildcard(jvmType) &&
+                !isInterface(jvmType) &&
+                !isAbstract(jvmType);
     }
 
     public static boolean isInstance(Object thisInstance, Type thatType) {
@@ -221,7 +240,7 @@ public class ReflectionUtils {
     }
 
     @NonNull
-    public static Type getKeyTypeArgumentTypeOfMapType(Type mapType) {
+    public static Type getKeyTypeOfMapType(Type mapType) {
         if (canAssign(mapType, Map.class)) {
             return getTypeArgumentTypeOfGenericType(mapType, 0);
         }
@@ -229,7 +248,7 @@ public class ReflectionUtils {
     }
 
     @NonNull
-    public static Type getValueTypeArgumentTypeOfMapType(Type mapType) {
+    public static Type getValueTypeOfMapType(Type mapType) {
         if (canAssign(mapType, Map.class)) {
             return getTypeArgumentTypeOfGenericType(mapType, 1);
         }
@@ -237,15 +256,70 @@ public class ReflectionUtils {
     }
 
     @NonNull
-    public static Type getTypeArgumentTypeOfCollectionType(Type listType) {
-        if (canAssign(listType, Collection.class)) {
-            return getTypeArgumentTypeOfGenericType(listType, 0);
+    public static Type getElementTypeOfCollectionType(Type collectionType) {
+        if (canAssign(collectionType, Collection.class)) {
+            return getTypeArgumentTypeOfGenericType(collectionType, 0);
         }
         return Object.class;
     }
 
-    public static Type getTypeArgumentTypeOfGenericType(Type collectionType, int paramIndex) {
-        if (collectionType instanceof ParameterizedType parameterizedType) {
+    //
+    // The original
+    //
+
+    /// Unboxes a single-type parameter wrapper (such as Enum<T>) to expose
+    /// the underlying type argument, or passes the type through as-is if unparameterized.
+    public static Type getEnumType(Type jvmType) {
+        Type enumType;
+        if (jvmType instanceof ParameterizedType paramaterizedType) {
+        // "unbox" the enum type
+        Type[] paramTypes = paramaterizedType.getActualTypeArguments();
+        if (paramTypes != null && paramTypes.length == 1) {
+            enumType = paramTypes[0];
+            } else {
+                throw new IllegalStateException("not an enum");
+            }
+        } else {
+            enumType = jvmType;
+        }
+        return enumType;
+    }
+
+    //
+    // Updated to check enumType is an enumm (which breaks things)
+    //
+
+    // @NonNull
+    // public static Type getEnumType(Type enumType) {
+    //     Type actualEnumType;
+    //     if (enumType instanceof ParameterizedType paramaterizedType) {
+    //         Type rawType = paramaterizedType.getRawType();
+    //         if ((Class<?>) rawType != Enum.class) {
+    //             throw new IllegalArgumentException("not an enum");
+    //         }
+    //         // "unbox" the enum type
+    //         Type[] paramTypes = paramaterizedType.getActualTypeArguments();
+    //         // It's entirely not possible to be an enum and paramTypes
+    //         // not to contain exactly one param type.
+    //         actualEnumType = paramTypes[0];
+    //     } else {
+    //         if (!(enumType instanceof Class<?> rawClass)) {
+    //             throw new IllegalArgumentException("not an enum");
+    //         }
+    //         if (!rawClass.isEnum()) {
+    //             throw new IllegalArgumentException("not an enum");
+    //         }
+    //         actualEnumType = enumType;
+    //     }
+    //     return actualEnumType;
+    // }
+
+    //
+    //
+    //
+
+    public static Type getTypeArgumentTypeOfGenericType(Type jvmType, int paramIndex) {
+        if (jvmType instanceof ParameterizedType parameterizedType) {
             Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
             if (actualTypeArguments.length > paramIndex) {
                 return actualTypeArguments[paramIndex];

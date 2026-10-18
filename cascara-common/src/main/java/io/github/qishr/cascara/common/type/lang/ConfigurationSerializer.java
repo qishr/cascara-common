@@ -56,7 +56,7 @@ public class ConfigurationSerializer extends AbstractTypeDescriptor<Configuratio
     }
 
     @Override
-    public GenericAstMap serialize(Configuration jvmInstance, Serializer.Context ctx) throws SerializerException {
+    public GenericAstMap serialize(Configuration jvmInstance, Type jvmType, Serializer.Context ctx) throws SerializerException {
         if (jvmInstance == null) {
             return null;
         }
@@ -81,7 +81,7 @@ public class ConfigurationSerializer extends AbstractTypeDescriptor<Configuratio
     }
 
     @Override
-    public Configuration deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException {
+    public Configuration deserialize(AstNode astNode, Type jvmType, Serializer.Context ctx) throws SerializerException {
         // Configurations are tied to live JVM module layers and cannot be directly
         // reconstructed from scratch without the original module finder/layer context.
         // Return null or a lightweight proxy/holder if needed.

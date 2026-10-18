@@ -40,11 +40,11 @@ import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public class ColorException extends LocalizableRuntimeException {
 
-    public ColorException(DiagnosticMessage code, Object... details) {
-        super(code, details);
+    public ColorException(DiagnosticMessage message, Object... details) {
+        super(message, details);
     }
 
-    public ColorException(Exception e, DiagnosticMessage code, Object... details) {
-        super(e, code, details);
+    public ColorException(Exception e, DiagnosticMessage message, Object... details) {
+        super(e, message, details);
     }
 }

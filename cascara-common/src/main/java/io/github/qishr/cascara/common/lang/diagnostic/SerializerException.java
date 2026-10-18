@@ -42,26 +42,26 @@ import io.github.qishr.cascara.common.lang.ast.AstNode;
 
 public class SerializerException extends LocatableException {
     /// Standard constructor for serializer-detected mapping errors.
-    public SerializerException(DiagnosticMessage code, Object... details) {
-        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, code, details);
+    public SerializerException(DiagnosticMessage message, Object... details) {
+        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, message, details);
     }
 
     /// Constructor
-    public SerializerException(AstNode node, Throwable cause, DiagnosticMessage code, Object... details) {
-        super(null, node.getStartLine(), node.getStartColumn(), cause, code, details);
+    public SerializerException(AstNode node, Throwable cause, DiagnosticMessage message, Object... details) {
+        super(null, node.getStartLine(), node.getStartColumn(), cause, message, details);
     }
 
     /// Constructor for I/O or Stream failures.
-    public SerializerException(Throwable cause, DiagnosticMessage code, Object... details) {
-        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, code, details);
+    public SerializerException(Throwable cause, DiagnosticMessage message, Object... details) {
+        super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, message, details);
     }
 
     //
     // With Location
     //
 
-    public SerializerException(AstNode node, DiagnosticMessage code, Object... details) {
-        this(node, null, code, details);
+    public SerializerException(AstNode node, DiagnosticMessage message, Object... details) {
+        this(node, null, message, details);
     }
 
 }

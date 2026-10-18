@@ -46,16 +46,17 @@ public interface TypeSerializer<T> extends TypeDescriptor<T> {
     /// Transforms a concrete Java object into its structural AST representation.
     ///
     /// @param jvmInstance The live runtime object instance to serialize.
+    /// @param jvmType Type information about the declared type (useful when it's parameterized)
     /// @return            The matching structural AstNode graph.
-    AstNode serialize(T jvmInstance, Serializer.Context ctx) throws SerializerException;
+    AstNode serialize(T jvmInstance, Type jvmType, Serializer.Context ctx) throws SerializerException;
 
     /// Deserializes an AST node into a strongly-typed Java object.
     ///
     /// @param astNode The structural AST node being parsed (e.g., YamlScalarNode, YamlMapNode).
-    /// @param targetType Type information about the target type (useful when it's parameterized)
+    /// @param jvmType Type information about the target type (useful when it's parameterized)
     /// @return        The fully constructed Java object instance.
     /// @throws SerializerException If the node structure violates the type constraints.
-    public abstract T deserialize(AstNode astNode, Type targetType, Serializer.Context ctx) throws SerializerException;
+    public abstract T deserialize(AstNode astNode, Type jvmType, Serializer.Context ctx) throws SerializerException;
 
     /// Type serializers don't need to validate, but they do
     /// everything else a type descriptor does, so we provide a

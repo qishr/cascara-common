@@ -108,7 +108,7 @@ public class Diagnostic {
 
         if (format == null) {
             if (message == null) {
-                formattedMessage = ("Message code or text required when creating Diagnostic.");
+                formattedMessage = ("Message or text required when creating Diagnostic.");
             } else {
                 if (details.length == 0) {
                     formattedMessage = message.getFormat();

@@ -53,15 +53,15 @@ public class AbstractLocalizableException extends Exception implements Localizab
         localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
     }
 
-    public AbstractLocalizableException(DiagnosticMessage code, Object... details) {
-        super(format(code, details));
-        this.diagnosticMessage = code;
+    public AbstractLocalizableException(DiagnosticMessage message, Object... details) {
+        super(format(message, details));
+        this.diagnosticMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
-    public AbstractLocalizableException(Throwable cause, DiagnosticMessage code, Object... details) {
-        super(format(code, details));
-        this.diagnosticMessage = code;
+    public AbstractLocalizableException(Throwable cause, DiagnosticMessage message, Object... details) {
+        super(format(message, details));
+        this.diagnosticMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
@@ -98,7 +98,7 @@ public class AbstractLocalizableException extends Exception implements Localizab
     }
 
     /// Formats a [DiagnosticMessage] without localizing it.
-    private static String format(DiagnosticMessage code, Object... details) {
-        return DiagnosticLocalizer.DEFAULT.format(code, details);
+    private static String format(DiagnosticMessage message, Object... details) {
+        return DiagnosticLocalizer.DEFAULT.format(message, details);
     }
 }

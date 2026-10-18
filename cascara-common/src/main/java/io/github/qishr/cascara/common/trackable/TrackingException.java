@@ -5,12 +5,12 @@ import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public class TrackingException extends LocalizableRuntimeException {
     /// Constructor for errors without an exception.
-    public TrackingException(DiagnosticMessage code, Object... details) {
-        super(code, details);
+    public TrackingException(DiagnosticMessage message, Object... details) {
+        super(message, details);
     }
 
     /// Constructor for errors with an exception.
-    public TrackingException(Throwable cause, DiagnosticMessage code, Object... details) {
-        super(cause, code, details);
+    public TrackingException(Throwable cause, DiagnosticMessage message, Object... details) {
+        super(cause, message, details);
     }
 }

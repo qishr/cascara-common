@@ -3,10 +3,6 @@ plugins {
     id "io.github.qishr.cascara-meta.publish" version "0.1.0"
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.release = 21
-}
-
 repositories {
 	mavenLocal()
 	mavenCentral()

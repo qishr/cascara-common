@@ -45,13 +45,13 @@ public class LocalizableIOException extends IOException implements LocalizableEx
     private final DiagnosticMessage diagnosticMessage;
     private final Object[] details;
 
-    public LocalizableIOException(DiagnosticMessage code, Object... details) {
-        this(null, code, details);
+    public LocalizableIOException(DiagnosticMessage message, Object... details) {
+        this(null, message, details);
     }
 
-    public LocalizableIOException(Throwable cause, DiagnosticMessage code, Object... details) {
+    public LocalizableIOException(Throwable cause, DiagnosticMessage message, Object... details) {
         super(cause);
-        this.diagnosticMessage = code;
+        this.diagnosticMessage = message;
         this.details = details;
     }
 
