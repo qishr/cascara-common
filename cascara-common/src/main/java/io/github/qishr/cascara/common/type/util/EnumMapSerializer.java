@@ -106,7 +106,6 @@ public class EnumMapSerializer extends AbstractTypeDescriptor<EnumMap> implement
         if (jvmType instanceof ParameterizedType pt) {
             Type[] actualArgs = pt.getActualTypeArguments();
             if (actualArgs.length > 0 && actualArgs[0] instanceof Class<?> cls && Enum.class.isAssignableFrom(cls)) {
-                // TODO: A test that reaches here
                 return (Class<? extends Enum>) cls;
             }
         }

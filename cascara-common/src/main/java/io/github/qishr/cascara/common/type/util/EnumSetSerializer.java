@@ -101,12 +101,8 @@ public class EnumSetSerializer extends AbstractTypeDescriptor<EnumSet> implement
         if (jvmType instanceof ParameterizedType pt) {
             Type[] actualArgs = pt.getActualTypeArguments();
             if (actualArgs.length > 0 && actualArgs[0] instanceof Class<?> cls && Enum.class.isAssignableFrom(cls)) {
-                // TODO: A test that reaches here
                 return (Class<? extends Enum>) cls;
             }
-        } else if (jvmType instanceof Class<?>) {
-            // If it's a raw EnumSet, check if we can inspect further or default
-            // (Usually fields are parameterized like EnumSet<DayOfWeek>)
         }
 
         if (!seqNode.isEmpty()) {
