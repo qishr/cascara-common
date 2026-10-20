@@ -63,7 +63,7 @@ public class JmxTest extends JmxTestBase {
             .setDebug(PROCESS_DEBUG_ENABLED)
             .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
             .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
-            .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
+            // .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
             .setEnv("CASC_HOME", getPhysicalHomePath());
 
         // Run sub-JVM process...

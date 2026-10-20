@@ -60,8 +60,10 @@ import io.github.qishr.cascara.common.exec.ExecutionMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
+import io.github.qishr.cascara.common.util.Cascara;
 
 public class IpcServer implements AutoCloseable {
+    public static final String SERIALIZATION_FORMAT = "application/json";
 
     private final Path socketPath;
     private final Serializer<?> serializer;
@@ -163,12 +165,19 @@ public class IpcServer implements AutoCloseable {
              BufferedReader reader = new BufferedReader(
                  Channels.newReader(clientChannel, StandardCharsets.UTF_8))) {
 
+
             // Send server PID header as the first line
-            String header = "SERVER_PID:" + ProcessHandle.current().pid() + "\n";
+            IpcConfig config = new IpcConfig();
+            config.setVersion(Cascara.getVersion());
+            config.setIpcServerPid(ProcessHandle.current().pid());
+            config.setIpcDebug(ipcDebugEnabled);
+            config.setIpcSerializer(serializer.getClass().getName());
+            String header = config.toString() + "---\n";
             ByteBuffer buffer = ByteBuffer.wrap(header.getBytes(StandardCharsets.UTF_8));
             while (buffer.hasRemaining()) {
                 clientChannel.write(buffer);
             }
+
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -191,6 +200,7 @@ public class IpcServer implements AutoCloseable {
                     try {
                         payload = serializer.fromString(payloadJson, targetClass);
                     } catch (SerializerException e) {
+                        // System.err.println(StringUtils.debugString(payloadJson));
                         throw new ExecutionException(e, ExecutionMessage.DESERIALIZATION_FAILED, e.getMessage());
                     }
 

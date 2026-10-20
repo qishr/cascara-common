@@ -51,8 +51,11 @@ public class ConsoleLogger implements Logger, ServiceProvider {
     //     JreUtils.isRunningInTerminal() ||
     //     JreUtils.isRunningViaEclipse() ||
     //     JreUtils.isRunningViaGradle()
-    //     // TODO: A JDK21 way of telling if output is being redirected
     // );
+
+
+        // TODO: A JDK21 way of telling if output is being redirected
+    // protected static boolean isRedirected = (System.out != System.out.getClass().getField("holder").get(null));
 
     // protected static final String[] levelColors = new String[7];
     // {
@@ -74,6 +77,22 @@ public class ConsoleLogger implements Logger, ServiceProvider {
     private LogFormatter formatter;
 
     // private ConsoleLogger() {}
+
+    public ConsoleLogger() {
+        // try {
+        //     boolean isRedirected = (System.out != System.out.getClass().getField("holder").get(null));
+        // } catch (IllegalArgumentException e) {
+        //     // TODO Auto-generated catch block
+        //     e.printStackTrace();
+        // } catch (IllegalAccessException e) {
+        //     // TODO Auto-generated catch block
+        //     e.printStackTrace();
+        // } catch (NoSuchFieldException e) {
+        //     // TODO Auto-generated catch block
+        //     e.printStackTrace();
+        // }
+
+    }
 
     @SingletonInitializer
     private void init() {

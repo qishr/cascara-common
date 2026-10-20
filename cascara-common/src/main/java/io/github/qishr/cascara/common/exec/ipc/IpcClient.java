@@ -49,29 +49,21 @@ import io.github.qishr.cascara.common.exec.ExecutionMessage;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 public final class IpcClient implements AutoCloseable {
-
     public static final String SOCKET_PROP = "cascara.ipc.socket";
-    public static final String DEBUG_PROP = "cascara.ipc.debug";
 
+    private IpcConfig config;
     private final SocketChannel channel;
     private final BufferedWriter writer;
     private final Serializer<?> serializer;
-    private final long serverPid;
-    private final boolean ipcDebugEnabled;
 
-    private IpcClient(SocketChannel channel, BufferedWriter writer, Serializer<?> serializer, long serverPid, boolean ipcDebugEnabled) {
+    private IpcClient(SocketChannel channel, BufferedWriter writer, Serializer<?> serializer, IpcConfig config) {
         this.channel = channel;
         this.writer = writer;
         this.serializer = serializer;
-        this.serverPid = serverPid;
-        this.ipcDebugEnabled = ipcDebugEnabled;
+        this.config = config;
     }
 
     public static IpcClient tryConnect(Serializer<?> serializer) {
-        // TODO: DEBUG_PROP shouldd be passed over in handshake rather than as env var.
-        String ipcDebugStr = System.getProperty(DEBUG_PROP);
-        boolean ipcDebugEnabled = "true".equalsIgnoreCase(ipcDebugStr);
-
         String socketPathStr = System.getProperty(SOCKET_PROP);
         if (socketPathStr == null || socketPathStr.isBlank()) {
             return null;
@@ -90,23 +82,31 @@ public final class IpcClient implements AutoCloseable {
             BufferedReader reader = new BufferedReader(
                 Channels.newReader(channel, StandardCharsets.UTF_8)
             );
-            String line = reader.readLine();
-            if (line == null || !line.startsWith("SERVER_PID:")) {
-                throw new ExecutionException(ExecutionMessage.CONNECT_FAILED, "Invalid server handshake header");
+
+            IpcConfig config = new IpcConfig();
+            while (true) {
+                String line = reader.readLine();
+                if (line.startsWith("---")) {
+                    break;
+                }
+                config.set(line);
             }
-            long serverPid = Long.parseLong(line.substring("SERVER_PID:".length()));
 
             BufferedWriter writer = new BufferedWriter(
                 Channels.newWriter(channel, StandardCharsets.UTF_8)
             );
-            return new IpcClient(channel, writer, serializer, serverPid, ipcDebugEnabled);
+            return new IpcClient(channel, writer, serializer, config);
         } catch (IOException | NumberFormatException e) {
             throw new ExecutionException(ExecutionMessage.CONNECT_FAILED, e.getMessage());
         }
     }
 
     public long getServerProcessId() {
-        return this.serverPid;
+        return config.ipcServerPid();
+    }
+
+    public Serializer<?> getSerializer() {
+        return serializer;
     }
 
     public synchronized void send(Object message) throws IOException {
@@ -119,7 +119,7 @@ public final class IpcClient implements AutoCloseable {
         try {
             String line = className + "|" + payloadJson + "\n";
 
-            if (ipcDebugEnabled) {
+            if (config.ipcDebug()) {
                 System.out.println("CLIENT: " + className + ": " + json);
             }
 

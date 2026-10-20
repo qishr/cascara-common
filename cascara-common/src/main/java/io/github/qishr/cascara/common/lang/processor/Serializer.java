@@ -131,6 +131,12 @@ public interface Serializer<N extends AstNode> extends Processor {
     //
     //
 
+    AstParser<N,?,?> getParser();
+
+    //
+    //
+    //
+
     @Experimental
     public interface Serialize {
         AstNode serialize(Object jvmInstance, Type jvmType);

@@ -18,12 +18,10 @@ import integration.test.fixtures.payload.ReporterTestOutput;
 public class ExecTestBase extends VfsTestBase {
     protected static final boolean TEST_DEBUG_ENABLED = true;
     protected static final boolean PROCESS_DEBUG_ENABLED = false;
-    // protected GlobalReporter REPORTER;
 
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
-        // REPORTER = GlobalReporter.forClass(getClass());
         if (TEST_DEBUG_ENABLED) {
             reporter.setLevel(Level.DEBUG);
         }

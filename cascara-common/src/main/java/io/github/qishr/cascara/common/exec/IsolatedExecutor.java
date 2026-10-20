@@ -41,18 +41,18 @@ import java.util.List;
 import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
+import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
-import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 @Beta
 public class IsolatedExecutor {
-    public static final String SERIALIZATION_FORMAT = "application/json";
 
     private final JvmProcess jvmProcess;
     private JvmOptions options;
     private final Class<?> responseClass;
     private final Class<? extends AbstractExecutionTask<?,?>> task;
+    private final Serializer<?> serializer;
     private boolean ipcDebugEnabled;
     private boolean diagnisticForwaringEnabled;
 
@@ -60,6 +60,7 @@ public class IsolatedExecutor {
         this.jvmProcess = JvmProcess.forClass(task);
         this.task = task;
         this.responseClass = response;
+        serializer = IpcConfig.createSerializer();
     }
 
     public static IsolatedExecutor forTask(Class<? extends AbstractExecutionTask<?,?>> task, Class<?> response) {
@@ -69,6 +70,10 @@ public class IsolatedExecutor {
     public static <T> Response<T> run(Class<? extends AbstractExecutionTask<?,?>> task, Object input, Class<?> response, JvmOptions options) {
         IsolatedExecutor exec = IsolatedExecutor.forTask(task, response);
         return exec.run(input, options);
+    }
+
+    public Serializer<?> getSerializer() {
+        return serializer;
     }
 
     public IsolatedExecutor setOptions(JvmOptions options) {
@@ -95,8 +100,6 @@ public class IsolatedExecutor {
         if (options == null) {
             options = this.options;
         }
-
-        Serializer<?> serializer = new ProcessorFactory().createSerializer(SERIALIZATION_FORMAT);
 
         String json = serializer.toString(input);
 

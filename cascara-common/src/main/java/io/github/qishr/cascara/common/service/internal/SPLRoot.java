@@ -48,14 +48,8 @@ import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOExceptio
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.filewatcher.FileWatcher;
-import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
-import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceException;
-import io.github.qishr.cascara.common.type.cascara.DiagnosticMessageDescriptor;
-import io.github.qishr.cascara.common.type.lang.StackTraceElementSerializer;
-import io.github.qishr.cascara.common.type.time.InstantDescriptor;
-import io.github.qishr.cascara.common.type.time.ZonedDateTimeDescriptor;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ContentType;
@@ -163,26 +157,30 @@ public class SPLRoot extends SPLBranch {
         // Set up the GlobalReporter serializer.
         // This is done here rather than in GlobalReporter because GlobalReporter
         // is used by SPL, and only SPL knows when the serializer becomes available.
-        try {
-            Serializer<?> serializer = ProcessorFactory.system().createSerializer(GlobalReporter.SERIALIZATION_FORMAT);
-            if (serializer != null) {
-                // Prevent the serializer from using SPL to find TypeDescriptor and
-                // TypeSerializer providers to avoid infinite recursion:
-                //     SPL -> GlobalReporter -> Serializer -> SPL
-                serializer.setProviderFactoryEnabled(false);
+        // try {
+        //     Serializer<?> serializer = ProcessorFactory.system().createSerializer(GlobalReporter.SERIALIZATION_FORMAT);
 
-                // Instead of letting the Serializer use SPL, give it the type
-                // descriptors and type serializers it needs for Diagnostic serialization.
-                serializer.registerTypeDescriptor(new InstantDescriptor());
-                serializer.registerTypeDescriptor(new ZonedDateTimeDescriptor());
-                serializer.registerTypeDescriptor(new DiagnosticMessageDescriptor());
-                serializer.registerTypeDescriptor(new StackTraceElementSerializer());
+        // TODO: Put this logic in GlobalReporter.initSerializer
+        GlobalReporter.configureSerializer();
+        // Serializer<?> serializer = IpcConfig.createSerializer();
+        //     if (serializer != null) {
+        //         // Prevent the serializer from using SPL to find TypeDescriptor and
+        //         // TypeSerializer providers to avoid infinite recursion:
+        //         //     SPL -> GlobalReporter -> Serializer -> SPL
+        //         serializer.setProviderFactoryEnabled(false);
 
-                GlobalReporter.initSerializer(serializer);
-            }
-        } catch (ServiceException e) {
-            // Ignore
-        }
+        //         // Instead of letting the Serializer use SPL, give it the type
+        //         // descriptors and type serializers it needs for Diagnostic serialization.
+        //         serializer.registerTypeDescriptor(new InstantDescriptor());
+        //         serializer.registerTypeDescriptor(new ZonedDateTimeDescriptor());
+        //         serializer.registerTypeDescriptor(new DiagnosticMessageDescriptor());
+        //         serializer.registerTypeDescriptor(new StackTraceElementSerializer());
+
+        //         GlobalReporter.initSerializer(serializer);
+        //     }
+        // } catch (ServiceException e) {
+        //     // Ignore
+        // }
     }
 
     private void discoverClasses() {
@@ -214,11 +212,6 @@ public class SPLRoot extends SPLBranch {
         this.modules.addAll(modules);
     }
 
-    private boolean isAutoDiscoverEnabled() {
-        String autoDiscover = System.getenv("cascara.spl.discover");
-        return !"false".equalsIgnoreCase(autoDiscover);
-    }
-
     private void collectLayers(SPLBranch layer, Set<SPLBranch> collected) {
         collected.add(layer);
         for (SPLBranch descendant : layer.namedChildren.values()) {
@@ -226,7 +219,14 @@ public class SPLRoot extends SPLBranch {
         }
     }
 
+    private boolean isAutoDiscoverEnabled() {
+        // TODO: Use propsFile for this too
+        String autoDiscover = System.getProperty("cascara.spl.discover");
+        return !"false".equalsIgnoreCase(autoDiscover);
+    }
+
     private void loadPreferences() {
+        // TODO see above
         Path propsFile = Cascara.getSplPropertiesPath();
 
         if (Cascara.isFileTimeSupported()) {

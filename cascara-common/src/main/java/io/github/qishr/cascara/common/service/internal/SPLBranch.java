@@ -102,7 +102,7 @@ public class SPLBranch implements SPL {
     protected Map<String,ServiceMetadata> servicesByFqcn = new HashMap<>();
     protected Map<Class<ServiceProvider>, Set<ServiceMetadata>> providersByServiceType = new HashMap<>();
 
-    private final Map<String, Object> singletonCache = new ConcurrentHashMap<>();
+    protected final Map<String, Object> singletonCache = new ConcurrentHashMap<>();
 
     Set<SPLBranch> visibleLayers = new HashSet<>();
     final TrackableArray<ServiceMetadata> visibleProviders = new TrackableArray<>();
@@ -303,8 +303,11 @@ public class SPLBranch implements SPL {
                 return (T) existing;
             }
             T instance = factory.get();
-            singletonCache.put(singletonClassName, instance);
+
+            // Order matters here. Singleton should not be in the cache unless it's initialized.
             initializeSingleton(instance);
+            singletonCache.put(singletonClassName, instance);
+
             return instance;
         }
     }
@@ -599,11 +602,11 @@ public class SPLBranch implements SPL {
         return clazz.isAnnotationPresent(NoAutoRegistration.class);
     }
 
-    private void registerClassInternal(Class<?> type, boolean isAutoRegistration) {
-        String providerFqcn = type.getName();
+    private void registerClassInternal(Class<?> providerClass, boolean isAutoRegistration) {
+        String providerFqcn = providerClass.getName();
         if (!isRegistered(providerFqcn)) {
-            ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(type);
-            Path jarPath = modulePath != null ? modulePath.getPathForModule(type.getModule().getName()) : null;
+            ServiceProvider instance = (ServiceProvider) SPLUtils.instantiate(providerClass);
+            Path jarPath = modulePath != null ? modulePath.getPathForModule(providerClass.getModule().getName()) : null;
             registerProvider(instance, jarPath, isAutoRegistration);
             if (SPLRoot.isBooting) {
                 rootLayer.bootProviders.add(providerFqcn);

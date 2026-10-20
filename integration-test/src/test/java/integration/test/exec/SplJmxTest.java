@@ -117,7 +117,7 @@ public class SplJmxTest extends JmxTestBase {
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
 
-            .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
+            // .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
 
             .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
             .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
@@ -223,7 +223,7 @@ public class SplJmxTest extends JmxTestBase {
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
-            .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
+            // .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
             .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
             .setEnv("CASC_HOME", getPhysicalHomePath());
 

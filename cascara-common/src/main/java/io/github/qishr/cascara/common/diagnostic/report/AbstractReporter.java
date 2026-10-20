@@ -181,10 +181,12 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     public T setAnsiColoringEnabled(boolean b) {
         // TODO: Allow this to be disabled via env var and/or system proeprty
-        if (b) {
-            consoleLogger.setFormatter(new ColoredLogFormatter());
-        } else {
-            consoleLogger.setFormatter(new PlainLogFormatter());
+        if (consoleLogger != null) {
+            if (b) {
+                consoleLogger.setFormatter(new ColoredLogFormatter());
+            } else {
+                consoleLogger.setFormatter(new PlainLogFormatter());
+            }
         }
         return self();
     }

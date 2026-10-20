@@ -1094,7 +1094,6 @@ public abstract class AbstractSerializer<
 
         // 5. No descriptor found anywhere
         classesWithNoTypeDescriptors.add(jvmType.getName());
-        reporter.debug("No type descriptor for " + jvmType.getName());
         return null;
     }
 

@@ -52,10 +52,15 @@ import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
+import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.service.SPL;
+import io.github.qishr.cascara.common.type.cascara.DiagnosticMessageDescriptor;
+import io.github.qishr.cascara.common.type.lang.StackTraceElementSerializer;
+import io.github.qishr.cascara.common.type.time.InstantDescriptor;
+import io.github.qishr.cascara.common.type.time.ZonedDateTimeDescriptor;
 import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
@@ -132,9 +137,30 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         this.level = globalInstance.level;
     }
 
-    public static void initSerializer(Serializer<?> serializer) {
-        if (globalInstance().serializer == null) {
-            globalInstance.serializer = serializer;
+    // public static void initSerializer(Serializer<?> serializer) {
+    //     if (globalInstance().serializer == null) {
+    //         globalInstance.serializer = serializer;
+    //     }
+    // }
+
+    public static void configureSerializer() {
+        Serializer<?> serializer = IpcConfig.createSerializer();
+        if (serializer != null) {
+            // Prevent the serializer from using SPL to find TypeDescriptor and
+            // TypeSerializer providers to avoid infinite recursion:
+            //     SPL -> GlobalReporter -> Serializer -> SPL
+            serializer.setProviderFactoryEnabled(false);
+
+            // Instead of letting the Serializer use SPL, give it the type
+            // descriptors and type serializers it needs for Diagnostic serialization.
+            serializer.registerTypeDescriptor(new InstantDescriptor());
+            serializer.registerTypeDescriptor(new ZonedDateTimeDescriptor());
+            serializer.registerTypeDescriptor(new DiagnosticMessageDescriptor());
+            serializer.registerTypeDescriptor(new StackTraceElementSerializer());
+
+            if (globalInstance().serializer == null) {
+                globalInstance.serializer = serializer;
+            }
         }
     }
 

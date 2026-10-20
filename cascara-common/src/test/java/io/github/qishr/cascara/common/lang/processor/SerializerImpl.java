@@ -159,4 +159,10 @@ public class SerializerImpl extends AbstractSerializer<SerializerImpl,AstNode,Ge
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'toWriter'");
     }
+
+    @Override
+    public AstParser<AstNode, ?, ?> getParser() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getParser'");
+    }
 }

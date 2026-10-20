@@ -44,8 +44,8 @@ import java.lang.reflect.Type;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
+import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
-import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 public abstract class AbstractExecutionTask<I, O> {
@@ -108,7 +108,6 @@ public abstract class AbstractExecutionTask<I, O> {
 
     @SuppressWarnings("unchecked")
     public void run(Class<?> targetClass, Class<?> inputClass) {
-        // GlobalReporter.globalInstance();
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
         GlobalReporter.globalInstance().setStackTraceEnabled(true);
 
@@ -125,7 +124,7 @@ public abstract class AbstractExecutionTask<I, O> {
 
         String json = sb.toString();
 
-        Serializer<?> serializer = new ProcessorFactory().createSerializer(IsolatedExecutor.SERIALIZATION_FORMAT);
+        Serializer<?> serializer = IpcConfig.createSerializer();
 
         I object = null;
         if (!json.isBlank()) {
@@ -151,11 +150,10 @@ public abstract class AbstractExecutionTask<I, O> {
             try (IpcClient ipcClient = IpcClient.tryConnect(serializer)) {
                 if (ipcClient != null) {
                     ipcClient.send(response);
-                } else {
+                }else {
                     System.out.println(serializer.toString(response));
                 }
             } catch (IOException e) {
-                // TODO: ExecutionException
                 error(e, "Failed to transmit task output over IPC: " + e.getMessage());
                 // Fallback to stdout if socket transmit fails
                 System.out.println(serializer.toString(response));

@@ -63,25 +63,34 @@ public class SPLUtils {
     /// Returns an instance of a service provider.
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @NonNull
-    public static <T> T loadDefault(Class<T> serviceType) {
+    public static <T> T loadDefault(Class<T> serviceType, String defaultProviderFqcn) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, serviceType);
         }
 
         SPLRoot rootLayer = SPLRoot.instance();
         List<ServiceMetadata> providers = rootLayer.findAllProviders((Class) serviceType);
+
+        Class<T> providerClass;
+        ServiceMetadata providerMeta = null;
         if (providers.isEmpty()) {
-            throw new ServiceException(ServiceMessage.NO_PROVIDER_REGISTERED, serviceType.getSimpleName());
+            if (defaultProviderFqcn == null) {
+                throw new ServiceException(ServiceMessage.NO_PROVIDER_REGISTERED, serviceType.getSimpleName());
+            }
+            try {
+                providerClass = (Class<T>) Class.forName(defaultProviderFqcn);
+            } catch (Exception e) {
+                throw new ServiceException(e, ServiceMessage.NOT_A_SERVICE_PROVIDER, defaultProviderFqcn);
+            }
+        } else {
+            providerMeta = getPreferredMeta(serviceType, providers);
+            if (providerMeta == null) {
+                providerMeta = getDefaultMeta(providers);
+            }
+            providerClass = (Class<T>) providerMeta.getType();
         }
 
-        ServiceMetadata providerMeta = getPreferredMeta(serviceType, providers);
-
-        if (providerMeta == null) {
-            providerMeta = getDefaultMeta(providers);
-        }
-
-        Class<T> clazz = (Class<T>) providerMeta.getType();
-        return getInstance(clazz, providerMeta);
+        return getInstance(providerClass, providerMeta);
     }
 
     /// Returns an instantiated service provider.
@@ -94,7 +103,7 @@ public class SPLUtils {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, providerClass);
         }
 
-        if (serviceMeta.isSingleton()) {
+        if (serviceMeta != null && serviceMeta.isSingleton()) {
             SPLBranch layer = (SPLBranch) serviceMeta.getLayer();
             return layer.getOrCreateSingleton(
                 serviceMeta,
@@ -114,12 +123,12 @@ public class SPLUtils {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, providerClass);
         }
         try {
-            // TODO: What happens to neo-singletons? They don't have a public constructor.
-            // Document this.
             Constructor<?> constructor = providerClass.getDeclaredConstructor();
             if (constructor == null) {
                 throw new ServiceException(ServiceMessage.NOARGS_CONSTRUCTOR_REQUIRED, providerClass.getName());
             } else {
+                // Make the constructor accessible. This allows instantiation
+                // of classes with a private noo-arg constructor, like neo-singletons.
                 if (!constructor.canAccess(null)) {
                     constructor.trySetAccessible();
                 }
@@ -138,17 +147,19 @@ public class SPLUtils {
     //
 
     public static void recomputeAllVisibleProviders(SPLRoot rootLayer) {
-        Set<SPLBranch> allLayers = rootLayer.allLayers();
+        synchronized(rootLayer) {
+            Set<SPLBranch> allLayers = rootLayer.allLayers();
 
-        // Step 1: compute visibility sets for all layers
-        for (SPLBranch layer : allLayers) {
-            layer.visibleLayers = computeVisibleLayers(layer);
-        }
+            // Step 1: compute visibility sets for all layers
+            for (SPLBranch layer : allLayers) {
+                layer.visibleLayers = computeVisibleLayers(layer);
+            }
 
-        // Step 2: merge providers for each layer
-        for (SPLBranch layer : allLayers) {
-            Set<ServiceMetadata> newProviders = mergeDeclaredProviders(layer.visibleLayers);
-            diffAndApply(layer.visibleProviders, newProviders);
+            // Step 2: merge providers for each layer
+            for (SPLBranch layer : allLayers) {
+                Set<ServiceMetadata> newProviders = mergeDeclaredProviders(layer.visibleLayers);
+                diffAndApply(layer.visibleProviders, newProviders);
+            }
         }
     }
 

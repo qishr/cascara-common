@@ -74,7 +74,15 @@ public interface SPL extends TreeNode<SPL> {
     /// Returns an instance of a service provider.
     @NonNull
     static <T> T load(Class<T> serviceType) {
-        return SPLUtils.loadDefault(serviceType);
+        return SPLUtils.loadDefault(serviceType, null);
+    }
+
+    /// Returns an instance of a service provider.
+    /// If there is no provider registered, and the FQCN of a valid provider is supplied,
+    /// an attempt will be made to use the supplied provider.
+    @NonNull
+    static <T> T load(Class<T> serviceType, String defaultProviderFqcn) {
+        return SPLUtils.loadDefault(serviceType, defaultProviderFqcn);
     }
 
     //

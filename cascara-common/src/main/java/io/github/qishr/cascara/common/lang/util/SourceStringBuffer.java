@@ -116,7 +116,17 @@ public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSeq
             return '\0';
         }
         previous = peek();
-        char c = source.charAt(offset++);
+        char c;
+        try {
+            c = source.charAt(offset++);
+        } catch (Exception e) {
+            // TODO
+            System.err.println("Offset = " + offset);
+            System.err.println("Source length = " + source.length());
+            System.err.println("Source = " + source);
+            e.printStackTrace();
+            throw e;
+        }
         if (c == '\n') {
             line++;
             column = 1;
@@ -135,7 +145,17 @@ public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSeq
     @Override
     public char peek() {
         if (isAtEnd()) return '\0';
-        return source.charAt(offset);
+        // return source.charAt(offset);
+        try {
+            return source.charAt(offset);
+        } catch (Exception e) {
+            // TODO
+            System.err.println("Offset = " + offset);
+            System.err.println("Source length = " + source.length());
+            System.err.println("Source = " + source);
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @Override
