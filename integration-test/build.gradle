@@ -1,5 +1,6 @@
 plugins {
-    id "io.github.qishr.cascara-meta.java-library" version "0.1.0"
+    id "java-library"
+    id "io.github.qishr.cascara.conventions" version "0.1.0"
     id 'eclipse'
 }
 
