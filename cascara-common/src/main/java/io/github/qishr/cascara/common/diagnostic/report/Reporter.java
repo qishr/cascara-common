@@ -46,24 +46,27 @@ import io.github.qishr.cascara.common.lang.token.Token;
 
 public interface Reporter {
 
-    Reporter setLineConsumer(Consumer<String> logger);
-
     /// Sets the level of output when logging directly to the console.
     Reporter setLevel(Level level);
 
-    /// Registers a collector to receive all diagnostics processed by this reporter.
+    @Experimental
+    Reporter setLineConsumer(Consumer<String> logger);
+
+    /// Registers a consumer to receive all diagnostics processed by this reporter.
     /// This includes debugging info, trace states, warnings, and error diagnostics.
     ///
-    /// @param collector The consumer that processes each produced [Diagnostic].
-    Reporter setDiagnosticConsumer(Consumer<Diagnostic> collector);
+    /// @param colconsumerlector The consumer that processes each produced [Diagnostic].
+    @Experimental
+    Reporter setDiagnosticConsumer(Consumer<Diagnostic> consumer);
 
-    /// Registers a specialized collector to receive only problem-level diagnostics.
+    /// Registers a consumer to receive only problem-level diagnostics.
     /// This collector is filtered to intercept only `Level.WARN` and `Level.ERROR` items.
     ///
-    /// @param collector The consumer that processes problem [Diagnostic] objects.
-    Reporter setProblemConsumer(Consumer<Diagnostic> collector);
+    /// @param consumer The consumer that processes problem [Diagnostic] objects.
+    @Experimental
+    Reporter setProblemConsumer(Consumer<Diagnostic> consumer);
 
-    /// Checks whether any active listener or collector is tracking problems.
+    /// Checks whether any active consumer is collecting problems.
     ///
     /// This can be used as an optimization flag by sub-parsers or AST-walkers
     /// to skip expensive location token captures or contextual allocations if nobody
@@ -72,9 +75,13 @@ public interface Reporter {
     /// @return `true` if warnings or errors are being collected, otherwise `false`.
     boolean collectsProblems();
 
-    Level getLevel();
-
     boolean isSilent();
+
+    boolean reportsDebug();
+
+    boolean reportsTrace();
+
+    Level getLevel();
 
     ReportWriter getWriter(Diagnostic.Level level);
 
@@ -239,8 +246,4 @@ public interface Reporter {
 
     @Experimental
     void errorAt(URI uri, Token token, Throwable t, DiagnosticMessage message, Object... details);
-
-    boolean reportsDebug();
-
-    boolean reportsTrace();
 }

@@ -26,7 +26,7 @@ public class LocalIpcTests extends ExecTestBase {
     void test_IPC_doesntForwardToSamePID() throws IOException {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
 
-        IpcServer ipcServer = IpcServer.start(serializer, true, false);
+        IpcServer ipcServer = IpcServer.start(true, false);
 
         System.setProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
 

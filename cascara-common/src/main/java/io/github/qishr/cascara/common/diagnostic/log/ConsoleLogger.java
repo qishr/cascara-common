@@ -41,76 +41,53 @@ import io.github.qishr.cascara.common.annotation.SingletonInitializer;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
+import io.github.qishr.cascara.common.diagnostic.format.ColoredLogFormatter;
+import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
 import io.github.qishr.cascara.common.diagnostic.format.LogFormatter;
-import io.github.qishr.cascara.common.service.ServiceProvider;
-import io.github.qishr.cascara.common.util.TermUtils;
+import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
+import io.github.qishr.cascara.common.util.JreUtils;
 
 @Experimental
-public class ConsoleLogger implements Logger, ServiceProvider {
-    // protected static final boolean CAN_USE_ANSI_COLORING = (
-    //     JreUtils.isRunningInTerminal() ||
-    //     JreUtils.isRunningViaEclipse() ||
-    //     JreUtils.isRunningViaGradle()
-    // );
-
-
-        // TODO: A JDK21 way of telling if output is being redirected
-    // protected static boolean isRedirected = (System.out != System.out.getClass().getField("holder").get(null));
-
-    // protected static final String[] levelColors = new String[7];
-    // {
-    //     // levelColors[Level.DEFAULT.ordinal()] = ANSI_WHITE;
-    //     levelColors[Level.ERROR.ordinal()] = TermUtils.ANSI_RED;
-    //     levelColors[Level.WARN.ordinal()] = TermUtils.ANSI_YELLOW;
-    //     levelColors[Level.INFO.ordinal()] = TermUtils.ANSI_BLUE;
-    //     // levelColors[Level.DEBUG.ordinal()] = TermUtils.ANSI_WHITE;
-    //     // levelColors[Level.TRACE.ordinal()] = TermUtils.ANSI_WHITE;
-    // }
-
-    protected boolean flushEnabled = false;
-    protected boolean systemErrorEnabled = false;
-    protected boolean stackTraceEnabled = false;
-    protected boolean prefixEveryLine = true;
-    protected boolean ansiColoringEnabled;
-    protected boolean showProblemCodes = false;
-
+public class ConsoleLogger implements Logger {
     private LogFormatter formatter;
+    private FormatOptions formatOptions;
 
-    // private ConsoleLogger() {}
+    private boolean flushEnabled = false;
+    private boolean systemErrorEnabled = false;
+    private boolean ansiColoringEnabled = true;
 
     public ConsoleLogger() {
-        // try {
-        //     boolean isRedirected = (System.out != System.out.getClass().getField("holder").get(null));
-        // } catch (IllegalArgumentException e) {
-        //     // TODO Auto-generated catch block
-        //     e.printStackTrace();
-        // } catch (IllegalAccessException e) {
-        //     // TODO Auto-generated catch block
-        //     e.printStackTrace();
-        // } catch (NoSuchFieldException e) {
-        //     // TODO Auto-generated catch block
-        //     e.printStackTrace();
-        // }
+        formatOptions = new FormatOptions();
+        init();
+    }
 
+    public ConsoleLogger(FormatOptions formatOptions) {
+        this.formatOptions = formatOptions;
+        init();
     }
 
     @SingletonInitializer
     private void init() {
-
+        boolean console = (System.console() != null);
+        boolean gradle = JreUtils.isRunningViaGradle();
+        boolean eclipse = JreUtils.isRunningViaEclipse();
+        ansiColoringEnabled = console||gradle||eclipse;
+        configureFormatter();
     }
 
     @Override
-    public void log(Diagnostic diagnostic) {
+    public ConsoleLogger log(Diagnostic diagnostic) {
         writeString(diagnostic);
+        return this;
     }
 
     @Override
-    public void flush() {
+    public ConsoleLogger flush() {
         throw new UnimplementedMethodException();
     }
 
     //
-    //
+    // Options
     //
 
     public ConsoleLogger setFormatter(LogFormatter formatter) {
@@ -118,13 +95,16 @@ public class ConsoleLogger implements Logger, ServiceProvider {
         return this;
     }
 
-    public ConsoleLogger setFlushEnabled(boolean b) {
-        flushEnabled = b;
+    public ConsoleLogger setFormatOptions(FormatOptions options) {
+        // This is required as loggers that are services can't have options
+        // passed into their constructor.
+        formatOptions = options;
+        formatter.setOptions(options);
         return this;
     }
 
-    public ConsoleLogger setStackTraceEnabled(boolean b) {
-        stackTraceEnabled = b;
+    public ConsoleLogger setImmediateFlushEnabled(boolean b) {
+        flushEnabled = b;
         return this;
     }
 
@@ -133,102 +113,35 @@ public class ConsoleLogger implements Logger, ServiceProvider {
         return this;
     }
 
-    // public ConsoleLogger setAnsiColoringEnabled(boolean b) {
-    //     ansiColoringEnabled = CAN_USE_ANSI_COLORING && b;
-    //     formatter.setAnsiColoringEnabled(b);
-    //     return this;
-    // }
-
-    public ConsoleLogger setPrefixEveryLine(boolean b) {
-        prefixEveryLine = b;
-        return this;
-    }
-
-    public ConsoleLogger setShowProblemCodes(boolean b) {
-        showProblemCodes = b;
+    public ConsoleLogger setAnsiColoringEnabled(boolean b) {
+        ansiColoringEnabled = b;
+        configureFormatter();
         return this;
     }
 
     //
     //
     //
+
+    private void configureFormatter() {
+        if (ansiColoringEnabled) {
+            formatter = new ColoredLogFormatter(formatOptions);
+        } else {
+            formatter = new PlainLogFormatter(formatOptions);
+        }
+        // formatter.setOptions(formatOptions);
+    }
 
     /// Reports a Diagnostic to the console and the line consumer if they are enabled.
     protected void writeString(Diagnostic diagnostic) {
-
-
-        // ReportWriter writer = writers[diagnostic.getLevel().ordinal()];
-        // if (writer == null) {
-        //     return;
-        // }
-
         Level level = diagnostic.getLevel();
-        PrintStream stream = (level == Level.ERROR && systemErrorEnabled) ? System.err : System.out;
-        // PrintWriter writer = new PrintWriter(stream);
+        PrintStream stream = (level == Level.ERROR && systemErrorEnabled)
+            ? System.err
+            : System.out;
 
-        String[] lines = formatter.format(diagnostic, stackTraceEnabled).split("\n");
-        for (int i = 0; i < lines.length; i++) {
-            displayLine(stream, level, lines[i], i);
-        }
-
-        // if ((diagnostic.getCause() != null || diagnostic.getStackTrace() != null) && stackTraceEnabled) {
-        //     if (diagnostic.getCause() != null) {
-        //         writeStackTrace(level, stream, diagnostic.getStackTrace(), diagnostic.getCause());
-        //     } else if (diagnostic.getStackTrace() != null) {
-        //         writeStackTrace(level, stream, diagnostic.getStackTrace(), null);
-        //     }
-        // }
-    }
-
-    protected void displayLine(PrintStream stream, Level level, String msgLine, int msgLineNumber) {
-        boolean indented = msgLine.startsWith(" ");
-
-        if (indented && ansiColoringEnabled) {
-            stream.print(TermUtils.ANSI_GREEN);
-            stream.print(msgLine);
-            stream.print(TermUtils.ANSI_RESET);
-        } else {
-            stream.print(msgLine);
-        }
-        stream.print("\n");
+        stream.print(formatter.format(diagnostic));
         if (flushEnabled) {
             stream.flush();
         }
     }
-
-    // private void writeStackTrace(Level level, PrintStream stream, StackTraceElement[] stackTrace, Throwable t) {
-
-    //     for (StackTraceElement frame : stackTrace) {
-    //         String msgLine = String.format(
-    //             "  at %s.%s(%s:%d)",
-    //             frame.getClassName(),
-    //             frame.getMethodName(),
-    //             frame.getFileName(),
-    //             frame.getLineNumber()
-    //         );
-    //         // writer.logLine(msgLine);
-    //         // writer.displayLine(msgLine, 1);
-
-    //         if (prefixEveryLine) {
-    //             stream.print("[");
-    //             if (ansiColoringEnabled) {
-    //                 String ansiCode = levelColors[level.ordinal()];
-    //                 if (ansiCode != null) {
-    //                     stream.print(ansiCode);
-    //                     stream.print(level.getLogPrefix());
-    //                     stream.print(TermUtils.ANSI_RESET);
-    //                 } else {
-    //                     stream.print(level.getLogPrefix());
-    //                 }
-    //             } else {
-    //                 stream.print(level.getLogPrefix());
-    //             }
-    //             stream.print("] ");
-    //         } else {
-    //             stream.print("        ");
-    //         }
-
-    //         stream.print(msgLine);
-    //     }
-    // }
 }

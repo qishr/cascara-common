@@ -53,7 +53,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Phaser;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.ExecutionException;
 import io.github.qishr.cascara.common.exec.ExecutionMessage;
@@ -74,9 +76,12 @@ public class IpcServer implements AutoCloseable {
     private boolean diagnosticForwarding;
     private boolean ipcDebugEnabled;
 
-    private IpcServer(Path socketPath, Serializer<?> serializer, boolean diagnosticForwarding, boolean ipcDebugEnabled) throws IOException {
+    private IpcServer(Path socketPath, boolean diagnosticForwarding, boolean ipcDebugEnabled) throws IOException {
+        if (socketPath == null) {
+            throw new UnexpectedNullParameterException("socketPath");
+        }
         this.socketPath = socketPath;
-        this.serializer = serializer;
+        this.serializer = IpcConfig.createSerializer();
         this.diagnosticForwarding = diagnosticForwarding;
         this.ipcDebugEnabled = ipcDebugEnabled;
 
@@ -85,11 +90,12 @@ public class IpcServer implements AutoCloseable {
         this.serverChannel.bind(address);
     }
 
-    public static IpcServer start(Serializer<?> serializer, boolean diagnosticForwarding, boolean ipcDebugEnabled) throws IOException {
+    @NonNull
+    public static IpcServer start(boolean diagnosticForwarding, boolean ipcDebugEnabled) throws IOException {
         Path tempSocket = Files.createTempFile("cascara-ipc-", ".sock");
         Files.deleteIfExists(tempSocket);
 
-        IpcServer server = new IpcServer(tempSocket, serializer, diagnosticForwarding, ipcDebugEnabled);
+        IpcServer server = new IpcServer(tempSocket, diagnosticForwarding, ipcDebugEnabled);
         server.listenAsync();
         return server;
     }
@@ -101,10 +107,12 @@ public class IpcServer implements AutoCloseable {
         this.listenerFuture = CompletableFuture.runAsync(this::listenLoop);
     }
 
+    @NonNull
     public Path getSocketPath() {
         return socketPath;
     }
 
+    @NonNull
     public <T> List<T> getMessages(Class<T> type) {
         List<Object> rawList = payloadsByType.getOrDefault(type.getName(), List.of());
         if (rawList.isEmpty()) {

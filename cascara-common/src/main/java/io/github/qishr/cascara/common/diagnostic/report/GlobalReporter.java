@@ -47,8 +47,6 @@ import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
-import io.github.qishr.cascara.common.diagnostic.format.ColoredLogFormatter;
-import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
@@ -70,8 +68,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
     public static final String SERIALIZATION_FORMAT = "application/json";
 
-    // private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
-
     private static GlobalReporter globalInstance = new GlobalReporter().init();
     private final Map<String,GlobalReporter> classInstances = new HashMap<>();
 
@@ -82,7 +78,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     private IpcClient ipcClient;
     private boolean ipcUnavailable = false;
     private List<Diagnostic> queue = new ArrayList<>();
-    // private long processId;
 
 
     private GlobalReporter() {
@@ -92,11 +87,10 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         globalInstance = this;
 
         consoleLogger = new ConsoleLogger();
-        consoleLogger.setFormatter(new ColoredLogFormatter());
+        consoleLogger.setFormatOptions(formatOptions);
 
         lineLogger = new LineLogger();
-        lineLogger.setFormatter(new PlainLogFormatter());
-
+        lineLogger.setFormatOptions(formatOptions);
 
         // TODO:
         // CASC_REPORT_CONFIG=/path/
@@ -136,12 +130,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         this.source = source;
         this.level = globalInstance.level;
     }
-
-    // public static void initSerializer(Serializer<?> serializer) {
-    //     if (globalInstance().serializer == null) {
-    //         globalInstance.serializer = serializer;
-    //     }
-    // }
 
     public static void configureSerializer() {
         Serializer<?> serializer = IpcConfig.createSerializer();
@@ -251,9 +239,9 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         return this;
     }
 
-    public GlobalReporter setFlushEnabled(boolean b) {
+    public GlobalReporter setImmediateFlushEnabled(boolean b) {
         assertGlobalInstance();
-        super.setFlushEnabled(b);
+        super.setImmediateFlushEnabled(b);
         return this;
     }
 
@@ -273,14 +261,8 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     @Override
-    protected boolean isFlushEnabled() {
-        return this == globalInstance ? flushEnabled : globalInstance.isFlushEnabled();
-    }
-
-    @Override
-    protected boolean isStackTraceEnabled() {
-        // TODO: They shoul all be like this?
-        return stackTraceEnabled || globalInstance.stackTraceEnabled;
+    protected boolean isImmediateFlushEnabled() {
+        return this == globalInstance ? flushEnabled : globalInstance.isImmediateFlushEnabled();
     }
 
     @Experimental
@@ -316,10 +298,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
     @Override
     protected void logLine(Level level, String msgLine) {
-        // if (getLineConsumer() != null) {
-        //     String logLine = "[" + level.getLogPrefix() + "] " + msgLine;
-        //     getLineConsumer().accept(logLine);
-        // }
         Diagnostic diagnostic = DiagnosticBuilder.build("", level, msgLine);
         globalInstance.log(diagnostic);
     }

@@ -38,6 +38,7 @@ import java.util.Comparator;
 import java.util.concurrent.*;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
 
 public class TimeSequencedAggregatorLogger implements Logger {
 
@@ -60,8 +61,9 @@ public class TimeSequencedAggregatorLogger implements Logger {
     }
 
     @Override
-    public void log(Diagnostic diagnostic) {
+    public TimeSequencedAggregatorLogger log(Diagnostic diagnostic) {
         buffer.add(diagnostic);
+        return this;
     }
 
     private synchronized void flushBuffered() {
@@ -72,10 +74,21 @@ public class TimeSequencedAggregatorLogger implements Logger {
     }
 
     @Override
-    public void flush() {
+    public TimeSequencedAggregatorLogger flush() {
         while (!buffer.isEmpty()) {
             delegate.log(buffer.poll());
         }
         delegate.flush();
+        return this;
     }
+
+    //
+    //
+    //
+
+    public TimeSequencedAggregatorLogger setFormatOptions(FormatOptions options) {
+        // formatter.setOptions(options);
+        return this;
+    }
+
 }

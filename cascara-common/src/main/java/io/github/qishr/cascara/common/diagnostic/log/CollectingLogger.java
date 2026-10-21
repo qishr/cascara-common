@@ -40,6 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
 
 @Experimental
 public class CollectingLogger implements Logger {
@@ -47,8 +48,9 @@ public class CollectingLogger implements Logger {
     private final List<Diagnostic> diagnostics = new CopyOnWriteArrayList<>();
 
     @Override
-    public void log(Diagnostic diagnostic) {
+    public CollectingLogger log(Diagnostic diagnostic) {
         diagnostics.add(diagnostic);
+        return this;
     }
 
     public void flushTo(Logger delegateLogger) {
@@ -60,7 +62,17 @@ public class CollectingLogger implements Logger {
     }
 
     @Override
-    public void flush() {
+    public CollectingLogger flush() {
         // Handled via explicit flushTo at end of test
+        return this;
+    }
+
+    //
+    //
+    //
+
+    public CollectingLogger setFormatOptions(FormatOptions options) {
+        // formatter.setOptions(options);
+        return this;
     }
 }

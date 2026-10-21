@@ -51,4 +51,19 @@ public class LocalReporterTests {
         assertTrue(lineHasException.get());
         assertTrue(lineHasStackTrace.get());
     }
+
+    @Test
+    void testFormatter() {
+        LocalReporter r = new LocalReporter().setLevel(Level.DEBUG);
+
+        r.setPrefixEveryLine(true);
+        r.debug("One");
+        r.debug("  Two");
+        r.debug("Split1\n  Split2");
+
+        // r.setPrefixEveryLine(false);
+        // r.debug("One");
+        // r.debug("  Two");
+        // r.debug("Split1\n  Split2");
+    }
 }

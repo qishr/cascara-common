@@ -38,48 +38,59 @@ import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
+import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
 import io.github.qishr.cascara.common.diagnostic.format.LogFormatter;
+import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
 
 public class LineLogger implements  Logger {
+    private LogFormatter formatter;
+    private FormatOptions formatOptions;
+
     /// Consumes every line of diagnostic output as a String.
     protected Consumer<String> lineConsumer;
-
-    protected boolean stackTraceEnabled = false;
-
-    private LogFormatter formatter;
 
     public LineLogger() {
         init();
     }
 
-    // @SingletonInitializer
-    private void init() {
-
+    public LineLogger(FormatOptions formatOptions) {
+        this.formatOptions = formatOptions;
+        init();
     }
 
-    public LineLogger setStackTraceEnabled(boolean b) {
-        stackTraceEnabled = b;
+    // @SingletonInitializer
+    private void init() {
+        formatter = new PlainLogFormatter(formatOptions);
+    }
+
+    @Override
+    public LineLogger log(Diagnostic diagnostic) {
+        if (formatter == null || lineConsumer == null) {
+            return this;
+        }
+        String[] lines = formatter.format(diagnostic).split("\n");
+        for (int i = 0; i < lines.length; i++) {
+            lineConsumer.accept(lines[i]);
+        }
         return this;
     }
 
     @Override
-    public void log(Diagnostic diagnostic) {
-        if (formatter == null || lineConsumer == null) {
-            return;
-        }
-        String[] lines = formatter.format(diagnostic, stackTraceEnabled).split("\n");
-        for (int i = 0; i < lines.length; i++) {
-            lineConsumer.accept(lines[i]);
-        }
-    }
-
-    @Override
-    public void flush() {
+    public LineLogger flush() {
         throw new UnimplementedMethodException();
     }
 
+    //
+    //
+    //
+
     public LineLogger setFormatter(LogFormatter formatter) {
         this.formatter = formatter;
+        return this;
+    }
+
+    public LineLogger setFormatOptions(FormatOptions options) {
+        formatter.setOptions(options);
         return this;
     }
 

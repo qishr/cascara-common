@@ -40,18 +40,10 @@ import java.time.ZonedDateTime;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.TermUtils;
 import io.github.qishr.cascara.common.util.UriScheme;
 
 public class ColoredLogFormatter extends PlainLogFormatter {
-    protected static final boolean CAN_USE_ANSI_COLORING = (
-        JreUtils.isRunningInTerminal() ||
-        JreUtils.isRunningViaEclipse() ||
-        JreUtils.isRunningViaGradle()
-        // TODO: A JDK21 way of telling if output is being redirected
-    );
-
     protected static final String[] levelColors = new String[7];
     {
         // levelColors[Level.DEFAULT.ordinal()] = ANSI_WHITE;
@@ -64,12 +56,8 @@ public class ColoredLogFormatter extends PlainLogFormatter {
 
     protected boolean ansiColoringEnabled = true;
 
-    public ColoredLogFormatter() {
-        init();
-    }
-
-    private void init() {
-        processId = ProcessHandle.current().pid();
+    public ColoredLogFormatter(FormatOptions options) {
+        super(options);
     }
 
     @Override
@@ -90,7 +78,7 @@ public class ColoredLogFormatter extends PlainLogFormatter {
         Level level = diagnostic.getLevel();
         String timeStamp = ZonedDateTime.ofInstant(diagnostic.getTimestamp(), UTC).format(TIME_FORMAT);
 
-        if (prefixEveryLine || msgLineNumber == 0) {
+        if (options.prefixEveryLine() || msgLineNumber == 0) {
             sb.append("[");
             String ansiCode = levelColors[level.ordinal()];
             if (ansiCode != null) {
@@ -107,26 +95,32 @@ public class ColoredLogFormatter extends PlainLogFormatter {
 
         if (msgLineNumber == 0) {
 
-            sb.append("[");
-            sb.append(timeStamp);
-            sb.append("] ");
-
-            sb.append("[");
-            if (diagnostic.getProcessId() != processId) {
-                sb.append(TermUtils.ANSI_CYAN);
-                sb.append(diagnostic.getProcessId());
-                sb.append(TermUtils.ANSI_RESET);
-            } else {
-                sb.append(diagnostic.getProcessId());
+            if (options.incluedTime()) {
+                sb.append("[");
+                sb.append(timeStamp);
+                sb.append("] ");
             }
-            // sb.append(diagnostic.getProcessId());
-            sb.append("] ");
 
-            sb.append("[");
-            sb.append(diagnostic.getSource());
-            sb.append("] ");
+            if (options.incluedPid()) {
+                sb.append("[");
+                if (diagnostic.getProcessId() != processId) {
+                    sb.append(TermUtils.ANSI_CYAN);
+                    sb.append(diagnostic.getProcessId());
+                    sb.append(TermUtils.ANSI_RESET);
+                } else {
+                    sb.append(diagnostic.getProcessId());
+                }
+                // sb.append(diagnostic.getProcessId());
+                sb.append("] ");
+            }
 
-            if (showProblemCodes && diagnostic.getLevel().isProblem()) {
+            if (options.incluedSource()) {
+                sb.append("[");
+                sb.append(diagnostic.getSource());
+                sb.append("] ");
+            }
+
+            if (options.includeProblemCodes() && diagnostic.getLevel().isProblem()) {
                 String msgCode = diagnostic.getMessage().getCode();
                 sb.append("[");
                 sb.append(TermUtils.ANSI_WHITE);
@@ -136,7 +130,16 @@ public class ColoredLogFormatter extends PlainLogFormatter {
             }
         }
 
+        boolean indented = msgLine.startsWith("  ");
+        if (indented) {
+            sb.append(TermUtils.ANSI_GREEN);
+        }
+
         sb.append(msgLine);
+
+        if (indented) {
+            sb.append(TermUtils.ANSI_RESET);
+        }
 
         if (showUri) {
             if (showLineNumber) {
@@ -176,7 +179,7 @@ public class ColoredLogFormatter extends PlainLogFormatter {
                 frame.getFileName(),
                 frame.getLineNumber()
             );
-            if (prefixEveryLine) {
+            if (options.prefixEveryLine()) {
                 sb.append("[");
                 String ansiCode = levelColors[level.ordinal()];
                 if (ansiCode != null) {

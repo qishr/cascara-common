@@ -32,35 +32,29 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.diagnostic.report;
 
-import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.diagnostic.format.LocalLogFormatter;
+import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 
 public class LocalReporter extends AbstractReporter<LocalReporter> {
 
-    private LocalLogFormatter consoleFormatter = new LocalLogFormatter();
-
     public LocalReporter() {
-        // Nothing to see here
-        consoleLogger = new ConsoleLogger();
-        consoleLogger.setFormatter(consoleFormatter);
-
-        lineLogger = new LineLogger();
-        lineLogger.setFormatter(new LocalLogFormatter());
-
+        consoleLogger = new ConsoleLogger(formatOptions);
+        lineLogger = new LineLogger(formatOptions);
     }
 
     @Override
     protected LocalReporter self() { return this; }
 
-    @Experimental
-    public LocalReporter setPrefixEveryLine(boolean b) {
-        prefixEveryLine = b;
-        consoleFormatter.setPrefixEveryLine(b);
-        return this;
+    @Override
+    protected FormatOptions defaultFormatOptions() {
+        return new FormatOptions()
+            .setPrefixEveryLine(false)
+            .setIncludeTime(false)
+            .setIncluedPid(false)
+            .setIncluedThread(false)
+            .setIncluedSource(false);
     }
 }

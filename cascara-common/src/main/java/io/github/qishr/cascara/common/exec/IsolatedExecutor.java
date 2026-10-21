@@ -54,7 +54,7 @@ public class IsolatedExecutor {
     private final Class<? extends AbstractExecutionTask<?,?>> task;
     private final Serializer<?> serializer;
     private boolean ipcDebugEnabled;
-    private boolean diagnisticForwaringEnabled;
+    private boolean diagnisticForwardingEnabled;
 
     private IsolatedExecutor(Class<? extends AbstractExecutionTask<?,?>> task, Class<?> response) {
         this.jvmProcess = JvmProcess.forClass(task);
@@ -87,7 +87,7 @@ public class IsolatedExecutor {
     }
 
     public IsolatedExecutor setDiagnosticForwardingEnabled(boolean enabled) {
-        this.diagnisticForwaringEnabled = enabled;
+        this.diagnisticForwardingEnabled = enabled;
         return  this;
     }
 
@@ -109,7 +109,7 @@ public class IsolatedExecutor {
 
         IpcServer ipcServer;
         try {
-            ipcServer = IpcServer.start(serializer, diagnisticForwaringEnabled, ipcDebugEnabled);
+            ipcServer = IpcServer.start(diagnisticForwardingEnabled, ipcDebugEnabled);
 
             options.setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
             jvmProcess.setOptions(options);

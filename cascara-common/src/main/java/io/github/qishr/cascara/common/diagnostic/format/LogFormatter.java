@@ -59,7 +59,7 @@ public interface LogFormatter {
     /// @param diagnostic the diagnostic to format
     /// @return formatted string line
     /// @since cascara.common-1.0.0
-    String format(Diagnostic diagnostic, boolean stackTraceEnabled);
+    String format(Diagnostic diagnostic);
 
     /// Configures active fields shown in output.
     ///
@@ -69,4 +69,6 @@ public interface LogFormatter {
     LogFormatter withFields(Set<Field> fields);
 
     String formatStackTrace(Level level, StackTraceElement[] stackTrace, Throwable t);
+
+    LogFormatter setOptions(FormatOptions formatOptions);
 }

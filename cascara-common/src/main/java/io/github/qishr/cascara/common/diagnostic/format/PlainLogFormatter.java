@@ -41,7 +41,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
-import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.util.UriScheme;
@@ -50,15 +49,11 @@ public class PlainLogFormatter implements LogFormatter {
     protected static final ZoneId UTC = ZoneId.of("UTC");
     protected static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
 
-    protected boolean prefixEveryLine = true;
-    protected boolean showProblemCodes = false;
+    protected FormatOptions options;
     protected long processId;
 
-    public PlainLogFormatter() {
-        init();
-    }
-
-    private void init() {
+    public PlainLogFormatter(FormatOptions options) {
+        this.options = options;
         processId = ProcessHandle.current().pid();
     }
 
@@ -66,22 +61,24 @@ public class PlainLogFormatter implements LogFormatter {
         return this;
     }
 
-    public String format(Diagnostic diagnostic, boolean stackTraceEnabled) {
+    public LogFormatter setOptions(FormatOptions options) {
+        // If a logger is a service, it doesn't have its format options
+        // until after it's created. It needs to be able to set the
+        // formatter's options later.
+        this.options = options;
+        return this;
+    }
+
+    public String format(Diagnostic diagnostic) {
         StringBuilder sb = new StringBuilder();
         String[] lines = diagnostic.getFormattedMessage().split("\n");
         for (int i = 0; i < lines.length; i++) {
             formatLine(sb, diagnostic, lines[i], i);
         }
-        if (stackTraceEnabled && diagnostic.getStackTrace() != null && diagnostic.getStackTrace().length > 0) {
+        if (options.includeStackTrace() && diagnostic.getStackTrace() != null && diagnostic.getStackTrace().length > 0) {
             sb.append(formatStackTrace(diagnostic.getLevel(), diagnostic.getStackTrace(), diagnostic.getCause()));
         }
         return sb.toString();
-    }
-
-    @Experimental
-    public PlainLogFormatter setPrefixEveryLine(boolean b) {
-        prefixEveryLine = b;
-        return this;
     }
 
     protected void formatLine(StringBuilder sb, Diagnostic diagnostic, String msgLine, int msgLineNumber) {
@@ -101,7 +98,7 @@ public class PlainLogFormatter implements LogFormatter {
         Level level = diagnostic.getLevel();
         String timeStamp = ZonedDateTime.ofInstant(diagnostic.getTimestamp(), UTC).format(TIME_FORMAT);
 
-        if (prefixEveryLine || msgLineNumber == 0) {
+        if (options.prefixEveryLine() || msgLineNumber == 0) {
             sb.append("[");
             sb.append(level.getLogPrefix());
             sb.append("] ");
@@ -111,19 +108,25 @@ public class PlainLogFormatter implements LogFormatter {
 
         if (msgLineNumber == 0) {
 
-            sb.append("[");
-            sb.append(timeStamp);
-            sb.append("] ");
+            if (options.incluedTime()) {
+                sb.append("[");
+                sb.append(timeStamp);
+                sb.append("] ");
+            }
 
-            sb.append("[");
-            sb.append(diagnostic.getProcessId());
-            sb.append("] ");
+            if (options.incluedPid()) {
+                sb.append("[");
+                sb.append(diagnostic.getProcessId());
+                sb.append("] ");
+            }
 
-            sb.append("[");
-            sb.append(diagnostic.getSource());
-            sb.append("] ");
+            if (options.incluedSource()) {
+                sb.append("[");
+                sb.append(diagnostic.getSource());
+                sb.append("] ");
+            }
 
-            if (showProblemCodes && diagnostic.getLevel().isProblem()) {
+            if (options.includeProblemCodes() && diagnostic.getLevel().isProblem()) {
                 String msgCode = diagnostic.getMessage().getCode();
                 sb.append("[");
                 sb.append(msgCode);
@@ -171,7 +174,7 @@ public class PlainLogFormatter implements LogFormatter {
                 frame.getFileName(),
                 frame.getLineNumber()
             );
-            if (prefixEveryLine) {
+            if (options.prefixEveryLine()) {
                 sb.append("[");
                 sb.append(level.getLogPrefix());
                 sb.append("] ");
