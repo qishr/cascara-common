@@ -24,7 +24,8 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-core:2.25.5'
     implementation('io.github.qishr:cascara-logging-log4j')
 
-    implementation('io.github.qishr:cascara-common')
+    implementation(project(':cascara-common'))
+    // implementation('io.github.qishr:cascara-common')
     implementation('io.github.qishr:cascara-lang-json')
     implementation(project(':integration-test-fixtures'))
 }

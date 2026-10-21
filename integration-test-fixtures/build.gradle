@@ -24,7 +24,8 @@ repositories {
 
 dependencies {
     implementation(platform("io.github.qishr:cascara-meta-bom:$cascara_version"))
-    implementation('io.github.qishr:cascara-common')
+    implementation(project(':cascara-common'))
+    // implementation('io.github.qishr:cascara-common')
 }
 
 
