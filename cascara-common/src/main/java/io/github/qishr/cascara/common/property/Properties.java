@@ -57,6 +57,8 @@ import io.github.qishr.cascara.common.util.Duplicable;
 
 public class Properties implements TabularData, Duplicable<Properties>, Iterable<Property<?>> {
     List<Property<?>> propertiesList = new ArrayList<>();
+
+    // TODO: Concurrency
     Map<String,Property<?>> propertiesMap = new HashMap<>();
 
     public boolean containsKey(String k) {

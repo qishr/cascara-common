@@ -34,6 +34,9 @@
 
 package io.github.qishr.cascara.common.service.internal;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
@@ -51,11 +54,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
 
 import io.github.qishr.cascara.common.annotation.NoAutoRegistration;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.annotation.Priority;
 import io.github.qishr.cascara.common.annotation.SingletonInitializer;
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
@@ -401,7 +406,15 @@ public class SPLBranch implements SPL {
             }
             manifest = jar.getManifest();
             classes = jar.getClassNames();
+            verifySignature(jar);
+        } catch(LocalizableIOException e) {
+            throw new ServiceException(e, ServiceMessage.FAILED_TO_READ_JAR, jarPath, e.getMessage());
         } catch (Exception e) {
+            // TODO: The above catch block should be catching all exceptions
+            // that JarFile.open can throw. This block should be removed.
+            if (e instanceof ServiceException e2) {
+                throw e2;
+            }
             throw new ServiceException(e, ServiceMessage.FAILED_TO_READ_JAR, jarPath, e.getMessage());
         }
 
@@ -540,6 +553,21 @@ public class SPLBranch implements SPL {
         }
     }
 
+    private void verifySignature(JarFile jar) {
+        List<ZipEntry> entries = jar.listFiles();
+        for (ZipEntry entry : entries) {
+            try (InputStream in = jar.getInputStream(entry)) {
+                in.transferTo(OutputStream.nullOutputStream());
+            } catch (LocalizableIOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void verifyModuleVersionCompatibility(String moduleName, SemVer moduleBuildCascaraVersion, SemVer moduleMinCascaraVersion) {
         SemVer activeCascaraVersion = Cascara.getVersion();
 
@@ -553,9 +581,9 @@ public class SPLBranch implements SPL {
             )) ||
             (hasBuildVersion && activeCascaraVersion.getMajor() != moduleBuildCascaraVersion.getMajor())
         ) {
-            System.out.println("activeCascaraVersion: " + activeCascaraVersion);
-            System.out.println("moduleBuildCascaraVersion: " + moduleBuildCascaraVersion);
-            System.out.println("moduleMinCascaraVersion: " + moduleMinCascaraVersion);
+            // System.out.println("activeCascaraVersion: " + activeCascaraVersion);
+            // System.out.println("moduleBuildCascaraVersion: " + moduleBuildCascaraVersion);
+            // System.out.println("moduleMinCascaraVersion: " + moduleMinCascaraVersion);
             throw new ServiceException(
                 ServiceMessage.INCOMPATIBLE_MODULE_VERSION,
                 moduleName, moduleMinCascaraVersion, activeCascaraVersion

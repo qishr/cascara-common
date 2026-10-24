@@ -53,6 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.jar.JarEntry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -131,6 +132,11 @@ public class ArchiveFile implements AutoCloseable {
     //
     //
 
+    public InputStream getInputStream(ZipEntry entry) throws LocalizableIOException {
+        byte[] byteArray = extractFile(entry.getName());
+        return new ByteArrayInputStream(byteArray);
+    }
+
     public InputStream getInputStream(String entryName) throws LocalizableIOException {
         byte[] byteArray = extractFile(entryName);
         return new ByteArrayInputStream(byteArray);
@@ -162,12 +168,25 @@ public class ArchiveFile implements AutoCloseable {
         return new byte[0];
     }
 
-    public List<EntryInfo> listFiles() throws LocalizableIOException {
-        return listFiles(archivePath, null);
+    public ZipEntry getEntry(String name) {
+        ZipEntry entry = new ZipEntry(name);
+        return entry;
     }
 
-    public List<EntryInfo> listFiles(String entryName) throws LocalizableIOException {
-        return listFiles(archivePath, entryName);
+    public List<ZipEntry> listFiles() {
+        try {
+            return listFiles(archivePath, null);
+        } catch (LocalizableIOException e) {
+            return List.of();
+        }
+    }
+
+    public List<ZipEntry> listFiles(String entryName) {
+        try {
+            return listFiles(archivePath, entryName);
+        } catch (LocalizableIOException e) {
+            return List.of();
+        }
     }
 
     public void addDirectory(Path entryName) throws LocalizableIOException {
@@ -234,20 +253,20 @@ public class ArchiveFile implements AutoCloseable {
     //
     //
 
-    protected static List<EntryInfo> listFiles(Path archivePath, String entryName) throws LocalizableIOException {
+    protected static List<ZipEntry> listFiles(Path archivePath, String entryName) throws LocalizableIOException {
         if (entryName != null && !entryName.isEmpty() && !entryName.endsWith("/")) {
             entryName = entryName + "/";
         }
-        List<EntryInfo> fileInfoList = new ArrayList<>();
+        List<ZipEntry> entryList = new ArrayList<>();
         try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(archivePath))) {
-            ZipEntry entry;
-            while ((entry = zipInputStream.getNextEntry()) != null) {
+            ZipEntry zipEntry;
+            while ((zipEntry = zipInputStream.getNextEntry()) != null) {
                 if (entryName == null) {
-                    EntryInfo fileInfo = new EntryInfo(entry.getName());
-                    fileInfoList.add(fileInfo);
-                } else if (entry.getName().startsWith(entryName) && !entry.getName().equals(entryName)) {
-                    EntryInfo fileInfo = new EntryInfo(entry.getName().substring(entryName.length()));
-                    fileInfoList.add(fileInfo);
+                    ZipEntry entry = new ZipEntry(zipEntry.getName());
+                    entryList.add(entry);
+                } else if (zipEntry.getName().startsWith(entryName) && !zipEntry.getName().equals(entryName)) {
+                    ZipEntry entry = new ZipEntry(zipEntry.getName().substring(entryName.length()));
+                    entryList.add(entry);
                 }
             }
         } catch (FileNotFoundException e) {
@@ -256,7 +275,7 @@ public class ArchiveFile implements AutoCloseable {
             throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
 
-        return fileInfoList;
+        return entryList;
     }
 
     private void addFileInternal(Path sourcePath, Path entryName) throws LocalizableIOException{
@@ -305,19 +324,19 @@ public class ArchiveFile implements AutoCloseable {
         }
     }
 
-    public static class EntryInfo {
-        private String path = "";
+    // public static class EntryInfo {
+    //     private String path = "";
 
-        public EntryInfo(String path) {
-            this.path = path;
-        }
+    //     public EntryInfo(String path) {
+    //         this.path = path;
+    //     }
 
-        public String getPath() {
-            return path;
-        }
+    //     public String getPath() {
+    //         return path;
+    //     }
 
-        public void setPath(String path) {
-            this.path = path;
-        }
-    }
+    //     public void setPath(String path) {
+    //         this.path = path;
+    //     }
+    // }
 }

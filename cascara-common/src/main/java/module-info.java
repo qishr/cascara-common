@@ -34,8 +34,8 @@
 
 /// Cascara common APIs and utilities.
 module cascara.common {
-    requires java.management;
     requires java.base;
+    requires java.management;
     requires jdk.unsupported;
 
     uses io.github.qishr.cascara.common.service.ServiceProvider;
@@ -74,6 +74,19 @@ module cascara.common {
     exports io.github.qishr.cascara.common.type.time;
     exports io.github.qishr.cascara.common.type.util;
     exports io.github.qishr.cascara.common.util;
+
+    exports io.github.qishr.cascara.common.security;
+    exports io.github.qishr.cascara.common.security.asn1;
+    exports io.github.qishr.cascara.common.security.asn1.annotations;
+    exports io.github.qishr.cascara.common.security.asn1.encodingrules;
+    exports io.github.qishr.cascara.common.security.asn1.encodingrules.ber;
+    exports io.github.qishr.cascara.common.security.asn1.encodingrules.der;
+    exports io.github.qishr.cascara.common.security.asn1.types;
+    exports io.github.qishr.cascara.common.security.asn1.types.constructed;
+    exports io.github.qishr.cascara.common.security.asn1.types.primitive;
+    exports io.github.qishr.cascara.common.security.asn1.types.string;
+    exports io.github.qishr.cascara.common.security.asn1.util;
+
 
     opens io.github.qishr.cascara.common.data;           // For tests
     opens io.github.qishr.cascara.common.diagnostic;     // For tests and SchmeaGenerator

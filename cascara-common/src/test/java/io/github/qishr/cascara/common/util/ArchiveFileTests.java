@@ -48,8 +48,6 @@ import java.util.zip.ZipInputStream;
 
 import org.junit.jupiter.api.io.TempDir;
 
-import io.github.qishr.cascara.common.util.ArchiveFile.EntryInfo;
-
 class ArchiveFileTests {
 
     @TempDir
@@ -89,7 +87,7 @@ class ArchiveFileTests {
 
         assertTrue(Files.exists(archivePath));
 
-        List<EntryInfo> files = archive.listFiles();
+        List<ZipEntry> files = archive.listFiles();
 
         assertContainsFile("folder/four.txt", files, archivePath);
         assertContainsFile("three.txt", files, archivePath);
@@ -97,9 +95,9 @@ class ArchiveFileTests {
         assertContainsFile("source/one.txt", files, archivePath);
     }
 
-    private void assertContainsFile(String fileName, List<EntryInfo> files, Path pkgPath) throws IOException {
-        for (EntryInfo info : files) {
-            if (info.getPath().equals(fileName)) {
+    private void assertContainsFile(String fileName, List<ZipEntry> files, Path pkgPath) throws IOException {
+        for (ZipEntry info : files) {
+            if (info.getName().equals(fileName)) {
                 return;
             }
         }
