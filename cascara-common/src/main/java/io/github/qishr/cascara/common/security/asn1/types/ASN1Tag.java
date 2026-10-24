@@ -23,7 +23,7 @@ import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Encoder;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Set;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1TaggedObject;
-import io.github.qishr.cascara.common.security.asn1.types.other.ASN1UTCTime;
+import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1UTCTime;
 import io.github.qishr.cascara.common.security.asn1.types.primitive.*;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1BitString;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
@@ -43,29 +43,28 @@ public abstract class ASN1Tag<T extends ASN1Object> {
         public ASN1Parser<ASN1Boolean> newParser(ASN1Decoder decoder) {
             return new ASN1Boolean.Parser(decoder);
         }
-
         @Override
         public ASN1Serializer<ASN1Boolean> newSerializer(ASN1Encoder encoder) {
             return new ASN1Boolean.Serializer(encoder);
         }
     };
+
     public static final ASN1Tag<ASN1Integer> INTEGER = new ASN1Tag<ASN1Integer>(UNIVERSAL, 0x02, ASN1Encoding.PRIMITIVE) {
         @Override
         public ASN1Parser<ASN1Integer> newParser(ASN1Decoder decoder) {
             return new ASN1Integer.Parser(decoder);
         }
-
         @Override
         public ASN1Serializer<ASN1Integer> newSerializer(ASN1Encoder encoder) {
             return new ASN1Integer.Serializer(encoder);
         }
     };
+
     public static final ASN1Tag<ASN1BitString> BIT_STRING = new ASN1Tag<ASN1BitString>(UNIVERSAL, 0x03, ASN1Encoding.PRIMITIVE, of(ASN1Encoding.PRIMITIVE, ASN1Encoding.CONSTRUCTED)) {
         @Override
         public ASN1Parser<ASN1BitString> newParser(ASN1Decoder decoder) {
             return new ASN1BitString.Parser(decoder);
         }
-
         @Override
         public ASN1Serializer<ASN1BitString> newSerializer(ASN1Encoder encoder) {
             return new ASN1BitString.Serializer(encoder);
@@ -87,51 +86,50 @@ public abstract class ASN1Tag<T extends ASN1Object> {
         public ASN1Parser<ASN1Null> newParser(ASN1Decoder decoder) {
             return new ASN1Null.Parser(decoder);
         }
-
         @Override
         public ASN1Serializer<ASN1Null> newSerializer(ASN1Encoder encoder) {
             return new ASN1Null.Serializer(encoder);
         }
     };
+
     public static final ASN1Tag<ASN1ObjectIdentifier> OBJECT_IDENTIFIER = new ASN1Tag<ASN1ObjectIdentifier>(UNIVERSAL, 0x06, ASN1Encoding.PRIMITIVE) {
         @Override
         public ASN1Parser<ASN1ObjectIdentifier> newParser(ASN1Decoder decoder) {
             return new ASN1ObjectIdentifier.Parser(decoder);
         }
-
         @Override
         public ASN1Serializer<ASN1ObjectIdentifier> newSerializer(ASN1Encoder encoder) {
             return new ASN1ObjectIdentifier.Serializer(encoder);
         }
     };
+
     public static final ASN1Tag<ASN1Enumerated> ENUMERATED = new ASN1Tag<ASN1Enumerated>(UNIVERSAL, 0x0A, ASN1Encoding.PRIMITIVE) {
         @Override
         public ASN1Parser<ASN1Enumerated> newParser(ASN1Decoder decoder) {
             return new ASN1Enumerated.Parser(decoder);
         }
-
         @Override
         public ASN1Serializer<ASN1Enumerated> newSerializer(ASN1Encoder encoder) {
             return new ASN1Enumerated.Serializer(encoder);
         }
     };
+
     public static final ASN1Tag<ASN1Set> SET = new ASN1Tag<ASN1Set>(UNIVERSAL, 0x11, ASN1Encoding.CONSTRUCTED) {
         @Override
         public ASN1Parser<ASN1Set> newParser(ASN1Decoder decoder) {
             return new ASN1Set.Parser(decoder);
         }
-
         @Override
         public ASN1Serializer<ASN1Set> newSerializer(ASN1Encoder encoder) {
             return new ASN1Set.Serializer(encoder);
         }
     };
+
     public static final ASN1Tag<ASN1Sequence> SEQUENCE = new ASN1Tag<ASN1Sequence>(UNIVERSAL, 0x10, ASN1Encoding.CONSTRUCTED) {
         @Override
         public ASN1Parser<ASN1Sequence> newParser(ASN1Decoder decoder) {
             return new ASN1Sequence.Parser(decoder);
         }
-
         @Override
         public ASN1Serializer<ASN1Sequence> newSerializer(ASN1Encoder encoder) {
             return new ASN1Sequence.Serializer(encoder);
@@ -151,6 +149,7 @@ public abstract class ASN1Tag<T extends ASN1Object> {
 
 
     public static final ASN1Tag<?> UTC_TIME = new ASN1Tag(UNIVERSAL, 23, of(ASN1Encoding.PRIMITIVE, ASN1Encoding.CONSTRUCTED)) {
+    // public static final ASN1Tag<?> UTC_TIME = new ASN1Tag(UNIVERSAL, 23, ASN1Encoding.CONSTRUCTED) {
         @Override
         public ASN1Parser<?> newParser(ASN1Decoder decoder) {
             return new ASN1UTCTime.Parser(decoder);
@@ -160,7 +159,6 @@ public abstract class ASN1Tag<T extends ASN1Object> {
             return new ASN1UTCTime.Serializer(encoder);
         }
     };
-
 
     static {
         tags.put(BOOLEAN.getTag(), BOOLEAN);

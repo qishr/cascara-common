@@ -29,7 +29,7 @@ import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 
 public class ASN1InputStream extends FilterInputStream implements Iterable<ASN1Object> {
-    private static final Reporter reporter = GlobalReporter.forClass(ASN1InputStream.class);
+    private static final Reporter REPORTER = GlobalReporter.forClass(ASN1InputStream.class);
     private final ASN1Decoder decoder;
 
     public ASN1InputStream(ASN1Decoder decoder, InputStream wrapped) {
@@ -45,14 +45,14 @@ public class ASN1InputStream extends FilterInputStream implements Iterable<ASN1O
     public <T extends ASN1Object> T readObject() {
         try {
             ASN1Tag tag = decoder.readTag(this);
-            reporter.trace("Read ASN.1 tag " + tag);
+            REPORTER.trace("Read ASN.1 tag " + tag);
             int length = decoder.readLength(this);
-            reporter.trace("Read ASN.1 object length: {}", length);
+            REPORTER.trace("Read ASN.1 object length: " + length);
             byte[] value = decoder.readValue(length, this);
 
             //noinspection unchecked
             ASN1Object parse = tag.newParser(decoder).parse(tag, value);
-            reporter.debug("Read ASN.1 object: " + parse);
+            REPORTER.trace("Read ASN.1 object: " + parse);
             return (T) parse;
         } catch (ASN1ParseException pe) {
             throw pe;

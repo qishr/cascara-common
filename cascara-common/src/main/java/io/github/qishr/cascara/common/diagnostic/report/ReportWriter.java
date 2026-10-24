@@ -50,8 +50,9 @@ public class ReportWriter extends Writer {
     }
 
 
-    public void write(int indent, String str) {
+    public void write(int indent, Object obj) {
         try {
+            String str = obj.toString();
             if (indent == 0) {
                 write(str.toString(), 0, str.length());
                 return;

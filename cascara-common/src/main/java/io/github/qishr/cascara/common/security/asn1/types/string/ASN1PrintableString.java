@@ -57,7 +57,7 @@ public final class ASN1PrintableString extends ASN1String {
     @Override
     public String toString() {
         String str = new String(valueBytes);
-        return this.getClass().getSimpleName() + "[" + str + "]";
+        return this.getClass().getSimpleName() + " [" + str + "]";
     }
 
     public static class Parser extends ASN1Parser<ASN1PrintableString> {
@@ -67,7 +67,7 @@ public final class ASN1PrintableString extends ASN1String {
         }
 
         @Override
-        public ASN1PrintableString parse(ASN1Tag<ASN1PrintableString> asn1Tag, byte[] value) throws ASN1ParseException {
+        public ASN1PrintableString parse(ASN1Tag asn1Tag, byte[] value) throws ASN1ParseException {
             return new ASN1PrintableString(asn1Tag, value);
         }
     }

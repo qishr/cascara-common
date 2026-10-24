@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.security.asn1.types.other;
+package io.github.qishr.cascara.common.security.asn1.types.constructed;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -62,6 +62,12 @@ public final class ASN1UTCTime extends ASN1String {
         return valueBytes.length;
     }
 
+    @Override
+    public String toString() {
+        String str = new String(valueBytes);
+        return this.getClass().getSimpleName() + " [" + str + "]";
+    }
+
     public static class Parser extends ASN1Parser<ASN1UTCTime> {
 
         public Parser(ASN1Decoder decoder) {
@@ -69,7 +75,7 @@ public final class ASN1UTCTime extends ASN1String {
         }
 
         @Override
-        public ASN1UTCTime parse(ASN1Tag<ASN1UTCTime> asn1Tag, byte[] value) throws ASN1ParseException {
+        public ASN1UTCTime parse(ASN1Tag asn1Tag, byte[] value) throws ASN1ParseException {
             return new ASN1UTCTime(asn1Tag, value);
         }
     }

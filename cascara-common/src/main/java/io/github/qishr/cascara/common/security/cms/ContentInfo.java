@@ -1,22 +1,15 @@
 package io.github.qishr.cascara.common.security.cms;
 
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
-import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1TaggedObject;
-import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1TaggedObject;
-import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectIdentifier;
-import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
-import java.util.List;
-
-import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 
 public final class ContentInfo {
 
     private final String contentType;
-    private final ASN1Object content;
+    private final ASN1Object<?> content;
 
     public ContentInfo(
             String contentType,
-            ASN1Object content) {
+            ASN1Object<?> content) {
 
         this.contentType = contentType;
         this.content = content;
@@ -26,7 +19,7 @@ public final class ContentInfo {
         return contentType;
     }
 
-    public ASN1Object content() {
+    public ASN1Object<?> content() {
         return content;
     }
 }

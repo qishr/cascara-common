@@ -81,6 +81,16 @@ public class PlainLogFormatter implements LogFormatter {
         return sb.toString();
     }
 
+    protected String formatSource(Diagnostic diagnostic) {
+        if (options.useSimpleClassName()) {
+            String s = diagnostic.getSource();
+            int dot = s.lastIndexOf('.');
+            return s.substring(dot + 1);
+        } else {
+            return diagnostic.getSource();
+        }
+    }
+
     protected void formatLine(StringBuilder sb, Diagnostic diagnostic, String msgLine, int msgLineNumber) {
         int diagnosticLineNumber = diagnostic.getLine();
         boolean showLineNumber = diagnosticLineNumber > 0;
@@ -122,7 +132,7 @@ public class PlainLogFormatter implements LogFormatter {
 
             if (options.incluedSource()) {
                 sb.append("[");
-                sb.append(diagnostic.getSource());
+                sb.append(formatSource(diagnostic));
                 sb.append("] ");
             }
 

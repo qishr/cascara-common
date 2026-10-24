@@ -46,6 +46,7 @@ import java.util.function.Consumer;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
@@ -158,6 +159,11 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
     public static GlobalReporter globalInstance() {
         return globalInstance;
+    }
+
+    @Experimental
+    public FormatOptions getFormatOptions() {
+        return formatOptions;
     }
 
     /// Gets a `GlobalReporter` instance for the specifie class.
@@ -298,7 +304,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
     @Override
     protected void logLine(Level level, String msgLine) {
-        Diagnostic diagnostic = DiagnosticBuilder.build("", level, msgLine);
+        Diagnostic diagnostic = DiagnosticBuilder.build(source, level, msgLine);
         globalInstance.log(diagnostic);
     }
 

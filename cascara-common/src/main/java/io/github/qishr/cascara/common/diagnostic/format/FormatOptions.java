@@ -12,6 +12,8 @@ public class FormatOptions {
     private boolean incluedThread = true;
     private boolean incluedSource = true;
 
+    private boolean useSimpleClassName = false;
+
     public FormatOptions() {}
 
     public boolean prefixEveryLine() {
@@ -74,6 +76,15 @@ public class FormatOptions {
 
     public FormatOptions setIncluedSource(boolean b) {
         incluedSource = b;
+        return this;
+    }
+
+    public boolean useSimpleClassName() {
+        return useSimpleClassName;
+    }
+
+    public FormatOptions setUseSimpleClassName(boolean b) {
+        useSimpleClassName = b;
         return this;
     }
 }

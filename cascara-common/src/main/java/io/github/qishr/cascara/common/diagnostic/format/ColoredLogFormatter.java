@@ -116,7 +116,7 @@ public class ColoredLogFormatter extends PlainLogFormatter {
 
             if (options.incluedSource()) {
                 sb.append("[");
-                sb.append(diagnostic.getSource());
+                sb.append(formatSource(diagnostic));
                 sb.append("] ");
             }
 
