@@ -33,10 +33,10 @@ public class BERDecoder implements ASN1Decoder {
 
             int tagByte = is.read();
 
-            System.out.printf(
-                "tag byte = %02x%n",
-                tagByte
-            );
+            // System.out.printf(
+            //     "tag byte = %02x%n",
+            //     tagByte
+            // );
 
             ASN1TagClass asn1TagClass = ASN1TagClass.parseClass((byte) tagByte);
             ASN1Encoding asn1Encoding = ASN1Encoding.parseEncoding((byte) tagByte);

@@ -148,23 +148,15 @@ public class ASN1TaggedObject extends ASN1Object<ASN1Object> implements ASN1Cons
             ", bytes=" + bytes.length
         );
 
-        System.out.println("bytes.length = " + bytes.length);
+        // System.out.println("bytes.length = " + bytes.length);
 
-        System.out.println(
-            HexFormat.of().formatHex(
-                Arrays.copyOf(bytes, 16)
-            )
-        );
+        // System.out.println(
+        //     HexFormat.of().formatHex(
+        //         Arrays.copyOf(bytes, 16)
+        //     )
+        // );
 
-        // try (ASN1InputStream inputStream =
-        //         new ASN1InputStream(decoder, bytes)) {
 
-        //     return inputStream.readObject();
-        // }
-
-        // if (object != null) {
-        //     return object;
-        // }
         try (ASN1InputStream inputStream = new ASN1InputStream(decoder, bytes)) {
             return inputStream.readObject();
         } catch (ASN1ParseException e) {

@@ -36,6 +36,7 @@ import io.github.qishr.cascara.common.security.asn1.types.string.ASN1String;
 import io.github.qishr.cascara.common.security.cms.CmsParser;
 import io.github.qishr.cascara.common.security.cms.ContentInfo;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
+import io.github.qishr.cascara.common.security.asn1.types.string.ASN1PrintableString;
 
 public class JarFileTests {
     // byte[] der = certSequence.getEncoded();
@@ -152,23 +153,34 @@ public class JarFileTests {
         }
         else if (obj instanceof ASN1TaggedObject tagged) {
             System.out.println(indent + "TAGGED " + tagged.getTag());
-            System.out.println(indent + "  toString  : " + tagged.toString());
+            // System.out.println(indent + "  toString  : " + tagged.toString());
             System.out.println(indent + "  getTag    : " + tagged.getTag());
             System.out.println(indent + "  getTagNo  : " + tagged.getTagNo());
             System.out.println(indent + "  isExplicit: " + tagged.isExplicit());
-            System.out.println(indent + "  getDecoder: " + tagged.getDecoder());
-            System.out.println(
-                HexFormat.of().formatHex(
-                    tagged.getValueBytes()
-                )
-            );
-            System.out.println(indent + "  getValue  : " + tagged.getValue());
+            // System.out.println(indent + "  getDecoder: " + tagged.getDecoder());
+            // System.out.println(
+            //     HexFormat.of().formatHex(
+            //         tagged.getValueBytes()
+            //     )
+            // );
+            // System.out.println(indent + "  getValue  : " + tagged.getValue());
             dump(tagged.getObject(), depth + 1);
         }
+        else if (obj instanceof ASN1PrintableString s) {
+            System.out.println(indent + "TAGGED " + s);
+        }
         else {
-            System.out.println(indent + obj);
+            System.out.println(indent + obj.getClass().getSimpleName());
         }
     }
+
+
+
+
+
+
+
+
 
 
     void output(ASN1Object obj, int epth){

@@ -54,6 +54,12 @@ public final class ASN1PrintableString extends ASN1String {
         return valueBytes.length;
     }
 
+    @Override
+    public String toString() {
+        String str = new String(valueBytes);
+        return this.getClass().getSimpleName() + "[" + str + "]";
+    }
+
     public static class Parser extends ASN1Parser<ASN1PrintableString> {
 
         public Parser(ASN1Decoder decoder) {
