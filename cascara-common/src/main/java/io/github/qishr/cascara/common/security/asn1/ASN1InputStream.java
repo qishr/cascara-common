@@ -79,11 +79,11 @@ public class ASN1InputStream extends FilterInputStream implements Iterable<ASN1O
 
             @Override
             public ASN1Object next() {
-                try {
+                // try {
                     return readObject();
-                } catch (Exception e) {
-                    throw new NoSuchElementException(e.getMessage());
-                }
+                // } catch (Exception e) {
+                //     throw new NoSuchElementException(e.getMessage());
+                // }
             }
 
             @Override

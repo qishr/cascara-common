@@ -48,6 +48,10 @@ public class ASN1Set extends ASN1Object<Set<ASN1Object>> implements ASN1Construc
         return new HashSet<>(objects);
     }
 
+    public byte[] getValueBytes() {
+        return bytes;
+    }
+
     @Override
     public ASN1Primitive toASN1Primitive() {
         return null;

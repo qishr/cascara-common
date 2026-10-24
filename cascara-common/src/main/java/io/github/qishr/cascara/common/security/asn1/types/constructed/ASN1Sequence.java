@@ -49,6 +49,10 @@ public class ASN1Sequence extends ASN1Object<List<ASN1Object>> implements ASN1Co
         return new ArrayList<>(objects);
     }
 
+    public byte[] getValueBytes() {
+        return bytes;
+    }
+
     @Override
     public ASN1Primitive toASN1Primitive() {
         return null;
@@ -77,9 +81,14 @@ public class ASN1Sequence extends ASN1Object<List<ASN1Object>> implements ASN1Co
         public ASN1Sequence parse(ASN1Tag<ASN1Sequence> asn1Tag, byte[] value) throws ASN1ParseException {
             List<ASN1Object> list = new ArrayList<>();
             try (ASN1InputStream stream = new ASN1InputStream(decoder, value)) {
-                for (ASN1Object asn1Object : stream) {
-                    list.add(asn1Object);
+                Iterator<ASN1Object> it = stream.iterator();
+                while (it.hasNext()) {
+                    ASN1Object obj = it.next();
+                    list.add(obj);
                 }
+                // for (ASN1Object asn1Object : stream) {
+                //     list.add(asn1Object);
+                // }
             } catch (IOException e) {
                 throw new ASN1ParseException(e, "Unable to parse the ASN.1 SEQUENCE contents.");
             }

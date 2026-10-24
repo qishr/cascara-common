@@ -25,6 +25,8 @@ public abstract class ASN1Object<T> {
 
     public abstract T getValue();
 
+    public abstract byte[] getValueBytes();
+
     public abstract ASN1Primitive toASN1Primitive();
 
     @Override

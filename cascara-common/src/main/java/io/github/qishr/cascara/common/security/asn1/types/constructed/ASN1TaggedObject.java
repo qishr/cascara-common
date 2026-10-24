@@ -67,7 +67,7 @@ public class ASN1TaggedObject extends ASN1Object<ASN1Object> implements ASN1Cons
         return getObject();
     }
 
-    public byte[] getBytes() {
+    public byte[] getValueBytes() {
         return bytes;
     }
 
@@ -141,6 +141,12 @@ public class ASN1TaggedObject extends ASN1Object<ASN1Object> implements ASN1Cons
         if (object != null) {
             return object;
         }
+
+        System.out.println(
+            "getObject(): tag=" + tag +
+            ", explicit=" + explicit +
+            ", bytes=" + bytes.length
+        );
 
         System.out.println("bytes.length = " + bytes.length);
 

@@ -86,6 +86,7 @@ module cascara.common {
     exports io.github.qishr.cascara.common.security.asn1.types.primitive;
     exports io.github.qishr.cascara.common.security.asn1.types.string;
     exports io.github.qishr.cascara.common.security.asn1.util;
+    exports io.github.qishr.cascara.common.security.cms;
 
 
     opens io.github.qishr.cascara.common.data;           // For tests

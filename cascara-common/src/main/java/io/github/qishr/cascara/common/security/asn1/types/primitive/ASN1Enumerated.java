@@ -48,6 +48,11 @@ public class ASN1Enumerated extends ASN1PrimitiveValue<BigInteger> {
         return value;
     }
 
+    public byte[] getValueBytes() {
+        // TODO
+        return new byte[]{};
+    }
+
     @Override
     public ASN1Primitive toASN1Primitive() {
         return this;

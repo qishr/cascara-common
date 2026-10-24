@@ -44,6 +44,11 @@ public class ASN1Boolean extends ASN1PrimitiveValue<Boolean> {
         return value;
     }
 
+    public byte[] getValueBytes() {
+        // TODO
+        return new byte[]{};
+    }
+
     @Override
     public ASN1Primitive toASN1Primitive() {
         return this;

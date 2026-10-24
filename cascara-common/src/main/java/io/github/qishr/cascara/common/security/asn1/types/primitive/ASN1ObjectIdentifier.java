@@ -49,6 +49,11 @@ public class ASN1ObjectIdentifier extends ASN1PrimitiveValue<String> {
         return oid;
     }
 
+    public byte[] getValueBytes() {
+        // TODO
+        return new byte[]{};
+    }
+
     @Override
     public ASN1Primitive toASN1Primitive() {
         return this;

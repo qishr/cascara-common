@@ -15,7 +15,9 @@ import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.HexFormat;
+import java.util.Iterator;
 
 import org.junit.jupiter.api.Test;
 
@@ -36,62 +38,96 @@ import io.github.qishr.cascara.common.security.cms.ContentInfo;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
 
 public class JarFileTests {
+    // byte[] der = certSequence.getEncoded();
+    // CertificateFactory cf =
+    //         CertificateFactory.getInstance("X.509");
+    // X509Certificate cert =
+    //         (X509Certificate)
+    //             cf.generateCertificate(
+    //                 new ByteArrayInputStream(der)
+    //             );
+
     @Test
     void test_file() throws IOException, KeyStoreException {
-        // KeyStore p12 = KeyStore.getInstance("pkcs12");
-        // p12.load(new FileInputStream("THE_PFX_FILE_PATH"),
-        //         getPassword().toCharArray());
-        // // the key is ready to be used !
-        // Key key = p12.getKey("SERVER", getPassword().toCharArray());
-
-
-
         Path path = Paths.get("/Users/sandy/security/t/META-INF/SERVER.RSA");
         byte[] bytes = Files.readAllBytes(path);
-        // InputStream is = new
         InputStream in = new ByteArrayInputStream(bytes);
-
         ASN1Decoder dec = new DERDecoder();
         ASN1InputStream ais = new ASN1InputStream(dec, in);
-
-        // for (ASN1Object obj : ais) {
-        //     System.out.println("  ASN1Object: " + obj);
-        // }
-
-        // ais.forEach(a -> {
-        //     System.out.println("  ASN1Object: " + a);
-        // });
-
-        while (ais.available() > 0) {
-            try {
-                ASN1Object obj = ais.readObject();
-
-                ContentInfo contentInfo = CmsParser.parseContentInfo(obj);
-
-                dump(obj,0);
-
-                // System.out.println("  ASN1Object: " + obj);
-
-                // if (obj instanceof ASN1TaggedObject to) {
-                //     System.out.println("    ASN1TaggedObject");
-                //     System.out.println("    Obj: " + to.getObject());
-                //     System.out.println("    Tag: " + to.getTag());
-                // }(obj in)
-
-
-                // Object o = obj.getValue();
-                // System.out.println("  Object: " + o.getClass().getName());
-
-
-                // CertificateFactory factory = CertificateFactory.getInstance("X.509");
-                // byte[] certEnc = seq.getObjectAt(1).toASN1Primitive().getEncoded();
-                // Certificate cert = factory.generateCertificate(new ByteArrayInputStream(certEnc));
-
-            } catch (ASN1ParseException e) {
-                // System.err.println(e.getMessage());
-            }
+        Iterator<ASN1Object> it = ais.iterator();
+        while (it.hasNext()) {
+            ASN1Object obj = it.next();
+            ContentInfo contentInfo = CmsParser.parseContentInfo(obj);
+            dump(obj, 0);
         }
     }
+
+
+
+    // KeyStore p12 = KeyStore.getInstance("pkcs12");
+    // p12.load(new FileInputStream("THE_PFX_FILE_PATH"),
+    //         getPassword().toCharArray());
+    // // the key is ready to be used !
+    // Key key = p12.getKey("SERVER", getPassword().toCharArray());
+
+
+
+
+    // for (ASN1Object obj : ais) {
+    //     System.out.println("  ASN1Object: " + obj);
+    // }
+
+    // ais.forEach(a -> {
+    //     System.out.println("  ASN1Object: " + a);
+    // });
+
+
+
+
+    // while (ais.available() > 0) {
+    //     try {
+    //         ASN1Object obj = ais.readObject();
+
+    //         ContentInfo contentInfo = CmsParser.parseContentInfo(obj);
+
+
+
+    //         // byte[] der = certSequence.getEncoded();
+    //         // CertificateFactory cf =
+    //         //         CertificateFactory.getInstance("X.509");
+    //         // X509Certificate cert =
+    //         //         (X509Certificate)
+    //         //             cf.generateCertificate(
+    //         //                 new ByteArrayInputStream(der)
+    //         //             );
+
+
+
+    //         dump(obj,0);
+
+    //         // System.out.println("  ASN1Object: " + obj);
+
+    //         // if (obj instanceof ASN1TaggedObject to) {
+    //         //     System.out.println("    ASN1TaggedObject");
+    //         //     System.out.println("    Obj: " + to.getObject());
+    //         //     System.out.println("    Tag: " + to.getTag());
+    //         // }(obj in)
+
+
+    //         // Object o = obj.getValue();
+    //         // System.out.println("  Object: " + o.getClass().getName());
+
+
+    //         // CertificateFactory factory = CertificateFactory.getInstance("X.509");
+    //         // byte[] certEnc = seq.getObjectAt(1).toASN1Primitive().getEncoded();
+    //         // Certificate cert = factory.generateCertificate(new ByteArrayInputStream(certEnc));
+
+    //     } catch (ASN1ParseException e) {
+    //         // System.err.println(e.getMessage());
+    //     }
+    // }
+
+
 
     private static void dump(Object obj, int depth) {
 
@@ -123,7 +159,7 @@ public class JarFileTests {
             System.out.println(indent + "  getDecoder: " + tagged.getDecoder());
             System.out.println(
                 HexFormat.of().formatHex(
-                    tagged.getBytes()
+                    tagged.getValueBytes()
                 )
             );
             System.out.println(indent + "  getValue  : " + tagged.getValue());
