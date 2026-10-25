@@ -71,11 +71,6 @@ public class ASN1TaggedObject extends ASN1Object<ASN1Object> implements ASN1Cons
         return bytes;
     }
 
-    @Override
-    public ASN1Primitive toASN1Primitive() {
-        return null;
-    }
-
     /**
      * Returns the identifying tag number of this ASN.1 Tagged Object.
      * @return the tag number.

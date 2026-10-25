@@ -50,11 +50,6 @@ public class ASN1Boolean extends ASN1PrimitiveValue<Boolean> {
     }
 
     @Override
-    public ASN1Primitive toASN1Primitive() {
-        return this;
-    }
-
-    @Override
     protected int valueHash() {
         return value ? 1231 : 1237;
     }

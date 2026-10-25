@@ -44,11 +44,6 @@ public class ASN1Null extends ASN1PrimitiveValue<Void> {
     }
 
     @Override
-    public ASN1Primitive toASN1Primitive() {
-        return this;
-    }
-
-    @Override
     protected int valueHash() {
         return 0;
     }

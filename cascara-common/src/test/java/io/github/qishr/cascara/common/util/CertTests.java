@@ -1,5 +1,8 @@
 package io.github.qishr.cascara.common.util;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -21,18 +24,16 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
-import io.github.qishr.cascara.common.diagnostic.report.ReportWriter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
-import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Set;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1TaggedObject;
-import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1UTCTime;
-import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectIdentifier;
-import io.github.qishr.cascara.common.security.asn1.types.string.ASN1PrintableString;
+import io.github.qishr.cascara.common.security.cms.CMSUtils;
+import io.github.qishr.cascara.common.security.cms.Certificate;
+import io.github.qishr.cascara.common.security.cms.CertificateSet;
 import io.github.qishr.cascara.common.security.cms.CmsParser;
 import io.github.qishr.cascara.common.security.cms.ContentInfo;
 import io.github.qishr.cascara.common.security.cms.SignedData;
@@ -57,63 +58,46 @@ public class CertTests {
                 while (it.hasNext()) {
                     ASN1Object<?> obj = it.next();
                     ContentInfo contentInfo = CmsParser.parseContentInfo(obj);
-                    dump(obj, 0);
+                    // CMSUtils.dump(obj, REPORTER);
+
+                    if (obj instanceof ASN1Sequence seq) {
+                        SignedData sd = CMSUtils.signedDataOrNull(seq);
+                        assertNotNull(sd);
+                        REPORTER.info(GenericMessage.INFO, "Success!");
+
+                        CertificateSet certificateSet = CertificateSet.parse(
+                            (ASN1Sequence) sd.certificates().getObject()
+                        );
+                        assertNotNull(certificateSet);
+
+                        List<X509Certificate> certificates = certificateSet.certificates()
+                            .stream()
+                            .map(c -> {
+                                try {
+                                    return c.toX509Certificate();
+                                } catch (CertificateException e) {
+                                    // TODO Auto-generated catch block
+                                    e.printStackTrace();
+                                    return null;
+                                }
+                            })
+                            .toList();
+
+                        assertFalse(certificates.isEmpty());
+
+                        for (X509Certificate cert : certificates) {
+
+                            System.out.println(
+                                    cert.getSubjectX500Principal());
+
+                            System.out.println(
+                                    cert.getIssuerX500Principal());
+                        }
+                    }
                 }
             }
         }
     }
-
-    private static void dump(Object obj, int depth) {
-        int indent = depth * 2;
-        ReportWriter writer = REPORTER.getWriter(Level.DEBUG);
-
-        if (obj instanceof ASN1UTCTime t) {
-            writer.write(indent, t);
-        }
-        else if (obj instanceof ASN1PrintableString s) {
-            writer.write(indent, s);
-        }
-        else if (obj instanceof ASN1Sequence seq) {
-            writer.write(indent, "SEQUENCE");
-            // try {
-            //     SignedData sd = SignedData.parse(seq);
-            //     if (sd != null) {
-            //         List<X509Certificate> certs = sd.certificates();
-            //         for (X509Certificate c : certs) {
-            //             writer.write(indent, "cert type: " + c.getType());
-            //             writer.write(indent, "cert alg: " + c.getSigAlgName());
-            //         }
-            //     }
-            // } catch (CertificateException e) {
-            //     REPORTER.error(e, GenericMessage.ERROR, e.getMessage());
-            // }
-
-            for (Object child : seq) {
-                dump(child, depth + 1);
-            }
-        }
-        else if (obj instanceof ASN1Set set) {
-            writer.write(indent, "SET");
-
-            for (Object child : set) {
-                dump(child, depth + 1);
-            }
-        }
-        else if (obj instanceof ASN1ObjectIdentifier oid) {
-            writer.write(indent, "OID " + oid.getValue());
-        }
-        else if (obj instanceof ASN1TaggedObject tagged) {
-            writer.write(indent, "TAGGED " + tagged.getTag());
-            // writer.write(indent, "  getTag    : " + tagged.getTag());
-            // writer.write(indent, "  getTagNo  : " + tagged.getTagNo());
-            // writer.write(indent, "  isExplicit: " + tagged.isExplicit());
-            dump(tagged.getObject(), depth + 1);
-        }
-        else {
-            writer.write(indent, obj.getClass().getSimpleName());
-        }
-    }
-
 
 
 

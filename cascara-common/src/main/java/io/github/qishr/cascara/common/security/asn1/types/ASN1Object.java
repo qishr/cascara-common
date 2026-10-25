@@ -15,6 +15,15 @@
  */
 package io.github.qishr.cascara.common.security.asn1.types;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import io.github.qishr.cascara.common.security.asn1.ASN1OutputStream;
+import io.github.qishr.cascara.common.security.asn1.ASN1ParseException;
+import io.github.qishr.cascara.common.security.asn1.ASN1Serializer;
+import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DEREncoder;
+
 public abstract class ASN1Object<T> {
 
     protected ASN1Tag tag;
@@ -26,8 +35,6 @@ public abstract class ASN1Object<T> {
     public abstract T getValue();
 
     public abstract byte[] getValueBytes();
-
-    public abstract ASN1Primitive toASN1Primitive();
 
     @Override
     public boolean equals(Object o) {
@@ -58,4 +65,38 @@ public abstract class ASN1Object<T> {
     public ASN1Tag getTag() {
         return tag;
     }
+
+    // public byte[] getEncoded() {
+    //     DEREncoder enc = new DEREncoder();
+    //     ASN1Serializer serializer = tag.newSerializer(enc);
+    //     OutputStream os = new ...
+    //     ASN1OutputStream aos = new ASN1OutputStream(enc, os);
+    //     serializer.serialize(this, aos);
+    // }
+
+
+    public byte[] getEncoded() {
+
+        try (
+            ByteArrayOutputStream baos =
+                new ByteArrayOutputStream();
+            ASN1OutputStream aos =
+                new ASN1OutputStream(
+                    new DEREncoder(),
+                    baos
+                )
+        ) {
+            aos.writeObject(this);
+            aos.flush();
+
+            return baos.toByteArray();
+        }
+        catch (IOException e) {
+            throw new ASN1ParseException(
+                e,
+                "Unable to encode ASN.1 object"
+            );
+        }
+    }
+
 }

@@ -55,11 +55,6 @@ public class ASN1ObjectIdentifier extends ASN1PrimitiveValue<String> {
     }
 
     @Override
-    public ASN1Primitive toASN1Primitive() {
-        return this;
-    }
-
-    @Override
     protected int valueHash() {
         return oid.hashCode();
     }

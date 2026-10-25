@@ -54,11 +54,6 @@ public class ASN1Sequence extends ASN1Object<List<ASN1Object>> implements ASN1Co
     }
 
     @Override
-    public ASN1Primitive toASN1Primitive() {
-        return null;
-    }
-
-    @Override
     public Iterator<ASN1Object> iterator() {
         return new ArrayList<>(objects).iterator();
     }

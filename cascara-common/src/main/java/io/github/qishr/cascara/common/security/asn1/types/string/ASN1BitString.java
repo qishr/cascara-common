@@ -95,11 +95,6 @@ public class ASN1BitString extends ASN1String<boolean[]> {
     }
 
     @Override
-    public ASN1Primitive toASN1Primitive() {
-        return this;
-    }
-
-    @Override
     protected String valueString() {
         return Arrays.toString(bits);
     }

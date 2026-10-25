@@ -58,11 +58,6 @@ public class ASN1Integer extends ASN1PrimitiveValue<BigInteger> {
     }
 
     @Override
-    public ASN1Primitive toASN1Primitive() {
-        return this;
-    }
-
-    @Override
     protected int valueHash() {
         return value.hashCode();
     }

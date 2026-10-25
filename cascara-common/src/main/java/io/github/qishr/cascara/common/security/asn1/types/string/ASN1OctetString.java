@@ -42,11 +42,6 @@ public class ASN1OctetString extends ASN1String<byte[]> {
     }
 
     @Override
-    public ASN1Primitive toASN1Primitive() {
-        return this;
-    }
-
-    @Override
     protected String valueString() {
         return Arrays.toString(valueBytes);
     }

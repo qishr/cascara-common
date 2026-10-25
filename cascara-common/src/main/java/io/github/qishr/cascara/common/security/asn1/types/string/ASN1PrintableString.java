@@ -40,11 +40,6 @@ public final class ASN1PrintableString extends ASN1String {
     }
 
     @Override
-    public ASN1Primitive toASN1Primitive() {
-        return this;
-    }
-
-    @Override
     protected String valueString() {
         return Arrays.toString(valueBytes);
     }
