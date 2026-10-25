@@ -3,7 +3,9 @@ package io.github.qishr.cascara.common.security.cms;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
+import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Set;
 
 // CertificateSet ::= SET OF CertificateChoices
 
@@ -26,6 +28,28 @@ public final class CertificateSet {
     public List<Certificate> certificates() {
         return certificates;
     }
+
+
+
+
+public static CertificateSet parse(ASN1Set set) {
+    List<Certificate> certificates = new ArrayList<>();
+
+    for (ASN1Object<?> child : set) {
+        if (child instanceof ASN1Sequence certSeq) {
+            // certSeq is now the COMPLETE X.509 Certificate sequence!
+            certificates.add(Certificate.parse(certSeq));
+        }
+    }
+
+    return new CertificateSet(certificates);
+}
+
+
+
+
+
+
 
     public static CertificateSet parse(
             ASN1Sequence sequence) {

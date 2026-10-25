@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.data.TreeNode;
 import io.github.qishr.cascara.common.service.internal.SPLRoot;
@@ -62,6 +63,11 @@ public interface SPL extends TreeNode<SPL> {
     }
 
     static boolean isBooting() {
+        return SPLRoot.isBooting();
+    }
+
+    @Experimental
+    static boolean hasBooted() {
         return SPLRoot.isBooting();
     }
 

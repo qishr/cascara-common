@@ -290,10 +290,10 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     public void report(Diagnostic diagnostic) {
         if (this == globalInstance) {
             super.reportAnyLevel(diagnostic);
-            if (SPL.isBooting()) {
-                globalInstance.queue.add(diagnostic);
-            } else {
+            if (SPL.hasBooted()) {
                 globalInstance.sendDiagnostic(diagnostic);
+            } else {
+                globalInstance.queue.add(diagnostic);
             }
         } else {
             if (this.level.includes(diagnostic.getLevel())) {
@@ -315,11 +315,14 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     private static GlobalReporter forSourceInternal(String fqcn) {
         GlobalReporter reporter = globalInstance.classInstances.get(fqcn);
         if (reporter == null) {
+            GlobalReporter root = globalInstance;
             reporter = new GlobalReporter(fqcn);
-            globalInstance.classInstances.put(fqcn, reporter);
+            root.classInstances.put(fqcn, reporter);
             String envKey = fqcn.replace('.', '_').toUpperCase();
-            Level envLevel = globalInstance.envLevels.get(envKey);
-            if (envLevel != null) {
+            Level envLevel = root.envLevels.get(envKey);
+            if (envLevel == null) {
+                reporter.level = root.level;
+            } else {
                 reporter.level = envLevel;
             }
         }
@@ -327,7 +330,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     private GlobalReporter setLevelInternal(Level level) {
-        if (this != globalInstance) {
+        if (this == globalInstance) {
             setLevelsForAll(level);
         } else {
             this.level = level;

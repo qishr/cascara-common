@@ -60,7 +60,8 @@ import io.github.qishr.cascara.common.util.Pair;
 public class SPLRoot extends SPLBranch {
     private static final Properties EMPTY_PROPERTIES = new Properties();
 
-    static boolean isBooting = true;
+    static boolean hasBooted = false;
+    static boolean isBooting = false;
 
     final Set<String> bootProviders = new HashSet<>();
 
@@ -73,6 +74,7 @@ public class SPLRoot extends SPLBranch {
     private Properties properties;
 
     private SPLRoot() {
+        isBooting = true;
         rootLayer = this;
         name = "root";
         contentTypes = new HashSet<>();
@@ -82,6 +84,7 @@ public class SPLRoot extends SPLBranch {
             autoDiscover();
         }
         isBooting = false;
+        hasBooted = true;
     }
 
     /// Retrieves the root Service Provider Layer.
@@ -91,6 +94,10 @@ public class SPLRoot extends SPLBranch {
             rootLayer = new SPLRoot();
         }
         return rootLayer;
+    }
+
+    public static boolean hasBooted() {
+        return hasBooted;
     }
 
     public static boolean isBooting() {

@@ -129,6 +129,20 @@ public class ASN1TaggedObject extends ASN1Object<ASN1Object> implements ASN1Cons
                 calculateBytes(asn1Object);
             }
             stream.write(asn1Object.bytes);
+
+
+
+            // TODO: Should be more like...
+
+            // if (obj.bytes == null) {
+            //     calculateBytes(obj);
+            // }
+            // encoder.writeTag(obj.getTag(),stream);
+            // encoder.writeLength(obj.bytes.length,stream);
+            // stream.write(obj.bytes);
+
+
+
         }
     }
 
@@ -136,13 +150,6 @@ public class ASN1TaggedObject extends ASN1Object<ASN1Object> implements ASN1Cons
         if (object != null) {
             return object;
         }
-
-        // System.out.println(
-        //     "getObject(): tag=" + tag +
-        //     ", explicit=" + explicit +
-        //     ", bytes=" + bytes.length
-        // );
-
 
         try (ASN1InputStream inputStream = new ASN1InputStream(decoder, bytes)) {
             return inputStream.readObject();
