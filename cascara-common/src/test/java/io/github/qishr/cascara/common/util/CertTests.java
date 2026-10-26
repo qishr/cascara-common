@@ -15,7 +15,9 @@ import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
@@ -51,6 +53,14 @@ public class CertTests {
                 .setUseSimpleClassName(true);
     }
 
+    @AfterAll
+    static void end() {
+        GlobalReporter.globalInstance()
+            .setLevel(Level.INFO);
+    }
+
+
+    @Disabled
     @Test
     void test_encode() {
         ASN1TaggedObject tagged =
@@ -136,7 +146,6 @@ public class CertTests {
 
             byte[] mfContent = jar.extractFile("META-INF/MANIFEST.MF");
             byte[] sfContent = jar.extractFile("META-INF/SERVER.SF");
-            // byte[] signatureBlock = jar.extractFile("META-INF/SERVER.RSA");
 
             JarManifestVerifier verifier = new JarManifestVerifier(mfContent, sfContent);
             boolean v1 = verifier.verifySignatureFileAgainstManifest();

@@ -8,10 +8,10 @@ import org.junit.jupiter.api.BeforeEach;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.ReportWriter;
-import io.github.qishr.cascara.common.exec.ArtifactResolver;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.util.Pair;
+import io.github.qishr.cascara.test.common.junit.util.ArtifactResolver;
 import io.github.qishr.cascara.test.common.junit.util.VfsTestBase;
 import integration.test.fixtures.payload.ReporterTestOutput;
 

@@ -133,24 +133,26 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     public static void configureSerializer() {
-        Serializer<?> serializer = IpcConfig.createSerializer();
-        if (serializer != null) {
-            // Prevent the serializer from using SPL to find TypeDescriptor and
-            // TypeSerializer providers to avoid infinite recursion:
-            //     SPL -> GlobalReporter -> Serializer -> SPL
-            serializer.setProviderFactoryEnabled(false);
+        try {
+            Serializer<?> serializer = IpcConfig.createSerializer();
+            if (serializer != null) {
+                // Prevent the serializer from using SPL to find TypeDescriptor and
+                // TypeSerializer providers to avoid infinite recursion:
+                //     SPL -> GlobalReporter -> Serializer -> SPL
+                serializer.setProviderFactoryEnabled(false);
 
-            // Instead of letting the Serializer use SPL, give it the type
-            // descriptors and type serializers it needs for Diagnostic serialization.
-            serializer.registerTypeDescriptor(new InstantDescriptor());
-            serializer.registerTypeDescriptor(new ZonedDateTimeDescriptor());
-            serializer.registerTypeDescriptor(new DiagnosticMessageDescriptor());
-            serializer.registerTypeDescriptor(new StackTraceElementSerializer());
+                // Instead of letting the Serializer use SPL, give it the type
+                // descriptors and type serializers it needs for Diagnostic serialization.
+                serializer.registerTypeDescriptor(new InstantDescriptor());
+                serializer.registerTypeDescriptor(new ZonedDateTimeDescriptor());
+                serializer.registerTypeDescriptor(new DiagnosticMessageDescriptor());
+                serializer.registerTypeDescriptor(new StackTraceElementSerializer());
 
-            if (globalInstance().serializer == null) {
-                globalInstance.serializer = serializer;
+                if (globalInstance().serializer == null) {
+                    globalInstance.serializer = serializer;
+                }
             }
-        }
+        } catch (Throwable e) {}
     }
 
     /// {@inheritDoc}

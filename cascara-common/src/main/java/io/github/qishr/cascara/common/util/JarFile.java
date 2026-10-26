@@ -36,36 +36,22 @@
 package io.github.qishr.cascara.common.util;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.Runtime.Version;
 import java.lang.module.InvalidModuleDescriptorException;
 import java.lang.module.ModuleDescriptor;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.CodeSigner;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.SignatureException;
 import java.security.cert.CertPath;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.HexFormat;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -77,18 +63,13 @@ import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
-import io.github.qishr.cascara.common.diagnostic.report.NoOpReporter;
-import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.property.Properties;
-import io.github.qishr.cascara.common.security.ASN1Stream;
-import io.github.qishr.cascara.common.util.JarManifest.ManifestDigester;
 
 public class JarFile extends ArchiveFile {
     private static final String META_INF = "META-INF/";
     private static final String META_INF_VERSIONS = "META-INF/versions/";
     static final String INDEX_NAME = "META-INF/INDEX.LIST";
     public static final String MANIFEST_NAME = META_INF + "MANIFEST.MF";
-
 
     private JarManifest manifest;
     private Properties mavenProperties;
@@ -97,12 +78,9 @@ public class JarFile extends ArchiveFile {
     private String moduleName = null;
     private boolean verify;
     private Version version;
-
     private X509Certificate signerCert;
     private X509Certificate intermediateCert;
     private X509Certificate rootCert;
-
-    // private java.util.jar.JarFile jujJarFile;
 
     private static final Runtime.Version BASE_VERSION;
     private static final int BASE_VERSION_FEATURE;
@@ -227,6 +205,10 @@ public class JarFile extends ArchiveFile {
         return moduleName;
     }
 
+    public List<JarEntry> getJarEntries() {
+        return listFiles().stream().map(f -> new JarEntry(f)).toList();
+    }
+
     public Set<String> getPackages() {
         if (packageNames == null) {
             discoverPackages();
@@ -339,11 +321,10 @@ public class JarFile extends ArchiveFile {
     private String getClassPath() {
         List<ZipEntry> versions = listFiles(META_INF_VERSIONS);
         for (ZipEntry entry : versions) {
-            String versionEntryName = entry.getName(); //.substring(META_INF_VERSIONS.length());
+            String versionEntryName = entry.getName();
             int slash = versionEntryName.indexOf("/");
             if (slash > -1) {
                 String classPath = META_INF_VERSIONS + entry.getName().substring(0, slash);
-                // System.out.println("classPath: " + classPath);
                 return classPath;
             }
         }
@@ -359,7 +340,6 @@ public class JarFile extends ArchiveFile {
             if (entryName.startsWith(META_INF)) {
                 continue;
             }
-            // System.out.println("entryName: " + entryName);
             if (entryName.endsWith(".class")) {
                 if (entryName.endsWith("module-info.class")) {
                     continue;
@@ -412,52 +392,9 @@ public class JarFile extends ArchiveFile {
             //     signatureBlock
             // );
 
-
-
-            // try {
-            //     Path path = Paths.get("/Users/sandy/security/t/META-INF/SERVER.RSA");
-            //     byte[] privKeyByteArray = Files.readAllBytes(path);
-
-            //     PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privKeyByteArray);
-            //     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            //     PrivateKey myPrivKey = keyFactory.generatePrivate(keySpec);
-            //     System.out.println("Algorithm: " + myPrivKey.getAlgorithm());
-            // } catch (Exception e) {
-            //     e.printStackTrace();
-            // }
-
-
-
-            // ASN1Stream s = new ASN1Stream(sf);
-            // CertificateFactory certFactory;
-            // try {
-
-            //     certFactory = CertificateFactory.getInstance("X.509");
-            //     InputStream in = new ByteArrayInputStream(sf);
-            //     X509Certificate cert = (X509Certificate)certFactory.generateCertificate(in);
-            //     // if (cert instanceof Certificate c) {
-            //     //     chain.add(c);
-            //     // }
-            //     chain.add(cert);
-            // } catch (CertificateException e) {
-            //     // TODO Auto-generated catch block
-            //     e.printStackTrace();
-            // }
-
-
-
-
-
-            // PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privKeyByteArray);
-            // KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            // PrivateKey myPrivKey = keyFactory.generatePrivate(keySpec);
-            // System.out.println("Algorithm: " + myPrivKey.getAlgorithm());
-
-
-
             // chain = List.of(signerCert, intermediateCert, rootCert);
         } catch (LocalizableIOException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
         }
 
     }
@@ -597,37 +534,23 @@ public class JarFile extends ArchiveFile {
     }
 
     public class JarEntry extends java.util.jar.JarEntry {
-        Attributes attr;
-        Certificate[] certs;
-        CodeSigner[] signers;
+        private Attributes attr;
+        private Certificate[] certs;
+        private CodeSigner[] signers;
         private String basename;
-        // private Verifier jv;
         private boolean jvInitialized;
         private boolean verify;
         private volatile VerifiedEntry verification;
 
-        /// Creates a new {@code JarEntry} for the specified JAR file entry name.
-        /// @param name the JAR file entry name
-        /// @throws    NullPointerException if the entry name is {@code null}
-        /// @throws    IllegalArgumentException if the entry name is longer than
-        ///            0xFFFF bytes.
         public JarEntry(String name) {
             super(name);
             this.basename = name;
         }
 
-        /// Creates a new {@code JarEntry} with fields taken from the
-        /// specified {@code ZipEntry} object.
-        /// @param ze the {@code ZipEntry} object to create the
-        ///           {@code JarEntry} from
         public JarEntry(ZipEntry ze) {
             super(ze);
         }
 
-        /// Creates a new {@code JarEntry} with fields taken from the
-        /// specified {@code JarEntry} object.
-        ///
-        /// @param je the {@code JarEntry} to copy
         JarEntry(JarEntry je) {
             this((ZipEntry)je);
             this.attr = je.attr;
@@ -644,11 +567,6 @@ public class JarFile extends ArchiveFile {
             this.verification = verification;
         }
 
-        /// Returns the {@code Manifest} {@code Attributes} for this
-        /// entry, or {@code null} if none.
-        ///
-        /// @return the {@code Manifest} {@code Attributes} for this
-        /// entry, or {@code null} if none
         public Attributes getAttributes() {
             JarManifest man = JarFile.this.getManifest();
             if (man != null) {
@@ -658,92 +576,22 @@ public class JarFile extends ArchiveFile {
             }
         }
 
-        /// Returns the {@code Certificate} objects for this entry, or
-        /// {@code null} if none. This method can only be called once
-        /// the {@code JarEntry} has been completely verified by reading
-        /// from the entry input stream until the end of the stream has been
-        /// reached. Otherwise, this method will return {@code null}.
-        ///
-        /// <p>The returned certificate array comprises all the signer certificates
-        /// that were used to verify this entry. Each signer certificate is
-        /// followed by its supporting certificate chain (which may be empty).
-        /// Each signer certificate and its supporting certificate chain are ordered
-        /// bottom-to-top (i.e., with the signer certificate first and the (root)
-        /// certificate authority last).
-        ///
-        /// @return the {@code Certificate} objects for this entry, or
-        /// {@code null} if none.
         @Override
         public Certificate[] getCertificates() {
-
             VerifiedEntry verification = this.verification;
-
             return verification == null
-                    ? null
-                    : verification.getCertificates();
+                ? null
+                : verification.getCertificates();
         }
-        // public Certificate[] getCertificates() {
-        //     // return certs == null ? null : certs.clone();
-        //     try {
-        //         maybeInstantiateVerifier();
-        //     } catch (IOException e) {
-        //         throw new RuntimeException(e);
-        //     }
-        //     if (certs == null && jv != null) {
-        //         certs = jv.getCerts(realEntry());
-        //     }
-        //     return certs == null ? null : certs.clone();
-        // }
 
-
-
-        /// Returns the {@code CodeSigner} objects for this entry, or
-        /// {@code null} if none. This method can only be called once
-        /// the {@code JarEntry} has been completely verified by reading
-        /// from the entry input stream until the end of the stream has been
-        /// reached. Otherwise, this method will return {@code null}.
-        ///
-        /// <p>The returned array comprises all the code signers that have signed
-        /// this entry.
-        ///
-        /// @return the {@code CodeSigner} objects for this entry, or
-        /// {@code null} if none.
         @Override
         public CodeSigner[] getCodeSigners() {
-
             VerifiedEntry verification = this.verification;
-
             return verification == null
-                    ? null
-                    : verification.getCodeSigners();
+                ? null
+                : verification.getCodeSigners();
         }
 
-        // public CodeSigner[] getCodeSigners() {
-        //     // return signers == null ? null : signers.clone();
-        //     try {
-        //         maybeInstantiateVerifier();
-        //     } catch (IOException e) {
-        //         throw new RuntimeException(e);
-        //     }
-        //     if (signers == null && jv != null) {
-        //         signers = jv.getCodeSigners(realEntry());
-        //     }
-        //     return signers == null ? null : signers.clone();
-        // }
-
-        /// Returns the real name of this {@code JarEntry}.
-        ///
-        /// If this {@code JarEntry} is an entry of a
-        /// <a href="JarFile.html#multirelease">multi-release jar file</a> and the
-        /// {@code JarFile} is configured to be processed as such, the name returned
-        /// by this method is the path name of the versioned entry that the
-        /// {@code JarEntry} represents, rather than the path name of the base entry
-        /// that {@link #getName()} returns. If the {@code JarEntry} does not represent
-        /// a versioned entry of a multi-release {@code JarFile} or the {@code JarFile}
-        /// is not configured for processing a multi-release jar file, this method
-        /// returns the same name that {@link #getName()} returns.
-        ///
-        /// @return the real name of the JarEntry
         public String getRealName() {
             return super.getName();
         }
@@ -756,44 +604,16 @@ public class JarFile extends ArchiveFile {
         JarEntry realEntry() {
             if (isMultiRelease() && versionFeature != BASE_VERSION_FEATURE) {
                 String entryName = super.getName();
-                return entryName == basename || entryName.equals(basename) ?
-                        this : new JarEntry(entryName, this);
+                return entryName == basename || entryName.equals(basename)
+                    ? this
+                    : new JarEntry(entryName, this);
             }
             return this;
         }
 
-        // changes the basename, returns "this"
         JarEntry setBasename(String name) {
             basename = name;
             return this;
         }
-
-        // /// Ensures that the JarVerifier has been created if one is
-        // /// necessary (i.e., the jar appears to be signed.) This is done as
-        // /// a quick check to avoid processing of the manifest for unsigned
-        // /// jars.
-        // private void maybeInstantiateVerifier() throws IOException {
-        //     if (jv != null) {
-        //        return;
-        //     }
-
-        //     if (verify) {
-        //         // Gets the manifest name, but only if there are
-        //         // signature-related files. If so we can assume
-        //         // that the jar is signed and that we therefore
-        //         // need a JarVerifier and Manifest
-
-        //         // TODO:
-        //         // String name = JUZFA.getManifestName(this, true);
-        //         // if (name != null) {
-        //         //     getManifest();
-        //         //     return;
-        //         // }
-
-        //         // No signature-related files; don't instantiate a
-        //         // verifier
-        //         verify = false;
-        //     }
-        // }
     }
 }

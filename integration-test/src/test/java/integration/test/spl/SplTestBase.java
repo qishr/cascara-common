@@ -43,6 +43,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import io.github.qishr.cascara.common.util.Cascara;
+import io.github.qishr.cascara.common.util.Pair;
+import io.github.qishr.cascara.test.common.junit.util.ArtifactResolver;
 import io.github.qishr.cascara.test.common.junit.util.TestModulePackager;
 import io.github.qishr.cascara.test.common.junit.util.VfsTestBase;
 
@@ -59,33 +61,23 @@ public class SplTestBase extends VfsTestBase {
         super.tearDown();
     }
 
+    protected String getModulePath() {
+        Pair<String,String> mp = ArtifactResolver.buildModulePath(
+            List.of("cascara-common", "integration-test-fixtures", "cascara-lang-json"),
+            "integration-test"
+        );
+        String modulePath = mp.getL();
+        return modulePath;
+    }
+
     protected Path createModuleA() throws IOException {
         Path providerAJar = Cascara.getModulePath().resolve("provider-a.jar");
 
         // Synthetic Module A with explicit module-info
-        TestModulePackager.createSyntheticModuleJar(
+        TestModulePackager.packageModuleJar(
             providerAJar,
             "0.10.0",
-            Map.of(
-                "module-info",
-                "module provider.a { " +
-                "    requires cascara.common; " +
-                "    requires integration.test.fixtures; " +
-                "    exports com.example.providera; " +
-                "    opens com.example.providera to cascara.common; " +
-                "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
-                "        with com.example.providera.ProviderA;" +
-                "}",
-
-                "com.example.providera.ProviderA",
-                "package com.example.providera; " +
-                "import integration.test.fixtures.TestService; " +
-                "import io.github.qishr.cascara.common.property.Properties; " +
-                "public class ProviderA implements TestService { " +
-                "    public String getName() { return \"ProviderA\"; } " +
-                "    public Properties getServiceProperties() { return null; } " +
-                "}"
-            ),
+            sourceCodeA(),
             List.of("cascara-common", "integration-test-fixtures"),
             "integration-test"
         );
@@ -95,29 +87,10 @@ public class SplTestBase extends VfsTestBase {
     protected Path createModuleB() throws IOException {
         Path providerBJar = Cascara.getModulePath().resolve("provider-b.jar");
         // Synthetic Module B with explicit module-info
-        TestModulePackager.createSyntheticModuleJar(
+        TestModulePackager.packageModuleJar(
             providerBJar,
             "0.10.0",
-            Map.of(
-                "module-info",
-                "module provider.b { " +
-                "    requires cascara.common; " +
-                "    requires integration.test.fixtures; " +
-                "    exports com.example.providerb; " +
-                "    opens com.example.providerb to cascara.common; " +
-                "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
-                "        with com.example.providerb.ProviderB;" +
-                "}",
-
-                "com.example.providerb.ProviderB",
-                "package com.example.providerb; " +
-                "import integration.test.fixtures.TestService; " +
-                "import io.github.qishr.cascara.common.property.Properties; " +
-                "public class ProviderB implements TestService { " +
-                "    public String getName() { return \"ProviderB\"; } " +
-                "    public Properties getServiceProperties() { return null; } " +
-                "}"
-            ),
+            sourceCodeB(),
             List.of("cascara-common", "integration-test-fixtures"),
             "integration-test"
         );
@@ -127,37 +100,93 @@ public class SplTestBase extends VfsTestBase {
     protected Path createSingletonModule() throws IOException {
         Path jar = Cascara.getModulePath().resolve("singleton.jar");
 
-        TestModulePackager.createSyntheticModuleJar(
+        TestModulePackager.packageModuleJar(
             jar,
             "0.10.0",
-            Map.of(
-                "module-info",
-                "module singleton.demo { " +
-                "    requires cascara.common; " +
-                "    requires integration.test.fixtures; " +
-                "    exports com.example.singleton; " +
-                "    opens com.example.singleton to cascara.common; " +
-                "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
-                "        with com.example.singleton.DemoSingletonImpl;" +
-                "}",
-
-                "com.example.singleton.DemoSingletonImpl",
-                "package com.example.singleton; " +
-                "import java.util.UUID; " +
-                "import integration.test.fixtures.DemoSingleton; " +
-                "import io.github.qishr.cascara.common.annotation.SingletonInitializer; " +
-                "public final class DemoSingletonImpl implements DemoSingleton { " +
-                "    public static int initCount = 0; " +
-                "    public UUID uuid; " +
-                "    @SingletonInitializer private void init() { initCount++; uuid = UUID.randomUUID(); } " +
-                "    public int getInitCount() { return initCount; } " +
-                "    public UUID getUuid() { return uuid; } " +
-                "}"
-            ),
+            sourceCodeS(),
             List.of("cascara-common", "integration-test-fixtures"),
             "integration-test"
         );
 
         return jar;
     }
+
+    //
+    //
+    //
+
+    protected Map<String, String> sourceCodeA() {
+        return Map.of(
+            "module-info",
+            "module provider.a { " +
+            "    requires cascara.common; " +
+            "    requires integration.test.fixtures; " +
+            "    exports com.example.providera; " +
+            "    opens com.example.providera to cascara.common; " +
+            "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
+            "        with com.example.providera.ProviderA;" +
+            "}",
+
+            "com.example.providera.ProviderA",
+            "package com.example.providera; " +
+            "import integration.test.fixtures.TestService; " +
+            "import io.github.qishr.cascara.common.property.Properties; " +
+            "public class ProviderA implements TestService { " +
+            "    public String getName() { return \"ProviderA\"; } " +
+            "    public Properties getServiceProperties() { return null; } " +
+            "}"
+        );
+    }
+
+    protected Map<String, String> sourceCodeB() {
+        return Map.of(
+            "module-info",
+            "module provider.b { " +
+            "    requires cascara.common; " +
+            "    requires integration.test.fixtures; " +
+            "    exports com.example.providerb; " +
+            "    opens com.example.providerb to cascara.common; " +
+            "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
+            "        with com.example.providerb.ProviderB;" +
+            "}",
+
+            "com.example.providerb.ProviderB",
+            "package com.example.providerb; " +
+            "import integration.test.fixtures.TestService; " +
+            "import io.github.qishr.cascara.common.property.Properties; " +
+            "public class ProviderB implements TestService { " +
+            "    public String getName() { return \"ProviderB\"; } " +
+            "    public Properties getServiceProperties() { return null; } " +
+            "}"
+        );
+    }
+
+    protected Map<String, String> sourceCodeS() {
+        return Map.of(
+            "module-info",
+            "module singleton.demo { " +
+            "    requires cascara.common; " +
+            "    requires integration.test.fixtures; " +
+            "    exports com.example.singleton; " +
+            "    opens com.example.singleton to cascara.common; " +
+            "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
+            "        with com.example.singleton.DemoSingletonImpl;" +
+            "}",
+
+            "com.example.singleton.DemoSingletonImpl",
+            "package com.example.singleton; " +
+            "import java.util.UUID; " +
+            "import integration.test.fixtures.DemoSingleton; " +
+            "import io.github.qishr.cascara.common.annotation.SingletonInitializer; " +
+            "public final class DemoSingletonImpl implements DemoSingleton { " +
+            "    public static int initCount = 0; " +
+            "    public UUID uuid; " +
+            "    @SingletonInitializer private void init() { initCount++; uuid = UUID.randomUUID(); } " +
+            "    public int getInitCount() { return initCount; } " +
+            "    public UUID getUuid() { return uuid; } " +
+            "}"
+        );
+    }
+
+
 }

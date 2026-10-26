@@ -68,7 +68,7 @@ public interface SPL extends TreeNode<SPL> {
 
     @Experimental
     static boolean hasBooted() {
-        return SPLRoot.isBooting();
+        return SPLRoot.hasBooted();
     }
 
     /// Returns an instance of a specific service provider.

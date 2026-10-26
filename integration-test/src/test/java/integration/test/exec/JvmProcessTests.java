@@ -64,7 +64,7 @@ public class JvmProcessTests extends ExecTestBase {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString(input);
 
-        IpcServer ipcServer = IpcServer.start(false, false);
+        IpcServer ipcServer = IpcServer.start(true, false);
         Class<?> taskClass = GlobalReporterTestTask.class;
 
         String classKey = "CASC_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
