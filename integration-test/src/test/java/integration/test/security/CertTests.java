@@ -5,12 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
-import java.util.zip.ZipFile;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -22,7 +20,6 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.security.JarManifestVerifier;
 import io.github.qishr.cascara.common.security.SecurityException;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
@@ -37,7 +34,7 @@ import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
-import io.github.qishr.cascara.common.util.ArchiveFile;
+import io.github.qishr.cascara.common.util.ZipFile;
 import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
 import io.github.qishr.cascara.test.common.junit.util.TestBase;
 
@@ -66,7 +63,6 @@ public class CertTests extends TestBase implements SourceCode {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSigningTests.class)
             .setPath(getTempDir().resolve("provider.jar"))
             .addSources(sourceCodeA())
-            // XXX test with incorrect deps
             .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();
@@ -74,7 +70,6 @@ public class CertTests extends TestBase implements SourceCode {
         JarFile jar = JarFile.open(testJar.getPath());
 
         ASN1Decoder dec = new DERDecoder();
-        // try (InputStream in = new FileInputStream("/Users/sandy/security/t/META-INF/SERVER.RSA")) {
         try (InputStream in = jar.getInputStream("META-INF/TEST.RSA")) {
             try (ASN1InputStream ais = new ASN1InputStream(dec, in)) {
                 ASN1Sequence seq = ais.readObject();
@@ -130,47 +125,11 @@ public class CertTests extends TestBase implements SourceCode {
         }
     }
 
-    @Disabled ("")
-    @Test
-    void test_invalid_misnamedSfFile_old() {
-        SyntheticJar testJar = SyntheticJar.forUseIn(JarSigningTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
-            .addSources(sourceCodeA())
-            // XXX test with incorrect deps
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .sign()
-            .packageJar();
-
-        try (JarFile jar = JarFile.open(testJar.getPath())) {
-
-            byte[] mfContent = jar.extractFile("META-INF/MANIFEST.MF");
-            byte[] sfContent = jar.extractFile("META-INF/FOO.SF");
-
-            JarManifestVerifier verifier = new JarManifestVerifier(mfContent, sfContent);
-            boolean v1 = verifier.verifySignatureFileAgainstManifest();
-            assertTrue(v1, "SF not verified against MF");
-
-            String entryName = "com/example/providera/ProviderA.class";
-            try (InputStream is = jar.getInputStream(entryName)) {
-                boolean v2 = verifier.verifyEntryContent(entryName, is);
-                assertTrue(v2, "Entry not verified");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        } catch (LocalizableIOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     @Test
     void test_valid_JarEntry_old() {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSigningTests.class)
             .setPath(getTempDir().resolve("provider.jar"))
             .addSources(sourceCodeA())
-            // XXX test with incorrect deps
             .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();
@@ -204,7 +163,6 @@ public class CertTests extends TestBase implements SourceCode {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSigningTests.class)
             .setPath(getTempDir().resolve("provider.jar"))
             .addSources(sourceCodeA())
-            // XXX test with incorrect deps
             .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();
@@ -233,7 +191,7 @@ public class CertTests extends TestBase implements SourceCode {
             .packageJar();
 
         // Remove the key file from the JAR
-        try (ArchiveFile jar = ArchiveFile.open(testJar.getPath())) {
+        try (ZipFile jar = ZipFile.open(testJar.getPath())) {
             jar.remove("META-INF/TEST.RSA");
         } catch (Exception e) {
             e.printStackTrace();
@@ -255,8 +213,6 @@ public class CertTests extends TestBase implements SourceCode {
         } catch (Exception e) {}
     }
 
-    // TODO: Make test common junit a subproject of this
-
     @Test
     void test_invalid_modifiedClass_readJarEntries() throws LocalizableIOException {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSigningTests.class)
@@ -267,7 +223,7 @@ public class CertTests extends TestBase implements SourceCode {
             .packageJar();
 
         // Modify a class file in the JAR
-        try (ArchiveFile jar = ArchiveFile.open(testJar.getPath())) {
+        try (ZipFile jar = ZipFile.open(testJar.getPath())) {
             jar.addFile("garbage", "module-info.class");
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.security;
+package integration.test.security;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -12,6 +12,8 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
+import io.github.qishr.cascara.common.security.SecurityMessage;
+import io.github.qishr.cascara.common.security.SecurityException;
 import io.github.qishr.cascara.common.util.Pair;
 
 public final class JarManifestVerifier {

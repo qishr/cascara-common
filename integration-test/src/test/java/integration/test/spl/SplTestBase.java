@@ -37,7 +37,6 @@ package integration.test.spl;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

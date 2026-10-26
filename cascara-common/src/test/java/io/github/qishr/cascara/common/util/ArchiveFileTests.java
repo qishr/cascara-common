@@ -48,7 +48,7 @@ import java.util.zip.ZipInputStream;
 
 import org.junit.jupiter.api.io.TempDir;
 
-class ArchiveFileTests {
+class ZipFileTests {
 
     @TempDir
     Path tempDir;
@@ -72,7 +72,7 @@ class ArchiveFileTests {
 
         Path archivePath = tempDir.resolve("archive.zip");
 
-        ArchiveFile archive = ArchiveFile.create(archivePath);
+        ZipFile archive = ZipFile.create(archivePath);
         archive.addDirectory(sourceDir);
 
         Files.writeString(

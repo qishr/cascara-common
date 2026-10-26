@@ -13,8 +13,6 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
-import io.github.qishr.cascara.common.lang.processor.Serializer;
-import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 
 public class LocalIpcTests extends ExecTestBase {
     @BeforeEach
@@ -24,7 +22,6 @@ public class LocalIpcTests extends ExecTestBase {
 
     @Test
     void test_IPC_doesntForwardToSamePID() throws IOException {
-        Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
 
         IpcServer ipcServer = IpcServer.start(true, false);
 

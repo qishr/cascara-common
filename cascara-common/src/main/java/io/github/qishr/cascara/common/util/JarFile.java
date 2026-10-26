@@ -72,7 +72,7 @@ import io.github.qishr.cascara.common.security.SecurityException;
 import io.github.qishr.cascara.common.security.SecurityMessage;
 import io.github.qishr.cascara.common.util.JarVerifier.VerifiedSigner;
 
-public class JarFile extends ArchiveFile {
+public class JarFile extends ZipFile {
     private static final String META_INF = "META-INF/";
     private static final String DOT_SF = ".SF";
     private static final String META_INF_VERSIONS = META_INF + "versions/";

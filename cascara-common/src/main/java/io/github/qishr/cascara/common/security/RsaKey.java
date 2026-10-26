@@ -1,6 +1,5 @@
 package io.github.qishr.cascara.common.security;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.cert.CertificateException;
