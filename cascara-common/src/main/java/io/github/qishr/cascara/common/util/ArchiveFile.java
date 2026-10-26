@@ -53,7 +53,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.jar.JarEntry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -133,16 +132,20 @@ public class ArchiveFile implements AutoCloseable {
     //
 
     public InputStream getInputStream(ZipEntry entry) throws LocalizableIOException {
-        byte[] byteArray = extractFile(entry.getName());
+        byte[] byteArray = extractFileInternal(entry.getName());
         return new ByteArrayInputStream(byteArray);
     }
 
     public InputStream getInputStream(String entryName) throws LocalizableIOException {
-        byte[] byteArray = extractFile(entryName);
+        byte[] byteArray = extractFileInternal(entryName);
         return new ByteArrayInputStream(byteArray);
     }
 
     public byte[] extractFile(String entryName) throws LocalizableIOException {
+        return extractFile(archivePath, entryName);
+    }
+
+    private byte[] extractFileInternal(String entryName) throws LocalizableIOException {
         return extractFile(archivePath, entryName);
     }
 
@@ -249,6 +252,14 @@ public class ArchiveFile implements AutoCloseable {
         }
     }
 
+    public void remove(String entryName) {
+        try (FileSystem fileSystem = getFileSystem()) {
+            removeInternal(fileSystem.getPath(entryName));
+        } catch (IOException e) {
+            // throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
+        }
+    }
+
     //
     //
     //
@@ -286,12 +297,12 @@ public class ArchiveFile implements AutoCloseable {
         }
     }
 
-    private void addFileInternalNoException(Path sourcePath, Path entryName, List<LocalizableIOException> exceptions) {
+    private void addFileInternalNoException(Path sourcePath, Path entryPath, List<LocalizableIOException> exceptions) {
         try (InputStream in = Files.newInputStream(sourcePath)) {
             byte[] buf = new byte[1024];
             int len;
-            ensureParentExists(entryName);
-            try (OutputStream os = Files.newOutputStream(entryName, StandardOpenOption.CREATE)) {
+            ensureParentExists(entryPath);
+            try (OutputStream os = Files.newOutputStream(entryPath, StandardOpenOption.CREATE)) {
                 while ((len = in.read(buf)) > 0) {
                     os.write(buf, 0, len);
                 }
@@ -304,39 +315,31 @@ public class ArchiveFile implements AutoCloseable {
         }
     }
 
-    private void addFileInternal(String content, Path entryName) throws LocalizableIOException {
+    private void addFileInternal(String content, Path entryPath) throws LocalizableIOException {
         byte[] buf = content.getBytes();
-        ensureParentExists(entryName);
-        try (OutputStream os = Files.newOutputStream(entryName, StandardOpenOption.CREATE)) {
+        ensureParentExists(entryPath);
+        try (OutputStream os = Files.newOutputStream(entryPath, StandardOpenOption.CREATE)) {
             os.write(buf, 0, buf.length);
         } catch (IOException e) {
             throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
     }
 
-    private void ensureParentExists(Path entryName) throws LocalizableIOException {
-        if (entryName.getParent() != null) {
+    private void removeInternal(Path entryPath) throws LocalizableIOException {
+        try {
+            Files.delete(entryPath);
+        } catch (IOException e) {
+            throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
+        }
+    }
+
+    private void ensureParentExists(Path entryPath) throws LocalizableIOException {
+        if (entryPath.getParent() != null) {
             try {
-                Files.createDirectories(entryName.getParent());
+                Files.createDirectories(entryPath.getParent());
             } catch (IOException e) {
                 throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
             }
         }
     }
-
-    // public static class EntryInfo {
-    //     private String path = "";
-
-    //     public EntryInfo(String path) {
-    //         this.path = path;
-    //     }
-
-    //     public String getPath() {
-    //         return path;
-    //     }
-
-    //     public void setPath(String path) {
-    //         this.path = path;
-    //     }
-    // }
 }

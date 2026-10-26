@@ -4,10 +4,10 @@
     "java.configuration.updateBuildConfiguration": "automatic",
 
     "java.test.config":  {
-        "vmArgs": [
-            "--add-opens", "java.base/java.lang=cascara.common",
-            "--add-opens", "java.base/java.lang=integration.test",
-        ],
+        // "vmArgs": [
+        //     "--add-opens", "java.base/java.lang=cascara.common",
+        //     "--add-opens", "java.base/java.lang=integration.test",
+        // ],
         "modulePaths": [
             // cascara-cpmmon requires sources and javadoc, so we can't use its libs folder
             // as it contains sources and libs with the same module names.

@@ -43,12 +43,13 @@ import java.lang.module.InvalidModuleDescriptorException;
 import java.lang.module.ModuleDescriptor;
 import java.nio.file.Path;
 import java.security.CodeSigner;
-import java.security.cert.CertPath;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -57,30 +58,37 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 
-import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.security.RsaKey;
+import io.github.qishr.cascara.common.security.SecurityException;
+import io.github.qishr.cascara.common.security.SecurityMessage;
+import io.github.qishr.cascara.common.util.JarVerifier.VerifiedSigner;
 
 public class JarFile extends ArchiveFile {
     private static final String META_INF = "META-INF/";
-    private static final String META_INF_VERSIONS = "META-INF/versions/";
-    static final String INDEX_NAME = "META-INF/INDEX.LIST";
-    public static final String MANIFEST_NAME = META_INF + "MANIFEST.MF";
+    private static final String DOT_SF = ".SF";
+    private static final String META_INF_VERSIONS = META_INF + "versions/";
+    // private static final String INDEX_NAME = META_INF + "INDEX.LIST";
+    public static final String MANIFEST_MF = META_INF + "MANIFEST.MF";
 
     private JarManifest manifest;
+    private JarVerifier verifier = null;
+    private boolean verify;
+    private Version version;
+    private boolean isMultiRelease;
+
+    private String moduleName = null;
     private Properties mavenProperties;
     private Set<String> packageNames = null;
     private Set<String> classNames = null;
-    private String moduleName = null;
-    private boolean verify;
-    private Version version;
-    private X509Certificate signerCert;
-    private X509Certificate intermediateCert;
-    private X509Certificate rootCert;
 
     private static final Runtime.Version BASE_VERSION;
     private static final int BASE_VERSION_FEATURE;
@@ -88,9 +96,6 @@ public class JarFile extends ArchiveFile {
     private static final boolean MULTI_RELEASE_ENABLED;
     private static final boolean MULTI_RELEASE_FORCED;
     private final int versionFeature;
-
-    private boolean isMultiRelease;
-    private Map<String, VerifiedSigner> verifiedEntries;
 
     static {
         // multi-release jar file versions >= 9
@@ -144,13 +149,9 @@ public class JarFile extends ArchiveFile {
         }
         this.versionFeature = this.version.feature();
 
-
-        String jarManifest = new String(extractFile("META-INF/MANIFEST.MF"));
+        String jarManifest = new String(super.extractFile("META-INF/MANIFEST.MF"));
         manifest = JarManifest.parse(jarManifest);
-        initSecurity();
     }
-
-
 
     public Path getPath() {
         return archivePath;
@@ -160,12 +161,34 @@ public class JarFile extends ArchiveFile {
         return manifest;
     }
 
-   //
-   //
-   //
+    public JarEntry getJarEntry(String name) {
+        return new JarEntry(getEntry(name), getVerifier());
+    }
 
+    public List<JarEntry> getJarEntries() {
+        return listFiles().stream().map(f -> new JarEntry(f, getVerifier())).toList();
+    }
 
-    // public List<List<String>> getServices() {
+    public InputStream getInputStream(JarEntry entry) throws LocalizableIOException {
+        verifyEntry(entry);
+        return super.getInputStream(entry);
+    }
+
+    public InputStream getInputStream(String entryName) throws LocalizableIOException {
+        verifyEntry(entryName);
+        return super.getInputStream(entryName);
+    }
+
+    public byte[] extractFile(String entryName) throws LocalizableIOException {
+        verifyEntry(entryName);
+        return super.extractFile(entryName);
+    }
+
+    //
+    //
+    //
+
+     // public List<List<String>> getServices() {
     //     try {
     //         List<List<String>> services = new ArrayList<>();
     //         List<FileInfo> serviceFiles = listFiles("META-INF/services");
@@ -199,14 +222,7 @@ public class JarFile extends ArchiveFile {
                 moduleName = automaticModuleName;
             }
         }
-        // if (moduleName == null) {
-        //     determineModuleName();
-        // }
         return moduleName;
-    }
-
-    public List<JarEntry> getJarEntries() {
-        return listFiles().stream().map(f -> new JarEntry(f)).toList();
     }
 
     public Set<String> getPackages() {
@@ -223,8 +239,44 @@ public class JarFile extends ArchiveFile {
         return classNames;
     }
 
+    public static String getClassName(ZipEntry entry) {
+        String filePath = entry.getName();
+        if (filePath.endsWith(".class")) {
+            int slash = filePath.lastIndexOf("/");
+            return filePath.substring(slash + 1, filePath.length() - 6);
+        }
+        return null;
+    }
+
+    public static String getPackageName(ZipEntry entry) {
+        String filePath = entry.getName();
+        if (filePath.endsWith(".class")) {
+            int slash = filePath.lastIndexOf("/");
+            if (slash > -1) {
+                String packagePath = filePath.substring(0, slash);
+                return packagePath.replace("/", ".");
+            }
+        }
+        return null;
+    }
+
+    public final boolean isMultiRelease() {
+        if (isMultiRelease) {
+            return true;
+        }
+        if (MULTI_RELEASE_ENABLED) {
+            // TODO:
+            // try {
+            //     checkForSpecialAttributes();
+            // } catch (IOException io) {
+            //     isMultiRelease = false;
+            // }
+        }
+        return isMultiRelease;
+    }
+
     //
-    // Private MEthods
+    // Private Methods
     //
 
     private void extractMavenInfo() {
@@ -262,51 +314,6 @@ public class JarFile extends ArchiveFile {
             e.printStackTrace();
         }
     }
-
-    @Experimental
-    public String guessModuleName() {
-        String[] fileNameSegments = getPath().getFileName().toString().split("-");
-        StringBuilder sb = new StringBuilder();
-        for (String segment : fileNameSegments) {
-            if (!segment.isEmpty()) {
-                int firstCodePoint = segment.codePointAt(0);
-                if (Character.isAlphabetic(firstCodePoint)) {
-                    if (!sb.isEmpty()) {
-                        sb.append(".");
-                    }
-                    sb.append(segment);
-                } else {
-                    break;
-                }
-            }
-        }
-        return sb.toString();
-    }
-
-    public static String getClassName(ZipEntry entry) {
-        String filePath = entry.getName();
-        if (filePath.endsWith(".class")) {
-            int slash = filePath.lastIndexOf("/");
-            return filePath.substring(slash + 1, filePath.length() - 6);
-        }
-        return null;
-    }
-
-    public static String getPackageName(ZipEntry entry) {
-        String filePath = entry.getName();
-        if (filePath.endsWith(".class")) {
-            int slash = filePath.lastIndexOf("/");
-            if (slash > -1) {
-                String packagePath = filePath.substring(0, slash);
-                return packagePath.replace("/", ".");
-            }
-        }
-        return null;
-    }
-
-    //
-    //
-    //
 
     private String getJpmsModuleName() {
         try (InputStream is = getInputStream("module-info.class")) {
@@ -364,183 +371,125 @@ public class JarFile extends ArchiveFile {
         }
     }
 
-    //
-    // Verification
-    //
+    private JarVerifier getVerifier() {
+        if (verify && verifier == null) {
+            verifier = createVerifier();
+        }
+        return verifier;
+    }
 
-    private List<Certificate> chain;
-
-    private void initSecurity() {
-        verifiedEntries = new HashMap<>();
-
-        // TODO: Set these values...
-
-        // private X509Certificate signerCert;
-        // private X509Certificate intermediateCert;
-        // private X509Certificate rootCert;
-
-        // Or just populate: List<Certificate> chain
-
-        chain = new ArrayList<>();
+    private JarVerifier createVerifier() {
+        byte[] mf;
         try {
-            byte[] sfContent = extractFile("META-INF/SERVER.SF");
-            byte[] signatureBlock = extractFile("META-INF/SERVER.RSA");
-
-            // JAR signature blocks commonly hold a detached signature over the .SF file.
-            // CMSSignedData cms = new CMSSignedData(
-            //     new CMSByteArray(sfContent),
-            //     signatureBlock
-            // );
-
-            // chain = List.of(signerCert, intermediateCert, rootCert);
+            mf = super.extractFile(MANIFEST_MF);
         } catch (LocalizableIOException e) {
-            // e.printStackTrace();
+            throw new SecurityException(e, GenericMessage.ERROR, "No MANIFEST.MF");
         }
 
+        Map<String,VerifiedSigner> signers = new HashMap<>();
+        Map<String,Manifest> signatures = new HashMap<>();
+        Map<String,String> keyFiles = getKeyFiles();
+        for (Entry<String,String> entry : keyFiles.entrySet()) {
+            String signerName = entry.getKey();
+
+            Manifest signature = null;
+            String signatureName = META_INF + signerName + DOT_SF;
+            try (InputStream is = super.getInputStream(signatureName)) {
+                signature = new Manifest(is);
+            } catch (IOException e) {
+                // TODO Proper error handling
+                throw new SecurityException(e, GenericMessage.ERROR, "Error reading " + signatureName);
+            }
+
+            String keyFileName = META_INF + entry.getValue();
+            try (InputStream is = super.getInputStream(keyFileName)) {
+                RsaKey k = new RsaKey(is);
+
+
+                // TODO: Key Verification
+
+
+                VerifiedSigner signer = new VerifiedSigner(k.getCertificates());
+                signers.put(signerName, signer);
+                signatures.put(signerName, signature);
+            } catch (IOException e) {
+                // TODO Proper error handling
+                throw new SecurityException(e, GenericMessage.ERROR, "Error reading " + keyFileName);
+            } catch (CertificateException e) {
+                // TODO Proper error handling
+                throw new SecurityException(e, GenericMessage.ERROR, "Error reading certificate: " + e.getMessage());
+            }
+        }
+
+        // TODO: Check that mf isn't empty, same for signers and signatures?
+
+        return new CascaraJarVerifier()
+            .setSigners(signers)
+            .setSignatures(signatures)
+            .setManifest(mf);
     }
 
-    public JarEntry getJarEntry(String name) {
-        ZipEntry zipEntry = getEntry(name);
-        JarEntry jarEntry = new JarEntry(zipEntry);
+    private Map<String,String> getKeyFiles() {
+        List<ZipEntry> metaInf = super.listFiles(META_INF);
 
-        // TODO:
-        // jarEntry.attr =
-        // jarEntry.certs =
-        // jarEntry.signers =
-
-
-        // List<X509Certificate> chain = List.of(
-        //     signerCert,
-        //     intermediateCert,
-        //     rootCert
-        // );
-
-        try {
-            jarEntry.setVerification(
-                new VerifiedEntry(chain)
-            );
-        } catch (CertificateException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        // 1. Find SF files
+        List<String> names = new ArrayList<>();
+        for (ZipEntry entry : metaInf) {
+            if (entry.getName().endsWith(DOT_SF)) {
+                String name = entry.getName().substring(0, entry.getName().length() -3);
+                names.add(name);
+            }
         }
 
-
-
-        VerifiedSigner signer = getSigner(name);
-        jarEntry.certs = signer.certificates();
-        try {
-            jarEntry.signers = signer.codeSigners();
-        } catch (CertificateException e) {
-
-            // TODO Handle this properly
-            e.printStackTrace();
+        Map<String,String> keyFiles = new HashMap<>();
+        for (ZipEntry entry : metaInf) {
+            String entryName = entry.getName();
+            if (!entryName.endsWith(DOT_SF)) {
+                int dot = entryName.lastIndexOf('.');
+                if (dot > -1) {
+                    String name = entry.getName().substring(0, dot);
+                    if (names.contains(name)) {
+                        keyFiles.put(name, entry.getName());
+                    }
+                }
+            }
         }
-        return jarEntry;
+        if (keyFiles.size() < names.size()) {
+            throw new SecurityException(GenericMessage.ERROR, "Missing key file");
+        }
+        return keyFiles;
     }
 
-    public final boolean isMultiRelease() {
-        if (isMultiRelease) {
-            return true;
+    private void verifyEntry(String entryName) {
+        JarVerifier jv = getVerifier();
+        if (jv != null) {
+            try {
+                if (jv.isTrustedManifestEntry(entryName)) {
+                    byte[] content = super.extractFile(entryName);
+                    if (!jv.verifyEntryContent(entryName, content)) {
+                        throw new SecurityException(GenericMessage.ERROR, "Verification failed for " + entryName + " in " + getPath());
+                    }
+                }
+            } catch (LocalizableIOException e) {
+                throw new SecurityException(e, GenericMessage.ERROR, "Verification failed for " + entryName + " in " + getPath());
+            }
         }
-        if (MULTI_RELEASE_ENABLED) {
-            // TODO:
-            // try {
-            //     checkForSpecialAttributes();
-            // } catch (IOException io) {
-            //     isMultiRelease = false;
-            // }
-        }
-        return isMultiRelease;
     }
 
-
-    private VerifiedSigner getSigner(String entryName) {
-        // TODO: populate verifiedEntries
-        // VerifiedSigner signer = verifiedEntries.get(entryName);
-        VerifiedSigner signer = verifiedEntries.computeIfAbsent(entryName, name -> {
-            // List<X509Certificate> chain =
-            return new VerifiedSigner(chain);
-        });
-        return signer;
+    private void verifyEntry(JarEntry entry) {
+        verifyEntry(entry.getName());
     }
 
     //
     //
     //
-
-    static class Verifier {
-        public void verify() {
-            // List<X509Certificate> chain =
-            // List.of(
-            //         signerCert,
-            //         intermediateCert,
-            //         rootCert
-            // );
-
-            // entry.setVerification(
-            //         new VerifiedEntry(chain)
-            // );
-        }
-
-        public boolean isTrustedManifestEntry(String name) {
-            // TODO
-            return false;
-        }
-    }
-
-    private final static class VerifiedSigner {
-
-        // private final List<X509Certificate> chain;
-        private final List<? extends Certificate> chain;
-
-
-        // private final Certificate[] certificates;
-        // private final CodeSigner[] codeSigners;
-
-        public VerifiedSigner(List<? extends Certificate> chain) {
-            // certificates = null;
-            // codeSigners = null;
-            // chain = new ArrayList<>();
-            this.chain = chain;
-        }
-
-        // public Certificate[] certificates() {
-        //     return certificates;
-        // }
-
-        // public CodeSigner[] codeSigners() {
-        //     return codeSigners;
-        // }
-
-
-
-        public Certificate[] certificates() {
-            return chain.toArray(Certificate[]::new);
-        }
-
-        public CodeSigner[] codeSigners()
-                throws CertificateException {
-
-            CertificateFactory factory =
-                    CertificateFactory.getInstance("X.509");
-
-            CertPath certPath =
-                    factory.generateCertPath(chain);
-
-            return new CodeSigner[] {
-                    new CodeSigner(certPath, null)
-            };
-        }
-    }
 
     public class JarEntry extends java.util.jar.JarEntry {
         private Attributes attr;
         private Certificate[] certs;
         private CodeSigner[] signers;
         private String basename;
-        private boolean jvInitialized;
-        private boolean verify;
-        private volatile VerifiedEntry verification;
+        private volatile JarVerifier jv;
 
         public JarEntry(String name) {
             super(name);
@@ -558,13 +507,17 @@ public class JarFile extends ArchiveFile {
             this.signers = je.signers;
         }
 
+        // Used by realEntry()
         JarEntry(String name, ZipEntry vze) {
             super(vze);
             this.basename = name;
         }
 
-        void setVerification(VerifiedEntry verification) {
-            this.verification = verification;
+        // Used by getJarEntries()
+        JarEntry(ZipEntry ze, JarVerifier jv) {
+            super(ze);
+            this.jv = jv;
+            this.basename = ze.getName();
         }
 
         public Attributes getAttributes() {
@@ -578,18 +531,22 @@ public class JarFile extends ArchiveFile {
 
         @Override
         public Certificate[] getCertificates() {
-            VerifiedEntry verification = this.verification;
-            return verification == null
+            JarVerifier.VerifiedSigner signer = jv == null
                 ? null
-                : verification.getCertificates();
+                : jv.getSigner(getName());
+            return signer == null
+                ? null
+                : signer.certificates();
         }
 
         @Override
         public CodeSigner[] getCodeSigners() {
-            VerifiedEntry verification = this.verification;
-            return verification == null
+            JarVerifier.VerifiedSigner signer = jv == null
                 ? null
-                : verification.getCodeSigners();
+                : jv.getSigner(getName());
+            return signer == null
+                ? null
+                : signer.codeSigners();
         }
 
         public String getRealName() {
@@ -602,6 +559,7 @@ public class JarFile extends ArchiveFile {
         }
 
         JarEntry realEntry() {
+            // TODO: How does this work with signing?
             if (isMultiRelease() && versionFeature != BASE_VERSION_FEATURE) {
                 String entryName = super.getName();
                 return entryName == basename || entryName.equals(basename)
@@ -614,6 +572,192 @@ public class JarFile extends ArchiveFile {
         JarEntry setBasename(String name) {
             basename = name;
             return this;
+        }
+    }
+
+    //
+    //
+    //
+
+    public static class CascaraJarVerifier implements JarVerifier {
+        private Manifest manifest;
+        private byte[] rawManifestBytes;
+        private Map<String,VerifiedSigner> signers;
+        private Map<String,Manifest> signatures;
+
+        public CascaraJarVerifier() {
+        }
+
+        public CascaraJarVerifier setSigners(Map<String,VerifiedSigner> signers) {
+            this.signers = signers;
+            return this;
+        }
+
+        public CascaraJarVerifier setSignatures(Map<String,Manifest> signatures) {
+            this.signatures = signatures;
+            return this;
+        }
+
+        public CascaraJarVerifier setManifest(byte[] rawManifestBytes) {
+            this.rawManifestBytes = rawManifestBytes;
+            try {
+                manifest = new Manifest(new ByteArrayInputStream(rawManifestBytes));
+                return this;
+            } catch (IOException e) {
+                // TODO Proper error handling
+                throw new SecurityException(e, GenericMessage.ERROR, e.getMessage());
+            }
+        }
+
+        @Override
+        public boolean verifyAllSignatureFilesAgainstManifest() {
+            boolean result = true;
+            for (Manifest signature : signatures.values()) {
+                result |= verifySignatureFileAgainstManifest(signature);
+            }
+            return result;
+        }
+
+        @Override
+        public boolean verifySignatureFileAgainstManifest(Manifest signatureFile) {
+            Attributes mainSfAttrs = signatureFile.getMainAttributes();
+
+            // 1. Verify global MANIFEST.MF digest (SHA-256-Digest-Manifest)
+            String sfManifestDigest = mainSfAttrs.getValue("SHA-256-Digest-Manifest");
+            if (sfManifestDigest != null) {
+                MessageDigest md = getAlgorithm("SHA-256");
+                byte[] computed = md.digest(rawManifestBytes);
+                byte[] expected = Base64.getDecoder().decode(sfManifestDigest);
+
+                if (!Arrays.equals(computed, expected)) {
+                    return false; // Whole-manifest digest mismatch!
+                }
+            }
+
+            // 2. Verify individual section digests in MANIFEST.SF against MANIFEST.MF
+            Map<String, Attributes> sfEntries = signatureFile.getEntries();
+            Map<String, Attributes> mfEntries = manifest.getEntries();
+
+            for (Map.Entry<String, Attributes> entry : sfEntries.entrySet()) {
+                String entryName = entry.getKey();
+                Attributes sfEntryAttrs = entry.getValue();
+
+                String sfEntryDigest = sfEntryAttrs.getValue("SHA-256-Digest");
+                if (sfEntryDigest == null) {
+                    continue;
+                }
+
+                Attributes mfEntryAttrs = mfEntries.get(entryName);
+                if (mfEntryAttrs == null) {
+                    return false; // File listed in .SF missing from .MF!
+                }
+
+                // Note: Section digest in .SF is calculated over the raw header lines of that section in MANIFEST.MF
+                String mfEntryDigest = mfEntryAttrs.getValue("SHA-256-Digest");
+                if (mfEntryDigest == null) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// Verifies an individual file entry's stream against its SHA-256 digest in MANIFEST.MF.
+        @Override
+        public boolean verifyEntryContent(String entryName, byte[] content) {
+
+            Attributes mfAttrs = manifest.getAttributes(entryName);
+            if (mfAttrs == null) {
+                // Not a signed entry (e.g., unindexed META-INF files)
+                return true;
+            }
+
+            try (InputStream contentStream = new ByteArrayInputStream(content)) {
+
+                Pair<String,String> digestPair = getAlgorithmAndDigest(mfAttrs);
+                if (digestPair == null) {
+                    throw new SecurityException(SecurityMessage.NO_ALGORITHM, entryName);
+                }
+
+                String algorithm = digestPair.getL();
+                String expectedDigestBase64 = digestPair.getR();
+
+                MessageDigest md = getAlgorithm(algorithm);
+
+                byte[] buffer = new byte[8192];
+                int read;
+                try {
+                    while ((read = contentStream.read(buffer)) != -1) {
+                        md.update(buffer, 0, read);
+                    }
+                } catch (IOException e) {
+                    throw new SecurityException(e, FileMessage.READ_ERROR, entryName);
+                }
+
+                byte[] computedDigest = md.digest();
+                byte[] expectedDigest = Base64.getDecoder().decode(expectedDigestBase64);
+
+                return Arrays.equals(computedDigest, expectedDigest);
+            } catch (LocalizableIOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            return false;
+        }
+
+        @Override
+        public VerifiedSigner getSigner(String entryName) {
+            VerifiedSigner result = signers.computeIfAbsent(entryName, n -> {
+                for (Entry<String,Manifest> signature : signatures.entrySet()) {
+                    if (isTrustedManifestEntry(entryName)) {
+                        return signers.get(signature.getKey());
+                    }
+                }
+                return null;
+            });
+            return result;
+        }
+
+        @Override
+        public boolean isTrustedManifestEntry(String entryName) {
+            for (Entry<String,Manifest> signature : signatures.entrySet()) {
+                if (signature.getValue().getAttributes(entryName) != null) {
+                    // TODO: Also check that attributes contain digest
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private MessageDigest getAlgorithm(String name) {
+            try {
+                return MessageDigest.getInstance(name);
+            } catch (NoSuchAlgorithmException e) {
+                throw new SecurityException(e, SecurityMessage.NO_SUCH_ALGORITHM, name);
+            }
+        }
+
+        private Pair<String,String> getAlgorithmAndDigest(Attributes mfAttrs) {
+            Pair<String,String> pair = tryAlgorithm("SHA-384-Digest", mfAttrs);
+            if (pair == null) {
+                pair = tryAlgorithm("SHA-256-Digest", mfAttrs);
+            }
+            if (pair == null) {
+                pair = tryAlgorithm("SHA-Digest", mfAttrs);
+            }
+            return pair;
+        }
+
+        private Pair<String,String> tryAlgorithm(String headerKey, Attributes mfAttrs) {
+            String digest = mfAttrs.getValue(headerKey);
+            if (digest == null) {
+                return null;
+            }
+            String algorithm = headerKey.replaceAll("-Digest$", "").replace("SHA1", "SHA-1");
+            return new Pair<>(algorithm, digest);
         }
     }
 }

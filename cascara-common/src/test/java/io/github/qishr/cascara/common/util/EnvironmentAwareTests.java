@@ -1,16 +1,8 @@
 package io.github.qishr.cascara.common.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.nio.file.Path;
-
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
-
-import io.github.qishr.cascara.common.semver.SemVer;
 
 public class EnvironmentAwareTests {
     static boolean isModularEnvironment() {
