@@ -18,7 +18,8 @@ import io.github.qishr.cascara.common.security.cms.CertificateSet;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 
 public class RsaKey {
-    List<X509Certificate> certificates;
+    private List<X509Certificate> certificates;
+    private SignedData sd;
 
     public RsaKey(InputStream in) {
         loadCerts(in);
@@ -28,22 +29,23 @@ public class RsaKey {
         return certificates;
     }
 
+    public SignedData getSignedData() {
+        return sd;
+    }
+
     private void loadCerts(InputStream in) {
         ASN1Decoder dec = new DERDecoder();
         try (ASN1InputStream ais = new ASN1InputStream(dec, in)) {
             ASN1Sequence seq = ais.readObject();
 
             // A simple wrapper that checks the structure an calls SignedData.parse
-            SignedData sd = CMSUtils.signedDataOrNull(seq);
-
-            // assertNotNull(sd);
+            sd = CMSUtils.signedDataOrNull(seq);
 
             // 1. Parse the tagged object as an implicit ASN1Set
             ASN1Set certSet = sd.certificates().getObject(ASN1Tag.SET);
 
             // 2. Parse the CertificateSet from the ASN1Set
             CertificateSet certificateSet = CertificateSet.parse(certSet);
-            // assertNotNull(certificateSet);
 
             certificates = certificateSet.certificates()
                 .stream()

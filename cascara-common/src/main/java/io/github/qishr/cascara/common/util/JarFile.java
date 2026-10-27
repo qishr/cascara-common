@@ -47,6 +47,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -70,6 +73,12 @@ import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.security.RsaKey;
 import io.github.qishr.cascara.common.security.SecurityException;
 import io.github.qishr.cascara.common.security.SecurityMessage;
+import io.github.qishr.cascara.common.security.SignaturePolicy;
+import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
+import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
+import io.github.qishr.cascara.common.security.cms.SignatureStatus;
+import io.github.qishr.cascara.common.security.cms.SignedData;
+import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.common.util.JarVerifier.VerifiedSigner;
 
 public class JarFile extends ZipFile {
@@ -371,7 +380,7 @@ public class JarFile extends ZipFile {
         }
     }
 
-    private JarVerifier getVerifier() {
+    public JarVerifier getVerifier() {
         if (verify && verifier == null) {
             verifier = createVerifier();
         }
@@ -386,47 +395,41 @@ public class JarFile extends ZipFile {
             throw new SecurityException(e, GenericMessage.ERROR, "No MANIFEST.MF");
         }
 
-        Map<String,VerifiedSigner> signers = new HashMap<>();
-        Map<String,Manifest> signatures = new HashMap<>();
-        Map<String,String> keyFiles = getKeyFiles();
-        for (Entry<String,String> entry : keyFiles.entrySet()) {
+        Map<String, byte[]> signatures = new HashMap<>();
+        Map<String, RsaKey> keys = new HashMap<>();
+        Map<String, String> keyFiles = getKeyFiles();
+
+        for (Entry<String, String> entry : keyFiles.entrySet()) {
             String signerName = entry.getKey();
 
-            Manifest signature = null;
-            String signatureName = META_INF + signerName + DOT_SF;
-            try (InputStream is = super.getInputStream(signatureName)) {
-                signature = new Manifest(is);
+            String sfName = META_INF + signerName + DOT_SF;
+            try {
+                byte[] sfBytes;
+                sfBytes = super.extractFile(sfName);
+                signatures.put(signerName, sfBytes);
             } catch (IOException e) {
-                // TODO Proper error handling
-                throw new SecurityException(e, GenericMessage.ERROR, "Error reading " + signatureName);
+                // TODO: move this. check signature exists in verifier
+                throw new SecurityException(e, GenericMessage.ERROR, "Error reading " + sfName);
             }
 
-            String keyFileName = META_INF + entry.getValue();
-            try (InputStream is = super.getInputStream(keyFileName)) {
-                RsaKey k = new RsaKey(is);
-
-
-                // TODO: Key Verification
-
-
-                VerifiedSigner signer = new VerifiedSigner(k.getCertificates());
-                signers.put(signerName, signer);
-                signatures.put(signerName, signature);
+            String kfName = META_INF + entry.getValue();
+            try {
+                byte[] kfBytes = super.extractFile(kfName);
+                RsaKey k = new RsaKey(new ByteArrayInputStream(kfBytes));
+                keys.put(signerName, k);
             } catch (IOException e) {
-                // TODO Proper error handling
-                throw new SecurityException(e, GenericMessage.ERROR, "Error reading " + keyFileName);
-            } catch (CertificateException e) {
-                // TODO Proper error handling
-                throw new SecurityException(e, GenericMessage.ERROR, "Error reading certificate: " + e.getMessage());
+                // TODO: move this. check key exists in verifier
+                throw new SecurityException(e, GenericMessage.ERROR, "Error reading " + kfName);
             }
         }
 
-        // TODO: Check that mf isn't empty, same for signers and signatures?
+        CascaraJarVerifier jarVerifier = new CascaraJarVerifier()
+                // .setSigners(signers)
+                .setKeys(keys)
+                .setSignatures(signatures)
+                .setManifest(mf);
 
-        return new CascaraJarVerifier()
-            .setSigners(signers)
-            .setSignatures(signatures)
-            .setManifest(mf);
+        return jarVerifier;
     }
 
     private Map<String,String> getKeyFiles() {
@@ -441,6 +444,7 @@ public class JarFile extends ZipFile {
             }
         }
 
+        // 2. Find matching keys
         Map<String,String> keyFiles = new HashMap<>();
         for (ZipEntry entry : metaInf) {
             String entryName = entry.getName();
@@ -450,19 +454,37 @@ public class JarFile extends ZipFile {
                     String name = entry.getName().substring(0, dot);
                     if (names.contains(name)) {
                         keyFiles.put(name, entry.getName());
+                    } else if (entryName.endsWith(".RSA")) {
+                        throw new SecurityException(GenericMessage.ERROR, "Missing SF file");
                     }
                 }
             }
         }
+        // TODO: move this. check key exists in verifier
         if (keyFiles.size() < names.size()) {
             throw new SecurityException(GenericMessage.ERROR, "Missing key file");
         }
         return keyFiles;
     }
 
+    private boolean verifieddSignatures;
+
     private void verifyEntry(String entryName) {
         JarVerifier jv = getVerifier();
         if (jv != null) {
+            if (!verifieddSignatures) {
+                verifieddSignatures = jv.verifySignaturesAgainstKeys();
+
+                // 2. Verify .SF manifest entries & SHA-256-Digest-Manifest against MANIFEST.MF
+                if (!jv.verifyAllSignatureFilesAgainstManifest()) {
+                    throw new SecurityException(GenericMessage.ERROR, "MANIFEST.SF digest verification against MANIFEST.MF failed");
+                }
+
+
+                // if (!verifieddSignatures) {
+                //     throw new SecurityException(GenericMessage.ERROR, "Verification failed for " + entryName + " in " + getPath());
+                // }
+            }
             try {
                 if (jv.isTrustedManifestEntry(entryName)) {
                     byte[] content = super.extractFile(entryName);
@@ -580,21 +602,35 @@ public class JarFile extends ZipFile {
     //
 
     public static class CascaraJarVerifier implements JarVerifier {
-        private Manifest manifest;
         private byte[] rawManifestBytes;
-        private Map<String,VerifiedSigner> signers;
+        private Map<String,RsaKey> keys;
+        private Map<String,byte[]> signatureFiles;
+
         private Map<String,Manifest> signatures;
+        private Manifest manifest;
+        private Map<String,VerifiedSigner> verifiedSigners;
 
         public CascaraJarVerifier() {
         }
 
-        public CascaraJarVerifier setSigners(Map<String,VerifiedSigner> signers) {
-            this.signers = signers;
+        public CascaraJarVerifier setKeys(Map<String,RsaKey> keus) {
+            this.keys = keus;
             return this;
         }
 
-        public CascaraJarVerifier setSignatures(Map<String,Manifest> signatures) {
-            this.signatures = signatures;
+        public CascaraJarVerifier setSignatures(Map<String,byte[]> signatureFiles) {
+            this.signatures = new HashMap<>();
+            this.signatureFiles = signatureFiles;
+            for (Entry<String,byte[]> entry : signatureFiles.entrySet()) {
+                byte[] sfBytes = entry.getValue();
+                try {
+                    Manifest signature = new Manifest(new ByteArrayInputStream(sfBytes));
+                    signatures.put(entry.getKey(), signature);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
             return this;
         }
 
@@ -610,10 +646,65 @@ public class JarFile extends ZipFile {
         }
 
         @Override
+        public boolean verifySignaturesAgainstKeys() {
+            verifiedSigners = new HashMap<>();
+            boolean allSignaturesValid = true;
+            for (Entry<String,RsaKey> entry : keys.entrySet()) {
+
+                String signerName = entry.getKey();
+                RsaKey k = entry.getValue();
+                // RsaKey k = new RsaKey(new ByteArrayInputStream(keyBytes));
+
+                byte[] sfBytes = signatureFiles.get(signerName);
+                try {
+
+                    // 1. Verify PKCS#7 / CMS signature over raw .SF file bytes
+                    SignedData sd = k.getSignedData();
+                    boolean signatureValid = false;
+
+                    if (sd != null && sd.signerInfos() != null) {
+                        for (ASN1Object<?> signerObj : sd.signerInfos()) {
+                            if (signerObj instanceof ASN1Sequence signerSeq) {
+                                SignerInfo signerInfo = SignerInfo.parse(signerSeq);
+                                X509Certificate cert = signerInfo.findSigningCertificate(k.getCertificates());
+                                if (cert != null && signerInfo.verifySignature(cert, sfBytes)) {
+                                    signatureValid = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+
+
+                    if (!signatureValid) {
+                        throw new SecurityException(GenericMessage.ERROR, "Signature verification failed for " + signerName);
+                    }
+                    allSignaturesValid &= signatureValid;
+
+
+
+                    VerifiedSigner signer = new VerifiedSigner(k.getCertificates());
+                    verifiedSigners.put(signerName, signer);
+
+
+
+                } catch (CertificateException e) {
+                    throw new SecurityException(e, GenericMessage.ERROR, "Error reading certificate: " + e.getMessage());
+                } catch (SecurityException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new SecurityException(e, GenericMessage.ERROR, "Signature check failed: " + e.getMessage());
+                }
+            }
+            return allSignaturesValid;
+        }
+
+        @Override
         public boolean verifyAllSignatureFilesAgainstManifest() {
             boolean result = true;
             for (Manifest signature : signatures.values()) {
-                result |= verifySignatureFileAgainstManifest(signature);
+                result &= verifySignatureFileAgainstManifest(signature);
             }
             return result;
         }
@@ -710,10 +801,10 @@ public class JarFile extends ZipFile {
 
         @Override
         public VerifiedSigner getSigner(String entryName) {
-            VerifiedSigner result = signers.computeIfAbsent(entryName, n -> {
+            VerifiedSigner result = verifiedSigners.computeIfAbsent(entryName, n -> {
                 for (Entry<String,Manifest> signature : signatures.entrySet()) {
                     if (isTrustedManifestEntry(entryName)) {
-                        return signers.get(signature.getKey());
+                        return verifiedSigners.get(signature.getKey());
                     }
                 }
                 return null;
@@ -731,6 +822,87 @@ public class JarFile extends ZipFile {
             }
             return false;
         }
+
+        public SignatureStatus evaluatePolicy(SignaturePolicy policy, X509Certificate cert, byte[] sfBytes) {
+            if (cert == null) {
+                return SignatureStatus.NOT_SIGNED;
+            }
+
+            try {
+                cert.checkValidity();
+            } catch (CertificateExpiredException e) {
+                return SignatureStatus.CERTIFICATE_EXPIRED;
+            } catch (CertificateNotYetValidException e) {
+                return SignatureStatus.CERTIFICATE_EXPIRED;
+            }
+
+            if (policy.isTrustStoreEnforced() && !policy.getTrustStore().contains(cert)) {
+                return SignatureStatus.UNTRUSTED_SIGNER;
+            }
+
+            try {
+                if (!verifySignature(cert, sfBytes)) {
+                    return SignatureStatus.INVALID_SIGNATURE;
+                }
+            } catch (Exception e) {
+                return SignatureStatus.INVALID_SIGNATURE;
+            }
+
+            return SignatureStatus.VALID;
+        }
+
+        @Override
+        public boolean verifySignature(X509Certificate cert, String entryName, byte[] content) {
+            // 1. First, verify entry content against SHA digest in MANIFEST.MF
+            if (!verifyEntryContent(entryName, content)) {
+                return false;
+            }
+
+            // 2. Obtain verified signers associated with this manifest entry
+            VerifiedSigner signer = getSigner(entryName);
+            if (signer == null) {
+                return false; // Entry is not signed
+            }
+
+            // 3. Confirm that the specified cert exists within the verified certificates for this entry
+            if (signer.certificates() == null) {
+                return false;
+            }
+
+            for (java.security.cert.Certificate entryCert : signer.certificates()) {
+                if (entryCert.equals(cert)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean verifySignature(X509Certificate cert, byte[] content) {
+            // Evaluates whether the content matches the global raw MANIFEST.MF bytes
+            // and is signed by the provided certificate
+            if (rawManifestBytes != null && Arrays.equals(rawManifestBytes, content)) {
+                for (VerifiedSigner signer : verifiedSigners.values()) {
+                    if (signer != null && signer.certificates() != null) {
+                        for (java.security.cert.Certificate c : signer.certificates()) {
+                            if (c.equals(cert)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        public SignatureStatus evaluatePolicy(SignaturePolicy policy) {
+            return null;
+        }
+
+        //
+        //
+        //
 
         private MessageDigest getAlgorithm(String name) {
             try {

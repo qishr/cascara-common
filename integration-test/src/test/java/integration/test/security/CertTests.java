@@ -1,18 +1,22 @@
 package integration.test.security;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import integration.test.util.SourceCode;
@@ -21,6 +25,7 @@ import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOExceptio
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.SecurityException;
+import io.github.qishr.cascara.common.security.SignaturePolicy;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
@@ -30,13 +35,17 @@ import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequen
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Set;
 import io.github.qishr.cascara.common.security.cms.CMSUtils;
 import io.github.qishr.cascara.common.security.cms.CertificateSet;
+import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.common.util.JarFile;
+import io.github.qishr.cascara.common.util.JarFile.CascaraJarVerifier;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.common.util.ZipFile;
 import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
 import io.github.qishr.cascara.test.common.junit.util.TestBase;
+import io.github.qishr.cascara.test.common.junit.util.TestCertificateAuthority;
+import io.github.qishr.cascara.test.common.junit.util.TestJarSigner;
 
 public class CertTests extends TestBase implements SourceCode {
     private final static Reporter REPORTER = GlobalReporter.forClass(CertTests.class);
@@ -243,5 +252,139 @@ public class CertTests extends TestBase implements SourceCode {
         try {
             jar.close();
         } catch (Exception e) {}
+    }
+
+    @Test
+    void test_invalid_tamperedSF_readJarEntries() throws LocalizableIOException {
+        SyntheticJar testJar = SyntheticJar.forUseIn(JarSigningTests.class)
+            .setPath(getTempDir().resolve("provider.jar"))
+            .addSources(sourceCodeA())
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .sign()
+            .packageJar();
+
+        // Corrupt the .SF file in the JAR archive
+        try (ZipFile jar = ZipFile.open(testJar.getPath())) {
+            jar.addFile("SHA-256-Digest-Manifest: corruptedDigestValue==", "META-INF/TEST.SF");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Verify that a SecurityException is thrown due to .SF messageDigest mismatch in SignerInfo
+        JarFile jar = JarFile.open(testJar.getPath());
+        assertThrows(SecurityException.class, () -> {
+            for (JarEntry entry : jar.getJarEntries()) {
+                try (InputStream is = jar.getInputStream(entry.getName())) {
+                    is.readAllBytes();
+                }
+            }
+        });
+
+        try {
+            jar.close();
+        } catch (Exception e) {}
+    }
+
+    @Test
+    void test_invalid_missingSF_readJarEntries() throws LocalizableIOException {
+        SyntheticJar testJar = SyntheticJar.forUseIn(JarSigningTests.class)
+            .setPath(getTempDir().resolve("provider.jar"))
+            .addSources(sourceCodeA())
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .sign()
+            .packageJar();
+
+        // Remove the .SF file while leaving TEST.RSA intact
+        try (ZipFile jar = ZipFile.open(testJar.getPath())) {
+            jar.remove("META-INF/TEST.SF");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Verify that a SecurityException is thrown when signature block lacks corresponding .SF
+        JarFile jar = JarFile.open(testJar.getPath());
+        assertThrows(SecurityException.class, () -> {
+            for (JarEntry entry : jar.getJarEntries()) {
+                try (InputStream is = jar.getInputStream(entry.getName())) {
+                    is.readAllBytes();
+                }
+            }
+        });
+
+        try {
+            jar.close();
+        } catch (Exception e) {}
+    }
+
+    @Test
+    void test_invalid_expiredCertificate() throws Exception {
+        // 1. Generate an expired self-signed certificate (validity ended yesterday)
+        TestJarSigner jarSigner = new TestJarSigner();
+        KeyPair keyPair = jarSigner.getKeyPair();
+
+        X509Certificate expiredCert = jarSigner.generateExpiredSelfSignedCert("CN=Expired Signer, O=cascara");
+
+        // 2. Sign test jar bytes with the expired certificate
+        Map<String, byte[]> classFiles = Map.of(
+            "io/github/qishr/cascara/Foo.class", "class bytes".getBytes(StandardCharsets.UTF_8)
+        );
+        TestJarSigner.SignedJarBundle bundle = jarSigner.sign(classFiles, expiredCert);
+
+        // 3. Verify checkValidity throws CertificateExpiredException
+        assertThrows(CertificateExpiredException.class, expiredCert::checkValidity);
+
+        // 4. Assert that SignerInfo or JarVerifier maps this to SignatureStatus.CERTIFICATE_EXPIRED
+        DERDecoder decoder = new DERDecoder();
+        ASN1Sequence rootSeq = (ASN1Sequence) new ASN1InputStream(decoder, bundle.keyRsa()).readObject();
+        SignedData sd = CMSUtils.signedDataOrNull(rootSeq);
+        SignerInfo signerInfo = SignerInfo.parse((ASN1Sequence) sd.signerInfos().iterator().next());
+
+        assertThrows(CertificateExpiredException.class, () -> {
+            X509Certificate cert = signerInfo.findSigningCertificate(List.of(expiredCert));
+            cert.checkValidity(); // Enforced during trust path evaluation
+        });
+    }
+
+    @Test
+    void test_invalid_untrustedSigner_signaturePolicy() throws Exception {
+        // 1. Create a trusted CA and a foreign CA
+        TestCertificateAuthority cascaraCA = TestCertificateAuthority.create("Cascara Root CA");
+        TestCertificateAuthority foreignCA = TestCertificateAuthority.create("Foreign Root CA");
+
+        // 2. Sign module with foreign identity
+        SyntheticJar foreignSignedJar = SyntheticJar.forUseIn(JarSigningTests.class)
+            .setPath(getTempDir().resolve("foreign-provider.jar"))
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addSources(sourceCodeA())
+            .signWith(foreignCA.issueIdentity("foreign-module"))
+            .packageJar();
+
+        // 3. Configure SignaturePolicy requiring trust anchors from Cascara CA
+        SignaturePolicy policy = SignaturePolicy.builder()
+            .requireSigned(true)
+            .trustStore(cascaraCA.trustStore())
+            .build();
+
+        // 4. Opening the JAR under Cascara policy rejects the foreign signer
+        JarFile jar = JarFile.open(foreignSignedJar.getPath());
+        CascaraJarVerifier verifier = (CascaraJarVerifier) jar.getVerifier();
+
+        SignatureStatus status = verifier.evaluatePolicy(policy);
+        assertEquals(SignatureStatus.UNTRUSTED_SIGNER, status);
+        // TODO: decide how this is meant to work
+        // how does policy fit inti spl?
+        // should there be a default policy (set of options)
+        // that can be overridden programatically andd through
+        //n jvm env/props?
+
+        // some things are checked before verifier is created.
+        // is there a way to delay those results?
+
+        // Should policy allow option of throwing exception
+        // and/or setting flag to be checked by user?
+
+        // typed exceptions and SignatureStatus in exceptions
+
+        //
     }
 }
