@@ -40,3 +40,4 @@ replay_pid*
 *.tmp
 .vscode/bookmarks.json
 *.csv
+# /*.txt

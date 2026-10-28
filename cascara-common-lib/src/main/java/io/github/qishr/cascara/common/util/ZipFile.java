@@ -102,7 +102,7 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
     // }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws LocalizableIOException {
         // if (fileSystem != null) {
         //     fileSystem.close();
         // }

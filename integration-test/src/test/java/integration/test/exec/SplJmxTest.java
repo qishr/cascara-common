@@ -38,7 +38,10 @@ import integration.test.fixtures.beans.SPLStatusMBean;
 import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.task.JmxTestTask;
 
+import org.junit.jupiter.api.parallel.Isolated;
+
 @Disabled
+@Isolated
 public class SplJmxTest extends JmxTestBase {
     @BeforeEach
     protected void setUp() throws IOException {

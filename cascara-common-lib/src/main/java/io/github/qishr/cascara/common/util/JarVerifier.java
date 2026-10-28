@@ -8,29 +8,40 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.Manifest;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.security.RsaKey;
+import io.github.qishr.cascara.common.security.SignaturePolicy;
+import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 
 public interface JarVerifier {
-    JarVerifier setKeys(Map<String,RsaKey> keus);
-    // JarVerifier setSigners(Map<String,VerifiedSigner> signers);
+
+    JarVerifier setKeys(Map<String,byte[]> keys);
     JarVerifier setSignatures(Map<String,byte[]> signatures);
     JarVerifier setManifest(byte[] rawManifestBytes);
 
-    boolean verifySignaturesAgainstKeys();
-    boolean verifyAllSignatureFilesAgainstManifest();
-    boolean verifySignatureFileAgainstManifest(Manifest signatureFile);
-    boolean verifyEntryContent(String entryName, byte[] content);
-    VerifiedSigner getSigner(String entryName);
+    boolean verifyJarSignature();
+    boolean verifyEntrySignature(String entryName, byte[] content);
     boolean isTrustedManifestEntry(String entryName);
+
+    @Nullable
+    VerifiedSigner getSigner(String entryName);
+
+    @NonNull
+    SignatureStatus evaluatePolicy(SignaturePolicy policy);
+    
     /**
      * Verifies that the given file content matches the SHA digest in MANIFEST.MF
      * AND that the entry was signed by the specified X509Certificate.
      */
-    boolean verifySignature(X509Certificate cert, String entryName, byte[] content);
+    boolean verifyJarSignature(X509Certificate cert, String entryName, byte[] content);
 
-    boolean verifySignature(X509Certificate cert, byte[] content);
+    boolean verifyJarSignature(X509Certificate cert, byte[] content);
+
+    //
+    //
+    //
 
     public final static class VerifiedSigner {
         private final Certificate[] certificates;

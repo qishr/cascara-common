@@ -27,7 +27,9 @@ import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.logging.log4j.Log4jLogger;
 import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.task.JmxTestTask;
+import org.junit.jupiter.api.parallel.Isolated;
 
+@Isolated
 public class JmxTest extends JmxTestBase {
     @BeforeEach
     protected void setUp() throws IOException {

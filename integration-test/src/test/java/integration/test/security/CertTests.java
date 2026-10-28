@@ -39,7 +39,7 @@ import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.common.util.JarFile;
-import io.github.qishr.cascara.common.util.JarFile.CascaraJarVerifier;
+import io.github.qishr.cascara.common.security.CascaraJarVerifier;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.common.util.ZipFile;
 import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
@@ -76,58 +76,58 @@ public class CertTests extends TestBase implements SourceCode {
             .sign()
             .packageJar();
 
-        JarFile jar = JarFile.open(testJar.getPath());
+        try (JarFile jar = JarFile.open(testJar.getPath())) {
+            ASN1Decoder dec = new DERDecoder();
+            try (InputStream in = jar.getInputStream("META-INF/TEST.RSA")) {
+                try (ASN1InputStream ais = new ASN1InputStream(dec, in)) {
+                    ASN1Sequence seq = ais.readObject();
 
-        ASN1Decoder dec = new DERDecoder();
-        try (InputStream in = jar.getInputStream("META-INF/TEST.RSA")) {
-            try (ASN1InputStream ais = new ASN1InputStream(dec, in)) {
-                ASN1Sequence seq = ais.readObject();
+                    // A simple wrapper that checks the structure an calls SignedData.parse
+                    SignedData sd = CMSUtils.signedDataOrNull(seq);
 
-                // A simple wrapper that checks the structure an calls SignedData.parse
-                SignedData sd = CMSUtils.signedDataOrNull(seq);
+                    assertNotNull(sd);
 
-                assertNotNull(sd);
+                    // 1. Parse the tagged object as an implicit ASN1Set
+                    ASN1Set certSet = sd.certificates().getObject(ASN1Tag.SET);
 
-                // 1. Parse the tagged object as an implicit ASN1Set
-                ASN1Set certSet = sd.certificates().getObject(ASN1Tag.SET);
+                    // 2. Parse the CertificateSet from the ASN1Set
+                    CertificateSet certificateSet = CertificateSet.parse(certSet);
+                    assertNotNull(certificateSet);
 
-                // 2. Parse the CertificateSet from the ASN1Set
-                CertificateSet certificateSet = CertificateSet.parse(certSet);
-                assertNotNull(certificateSet);
+                    List<X509Certificate> certificates = certificateSet.certificates()
+                            .stream()
+                            .map(c -> {
+                                try {
+                                    return c.toX509Certificate();
+                                } catch (CertificateException e) {
+                                    // TODO Auto-generated catch block
+                                    e.printStackTrace();
+                                    return null;
+                                }
+                            })
+                            .toList();
 
-                List<X509Certificate> certificates = certificateSet.certificates()
-                    .stream()
-                    .map(c -> {
-                        try {
-                            return c.toX509Certificate();
-                        } catch (CertificateException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                            return null;
+                    assertFalse(certificates.isEmpty());
+
+                    // 1. Parse SignerInfo set from SignedData
+                    ASN1Set signerInfoSet = sd.signerInfos();
+                    for (ASN1Object<?> obj : signerInfoSet) {
+                        if (obj instanceof ASN1Sequence signerSeq) {
+                            SignerInfo signerInfo = SignerInfo.parse(signerSeq);
+
+                            // 2. Find matching certificate from our parsed CertificateSet
+                            X509Certificate signingCert = signerInfo.findSigningCertificate(certificates);
+                            assertNotNull(signingCert, "Signing certificate must be present in PKCS#7 block");
+
+                            // 3. Read raw .SF file bytes from META-INF/
+                            byte[] sfBytes = jar.extractFile("META-INF/TEST.SF");
+
+                            // 4. Verify signature!
+                            boolean isValid = signerInfo.verifySignature(signingCert, sfBytes);
+                            assertTrue(isValid, "JAR Signature on MANIFEST.SF must be cryptographically valid!");
+
+                            REPORTER.debug("Verified signature for: " + signingCert.getSubjectX500Principal());
                         }
-                    })
-                    .toList();
-
-                assertFalse(certificates.isEmpty());
-
-                // 1. Parse SignerInfo set from SignedData
-                ASN1Set signerInfoSet = sd.signerInfos();
-                for (ASN1Object<?> obj : signerInfoSet) {
-                    if (obj instanceof ASN1Sequence signerSeq) {
-                        SignerInfo signerInfo = SignerInfo.parse(signerSeq);
-
-                        // 2. Find matching certificate from our parsed CertificateSet
-                        X509Certificate signingCert = signerInfo.findSigningCertificate(certificates);
-                        assertNotNull(signingCert, "Signing certificate must be present in PKCS#7 block");
-
-                        // 3. Read raw .SF file bytes from META-INF/
-                        byte[] sfBytes = jar.extractFile("META-INF/TEST.SF");
-
-                        // 4. Verify signature!
-                        boolean isValid = signerInfo.verifySignature(signingCert, sfBytes);
-                        assertTrue(isValid, "JAR Signature on MANIFEST.SF must be cryptographically valid!");
-
-                        REPORTER.debug("Verified signature for: " + signingCert.getSubjectX500Principal());
                     }
                 }
             }
@@ -366,11 +366,14 @@ public class CertTests extends TestBase implements SourceCode {
             .build();
 
         // 4. Opening the JAR under Cascara policy rejects the foreign signer
-        JarFile jar = JarFile.open(foreignSignedJar.getPath());
-        CascaraJarVerifier verifier = (CascaraJarVerifier) jar.getVerifier();
+        CascaraJarVerifier verifier;
+        try (JarFile jar = JarFile.open(foreignSignedJar.getPath())) {
+            verifier = (CascaraJarVerifier) jar.getVerifier();
 
-        SignatureStatus status = verifier.evaluatePolicy(policy);
-        assertEquals(SignatureStatus.UNTRUSTED_SIGNER, status);
+            SignatureStatus status = verifier.evaluatePolicy(policy);
+            assertEquals(SignatureStatus.UNTRUSTED_SIGNER, status);
+        }
+
         // TODO: decide how this is meant to work
         // how does policy fit inti spl?
         // should there be a default policy (set of options)
@@ -386,5 +389,6 @@ public class CertTests extends TestBase implements SourceCode {
         // typed exceptions and SignatureStatus in exceptions
 
         //
+
     }
 }

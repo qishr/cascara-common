@@ -43,7 +43,7 @@ import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.common.util.JarFile;
-import io.github.qishr.cascara.common.util.JarFile.CascaraJarVerifier;
+import io.github.qishr.cascara.common.security.CascaraJarVerifier;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.common.util.ZipFile;
 import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
@@ -96,7 +96,7 @@ public class PolicyTests extends TestBase implements SourceCode {
             CascaraJarVerifier verifier = (CascaraJarVerifier) jar.getVerifier();
 
             // Evaluates valid signature, cert expiry, and TrustStore anchor
-            SignatureStatus status = policy.evaluate(signer.certificate(), verifier.verifyAllSignatureFilesAgainstManifest());
+            SignatureStatus status = policy.evaluate(signer.certificate());
             assertEquals(SignatureStatus.VALID, status);
 
         }

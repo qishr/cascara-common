@@ -15,11 +15,13 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 
 public final class SignaturePolicy {
 
     private final boolean requireSigned;
+
     private final boolean checkExpiry;
     private final TrustStore trustStore;
     private final Set<String> allowedDigestAlgorithms;
@@ -31,38 +33,38 @@ public final class SignaturePolicy {
         this.allowedDigestAlgorithms = builder.allowedDigestAlgorithms;
     }
 
-    public boolean isRequireSigned() {
+    public boolean getRequireSigned() {
         return requireSigned;
     }
 
     // TODO: Is this meant to be the same as the above?
-    public boolean isTrustStoreEnforced() {
+    public boolean getTrustStoreEnforced() {
         return requireSigned;
     }
 
+    public boolean getCheckExpiry() {
+        return checkExpiry;
+    }
 
     public TrustStore getTrustStore() {
         return trustStore;
     }
 
-    public SignatureStatus evaluate(X509Certificate signingCert, boolean signatureValid) {
-        if (signingCert == null) {
+    @NonNull
+    public SignatureStatus evaluate(X509Certificate cert) {
+        if (cert == null) {
             return requireSigned ? SignatureStatus.NOT_SIGNED : SignatureStatus.VALID;
-        }
-
-        if (!signatureValid) {
-            return SignatureStatus.INVALID_SIGNATURE;
         }
 
         if (checkExpiry) {
             try {
-                signingCert.checkValidity();
+                cert.checkValidity();
             } catch (CertificateExpiredException | CertificateNotYetValidException e) {
                 return SignatureStatus.CERTIFICATE_EXPIRED;
             }
         }
 
-        if (!trustStore.getCertificates().isEmpty() && !trustStore.contains(signingCert)) {
+        if (!trustStore.getCertificates().isEmpty() && !trustStore.contains(cert)) {
             return SignatureStatus.UNTRUSTED_SIGNER;
         }
 

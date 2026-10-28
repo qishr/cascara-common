@@ -4,9 +4,10 @@ plugins {
     id 'eclipse'
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.release = 21
-}
+// tasks.withType(JavaCompile).configureEach {
+//     options.release = 21
+// }
+java { modularity.inferModulePath = true }
 
 repositories {
 	mavenLocal()
@@ -15,32 +16,36 @@ repositories {
 
 dependencies {
     implementation(platform("io.github.qishr:cascara-meta-bom:$cascara_version"))
+
     implementation("org.junit.jupiter:junit-jupiter-api")
     implementation("org.junit.jupiter:junit-jupiter-engine")
     implementation('org.junit.platform:junit-platform-launcher')
-    implementation('io.github.qishr:cascara-test-common-junit')
 
     implementation "org.apache.logging.log4j:log4j-api:2.25.5"
     implementation 'org.apache.logging.log4j:log4j-core:2.25.5'
     implementation('io.github.qishr:cascara-logging-log4j')
-
-    // implementation(project(':cascara-common'))
-    implementation('io.github.qishr:cascara-common')
     implementation('io.github.qishr:cascara-lang-json')
-    implementation(project(':integration-test-fixtures'))
+
+    api(project(':cascara-test-common-junit'))
+    api(project(':cascara-common-lib'))
+    api(project(':integration-test-fixtures'))
 }
+
+    // implementation('io.github.qishr:cascara-test-common-junit')
+    // implementation('io.github.qishr:cascara-common')
+
 
 tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:-missing', '-quiet')
 }
 
-test {
-    useJUnitPlatform()
-    jvmArgs = [
-        '--module-path', "$buildDir/modulepath",
-        '--add-modules', 'ALL-MODULE-PATH'
-    ]
-}
+// test {
+//     useJUnitPlatform()
+//     jvmArgs = [
+//         '--module-path', "$buildDir/modulepath",
+//         '--add-modules', 'ALL-MODULE-PATH'
+//     ]
+// }
 
 tasks.named('test', Test) {
     systemProperty 'java.net.preferIPv4Stack', 'true'
@@ -56,16 +61,4 @@ tasks.named('sourcesJar') {
 
 tasks.named('compileTestJava', JavaCompile) {
     modularity.inferModulePath = true
-}
-
-eclipse {
-    classpath {
-        file {
-            whenMerged { classpath ->
-                classpath.entries.findAll { it instanceof org.gradle.plugins.ide.eclipse.model.ProjectDependency }.each { dep ->
-                    dep.entryAttributes['module'] = 'true'
-                }
-            }
-        }
-    }
 }
