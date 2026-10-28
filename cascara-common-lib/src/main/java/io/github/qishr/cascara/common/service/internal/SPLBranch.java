@@ -399,7 +399,12 @@ public class SPLBranch implements SPL {
         String moduleName;
         JarManifest manifest;
         Set<String> classes;
-        try (JarFile jar = JarFile.open(jarPath)) {
+
+
+        // TODO: Make verify part of a policy
+        boolean verify = false;
+
+        try (JarFile jar = JarFile.open(jarPath, verify)) {
             moduleName = jar.getModuleName();
             if (moduleName == null || moduleName.isEmpty()) {
                 throw new ServiceException(ServiceMessage.NON_MODULAR_JAR, jarPath);

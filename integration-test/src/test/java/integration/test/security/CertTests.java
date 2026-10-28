@@ -24,8 +24,9 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.security.SecurityException;
-import io.github.qishr.cascara.common.security.SignaturePolicy;
+import io.github.qishr.cascara.common.security.LocalizableSecurityException;
+import io.github.qishr.cascara.common.security.SignatureException;
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
@@ -208,7 +209,7 @@ public class CertTests extends TestBase implements SourceCode {
 
         // Verify that an security exception is thrown
         JarFile jar = JarFile.open(testJar.getPath());
-        assertThrows(SecurityException.class, () -> {
+        assertThrows(LocalizableSecurityException.class, () -> {
             for (JarEntry entry : jar.getJarEntries()) {
                 InputStream is = jar.getInputStream(entry.getName());
                 try {
@@ -240,8 +241,9 @@ public class CertTests extends TestBase implements SourceCode {
 
         // Verify that an security exception is thrown
         JarFile jar = JarFile.open(testJar.getPath());
-        assertThrows(SecurityException.class, () -> {
-            for (JarEntry entry : jar.getJarEntries()) {
+        assertThrows(SignatureException.class, () -> {
+            List<JarEntry> entries = jar.getJarEntries();
+            for (JarEntry entry : entries) {
                 InputStream is = jar.getInputStream(entry.getName());
                 try {
                     is.close();
@@ -272,7 +274,7 @@ public class CertTests extends TestBase implements SourceCode {
 
         // Verify that a SecurityException is thrown due to .SF messageDigest mismatch in SignerInfo
         JarFile jar = JarFile.open(testJar.getPath());
-        assertThrows(SecurityException.class, () -> {
+        assertThrows(LocalizableSecurityException.class, () -> {
             for (JarEntry entry : jar.getJarEntries()) {
                 try (InputStream is = jar.getInputStream(entry.getName())) {
                     is.readAllBytes();
@@ -303,7 +305,7 @@ public class CertTests extends TestBase implements SourceCode {
 
         // Verify that a SecurityException is thrown when signature block lacks corresponding .SF
         JarFile jar = JarFile.open(testJar.getPath());
-        assertThrows(SecurityException.class, () -> {
+        assertThrows(LocalizableSecurityException.class, () -> {
             for (JarEntry entry : jar.getJarEntries()) {
                 try (InputStream is = jar.getInputStream(entry.getName())) {
                     is.readAllBytes();
@@ -343,52 +345,5 @@ public class CertTests extends TestBase implements SourceCode {
             X509Certificate cert = signerInfo.findSigningCertificate(List.of(expiredCert));
             cert.checkValidity(); // Enforced during trust path evaluation
         });
-    }
-
-    @Test
-    void test_invalid_untrustedSigner_signaturePolicy() throws Exception {
-        // 1. Create a trusted CA and a foreign CA
-        TestCertificateAuthority cascaraCA = TestCertificateAuthority.create("Cascara Root CA");
-        TestCertificateAuthority foreignCA = TestCertificateAuthority.create("Foreign Root CA");
-
-        // 2. Sign module with foreign identity
-        SyntheticJar foreignSignedJar = SyntheticJar.forUseIn(JarSigningTests.class)
-            .setPath(getTempDir().resolve("foreign-provider.jar"))
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .addSources(sourceCodeA())
-            .signWith(foreignCA.issueIdentity("foreign-module"))
-            .packageJar();
-
-        // 3. Configure SignaturePolicy requiring trust anchors from Cascara CA
-        SignaturePolicy policy = SignaturePolicy.builder()
-            .requireSigned(true)
-            .trustStore(cascaraCA.trustStore())
-            .build();
-
-        // 4. Opening the JAR under Cascara policy rejects the foreign signer
-        CascaraJarVerifier verifier;
-        try (JarFile jar = JarFile.open(foreignSignedJar.getPath())) {
-            verifier = (CascaraJarVerifier) jar.getVerifier();
-
-            SignatureStatus status = verifier.evaluatePolicy(policy);
-            assertEquals(SignatureStatus.UNTRUSTED_SIGNER, status);
-        }
-
-        // TODO: decide how this is meant to work
-        // how does policy fit inti spl?
-        // should there be a default policy (set of options)
-        // that can be overridden programatically andd through
-        //n jvm env/props?
-
-        // some things are checked before verifier is created.
-        // is there a way to delay those results?
-
-        // Should policy allow option of throwing exception
-        // and/or setting flag to be checked by user?
-
-        // typed exceptions and SignatureStatus in exceptions
-
-        //
-
     }
 }

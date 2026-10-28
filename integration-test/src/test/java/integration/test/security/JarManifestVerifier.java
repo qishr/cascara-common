@@ -13,7 +13,7 @@ import java.util.jar.Manifest;
 
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.security.SecurityMessage;
-import io.github.qishr.cascara.common.security.SecurityException;
+import io.github.qishr.cascara.common.security.LocalizableSecurityException;
 import io.github.qishr.cascara.common.util.Pair;
 
 public final class JarManifestVerifier {
@@ -83,7 +83,7 @@ public final class JarManifestVerifier {
 
         Pair<String,String> digestPair = getAlgorithmAndDigest(mfAttrs);
         if (digestPair == null) {
-            throw new SecurityException(SecurityMessage.NO_ALGORITHM, entryName);
+            throw new LocalizableSecurityException(SecurityMessage.NO_ALGORITHM, entryName);
         }
 
         String algorithm = digestPair.getL();
@@ -98,7 +98,7 @@ public final class JarManifestVerifier {
                 md.update(buffer, 0, read);
             }
         } catch (IOException e) {
-            throw new SecurityException(e, FileMessage.READ_ERROR, entryName);
+            throw new LocalizableSecurityException(e, FileMessage.READ_ERROR, entryName);
         }
 
         byte[] computedDigest = md.digest();
@@ -111,7 +111,7 @@ public final class JarManifestVerifier {
         try {
             return MessageDigest.getInstance(name);
         } catch (NoSuchAlgorithmException e) {
-            throw new SecurityException(e, SecurityMessage.NO_SUCH_ALGORITHM, name);
+            throw new LocalizableSecurityException(e, SecurityMessage.NO_SUCH_ALGORITHM, name);
         }
     }
 

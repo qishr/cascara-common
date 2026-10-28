@@ -53,7 +53,7 @@ public final class TrustStore {
                 }
             }
         } catch (Exception e) {
-            throw new SecurityException(e, SecurityMessage.NO_SUCH_ALGORITHM, path.toString());
+            throw new LocalizableSecurityException(e, SecurityMessage.NO_SUCH_ALGORITHM, path.toString());
         }
         return new TrustStore(certs);
     }

@@ -23,29 +23,19 @@ dependencies {
 
     implementation "org.apache.logging.log4j:log4j-api:2.25.5"
     implementation 'org.apache.logging.log4j:log4j-core:2.25.5'
+
     implementation('io.github.qishr:cascara-logging-log4j')
     implementation('io.github.qishr:cascara-lang-json')
 
-    api(project(':cascara-test-common-junit'))
-    api(project(':cascara-common-lib'))
+    implementation project(':cascara-common-lib')
+    testImplementation project(':cascara-test-common-junit')
+
     api(project(':integration-test-fixtures'))
 }
-
-    // implementation('io.github.qishr:cascara-test-common-junit')
-    // implementation('io.github.qishr:cascara-common')
-
 
 tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:-missing', '-quiet')
 }
-
-// test {
-//     useJUnitPlatform()
-//     jvmArgs = [
-//         '--module-path', "$buildDir/modulepath",
-//         '--add-modules', 'ALL-MODULE-PATH'
-//     ]
-// }
 
 tasks.named('test', Test) {
     systemProperty 'java.net.preferIPv4Stack', 'true'
@@ -61,4 +51,19 @@ tasks.named('sourcesJar') {
 
 tasks.named('compileTestJava', JavaCompile) {
     modularity.inferModulePath = true
+}
+
+
+
+eclipse {
+    classpath {
+        file {
+            whenMerged {
+                // Force Buildship to mark external test JARs as JPMS modules for JDT LS
+                entries.findAll { it.kind == 'lib' || it.kind == 'con' }.each { entry ->
+                    entry.entryAttributes['module'] = 'true'
+                }
+            }
+        }
+    }
 }

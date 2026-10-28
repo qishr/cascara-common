@@ -9,22 +9,13 @@
         "vmArgs": [
             "--add-reads", "cascara.common=org.junit.jupiter.api",
             // "--add-reads", "integration.test=org.junit.jupiter.api",
+            "--add-reads", "cascara.common=org.junit.jupiter.api",
             "--add-opens", "java.base/java.lang=cascara.common",
             "--add-opens", "java.base/java.lang=cascara.test.common.junit",
             "--add-opens", "java.base/java.lang=integration.test",
         ],
-        // "vmArgs": ["-Xbootclasspath/a:${userHome}/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-commons/1.14.4/8fc5afb31243ac7141e48e5aa571955340c83795/junit-platform-commons-1.14.4.jar"],
-        // "vmArgs": [ "--add-opens", "java.base/java.lang=ALL-UNNAMED" ],
         "modulePaths": [
-            // cascara-cpmmon requires sources and javadoc, so we can't use its libs folder
-            // as it contains sources and libs with the same module names.
-            // "${workspaceFolder}/cascara-common-lib/build/modulepath",
             "${workspaceFolder}/integration-test/build/modulepath",
-
-            // For everything else we use libs rather than modulepath to avoid
-            // a duplicate cascara-common module.
-            // "${workspaceFolder}/integration-test/build/libs",
-            // "${workspaceFolder}/integration-test-fixtures/build/libs",
         ],
         "classPaths": [
             "${workspaceFolder}/cascara-common-lib/build/classes/java/main",
@@ -35,8 +26,6 @@
             "${workspaceFolder}/cascara-test-common-junit/build/resources/test",
             "${workspaceFolder}/integration-test/build/classes/java/test",
             "${workspaceFolder}/integration-test/build/resources/test",
-            // "${workspaceFolder}/integration-test-fixtures/build/classes/java/main",
-            // "${workspaceFolder}/integration-test-fixtures/build/resources/main",
         ],
     },
 
@@ -50,8 +39,6 @@
 
 
     "java.import.gradle.wrapper.enabled": true,
-    // "java.jdt.ls.java.home": "/Library/Java/JavaVirtualMachines/zulu-25.jdk/Contents/Home",
-    // "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms100m -Xlog:disable",
     "java.configuration.updateBuildConfiguration": "automatic",
 
     "java.gradle.buildServer.enabled": "off"

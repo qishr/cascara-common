@@ -6,8 +6,15 @@ import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOExceptio
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
+import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
+import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
+import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
+import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Set;
+import io.github.qishr.cascara.common.security.cms.CMSUtils;
+import io.github.qishr.cascara.common.security.cms.CertificateSet;
 import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
@@ -24,6 +31,8 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.HexFormat;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.jar.Attributes;
@@ -31,10 +40,9 @@ import java.util.jar.Manifest;
 
 public class CascaraJarVerifier implements JarVerifier {
     private byte[] manifestBytes;
-    private Map<String,byte[]> keysFiles;
     private Map<String,byte[]> signatureFiles;
 
-    private Map<String,RsaKey> keys;
+    private Map<String,SignatureBlock> keys;
     private Map<String,Manifest> signatures;
     private Manifest manifest;
     private Map<String, JarVerifier.VerifiedSigner> signers;
@@ -43,12 +51,11 @@ public class CascaraJarVerifier implements JarVerifier {
     }
 
     public CascaraJarVerifier setKeys(Map<String,byte[]> keysFiles) {
-        this.keysFiles = keysFiles;
         this.keys = new HashMap<>();
         for (Entry<String,byte[]> entry : keysFiles.entrySet()) {
             String identityName = entry.getKey();
             byte[] kfBytes = entry.getValue();
-            RsaKey key = new RsaKey(new ByteArrayInputStream(kfBytes));
+            SignatureBlock key = new SignatureBlock(new ByteArrayInputStream(kfBytes));
             keys.put(identityName, key);
         }
         return this;
@@ -77,34 +84,35 @@ public class CascaraJarVerifier implements JarVerifier {
             manifest = new Manifest(new ByteArrayInputStream(mf));
             return this;
         } catch (IOException e) {
-            // TODO Proper error handling
-            throw new SecurityException(e, GenericMessage.ERROR, e.getMessage());
+            // TODO: Better status code
+            throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, e.getMessage());
         }
     }
 
     @Override
-    public boolean verifyJarSignature() {
-        boolean result = true;
-        result &= verifySignaturesAgainstKeys();
-        result &= verifyAllSignatureFilesAgainstManifest();
-        return result;
+    public void verifyJarSignature() {
+        assertSetup();
+        verifySignaturesAgainstKeys();
+        verifyAllSignatureFilesAgainstManifest();
     }
 
     /// Verifies an individual file entry's stream against its SHA-256 digest in MANIFEST.MF.
     @Override
-    public boolean verifyEntrySignature(String entryName, byte[] content) {
+    public void verifyEntrySignature(String entryName, byte[] content) {
+        assertSetup();
 
         Attributes mfAttrs = manifest.getAttributes(entryName);
         if (mfAttrs == null) {
             // Not a signed entry (e.g., unindexed META-INF files)
-            return true;
+            // TODO: Better status code
+            throw new SignatureException(SignatureStatus.NOT_SIGNED, GenericMessage.ERROR, entryName + " is not a signed entry");
         }
 
         try (InputStream contentStream = new ByteArrayInputStream(content)) {
 
             Pair<String,String> digestPair = getAlgorithmAndDigest(mfAttrs);
             if (digestPair == null) {
-                throw new SecurityException(SecurityMessage.NO_ALGORITHM, entryName);
+                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, SecurityMessage.NO_ALGORITHM, entryName);
             }
 
             String algorithm = digestPair.getL();
@@ -119,13 +127,17 @@ public class CascaraJarVerifier implements JarVerifier {
                     md.update(buffer, 0, read);
                 }
             } catch (IOException e) {
-                throw new SecurityException(e, FileMessage.READ_ERROR, entryName);
+                // TODO: Better status code
+                throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, FileMessage.READ_ERROR, entryName);
             }
 
             byte[] computedDigest = md.digest();
             byte[] expectedDigest = Base64.getDecoder().decode(expectedDigestBase64);
 
-            return Arrays.equals(computedDigest, expectedDigest);
+            if (!Arrays.equals(computedDigest, expectedDigest)) {
+                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, FileMessage.READ_ERROR, entryName);
+            }
+
         } catch (LocalizableIOException e1) {
             // TODO Auto-generated catch block
             e1.printStackTrace();
@@ -133,12 +145,20 @@ public class CascaraJarVerifier implements JarVerifier {
             // TODO Auto-generated catch block
             e1.printStackTrace();
         }
-        return false;
+    }
+
+    public Map<String, VerifiedSigner> getSigners() {
+        assertSetup();
+        ensureSigners();
+        return signers;
     }
 
     @Override
     @Nullable
     public VerifiedSigner getSigner(String entryName) {
+        assertSetup();
+        ensureSigners();
+
         VerifiedSigner result = signers.computeIfAbsent(entryName, n -> {
             for (Entry<String,Manifest> signature : signatures.entrySet()) {
                 if (isTrustedManifestEntry(entryName)) {
@@ -152,6 +172,12 @@ public class CascaraJarVerifier implements JarVerifier {
 
     @Override
     public boolean isTrustedManifestEntry(String entryName) {
+        assertSetup();
+        if ("META-INF/MANIFEST.MF".equals(entryName)) {
+            // TODO: do we need to check that signatures isn;t empty too?
+            // MANIFEST.MF is trusted if any signature file exists and verifies against manifest
+            return !signatures.isEmpty();
+        }
         for (Entry<String,Manifest> signature : signatures.entrySet()) {
             if (signature.getValue().getAttributes(entryName) != null) {
                 // TODO: Also check that attributes contain digest
@@ -161,112 +187,39 @@ public class CascaraJarVerifier implements JarVerifier {
         return false;
     }
 
-    @Override
-    @NonNull
-    public SignatureStatus evaluatePolicy(SignaturePolicy policy) {
-        if (signers == null) {
-            verifySignaturesAgainstKeys();
-        }
-
-        // 1. Handle unsigned JARs
-        if (signers == null || signers.isEmpty()) {
-            return policy.evaluate(null);
-        }
-
-        // 2. Cryptographic signature & digest check (short-circuit if tampered)
-        if (!verifyAllSignatureFilesAgainstManifest()) {
-            return SignatureStatus.INVALID_SIGNATURE;
-        }
-
-        // 3. Evaluate internal signing certificates against policy
-        SignatureStatus lastStatus = SignatureStatus.VALID;
-
-        for (VerifiedSigner signer : signers.values()) {
-            if (signer == null || signer.certificates() == null) {
-                continue;
-            }
-
-            for (java.security.cert.Certificate cert : signer.certificates()) {
-                if (cert instanceof X509Certificate x509) {
-                    SignatureStatus status = policy.evaluate(x509);
-
-                    // If any signing cert passes all policy rules, the JAR is valid
-                    if (status == SignatureStatus.VALID) {
-                        return SignatureStatus.VALID;
-                    }
-                    lastStatus = status;
-                }
-            }
-        }
-
-        return lastStatus;
-    }
-
-    @Override
-    public boolean verifyJarSignature(X509Certificate cert, String entryName, byte[] content) {
-        if (signers == null) {
-            verifySignaturesAgainstKeys();
-        }
-
-        // 1. First, verify entry content against SHA digest in MANIFEST.MF
-        if (!verifyEntrySignature(entryName, content)) {
-            return false;
-        }
-
-        // 2. Obtain verified signers associated with this manifest entry
-        VerifiedSigner signer = getSigner(entryName);
-        if (signer == null) {
-            return false; // Entry is not signed
-        }
-
-        // 3. Confirm that the specified cert exists within the verified certificates for this entry
-        if (signer.certificates() == null) {
-            return false;
-        }
-
-        for (java.security.cert.Certificate entryCert : signer.certificates()) {
-            if (entryCert.equals(cert)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public boolean verifyJarSignature(X509Certificate cert, byte[] content) {
-        if (signers == null) {
-            verifySignaturesAgainstKeys();
-        }
-        // Evaluates whether the content matches the global raw MANIFEST.MF bytes
-        // and is signed by the provided certificate
-        if (manifestBytes != null && Arrays.equals(manifestBytes, content)) {
-            for (VerifiedSigner signer : signers.values()) {
-                if (signer != null && signer.certificates() != null) {
-                    for (java.security.cert.Certificate c : signer.certificates()) {
-                        if (c.equals(cert)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
 
     //
     //
     //
 
-    private boolean verifyAllSignatureFilesAgainstManifest() {
-        boolean result = true;
+    private void assertSetup() {
+        if (signatures == null) {
+            // TODO: Better exception
+            throw new IllegalStateException("setSignatures has not been called");
+        }
+        if (manifest == null) {
+            // TODO: Better exception
+            throw new IllegalStateException("setManifest has not been called");
+        }
+        if (keys == null) {
+            // TODO: Better exception
+            throw new IllegalStateException("setKeys has not been called");
+        }
+    }
+
+    private void ensureSigners() {
+        if (signers == null) {
+            verifySignaturesAgainstKeys();
+        }
+    }
+
+    private void verifyAllSignatureFilesAgainstManifest() {
         for (Manifest signature : signatures.values()) {
-            result &= verifySignatureFileAgainstManifest(signature);
+            verifySignatureFileAgainstManifest(signature);
         }
-        return result;
     }
 
-    private boolean verifySignatureFileAgainstManifest(Manifest signatureFile) {
+    private void verifySignatureFileAgainstManifest(Manifest signatureFile) {
         Attributes mainSfAttrs = signatureFile.getMainAttributes();
 
         // 1. Verify global MANIFEST.MF digest (SHA-256-Digest-Manifest)
@@ -277,9 +230,11 @@ public class CascaraJarVerifier implements JarVerifier {
             byte[] expected = Base64.getDecoder().decode(sfManifestDigest);
 
             if (!Arrays.equals(computed, expected)) {
-                return false; // Whole-manifest digest mismatch!
+                // TODO: Proper exception message
+                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Manifest does not match digest");
             }
         }
+        // TODO: WHat if sfManifestDigest *IS* null? Is it valid?
 
         // 2. Verify individual section digests in MANIFEST.SF against MANIFEST.MF
         Map<String, Attributes> sfEntries = signatureFile.getEntries();
@@ -296,35 +251,27 @@ public class CascaraJarVerifier implements JarVerifier {
 
             Attributes mfEntryAttrs = mfEntries.get(entryName);
             if (mfEntryAttrs == null) {
-                return false; // File listed in .SF missing from .MF!
+                // File listed in .SF missing from .MF!
+                // TODO: Proper exception message
+                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Missing attributes for " + entryName + " in MANIFEST.MF");
             }
 
             // Note: Section digest in .SF is calculated over the raw header lines of that section in MANIFEST.MF
             String mfEntryDigest = mfEntryAttrs.getValue("SHA-256-Digest");
             if (mfEntryDigest == null) {
-                return false;
+                // TODO: Proper exception message
+                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Missing digest for " + entryName);
             }
         }
-
-        return true;
     }
 
-    private boolean verifySignaturesAgainstKeys() {
-
-
-        boolean throwExceptions = false;
-
-
-        if (keys == null) {
-            throw new LocalizableRuntimeException(GenericMessage.ERROR, "No keys set");
-        }
+    private void verifySignaturesAgainstKeys() {
         signers = new HashMap<>();
-        boolean allSignaturesValid = true;
-        for (Entry<String,RsaKey> entry : keys.entrySet()) {
+        // `keys` cannot be null here due to earlier assertSetup() call
+        for (Entry<String,SignatureBlock> entry : keys.entrySet()) {
 
             String signerName = entry.getKey();
-            RsaKey k = entry.getValue();
-            // RsaKey k = new RsaKey(new ByteArrayInputStream(keyBytes));
+            SignatureBlock k = entry.getValue();
 
             byte[] sfBytes = signatureFiles.get(signerName);
             try {
@@ -338,7 +285,17 @@ public class CascaraJarVerifier implements JarVerifier {
                         if (signerObj instanceof ASN1Sequence signerSeq) {
                             SignerInfo signerInfo = SignerInfo.parse(signerSeq);
                             X509Certificate cert = signerInfo.findSigningCertificate(k.getCertificates());
-                            if (cert != null && signerInfo.verifySignature(cert, sfBytes)) {
+
+
+// System.out.println("--- DEBUG SF VERIFICATION ---");
+// System.out.println("Cert Public Key: " + HexFormat.of().formatHex(cert.getPublicKey().getEncoded()));
+// System.out.println("SF Bytes Length: " + sfBytes.length);
+// System.out.println("SF Bytes Hash:   " + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(sfBytes)));
+// System.out.println("Signature Length: " + signerInfo.signatureBytes().length);
+
+
+                            boolean verified = signerInfo.verifySignature(cert, sfBytes);
+                            if (cert != null && verified) {
                                 signatureValid = true;
                                 break;
                             }
@@ -346,49 +303,34 @@ public class CascaraJarVerifier implements JarVerifier {
                     }
                 }
 
+                if (!signatureValid) {
+                    // TODO: This happens when the SF file's digest doesn't match the signature
+                    // TODO: Proper exception
 
-                // TODO: This casues test_invalid_untrustedSigner_signaturePolicy to
-                //  get an exeption before it does its verification. We need to support:
-                // - normal exception throwing like this, and
-                // - returning false on failure
-                if (!signatureValid && throwExceptions) {
-                    throw new SecurityException(GenericMessage.ERROR, "Signature verification failed for " + signerName);
+                    // FAILURE: Test test_invalid_untrustedSigner_signaturePolicy expects UNTRUSTED_SIGNER
+                    throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Signature verification failed for identity \"" + signerName + "\"");
                 }
-
-                allSignaturesValid &= signatureValid;
-
-
 
                 VerifiedSigner signer = new VerifiedSigner(k.getCertificates());
                 signers.put(signerName, signer);
 
-
-
             } catch (CertificateException e) {
-                if (throwExceptions) {
-                    throw new SecurityException(e, GenericMessage.ERROR, "Error reading certificate: " + e.getMessage());
-                }
-                return false;
-            } catch (SecurityException e) {
-                if (throwExceptions) {
-                    throw e;
-                }
-                return false;
+                // TODO: Better status code
+                throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Error reading certificate: " + e.getMessage());
+            } catch (SignatureException e) {
+                throw e;
             } catch (Exception e) {
-                if (throwExceptions) {
-                    throw new SecurityException(e, GenericMessage.ERROR, "Signature check failed: " + e.getMessage());
-                }
-                return false;
+                // TODO: Better status code
+                throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Signature check failed: " + e.getMessage());
             }
         }
-        return allSignaturesValid;
     }
 
     private MessageDigest getAlgorithm(String name) {
         try {
             return MessageDigest.getInstance(name);
         } catch (NoSuchAlgorithmException e) {
-            throw new SecurityException(e, SecurityMessage.NO_SUCH_ALGORITHM, name);
+            throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, SecurityMessage.NO_SUCH_ALGORITHM, name);
         }
     }
 
@@ -410,5 +352,57 @@ public class CascaraJarVerifier implements JarVerifier {
         }
         String algorithm = headerKey.replaceAll("-Digest$", "").replace("SHA1", "SHA-1");
         return new Pair<>(algorithm, digest);
+    }
+
+    private static class SignatureBlock {
+        private List<X509Certificate> certificates;
+        private SignedData sd;
+
+        public SignatureBlock(InputStream in) {
+            loadCerts(in);
+        }
+
+        public List<X509Certificate> getCertificates() {
+            return certificates;
+        }
+
+        public SignedData getSignedData() {
+            return sd;
+        }
+
+        private void loadCerts(InputStream in) {
+            ASN1Decoder dec = new DERDecoder();
+            try (ASN1InputStream ais = new ASN1InputStream(dec, in)) {
+                ASN1Sequence seq = ais.readObject();
+
+                // A simple wrapper that checks the structure an calls SignedData.parse
+                sd = CMSUtils.signedDataOrNull(seq);
+
+                // TODO: Null check
+                // also this needs re-written to not use CMSUtils which can then be removed.
+
+                // 1. Parse the tagged object as an implicit ASN1Set
+                ASN1Set certSet = sd.certificates().getObject(ASN1Tag.SET);
+
+                // 2. Parse the CertificateSet from the ASN1Set
+                CertificateSet certificateSet = CertificateSet.parse(certSet);
+
+                certificates = certificateSet.certificates()
+                    .stream()
+                    .map(c -> {
+                        try {
+                            return c.toX509Certificate();
+                        } catch (CertificateException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
+                    .toList();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                throw new LocalizableSecurityException(e, GenericMessage.ERROR, e.getMessage());
+            }
+        }
     }
 }

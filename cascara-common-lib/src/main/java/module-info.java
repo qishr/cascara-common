@@ -88,8 +88,8 @@ module cascara.common {
     exports io.github.qishr.cascara.common.security.cms;
 
 
-    opens io.github.qishr.cascara.common.annotation;
-    opens io.github.qishr.cascara.common.service;
+    // opens io.github.qishr.cascara.common.annotation;
+    // opens io.github.qishr.cascara.common.service;
 
     opens io.github.qishr.cascara.common.data;           // For tests
     opens io.github.qishr.cascara.common.diagnostic;     // For tests and SchmeaGenerator

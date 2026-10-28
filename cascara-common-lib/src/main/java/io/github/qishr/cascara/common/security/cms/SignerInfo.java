@@ -133,8 +133,25 @@ public final class SignerInfo {
                 }
             }
 
-            // B. When signedAttrs are present, signature is computed over DER bytes of signedAttrs (encoded as SET)
+
+
+
+            // TODO: This was added but is it needed and should it be here?
+            //
+            // B. Re-encode signedAttrs as universal SET OF (0x31) per RFC 5652 Section 5.3
             byte[] encodedSignedAttrs = signedAttrs.getEncoded();
+            if (encodedSignedAttrs != null && encodedSignedAttrs.length > 0) {
+                // Check if the leading tag byte at index 0 is context-specific (0xA0 / 0xA1)
+                if ((encodedSignedAttrs[0] & 0xC0) == 0x80) {
+                    encodedSignedAttrs[0] = (byte) 0x31; // Re-tag as universal SET OF (0x31) per RFC 5652
+                }
+            }
+            //
+            //---------------------------------------------------------------
+
+
+
+
             sig.update(encodedSignedAttrs);
         } else {
             // Direct signature over raw .SF file bytes

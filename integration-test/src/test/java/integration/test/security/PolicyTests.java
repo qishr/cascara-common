@@ -13,6 +13,7 @@ import java.security.KeyPairGenerator;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,8 +28,8 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.security.SecurityException;
-import io.github.qishr.cascara.common.security.SignaturePolicy;
+import io.github.qishr.cascara.common.security.LocalizableSecurityException;
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.TrustStore;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
@@ -82,28 +83,124 @@ public class PolicyTests extends TestBase implements SourceCode {
             .setPath(getTempDir().resolve("provider.jar"))
             .addSources(sourceCodeA())
             .addDependencies("cascara-common", "integration-test-fixtures")
-            // .signWith(signer.certificate(), signer.privateKey())
-            .signWith(signer) //TODO: remove unused sign* methods
+            .signWith(signer)
             .packageJar();
 
         // 3. Verify JAR under a SignaturePolicy backed by the CA's TrustStore
-        SignaturePolicy policy = SignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
             .requireSigned(true)
             .trustStore(ca.trustStore())
             .build();
 
         try (JarFile jar = JarFile.open(testJar.getPath())) {
-            CascaraJarVerifier verifier = (CascaraJarVerifier) jar.getVerifier();
-
-            // Evaluates valid signature, cert expiry, and TrustStore anchor
-            SignatureStatus status = policy.evaluate(signer.certificate());
+            // Evaluates valid signature, cert expiry, and TrustStore anchor directly on the JarFile
+            SignatureStatus status = policy.evaluate(jar);
             assertEquals(SignatureStatus.VALID, status);
-
         }
-
     }
 
-    // TODO:
+    @Test
+    void test_invalid_untrustedSigner_signaturePolicy() throws Exception {
+        // 1. Create a trusted CA and a foreign CA
+        TestCertificateAuthority cascaraCA = TestCertificateAuthority.create("Cascara Root CA");
+        TestCertificateAuthority foreignCA = TestCertificateAuthority.create("Foreign Root CA");
+
+        // 2. Sign module with foreign identity
+        SyntheticJar foreignSignedJar = SyntheticJar.forUseIn(JarSigningTests.class)
+            .setPath(getTempDir().resolve("foreign-provider.jar"))
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addSources(sourceCodeA())
+            .signWith(foreignCA.issueIdentity("foreign-module"))
+            .packageJar();
+
+        // 3. Configure SignaturePolicy requiring trust anchors from Cascara CA
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+            .requireSigned(true)
+            .trustStore(cascaraCA.trustStore())
+            .build();
+
+        // 4. Opening the JAR under Cascara policy rejects the foreign signer
+        try (JarFile jar = JarFile.open(foreignSignedJar.getPath())) {
+            SignatureStatus status = policy.evaluate(jar);
+            assertEquals(SignatureStatus.UNTRUSTED_SIGNER, status); // Failure: status is INVALID_SIGNATURE
+        }
+    }
+
+    @Test
+    void test_policy_and_entry_verification() throws Exception {
+        // 1. Instantiate Root CA, issue a signer, and package a synthetic JAR
+        TestCertificateAuthority ca = TestCertificateAuthority.create("Cascara Root CA");
+        TestCertificateAuthority.TestSigningIdentity signer = ca.issueIdentity("provider-module");
+
+        SyntheticJar testJar = SyntheticJar.forUseIn(PolicyTests.class)
+            .setPath(getTempDir().resolve("signed-foo.jar"))
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addSources(sourceCodeA())
+            .signWith(signer)
+            .packageJar();
+
+        // 2. Build SignaturePolicy backed by CA's TrustStore
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+            .requireSigned(true)
+            .trustStore(ca.trustStore())
+            .build();
+
+        // 3. Open JarFile and verify entry + policy using standard JRE APIs
+        try (JarFile jar = JarFile.open(testJar.getPath())) {
+            String entryName = "module-info.class";
+
+            // 1. Reading/extracting the file verifies the bytes against MANIFEST.MF digests under the hood
+            byte[] classContent = jar.extractFile(entryName);
+            assertNotNull(classContent);
+
+            // 2. Standard JRE JarEntry API: certificates/signers are populated after reading
+            JarEntry entry = jar.getJarEntry(entryName);
+            assertNotNull(entry);
+            assertTrue(Arrays.asList(entry.getCertificates()).contains(signer.certificate()));
+
+            // 3. Evaluate SPL signature policy against the JarFile
+            SignatureStatus status = policy.evaluate(jar);
+            assertEquals(SignatureStatus.VALID, status);
+        }
+    }
+
+    // @Test
+    // void test_policy_and_entry_verification() throws Exception {
+    //     // 1. Instantiate Root CA and issue a signing identity
+    //     TestCertificateAuthority ca = TestCertificateAuthority.create("Cascara Root CA");
+    //     TestCertificateAuthority.TestSigningIdentity signer = ca.issueIdentity("provider-module");
+    //     TrustStore trustStore = ca.trustStore();
+    //     X509Certificate myCaCert = ca.rootCertificate();
+    //     // Or is it signer.certificate();?
+
+    //     // TrustStore trustStore = new TrustStore(Set.of(myCaCert));
+    //     SplSignaturePolicy policy = SplSignaturePolicy.builder()
+    //         .requireSigned(true)
+    //         .trustStore(trustStore)
+    //         .build();
+
+    //     // ??? There is no signedJarPath yet
+    //     try (JarFile jar = JarFile.open(signedJarPath)) {
+    //         String entryName = "io/github/qishr/cascara/Foo.class";
+
+    //         // 1. Verify entry bytes against manifest digest
+    //         byte[] classContent = jar.extractFile(entryName);
+
+    //         // There is no jar.getVerifier(), as we discusses this morning
+    //         boolean digestValid = jar.getVerifier().verifyEntrySignature(entryName, classContent);
+    //         assertTrue(digestValid);
+
+    //         // Verify entry was signed by myCaCert via standard JarEntry API
+    //         JarEntry entry = jar.getJarEntry(entryName);
+    //         assertNotNull(entry);
+    //         assertTrue(Arrays.asList(entry.getCertificates()).contains(myCaCert));
+
+    //         // 2. Evaluate SPL policy directly against JarFile
+    //         SignatureStatus status = policy.evaluate(jar);
+    //         assertEquals(SignatureStatus.VALID, status);
+    //     }
+    // }
+
 
     // @Test
     // void test_policy_and_entry_verification() throws Exception {

@@ -55,13 +55,15 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.zip.ZipEntry;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.security.*;
-import io.github.qishr.cascara.common.security.SecurityException;
+import io.github.qishr.cascara.common.security.cms.SignatureStatus;
+import io.github.qishr.cascara.common.util.JarVerifier.VerifiedSigner;
 
 public class JarFile extends ZipFile {
     private static final String META_INF = "META-INF/";
@@ -121,6 +123,11 @@ public class JarFile extends ZipFile {
 
     public static JarFile open(Path jarPath) throws LocalizableIOException {
         return new JarFile(jarPath, false, true, BASE_VERSION);
+    }
+
+    @Experimental
+    public static JarFile open(Path jarPath, boolean verify) throws LocalizableIOException {
+        return new JarFile(jarPath, false, verify, BASE_VERSION);
     }
 
     private JarFile(Path jarPath, boolean create, boolean verify, Runtime.Version version) throws LocalizableIOException {
@@ -266,6 +273,19 @@ public class JarFile extends ZipFile {
         return isMultiRelease;
     }
 
+    @Nullable
+    public Map<String,VerifiedSigner> getSigners() {
+        JarVerifier jv = getVerifier();
+        if (jv == null) {
+            return null;
+        }
+        return jv.getSigners();
+    }
+
+    // TODO:
+    // - static Runtime.Version runtimeVersion()
+    // - streaming API
+
     //
     // Private Methods
     //
@@ -307,7 +327,9 @@ public class JarFile extends ZipFile {
     }
 
     private String getJpmsModuleName() {
-        try (InputStream is = getInputStream("module-info.class")) {
+        // TODO: super.getInputStream doesn't verify, regular getInputStream does.
+        // What is supposed to happen here?
+        try (InputStream is = super.getInputStream("module-info.class")) {
             ModuleDescriptor descriptor = ModuleDescriptor.read(is);
             return descriptor.name();
         } catch (IOException | InvalidModuleDescriptorException e) {
@@ -362,19 +384,28 @@ public class JarFile extends ZipFile {
         }
     }
 
+    // TODO: does this need to be public?
+    @Experimental
     public JarVerifier getVerifier() {
         if (verify && verifier == null) {
-            verifier = createVerifier();
+            try {
+                verifier = createVerifier();
+            } catch (LocalizableIOException e) {
+                // TODO: We might want to handle this differently
+                return null;
+            }
         }
         return verifier;
     }
 
-    private JarVerifier createVerifier() {
+    /// @throws SignatureException
+    /// @throws IoException
+    private JarVerifier createVerifier() throws LocalizableIOException {
         byte[] mf;
         try {
             mf = super.extractFile(MANIFEST_MF);
         } catch (LocalizableIOException e) {
-            throw new SecurityException(e, GenericMessage.ERROR, "No MANIFEST.MF");
+            throw new LocalizableIOException(e, GenericMessage.ERROR, "No MANIFEST.MF");
         }
 
         Map<String, byte[]> signatures = new HashMap<>();
@@ -391,7 +422,7 @@ public class JarFile extends ZipFile {
                 signatures.put(identityName, sfBytes);
             } catch (IOException e) {
                 // TODO: move this. check signature exists in verifier
-                throw new SecurityException(e, GenericMessage.ERROR, "Error reading " + sfName);
+                throw new LocalizableIOException(e, GenericMessage.ERROR, "Error reading " + sfName);
             }
 
             String kfName = META_INF + entry.getValue();
@@ -400,7 +431,7 @@ public class JarFile extends ZipFile {
                 keys.put(identityName, kfBytes);
             } catch (IOException e) {
                 // TODO: move this. check key exists in verifier
-                throw new SecurityException(e, GenericMessage.ERROR, "Error reading " + kfName);
+                throw new LocalizableIOException(e, GenericMessage.ERROR, "Error reading " + kfName);
             }
         }
 
@@ -433,45 +464,35 @@ public class JarFile extends ZipFile {
                     if (names.contains(name)) {
                         keyFiles.put(name, entry.getName());
                     } else if (entryName.endsWith(".RSA")) {
-                        throw new SecurityException(GenericMessage.ERROR, "Missing SF file");
+                        throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Missing SF file");
                     }
                 }
             }
         }
         // TODO: move this. check key exists in verifier
         if (keyFiles.size() < names.size()) {
-            throw new SecurityException(GenericMessage.ERROR, "Missing key file");
+            throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Missing key file");
         }
         return keyFiles;
     }
 
-    private boolean verifieddSignatures;
+    private boolean signaturesChecked;
 
     private void verifyEntry(String entryName) {
         JarVerifier jv = getVerifier();
         if (jv != null) {
-            if (!verifieddSignatures) {
-                verifieddSignatures = jv.verifyJarSignature();
-
-//                // 2. Verify .SF manifest entries & SHA-256-Digest-Manifest against MANIFEST.MF
-//                if (!jv.verifySignature()) {
-//                    throw new SecurityException(GenericMessage.ERROR, "MANIFEST.SF digest verification against MANIFEST.MF failed");
-//                }
-
-
-                 if (!verifieddSignatures) {
-                     throw new SecurityException(GenericMessage.ERROR, "Verification failed for " + entryName + " in " + getPath());
-                 }
+            if (!signaturesChecked) {
+                signaturesChecked = true;
+                jv.verifyJarSignature();
             }
-            try {
-                if (jv.isTrustedManifestEntry(entryName)) {
+            if (jv.isTrustedManifestEntry(entryName)) {
+                try {
                     byte[] content = super.extractFile(entryName);
-                    if (!jv.verifyEntrySignature(entryName, content)) {
-                        throw new SecurityException(GenericMessage.ERROR, "Verification failed for " + entryName + " in " + getPath());
-                    }
+                    jv.verifyEntrySignature(entryName, content);
+                } catch (LocalizableIOException e) {
+                    // TODO: Proper error message
+                    throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Verification failed for " + entryName + " in " + getPath());
                 }
-            } catch (LocalizableIOException e) {
-                throw new SecurityException(e, GenericMessage.ERROR, "Verification failed for " + entryName + " in " + getPath());
             }
         }
     }
