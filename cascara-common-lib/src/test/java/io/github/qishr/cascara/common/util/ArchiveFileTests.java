@@ -118,4 +118,6 @@ class ZipFileTests {
         }
     }
 
+    // TODO: subdirectory tests
+
 }

@@ -164,30 +164,7 @@ public class SPLRoot extends SPLBranch {
         // Set up the GlobalReporter serializer.
         // This is done here rather than in GlobalReporter because GlobalReporter
         // is used by SPL, and only SPL knows when the serializer becomes available.
-        // try {
-        //     Serializer<?> serializer = ProcessorFactory.system().createSerializer(GlobalReporter.SERIALIZATION_FORMAT);
-
-        // TODO: Put this logic in GlobalReporter.initSerializer
         GlobalReporter.configureSerializer();
-        // Serializer<?> serializer = IpcConfig.createSerializer();
-        //     if (serializer != null) {
-        //         // Prevent the serializer from using SPL to find TypeDescriptor and
-        //         // TypeSerializer providers to avoid infinite recursion:
-        //         //     SPL -> GlobalReporter -> Serializer -> SPL
-        //         serializer.setProviderFactoryEnabled(false);
-
-        //         // Instead of letting the Serializer use SPL, give it the type
-        //         // descriptors and type serializers it needs for Diagnostic serialization.
-        //         serializer.registerTypeDescriptor(new InstantDescriptor());
-        //         serializer.registerTypeDescriptor(new ZonedDateTimeDescriptor());
-        //         serializer.registerTypeDescriptor(new DiagnosticMessageDescriptor());
-        //         serializer.registerTypeDescriptor(new StackTraceElementSerializer());
-
-        //         GlobalReporter.initSerializer(serializer);
-        //     }
-        // } catch (ServiceException e) {
-        //     // Ignore
-        // }
     }
 
     private void discoverClasses() {
@@ -228,7 +205,7 @@ public class SPLRoot extends SPLBranch {
 
     private boolean isAutoDiscoverEnabled() {
         // TODO: Use propsFile for this too
-        String autoDiscover = System.getProperty("cascara.spl.discover");
+        String autoDiscover = System.getProperty(CASCARA_SPL_DISCOVER);
         return !"false".equalsIgnoreCase(autoDiscover);
     }
 

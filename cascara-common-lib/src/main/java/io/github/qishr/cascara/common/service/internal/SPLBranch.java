@@ -87,6 +87,9 @@ import io.github.qishr.cascara.common.util.ReflectionUtils;
 public class SPLBranch implements SPL {
     protected static final Reporter REPORTER = GlobalReporter.forClass(SPL.class);
 
+    protected static final String CASCARA_SPL_DISCOVER = "cascara.spl.discover";
+    protected static final String CASCARA_SEC_VERIFY = "cascara.sec.verify";
+
     protected static SPLRoot rootLayer;
 
     // TODO: Remove this
@@ -401,8 +404,13 @@ public class SPLBranch implements SPL {
         Set<String> classes;
 
 
+
+
         // TODO: Make verify part of a policy
-        boolean verify = false;
+        boolean verify = isVerifyEnabled();
+
+
+
 
         try (JarFile jar = JarFile.open(jarPath, verify)) {
             moduleName = jar.getModuleName();
@@ -626,6 +634,12 @@ public class SPLBranch implements SPL {
     //
     // Registration
     //
+
+    private boolean isVerifyEnabled() {
+        // TODO: Use propsFile for this too
+        String verify = System.getProperty(CASCARA_SEC_VERIFY);
+        return !"false".equalsIgnoreCase(verify);
+    }
 
     private boolean isRegistered(String providerFqcn) {
         return rootLayer.bootProviders.contains(providerFqcn) || providersByFqcn.containsKey(providerFqcn);

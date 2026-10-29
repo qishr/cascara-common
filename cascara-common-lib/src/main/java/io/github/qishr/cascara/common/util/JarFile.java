@@ -386,7 +386,7 @@ public class JarFile extends ZipFile {
 
     // TODO: does this need to be public?
     @Experimental
-    public JarVerifier getVerifier() {
+    private JarVerifier getVerifier() {
         if (verify && verifier == null) {
             try {
                 verifier = createVerifier();

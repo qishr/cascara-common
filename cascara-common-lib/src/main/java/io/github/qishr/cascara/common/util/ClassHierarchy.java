@@ -43,6 +43,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -65,6 +66,8 @@ public class ClassHierarchy {
 
     private static final Object LOCK = new Object();
 
+    private static Instant timestamp = Instant.now();
+
     private ClassHierarchy() {}
 
     public static void invalidate() {
@@ -72,6 +75,8 @@ public class ClassHierarchy {
             HIERARCHY_REF.set(null);
         }
     }
+
+    // TODO: Use Classes.getAll() instead of rescanning
 
     private static Map<String, Set<String>> ensureHierarchy() {
         Map<String, Set<String>> map = HIERARCHY_REF.get();
@@ -85,6 +90,7 @@ public class ClassHierarchy {
                     scanModulePath(newMap);
                     HIERARCHY_REF.set(newMap);
                     map = newMap;
+                    timestamp = Instant.now();
                 }
             }
         }
@@ -101,6 +107,11 @@ public class ClassHierarchy {
 
     public static Map<String, Set<String>> getAll() {
         return Collections.unmodifiableMap(ensureHierarchy());
+    }
+
+    @NonNull
+    public static Instant getTimestamp() {
+        return timestamp;
     }
 
     private static void save(String k, String v, Map<String, Set<String>> hierarchy) {

@@ -159,6 +159,14 @@ public class CascaraJarVerifier implements JarVerifier {
         assertSetup();
         ensureSigners();
 
+        // Special handling for overall MANIFEST.MF
+        if ("META-INF/MANIFEST.MF".equals(entryName)) {
+            if (signers == null || signers.isEmpty()) {
+                return null;
+            }
+            return signers.values().iterator().next();
+        }
+
         VerifiedSigner result = signers.computeIfAbsent(entryName, n -> {
             for (Entry<String,Manifest> signature : signatures.entrySet()) {
                 if (isTrustedManifestEntry(entryName)) {

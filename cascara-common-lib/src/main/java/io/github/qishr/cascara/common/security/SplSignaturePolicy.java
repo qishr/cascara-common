@@ -9,7 +9,11 @@ import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.annotation.DataIgnore;
 import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.annotation.SchemaDefinition;
+import io.github.qishr.cascara.common.annotation.SchemaProperty;
+import io.github.qishr.cascara.common.annotation.SchemaUri;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
@@ -17,14 +21,24 @@ import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 
+@SchemaDefinition(title = "SPL Signature Policy")
 public final class SplSignaturePolicy implements SignaturePolicy {
     private final static Reporter REPORTER = GlobalReporter.forClass(SplSignaturePolicy.class);
 
+    @SchemaUri
+    public static final String SCHEMA = "https://qishr.github.io/schemas/spl-signature-policy.json";
+
+    @SchemaProperty(title = "", description = "")
     private final boolean requireSigned;
 
+    @SchemaProperty(title = "", description = "")
     private final boolean checkExpiry;
-    private final TrustStore trustStore;
+
+    @SchemaProperty(title = "", description = "")
     private final Set<String> allowedDigestAlgorithms;
+
+    @DataIgnore
+    private final TrustStore trustStore;
 
     private SplSignaturePolicy(Builder builder) {
         this.requireSigned = builder.requireSigned;
