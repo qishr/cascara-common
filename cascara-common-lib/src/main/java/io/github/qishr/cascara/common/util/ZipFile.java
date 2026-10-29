@@ -101,6 +101,7 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
     //     }
     // }
 
+    // TODO: Implement
     @Override
     public void close() throws LocalizableIOException {
         // if (fileSystem != null) {
@@ -266,13 +267,21 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
         try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(archivePath))) {
             ZipEntry zipEntry;
             while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-                if (entryName == null) {
-                    ZipEntry entry = new ZipEntry(zipEntry.getName());
-                    entryList.add(entry);
-                } else if (zipEntry.getName().startsWith(entryName) && !zipEntry.getName().equals(entryName)) {
-                    ZipEntry entry = new ZipEntry(zipEntry.getName().substring(entryName.length()));
-                    entryList.add(entry);
+
+
+
+                // if (entryName == null) {
+                //     ZipEntry entry = new ZipEntry(zipEntry.getName());
+                //     entryList.add(entry);
+                // } else
+                if (zipEntry.getName().startsWith(entryName) && !zipEntry.getName().equals(entryName)) {
+                    // ZipEntry entry = new ZipEntry(zipEntry.getName().substring(entryName.length()));
+                    // entryList.add(entry);
+                    entryList.add(zipEntry);
                 }
+
+
+
             }
         } catch (FileNotFoundException e) {
             throw new LocalizableIOException(e, FileMessage.FILE_NOT_FOUND, archivePath);
