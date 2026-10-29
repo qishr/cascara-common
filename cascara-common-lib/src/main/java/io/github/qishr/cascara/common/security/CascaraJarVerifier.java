@@ -181,11 +181,11 @@ public class CascaraJarVerifier implements JarVerifier {
     @Override
     public boolean isTrustedManifestEntry(String entryName) {
         assertSetup();
-        if ("META-INF/MANIFEST.MF".equals(entryName)) {
-            // TODO: do we need to check that signatures isn;t empty too?
-            // MANIFEST.MF is trusted if any signature file exists and verifies against manifest
-            return !signatures.isEmpty();
-        }
+        // if ("META-INF/MANIFEST.MF".equals(entryName)) {
+        //     // TODO: do we need to check that signatures isn;t empty too?
+        //     // MANIFEST.MF is trusted if any signature file exists and verifies against manifest
+        //     return !signatures.isEmpty();
+        // }
         for (Entry<String,Manifest> signature : signatures.entrySet()) {
             if (signature.getValue().getAttributes(entryName) != null) {
                 // TODO: Also check that attributes contain digest

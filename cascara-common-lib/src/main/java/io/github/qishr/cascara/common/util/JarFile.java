@@ -306,7 +306,6 @@ public class JarFile extends ZipFile {
         List<ZipEntry> files = listFiles(mavenDirectory);
         for (ZipEntry info : files) {
             if (info.getName().endsWith("pom.properties")) {
-                // return mavenDirectory + info.getName();
                 return info.getName();
             }
         }
@@ -342,17 +341,10 @@ public class JarFile extends ZipFile {
     private String getClassRoot() {
         List<ZipEntry> versions = listFiles(META_INF_VERSIONS);
         for (ZipEntry entry : versions) {
-            String versionEntryName = entry.getName().substring(META_INF_VERSIONS.length() + 1);
-
-            int slash = versionEntryName.indexOf("/");
-            // int slash = versionEntryName.indexOf("/", META_INF_VERSIONS.length() + 1);
-            // int slash = versionEntryName.lastIndexOf("/");
-
+            String versionEntryName = entry.getName();
+            int slash = versionEntryName.indexOf("/", META_INF_VERSIONS.length() + 1);
             if (slash > -1) {
-                // String classPath = META_INF_VERSIONS + entry.getName().substring(0, slash);
-                // String classPath = versionEntryName.substring(0, slash);
-                String classPath = META_INF_VERSIONS + versionEntryName.substring(0, slash);
-                return classPath;
+                return versionEntryName.substring(0, slash + 1);
             }
         }
         return "";
@@ -459,7 +451,6 @@ public class JarFile extends ZipFile {
         List<String> names = new ArrayList<>();
         for (ZipEntry entry : metaInf) {
             if (entry.getName().endsWith(DOT_SF)) {
-                // String name = entry.getName().substring(0, entry.getName().length() -3);
                 String name = entry.getName().substring(META_INF.length(), entry.getName().length() -3);
                 names.add(name); // TODO: "alias" / "aliases"
             }

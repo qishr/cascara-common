@@ -50,7 +50,7 @@ public class JmxTest extends JmxTestBase {
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString(input);
 
-        boolean ipcDebug = false;
+        boolean ipcDebug = true;
 
         Class<?> taskClass = JmxTestTask.class;
         GlobalReporter.forClass(taskClass).setLevel(Level.DEBUG);

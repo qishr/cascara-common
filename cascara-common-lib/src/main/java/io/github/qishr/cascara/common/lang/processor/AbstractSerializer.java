@@ -236,7 +236,7 @@ public abstract class AbstractSerializer<
 
             // Maps
             if (jvmInstance instanceof Map<?, ?> map) {
-                return (N) serializeMap(map);
+                return (N) serializeMap(map, jvmType);
             }
 
             return (N) serializeObject(jvmInstance);
@@ -380,11 +380,15 @@ public abstract class AbstractSerializer<
     }
 
     @NonNull
-    private M serializeMap(Map<?, ?> map) {
+    private M serializeMap(Map<?, ?> map, Type mapType) {
         M mapNode = astFactory.createMapNode();
         if (mapNode == null) {
             throw new SerializerException(LangMessage.AST_FACTORY_FAIL_MAP);
         }
+
+        Type declaredKeyType = ReflectionUtils.getKeyTypeOfMapType(mapType);
+        Type declaredValueType = ReflectionUtils.getValueTypeOfMapType(mapType);
+
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             if (entry.getKey() == null) {
                 continue;
@@ -395,7 +399,7 @@ public abstract class AbstractSerializer<
             }
             N valueNode = (entry.getValue() == null)
                 ? createScalar(null)
-                : serialize(entry.getValue());
+                : serialize(entry.getValue(), declaredValueType);
 
             mapNode.put(keyNode, valueNode);
         }

@@ -270,10 +270,11 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
 
 
 
-                // if (entryName == null) {
-                //     ZipEntry entry = new ZipEntry(zipEntry.getName());
-                //     entryList.add(entry);
-                // } else
+                if (entryName == null) {
+                    // ZipEntry entry = new ZipEntry(zipEntry.getName());
+                    // entryList.add(entry);
+                    entryList.add(zipEntry);
+                } else
                 if (zipEntry.getName().startsWith(entryName) && !zipEntry.getName().equals(entryName)) {
                     // ZipEntry entry = new ZipEntry(zipEntry.getName().substring(entryName.length()));
                     // entryList.add(entry);
