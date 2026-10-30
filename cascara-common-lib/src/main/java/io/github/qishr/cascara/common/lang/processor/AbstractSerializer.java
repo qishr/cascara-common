@@ -386,7 +386,7 @@ public abstract class AbstractSerializer<
             throw new SerializerException(LangMessage.AST_FACTORY_FAIL_MAP);
         }
 
-        Type declaredKeyType = ReflectionUtils.getKeyTypeOfMapType(mapType);
+        // Type declaredKeyType = ReflectionUtils.getKeyTypeOfMapType(mapType);
         Type declaredValueType = ReflectionUtils.getValueTypeOfMapType(mapType);
 
         for (Map.Entry<?, ?> entry : map.entrySet()) {

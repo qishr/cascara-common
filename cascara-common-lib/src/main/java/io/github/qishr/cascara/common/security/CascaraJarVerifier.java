@@ -1,5 +1,21 @@
 package io.github.qishr.cascara.common.security;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
@@ -18,22 +34,6 @@ import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.common.util.JarVerifier;
 import io.github.qishr.cascara.common.util.Pair;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 public class CascaraJarVerifier implements JarVerifier {
     private byte[] manifestBytes;
@@ -406,7 +406,7 @@ public class CascaraJarVerifier implements JarVerifier {
                     .toList();
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                throw new LocalizableSecurityException(e, GenericMessage.ERROR, e.getMessage());
+                throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, e.getMessage());
             }
         }
     }

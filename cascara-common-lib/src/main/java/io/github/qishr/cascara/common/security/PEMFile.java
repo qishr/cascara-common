@@ -987,6 +987,8 @@ public class PEMFile {
 
             if(certificate instanceof X509Certificate) {
                 X509Certificate xc = (X509Certificate)certificate;
+                // TODO: Use this instead:
+                // xc.getSubjectX500Principal();
                 sb.append(", subject=").append(xc.getSubjectDN());
             }
             return sb.toString();
@@ -1032,6 +1034,8 @@ public class PEMFile {
 
         public String toString() {
             StringBuilder sb = new StringBuilder();
+            // TODO: Use this instead:
+            // crl.getIssuerX500Principal
 
             sb.append("CRL: type=")
             .append(crl.getType())

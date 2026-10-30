@@ -1,5 +1,6 @@
 package io.github.qishr.cascara.common.security;
 
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 

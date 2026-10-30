@@ -1,6 +1,5 @@
 package integration.test.security;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
@@ -22,11 +20,10 @@ import org.junit.jupiter.api.Test;
 import integration.test.util.SourceCode;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.security.LocalizableSecurityException;
 import io.github.qishr.cascara.common.security.SignatureException;
-import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
@@ -36,16 +33,13 @@ import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequen
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Set;
 import io.github.qishr.cascara.common.security.cms.CMSUtils;
 import io.github.qishr.cascara.common.security.cms.CertificateSet;
-import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.common.util.JarFile;
-import io.github.qishr.cascara.common.security.CascaraJarVerifier;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.common.util.ZipFile;
 import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
 import io.github.qishr.cascara.test.common.junit.util.TestBase;
-import io.github.qishr.cascara.test.common.junit.util.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.junit.util.TestJarSigner;
 
 public class CertTests extends TestBase implements SourceCode {
@@ -322,7 +316,7 @@ public class CertTests extends TestBase implements SourceCode {
     void test_invalid_expiredCertificate() throws Exception {
         // 1. Generate an expired self-signed certificate (validity ended yesterday)
         TestJarSigner jarSigner = new TestJarSigner();
-        KeyPair keyPair = jarSigner.getKeyPair();
+        // KeyPair keyPair = jarSigner.getKeyPair();
 
         X509Certificate expiredCert = jarSigner.generateExpiredSelfSignedCert("CN=Expired Signer, O=cascara");
 
@@ -337,7 +331,10 @@ public class CertTests extends TestBase implements SourceCode {
 
         // 4. Assert that SignerInfo or JarVerifier maps this to SignatureStatus.CERTIFICATE_EXPIRED
         DERDecoder decoder = new DERDecoder();
-        ASN1Sequence rootSeq = (ASN1Sequence) new ASN1InputStream(decoder, bundle.keyRsa()).readObject();
+        ASN1Sequence rootSeq;
+        try (ASN1InputStream ais = new ASN1InputStream(decoder, bundle.keyRsa())) {
+            rootSeq = (ASN1Sequence) ais.readObject();
+        }
         SignedData sd = CMSUtils.signedDataOrNull(rootSeq);
         SignerInfo signerInfo = SignerInfo.parse((ASN1Sequence) sd.signerInfos().iterator().next());
 

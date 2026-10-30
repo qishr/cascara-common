@@ -1,16 +1,23 @@
 package io.github.qishr.cascara.common.security;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 
 public final class TrustStore {
 
@@ -28,6 +35,7 @@ public final class TrustStore {
      * Loads a TrustStore from standard Cascara system properties:
      * -Dcascara.truststore=/path/to/truststore.jks
      * -Dcascara.truststore.password=secret
+     * @throws IOException
      */
     public static TrustStore fromSystemProperties() {
         String pathStr = System.getProperty("cascara.truststore");
@@ -52,8 +60,21 @@ public final class TrustStore {
                     certs.add(x509);
                 }
             }
-        } catch (Exception e) {
-            throw new LocalizableSecurityException(e, SecurityMessage.NO_SUCH_ALGORITHM, path.toString());
+        } catch (IOException e) {
+            // TODO: Test this, improve error reporting
+            throw new TrustStoreException(e, FileMessage.READ_ERROR, path.toString());
+        } catch (KeyStoreException e) {
+            // from ks.aliases and ks.getCertificate
+            // TODO: Test this, improve error reporting
+            throw new TrustStoreException(e, GenericMessage.ERROR, e.getMessage());
+        } catch (NoSuchAlgorithmException e) {
+            // from ks.load
+            // TODO: Test this, improve error reporting
+            throw new TrustStoreException(e, GenericMessage.ERROR, e.getMessage());
+        } catch (CertificateException e) {
+            // from ks.load
+            // TODO: Test this, improve error reporting
+            throw new TrustStoreException(e, GenericMessage.ERROR, e.getMessage());
         }
         return new TrustStore(certs);
     }
