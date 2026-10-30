@@ -15,5 +15,5 @@
  */
 package io.github.qishr.cascara.common.security.asn1.types;
 
-public interface ASN1Constructed extends Iterable<ASN1Object> {
+public interface ASN1Constructed extends Iterable<ASN1Object<?>> {
 }

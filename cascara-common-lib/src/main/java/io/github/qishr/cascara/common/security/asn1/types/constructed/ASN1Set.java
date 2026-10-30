@@ -27,23 +27,23 @@ import io.github.qishr.cascara.common.security.asn1.types.ASN1Constructed;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 
-public class ASN1Set extends ASN1Object<Set<ASN1Object>> implements ASN1Constructed {
-    private final Set<ASN1Object> objects;
+public class ASN1Set extends ASN1Object<Set<ASN1Object<?>>> implements ASN1Constructed {
+    private final Set<ASN1Object<?>> objects;
     private byte[] bytes;
 
-    private ASN1Set(Set<ASN1Object> objects, byte[] bytes) {
+    private ASN1Set(Set<ASN1Object<?>> objects, byte[] bytes) {
         super(ASN1Tag.SET);
         this.objects = objects;
         this.bytes = bytes;
     }
 
-    public ASN1Set(Set<ASN1Object> objects) {
+    public ASN1Set(Set<ASN1Object<?>> objects) {
         super(ASN1Tag.SET);
         this.objects = new HashSet<>(objects);
     }
 
     @Override
-    public Set<ASN1Object> getValue() {
+    public Set<ASN1Object<?>> getValue() {
         return new HashSet<>(objects);
     }
 
@@ -51,7 +51,7 @@ public class ASN1Set extends ASN1Object<Set<ASN1Object>> implements ASN1Construc
         return bytes;
     }
 
-    public Iterator<ASN1Object> iterator() {
+    public Iterator<ASN1Object<?>> iterator() {
         return new HashSet<>(objects).iterator();
     }
 
@@ -62,7 +62,7 @@ public class ASN1Set extends ASN1Object<Set<ASN1Object>> implements ASN1Construc
 
         @Override
         public ASN1Set parse(ASN1Tag<ASN1Set> asn1Tag, byte[] value) throws ASN1ParseException {
-            HashSet<ASN1Object> asn1Objects = new HashSet<>();
+            HashSet<ASN1Object<?>> asn1Objects = new HashSet<>();
             try (ASN1InputStream stream = new ASN1InputStream(decoder, value)) {
                 for (ASN1Object asn1Object : stream) {
                     asn1Objects.add(asn1Object);

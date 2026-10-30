@@ -27,6 +27,7 @@ import io.github.qishr.cascara.common.security.asn1.types.primitive.*;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1BitString;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1PrintableString;
+import io.github.qishr.cascara.common.security.asn1.types.string.ASN1UTCTime;
 
 import java.util.*;
 

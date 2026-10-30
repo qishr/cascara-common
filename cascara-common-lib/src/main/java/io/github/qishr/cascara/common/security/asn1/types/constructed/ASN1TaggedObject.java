@@ -25,8 +25,8 @@ import io.github.qishr.cascara.common.security.asn1.types.ASN1Constructed;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 
-public class ASN1TaggedObject extends ASN1Object<ASN1Object> implements ASN1Constructed {
-    private final ASN1Object object;
+public class ASN1TaggedObject extends ASN1Object<ASN1Object<?>> implements ASN1Constructed {
+    private final ASN1Object<?> object;
     private byte[] bytes;
     private ASN1Decoder decoder;
     private boolean explicit = true;
@@ -77,7 +77,7 @@ public class ASN1TaggedObject extends ASN1Object<ASN1Object> implements ASN1Cons
     }
 
     @Override
-    public Iterator<ASN1Object> iterator() {
+    public Iterator<ASN1Object<?>> iterator() {
         return getObject(ASN1Tag.SEQUENCE).iterator();
     }
 

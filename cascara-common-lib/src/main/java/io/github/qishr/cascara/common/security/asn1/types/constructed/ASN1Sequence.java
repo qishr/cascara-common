@@ -28,23 +28,23 @@ import io.github.qishr.cascara.common.security.asn1.types.ASN1Constructed;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 
-public class ASN1Sequence extends ASN1Object<List<ASN1Object>> implements ASN1Constructed {
-    private final List<ASN1Object> objects;
+public class ASN1Sequence extends ASN1Object<List<ASN1Object<?>>> implements ASN1Constructed {
+    private final List<ASN1Object<?>> objects;
     private byte[] bytes;
 
-    private ASN1Sequence(List<ASN1Object> objects, byte[] bytes) {
+    private ASN1Sequence(List<ASN1Object<?>> objects, byte[] bytes) {
         super(ASN1Tag.SEQUENCE);
         this.objects = objects;
         this.bytes = bytes;
     }
 
-    public ASN1Sequence(List<ASN1Object> objects) {
+    public ASN1Sequence(List<ASN1Object<?>> objects) {
         super(ASN1Tag.SEQUENCE);
         this.objects = objects;
     }
 
     @Override
-    public List<ASN1Object> getValue() {
+    public List<ASN1Object<?>> getValue() {
         return new ArrayList<>(objects);
     }
 
@@ -53,7 +53,7 @@ public class ASN1Sequence extends ASN1Object<List<ASN1Object>> implements ASN1Co
     }
 
     @Override
-    public Iterator<ASN1Object> iterator() {
+    public Iterator<ASN1Object<?>> iterator() {
         return new ArrayList<>(objects).iterator();
     }
 
@@ -73,7 +73,7 @@ public class ASN1Sequence extends ASN1Object<List<ASN1Object>> implements ASN1Co
 
         @Override
         public ASN1Sequence parse(ASN1Tag<ASN1Sequence> asn1Tag, byte[] value) throws ASN1ParseException {
-            List<ASN1Object> list = new ArrayList<>();
+            List<ASN1Object<?>> list = new ArrayList<>();
             try (ASN1InputStream stream = new ASN1InputStream(decoder, value)) {
                 Iterator<ASN1Object> it = stream.iterator();
                 while (it.hasNext()) {

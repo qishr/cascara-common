@@ -8,8 +8,8 @@ import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequen
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Set;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1TaggedObject;
 import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectIdentifier;
-import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1UTCTime;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1PrintableString;
+import io.github.qishr.cascara.common.security.asn1.types.string.ASN1UTCTime;
 
 @Experimental
 public class CMSUtils {

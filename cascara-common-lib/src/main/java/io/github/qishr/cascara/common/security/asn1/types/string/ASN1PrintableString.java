@@ -27,7 +27,7 @@ public final class ASN1PrintableString extends ASN1String<byte[]> {
         super(ASN1Tag.PRINTABLE_STRING, bytes);
     }
 
-    public ASN1PrintableString(ASN1Tag<?> tag, byte[] bytes) {
+    public ASN1PrintableString(ASN1Tag<ASN1PrintableString> tag, byte[] bytes) {
         super(tag, bytes);
     }
 

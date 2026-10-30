@@ -26,7 +26,7 @@ public abstract class ASN1Object<T> {
 
     protected ASN1Tag tag;
 
-    protected ASN1Object(ASN1Tag tag) {
+    protected ASN1Object(ASN1Tag<? extends ASN1Object> tag) {
         this.tag = tag;
     }
 

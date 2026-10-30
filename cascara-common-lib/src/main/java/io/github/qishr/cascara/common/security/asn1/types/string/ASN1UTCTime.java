@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.security.asn1.types.primitive;
+package io.github.qishr.cascara.common.security.asn1.types.string;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -10,7 +10,6 @@ import io.github.qishr.cascara.common.security.asn1.ASN1Serializer;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Encoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
-import io.github.qishr.cascara.common.security.asn1.types.string.ASN1String;
 
 public final class ASN1UTCTime extends ASN1String<byte[]> {
 
@@ -34,7 +33,7 @@ public final class ASN1UTCTime extends ASN1String<byte[]> {
         super(ASN1Tag.UTC_TIME, bytes);
     }
 
-    public ASN1UTCTime(ASN1Tag<?> tag, byte[] bytes) {
+    public ASN1UTCTime(ASN1Tag<ASN1UTCTime> tag, byte[] bytes) {
         super(tag, bytes);
     }
 
