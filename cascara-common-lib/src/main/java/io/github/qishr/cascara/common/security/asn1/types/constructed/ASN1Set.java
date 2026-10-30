@@ -25,7 +25,6 @@ import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Encoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Constructed;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
-import io.github.qishr.cascara.common.security.asn1.types.ASN1Primitive;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 
 public class ASN1Set extends ASN1Object<Set<ASN1Object>> implements ASN1Constructed {

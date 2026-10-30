@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.security.asn1.types.constructed;
+package io.github.qishr.cascara.common.security.asn1.types.primitive;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -9,14 +9,10 @@ import io.github.qishr.cascara.common.security.asn1.ASN1Parser;
 import io.github.qishr.cascara.common.security.asn1.ASN1Serializer;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Encoder;
-import io.github.qishr.cascara.common.security.asn1.types.ASN1Encoding;
-import io.github.qishr.cascara.common.security.asn1.types.ASN1Primitive;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
-import io.github.qishr.cascara.common.security.asn1.types.ASN1TagClass;
-import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1String;
 
-public final class ASN1UTCTime extends ASN1String {
+public final class ASN1UTCTime extends ASN1String<byte[]> {
 
     // public static final ASN1Tag<ASN1UTCTime> TAG =
     //     ASN1Tag.register(
@@ -70,7 +66,7 @@ public final class ASN1UTCTime extends ASN1String {
         }
 
         @Override
-        public ASN1UTCTime parse(ASN1Tag asn1Tag, byte[] value) throws ASN1ParseException {
+        public ASN1UTCTime parse(ASN1Tag<ASN1UTCTime> asn1Tag, byte[] value) throws ASN1ParseException {
             return new ASN1UTCTime(asn1Tag, value);
         }
     }

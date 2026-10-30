@@ -22,7 +22,6 @@ import java.util.BitSet;
 import io.github.qishr.cascara.common.security.asn1.*;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Encoder;
-import io.github.qishr.cascara.common.security.asn1.types.ASN1Primitive;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 import io.github.qishr.cascara.common.security.asn1.util.Checks;
 
@@ -132,7 +131,7 @@ public class ASN1BitString extends ASN1String<boolean[]> {
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     int unusedBits = 0;
                     while (stream.available() > 0) {
-                        ASN1Tag subTag = stream.readTag();
+                        ASN1Tag<?> subTag = stream.readTag();
                         Checks.checkState(subTag.getTag() == asn1Tag.getTag(), "Expected an ASN.1 BIT STRING as Constructed object, got: %s", subTag);
                         int i = stream.readLength();
                         byte[] subValue = stream.readValue(i);

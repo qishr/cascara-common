@@ -17,15 +17,12 @@ package io.github.qishr.cascara.common.security.asn1.types.constructed;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HexFormat;
 import java.util.Iterator;
 import io.github.qishr.cascara.common.security.asn1.*;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Encoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Constructed;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
-import io.github.qishr.cascara.common.security.asn1.types.ASN1Primitive;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 
 public class ASN1TaggedObject extends ASN1Object<ASN1Object> implements ASN1Constructed {

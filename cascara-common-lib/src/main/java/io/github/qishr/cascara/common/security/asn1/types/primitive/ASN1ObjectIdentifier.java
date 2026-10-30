@@ -25,7 +25,6 @@ import io.github.qishr.cascara.common.security.asn1.ASN1Parser;
 import io.github.qishr.cascara.common.security.asn1.ASN1Serializer;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Encoder;
-import io.github.qishr.cascara.common.security.asn1.types.ASN1Primitive;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 
 import static io.github.qishr.cascara.common.security.asn1.util.Checks.checkArgument;

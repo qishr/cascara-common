@@ -9,13 +9,10 @@ import io.github.qishr.cascara.common.security.asn1.ASN1Parser;
 import io.github.qishr.cascara.common.security.asn1.ASN1Serializer;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Encoder;
-import io.github.qishr.cascara.common.security.asn1.types.ASN1Encoding;
-import io.github.qishr.cascara.common.security.asn1.types.ASN1Primitive;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
-import io.github.qishr.cascara.common.security.asn1.types.ASN1TagClass;
 
 // 19
-public final class ASN1PrintableString extends ASN1String {
+public final class ASN1PrintableString extends ASN1String<byte[]> {
 
     // public static final ASN1Tag<ASN1PrintableString> TAG =
     //     register(
@@ -62,7 +59,7 @@ public final class ASN1PrintableString extends ASN1String {
         }
 
         @Override
-        public ASN1PrintableString parse(ASN1Tag asn1Tag, byte[] value) throws ASN1ParseException {
+        public ASN1PrintableString parse(ASN1Tag<ASN1PrintableString> asn1Tag, byte[] value) throws ASN1ParseException {
             return new ASN1PrintableString(asn1Tag, value);
         }
     }
