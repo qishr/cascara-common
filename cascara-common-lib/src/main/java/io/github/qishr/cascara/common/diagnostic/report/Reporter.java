@@ -46,6 +46,12 @@ import io.github.qishr.cascara.common.lang.token.Token;
 
 public interface Reporter {
 
+    /// Gets a `GlobalReporter` instance for the specifie class.
+    /// @param clazz the class to get a `GlobalReporter` instance for.
+    static Reporter forClass(Class<?> clazz) {
+        return GlobalReporter.forSource(clazz.getName());
+    }
+
     /// Sets the level of output when logging directly to the console.
     Reporter setLevel(Level level);
 

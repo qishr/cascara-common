@@ -61,7 +61,7 @@ public class ASN1Sequence extends ASN1Object<List<ASN1Object<?>>> implements ASN
         return objects.size();
     }
 
-    public ASN1Object get(int i) {
+    public ASN1Object<?> get(int i) {
         return objects.get(i);
     }
 
@@ -75,14 +75,9 @@ public class ASN1Sequence extends ASN1Object<List<ASN1Object<?>>> implements ASN
         public ASN1Sequence parse(ASN1Tag<ASN1Sequence> asn1Tag, byte[] value) throws ASN1ParseException {
             List<ASN1Object<?>> list = new ArrayList<>();
             try (ASN1InputStream stream = new ASN1InputStream(decoder, value)) {
-                Iterator<ASN1Object> it = stream.iterator();
-                while (it.hasNext()) {
-                    ASN1Object obj = it.next();
-                    list.add(obj);
+                for (ASN1Object<?> asn1Object : stream) {
+                    list.add(asn1Object);
                 }
-                // for (ASN1Object asn1Object : stream) {
-                //     list.add(asn1Object);
-                // }
             } catch (IOException e) {
                 throw new ASN1ParseException(e, "Unable to parse the ASN.1 SEQUENCE contents.");
             }
@@ -105,9 +100,10 @@ public class ASN1Sequence extends ASN1Object<List<ASN1Object<?>>> implements ASN
 
         private void calculateBytes(final ASN1Sequence asn1Object) throws IOException {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            ASN1OutputStream asn1OutputStream = new ASN1OutputStream(encoder, out);
-            for (ASN1Object object : asn1Object) {
-                asn1OutputStream.writeObject(object);
+            try (ASN1OutputStream asn1OutputStream = new ASN1OutputStream(encoder, out)) {
+                for (ASN1Object<?> object : asn1Object) {
+                    asn1OutputStream.writeObject(object);
+                }
             }
             asn1Object.bytes = out.toByteArray();
         }
@@ -117,7 +113,7 @@ public class ASN1Sequence extends ASN1Object<List<ASN1Object<?>>> implements ASN
             if (asn1Object.bytes != null) {
                 stream.write(asn1Object.bytes);
             } else {
-                for (ASN1Object object : asn1Object) {
+                for (ASN1Object<?> object : asn1Object) {
                     stream.writeObject(object);
                 }
             }

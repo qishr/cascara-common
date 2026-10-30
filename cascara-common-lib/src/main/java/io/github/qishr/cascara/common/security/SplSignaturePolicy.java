@@ -1,21 +1,17 @@
 package io.github.qishr.cascara.common.security;
 
-import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
-import java.util.Enumeration;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.DataIgnore;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.SchemaDefinition;
 import io.github.qishr.cascara.common.annotation.SchemaProperty;
-import io.github.qishr.cascara.common.annotation.SchemaUri;
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.annotation.SchemaID;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 import io.github.qishr.cascara.common.util.JarFile;
@@ -23,9 +19,9 @@ import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 
 @SchemaDefinition(title = "SPL Signature Policy")
 public final class SplSignaturePolicy implements SignaturePolicy {
-    private final static Reporter REPORTER = GlobalReporter.forClass(SplSignaturePolicy.class);
+    private final static Reporter REPORTER = Reporter.forClass(SplSignaturePolicy.class);
 
-    @SchemaUri
+    @SchemaID
     public static final String SCHEMA = "https://qishr.github.io/schemas/spl-signature-policy.json";
 
     @SchemaProperty(title = "", description = "")

@@ -8,5 +8,5 @@ import java.lang.annotation.Target;
 /// Indicates that a field declares the schema URI of a class annotated with @SchemaDefinition.
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SchemaUri {
+public @interface SchemaID {
 }

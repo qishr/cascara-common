@@ -10,7 +10,6 @@ import java.util.Map;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 
 public interface JarVerifier {
 
@@ -24,22 +23,6 @@ public interface JarVerifier {
 
     @Nullable Map<String, VerifiedSigner> getSigners();
     @Nullable VerifiedSigner getSigner(String entryName);
-
-
-
-
-    // TODO: Move these to policy...
-
-    // @NonNull
-    // SignatureStatus evaluatePolicy(SplSignaturePolicy policy);
-
-    // /**
-    //  * Verifies that the given file content matches the SHA digest in MANIFEST.MF
-    //  * AND that the entry was signed by the specified X509Certificate.
-    //  */
-    // boolean verifyJarSignature(X509Certificate cert, String entryName, byte[] content);
-
-    // boolean verifyJarSignature(X509Certificate cert, byte[] content);
 
     //
     //

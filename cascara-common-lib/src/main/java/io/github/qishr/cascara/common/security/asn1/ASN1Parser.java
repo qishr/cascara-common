@@ -19,7 +19,7 @@ import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 
-public abstract class ASN1Parser<T extends ASN1Object> {
+public abstract class ASN1Parser<T extends ASN1Object<?>> {
     protected ASN1Decoder decoder;
 
     public ASN1Parser(ASN1Decoder decoder) {

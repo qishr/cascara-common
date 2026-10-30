@@ -64,7 +64,7 @@ public class ASN1Set extends ASN1Object<Set<ASN1Object<?>>> implements ASN1Const
         public ASN1Set parse(ASN1Tag<ASN1Set> asn1Tag, byte[] value) throws ASN1ParseException {
             HashSet<ASN1Object<?>> asn1Objects = new HashSet<>();
             try (ASN1InputStream stream = new ASN1InputStream(decoder, value)) {
-                for (ASN1Object asn1Object : stream) {
+                for (ASN1Object<?> asn1Object : stream) {
                     asn1Objects.add(asn1Object);
                 }
             } catch (IOException e) {
@@ -90,9 +90,10 @@ public class ASN1Set extends ASN1Object<Set<ASN1Object<?>>> implements ASN1Const
 
         private void calculateBytes(final ASN1Set asn1Object) throws IOException {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            ASN1OutputStream asn1OutputStream = new ASN1OutputStream(encoder, out);
-            for (ASN1Object object : asn1Object) {
-                asn1OutputStream.writeObject(object);
+            try (ASN1OutputStream asn1OutputStream = new ASN1OutputStream(encoder, out)) {
+                for (ASN1Object<?> object : asn1Object) {
+                    asn1OutputStream.writeObject(object);
+                }
             }
             asn1Object.bytes = out.toByteArray();
         }
@@ -102,7 +103,7 @@ public class ASN1Set extends ASN1Object<Set<ASN1Object<?>>> implements ASN1Const
             if (asn1Object.bytes != null) {
                 stream.write(asn1Object.bytes);
             } else {
-                for (ASN1Object object : asn1Object) {
+                for (ASN1Object<?> object : asn1Object) {
                     stream.writeObject(object);
                 }
             }

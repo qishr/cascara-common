@@ -19,7 +19,7 @@ import java.io.IOException;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Encoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 
-public abstract class ASN1Serializer<T extends ASN1Object> {
+public abstract class ASN1Serializer<T extends ASN1Object<?>> {
     protected final ASN1Encoder encoder;
 
     public ASN1Serializer(ASN1Encoder encoder) {
