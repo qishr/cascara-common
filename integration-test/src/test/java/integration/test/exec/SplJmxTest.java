@@ -33,16 +33,18 @@ import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.logging.log4j.Log4jLogger;
+import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
 import io.github.qishr.cascara.test.common.junit.util.TestModulePackager;
 import integration.test.fixtures.beans.SPLStatusMBean;
 import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.task.JmxTestTask;
+import integration.test.util.SourceCode;
 
 import org.junit.jupiter.api.parallel.Isolated;
 
-@Disabled
-@Isolated
-public class SplJmxTest extends JmxTestBase {
+// @Disabled
+// @Isolated
+public class SplJmxTest extends JmxTestBase implements  SourceCode {
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
@@ -55,36 +57,45 @@ public class SplJmxTest extends JmxTestBase {
     }
 
     protected Path createModuleA() throws IOException {
-        Path providerAJar = Cascara.getModulePath().resolve("provider-a.jar");
+        // Path providerAJar = Cascara.getModulePath().resolve("provider-a.jar");
 
-        // Synthetic Module A with explicit module-info
-        TestModulePackager.packageModuleJar(
-            providerAJar,
-            "0.11.0",
-            Map.of(
-                "module-info",
-                "module provider.a { " +
-                "    requires cascara.common; " +
-                "    requires integration.test.fixtures; " +
-                "    exports com.example.providera; " +
-                "    opens com.example.providera to cascara.common; " +
-                "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
-                "        with com.example.providera.ProviderA;" +
-                "}",
+        // // Synthetic Module A with explicit module-info
+        // TestModulePackager.packageModuleJar(
+        //     providerAJar,
+        //     "0.11.0",
+        //     Map.of(
+        //         "module-info",
+        //         "module provider.a { " +
+        //         "    requires cascara.common; " +
+        //         "    requires integration.test.fixtures; " +
+        //         "    exports com.example.providera; " +
+        //         "    opens com.example.providera to cascara.common; " +
+        //         "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
+        //         "        with com.example.providera.ProviderA;" +
+        //         "}",
 
-                "com.example.providera.ProviderA",
-                "package com.example.providera; " +
-                "import integration.test.fixtures.TestService; " +
-                "import io.github.qishr.cascara.common.property.Properties; " +
-                "public class ProviderA implements TestService { " +
-                "    public String getName() { return \"ProviderA\"; } " +
-                "    public Properties getServiceProperties() { return null; } " +
-                "}"
-            ),
-            List.of("cascara-common", "integration-test-fixtures"),
-            "integration-test"
-        );
-        return providerAJar;
+        //         "com.example.providera.ProviderA",
+        //         "package com.example.providera; " +
+        //         "import integration.test.fixtures.TestService; " +
+        //         "import io.github.qishr.cascara.common.property.Properties; " +
+        //         "public class ProviderA implements TestService { " +
+        //         "    public String getName() { return \"ProviderA\"; } " +
+        //         "    public Properties getServiceProperties() { return null; } " +
+        //         "}"
+        //     ),
+        //     List.of("cascara-common", "integration-test-fixtures"),
+        //     "integration-test"
+        // );
+        // return providerAJar;
+
+        SyntheticJar testJar = SyntheticJar.forUseIn(SplJmxTest.class)
+            .setPath(Cascara.getModulePath().resolve("provider-a.jar"))
+            .setMinCascaraVersion("0.10.0")
+            .addSources(sourceCodeA())
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .sign()
+            .packageJar();
+        return testJar.getPath();
     }
 
     //
@@ -159,12 +170,12 @@ public class SplJmxTest extends JmxTestBase {
         String urlString = String.format("service:jmx:rmi:///jndi/rmi://127.0.0.1:%d/jmxrmi", jmxPort);
         JMXServiceURL url = new JMXServiceURL(urlString);
 
-        JMXConnector jmxConnector = connectWithRetry(url, 20, 1000);
+        JMXConnector jmxConnector = connectWithRetry(url, 20, 2000);
         MBeanServerConnection connection = jmxConnector.getMBeanServerConnection();
 
         try {
 
-            @SuppressWarnings("null")
+            // @SuppressWarnings("null")
             ClassLoadingMXBean classLoading =
                     ManagementFactory.newPlatformMXBeanProxy(
                             connection,
@@ -263,7 +274,7 @@ public class SplJmxTest extends JmxTestBase {
             invokeOperation(connection, "test.interfaces.beans:type=SPLStatus", "test", null, null, true);
             aggregator.flush();
 
-            @SuppressWarnings("null")
+            // @SuppressWarnings("null")
             SPLStatusMBean statusProxy = JMX.newMBeanProxy(
                 connection,
                 new ObjectName("test.interfaces.beans:type=SPLStatus"),

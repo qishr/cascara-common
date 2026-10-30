@@ -56,8 +56,10 @@ import io.github.qishr.cascara.common.service.ServiceProviderFactory;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.trackable.tracker.ArrayChangeTracker;
 import io.github.qishr.cascara.common.util.Cascara;
+import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
 import integration.test.fixtures.DemoSingleton;
 import integration.test.fixtures.TestService;
+import integration.test.security.JarSigningTests;
 
 class ModuleRegistrationTests extends SplTestBase {
 
@@ -99,9 +101,17 @@ class ModuleRegistrationTests extends SplTestBase {
         });
 
         reporter.info(GenericMessage.INFO, "Test registering JAR");
-        Path providerAJar = createModuleA();
 
-        layer.registerJar(providerAJar);
+        SyntheticJar testJar = SyntheticJar.forUseIn(ModuleRegistrationTests.class)
+            .setPath(Cascara.getModulePath().resolve("provider-a.jar"))
+            .setMinCascaraVersion("0.10.0")
+            .addSources(sourceCodeA())
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .sign()
+            .packageJar();
+
+        layer.registerJar(testJar.getPath());
+
 
         // Verify the provider is registered
         List<ServiceMetadata> providers = spl.findAllProviders(TestService.class);
@@ -138,8 +148,19 @@ class ModuleRegistrationTests extends SplTestBase {
         SPL layer = spl.create("singletonLayer");
 
         // Create synthetic module containing DemoSingleton
-        Path singletonJar = createSingletonModule();
-        layer.registerJar(singletonJar);
+        // Path singletonJar = createSingletonModule();
+        // layer.registerJar(singletonJar);
+
+        SyntheticJar testJar = SyntheticJar.forUseIn(ModuleRegistrationTests.class)
+            .setPath(Cascara.getModulePath().resolve("singleton.jar"))
+            .setMinCascaraVersion("0.10.0")
+            .addSources(sourceCodeS())
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .sign()
+            .packageJar();
+
+        layer.registerJar(testJar.getPath());
+
 
         // Verify singleton is present
         List<ServiceMetadata> providers = spl.findAllProviders(DemoSingleton.class);
@@ -167,7 +188,7 @@ class ModuleRegistrationTests extends SplTestBase {
 
         // Reload the module
         layer = spl.create("singletonLayer");
-        layer.registerJar(singletonJar);
+        layer.registerJar(testJar.getPath());
 
         // New instance should be created
         DemoSingleton secondInstance = SPL.load(DemoSingleton.class);

@@ -52,6 +52,9 @@ public class JmxTestBase extends ExecTestBase {
                 // e.printStackTrace();
                 lastException = e;
                 Thread.sleep(delayMs);
+
+                // TODO: Use reporter
+                System.out.println("Retrying JMX connection");
             }
         }
         throw new IllegalStateException("Failed to connect to JMX server after " + maxRetries + " attempts", lastException);

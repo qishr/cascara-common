@@ -52,7 +52,6 @@ public class SplTestBase extends VfsTestBase implements SourceCode {
     @BeforeEach
     protected void setUp() throws IOException {
         // GlobalReporter.globalInstance().setLevel(Level.TRACE);
-
         super.setUp();
     }
 
@@ -61,53 +60,53 @@ public class SplTestBase extends VfsTestBase implements SourceCode {
         super.tearDown();
     }
 
-    protected String getModulePath() {
-        Pair<String,String> mp = ArtifactResolver.buildModulePath(
-            List.of("cascara-common", "integration-test-fixtures", "cascara-lang-json"),
-            "integration-test"
-        );
-        String modulePath = mp.getL();
-        return modulePath;
-    }
+    // protected String getModulePath() {
+    //     Pair<String,String> mp = ArtifactResolver.buildModulePath(
+    //         List.of("cascara-common", "integration-test-fixtures", "cascara-lang-json"),
+    //         "integration-test"
+    //     );
+    //     String modulePath = mp.getL();
+    //     return modulePath;
+    // }
 
-    protected Path createModuleA() throws IOException {
-        Path providerAJar = Cascara.getModulePath().resolve("provider-a.jar");
+    // protected Path createModuleA() throws IOException {
+    //     Path providerAJar = Cascara.getModulePath().resolve("provider-a.jar");
 
-        // Synthetic Module A with explicit module-info
-        TestModulePackager.packageModuleJar(
-            providerAJar,
-            "0.10.0",
-            sourceCodeA(),
-            List.of("cascara-common", "integration-test-fixtures"),
-            "integration-test"
-        );
-        return providerAJar;
-    }
+    //     // Synthetic Module A with explicit module-info
+    //     TestModulePackager.packageModuleJar(
+    //         providerAJar,
+    //         "0.10.0",
+    //         sourceCodeA(),
+    //         List.of("cascara-common", "integration-test-fixtures"),
+    //         "integration-test"
+    //     );
+    //     return providerAJar;
+    // }
 
-    protected Path createModuleB() throws IOException {
-        Path providerBJar = Cascara.getModulePath().resolve("provider-b.jar");
-        // Synthetic Module B with explicit module-info
-        TestModulePackager.packageModuleJar(
-            providerBJar,
-            "0.10.0",
-            sourceCodeB(),
-            List.of("cascara-common", "integration-test-fixtures"),
-            "integration-test"
-        );
-        return providerBJar;
-    }
+    // protected Path createModuleB() throws IOException {
+    //     Path providerBJar = Cascara.getModulePath().resolve("provider-b.jar");
+    //     // Synthetic Module B with explicit module-info
+    //     TestModulePackager.packageModuleJar(
+    //         providerBJar,
+    //         "0.10.0",
+    //         sourceCodeB(),
+    //         List.of("cascara-common", "integration-test-fixtures"),
+    //         "integration-test"
+    //     );
+    //     return providerBJar;
+    // }
 
-    protected Path createSingletonModule() throws IOException {
-        Path jar = Cascara.getModulePath().resolve("singleton.jar");
+    // protected Path createSingletonModule() throws IOException {
+    //     Path jar = Cascara.getModulePath().resolve("singleton.jar");
 
-        TestModulePackager.packageModuleJar(
-            jar,
-            "0.10.0",
-            sourceCodeS(),
-            List.of("cascara-common", "integration-test-fixtures"),
-            "integration-test"
-        );
+    //     TestModulePackager.packageModuleJar(
+    //         jar,
+    //         "0.10.0",
+    //         sourceCodeS(),
+    //         List.of("cascara-common", "integration-test-fixtures"),
+    //         "integration-test"
+    //     );
 
-        return jar;
-    }
+    //     return jar;
+    // }
 }
