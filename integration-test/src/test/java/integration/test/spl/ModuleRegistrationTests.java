@@ -148,9 +148,6 @@ class ModuleRegistrationTests extends SplTestBase {
         SPL layer = spl.create("singletonLayer");
 
         // Create synthetic module containing DemoSingleton
-        // Path singletonJar = createSingletonModule();
-        // layer.registerJar(singletonJar);
-
         SyntheticJar testJar = SyntheticJar.forUseIn(ModuleRegistrationTests.class)
             .setPath(Cascara.getModulePath().resolve("singleton.jar"))
             .setMinCascaraVersion("0.10.0")

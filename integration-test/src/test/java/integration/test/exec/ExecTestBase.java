@@ -33,9 +33,13 @@ public class ExecTestBase extends VfsTestBase {
     }
 
     protected String getModulePath() {
+        // Pair<String,String> mp = ArtifactResolver.buildModulePath(
+        //     List.of("cascara-common", "integration-test-fixtures", "cascara-lang-json"),
+        //     "integration-test"
+        // );
         Pair<String,String> mp = ArtifactResolver.buildModulePath(
             List.of("cascara-common", "integration-test-fixtures", "cascara-lang-json"),
-            "integration-test"
+            ExecTestBase.class
         );
         String modulePath = mp.getL();
         return modulePath;

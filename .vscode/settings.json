@@ -1,14 +1,8 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    // "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true",
-    // "java.configuration.updateBuildConfiguration": "automatic",
-
-    // "java.test.defaultConfig": "Gradle",
 
     "java.test.config":  {
         "vmArgs": [
-            "--add-reads", "cascara.common=org.junit.jupiter.api",
-            // "--add-reads", "integration.test=org.junit.jupiter.api",
             "--add-reads", "cascara.common=org.junit.jupiter.api",
             "--add-opens", "java.base/java.lang=cascara.common",
             "--add-opens", "java.base/java.lang=cascara.test.common.junit",
@@ -33,7 +27,7 @@
         "io.github.qishr.cascara.common.annotation.Nullable",
     ],
     "java.compile.nullAnalysis.nonnull": [
-        "io.github.qishr.cascara.common.annotation.Nonnull",
+        "io.github.qishr.cascara.common.annotation.NonNull",
     ],
     // TODO: NonNullByDefault
 

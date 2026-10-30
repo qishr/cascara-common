@@ -33,6 +33,7 @@ tasks.named('compileTestJava', JavaCompile) {
 test {
     useJUnitPlatform()
     jvmArgs = [
+        "--add-reads", "cascara.common=org.mockito",
         '--module-path', "$buildDir/modulepath",
         '--add-modules', 'ALL-MODULE-PATH'
     ]

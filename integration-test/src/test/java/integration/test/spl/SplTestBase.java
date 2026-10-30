@@ -35,17 +35,11 @@
 package integration.test.spl;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import integration.test.util.SourceCode;
-import io.github.qishr.cascara.common.util.Cascara;
-import io.github.qishr.cascara.common.util.Pair;
-import io.github.qishr.cascara.test.common.junit.util.ArtifactResolver;
-import io.github.qishr.cascara.test.common.junit.util.TestModulePackager;
 import io.github.qishr.cascara.test.common.junit.util.VfsTestBase;
 
 public class SplTestBase extends VfsTestBase implements SourceCode {
@@ -59,54 +53,4 @@ public class SplTestBase extends VfsTestBase implements SourceCode {
     protected void tearDown() throws IOException {
         super.tearDown();
     }
-
-    // protected String getModulePath() {
-    //     Pair<String,String> mp = ArtifactResolver.buildModulePath(
-    //         List.of("cascara-common", "integration-test-fixtures", "cascara-lang-json"),
-    //         "integration-test"
-    //     );
-    //     String modulePath = mp.getL();
-    //     return modulePath;
-    // }
-
-    // protected Path createModuleA() throws IOException {
-    //     Path providerAJar = Cascara.getModulePath().resolve("provider-a.jar");
-
-    //     // Synthetic Module A with explicit module-info
-    //     TestModulePackager.packageModuleJar(
-    //         providerAJar,
-    //         "0.10.0",
-    //         sourceCodeA(),
-    //         List.of("cascara-common", "integration-test-fixtures"),
-    //         "integration-test"
-    //     );
-    //     return providerAJar;
-    // }
-
-    // protected Path createModuleB() throws IOException {
-    //     Path providerBJar = Cascara.getModulePath().resolve("provider-b.jar");
-    //     // Synthetic Module B with explicit module-info
-    //     TestModulePackager.packageModuleJar(
-    //         providerBJar,
-    //         "0.10.0",
-    //         sourceCodeB(),
-    //         List.of("cascara-common", "integration-test-fixtures"),
-    //         "integration-test"
-    //     );
-    //     return providerBJar;
-    // }
-
-    // protected Path createSingletonModule() throws IOException {
-    //     Path jar = Cascara.getModulePath().resolve("singleton.jar");
-
-    //     TestModulePackager.packageModuleJar(
-    //         jar,
-    //         "0.10.0",
-    //         sourceCodeS(),
-    //         List.of("cascara-common", "integration-test-fixtures"),
-    //         "integration-test"
-    //     );
-
-    //     return jar;
-    // }
 }

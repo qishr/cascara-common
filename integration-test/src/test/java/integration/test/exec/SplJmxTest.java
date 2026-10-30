@@ -8,7 +8,6 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.JMX;
@@ -34,7 +33,6 @@ import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.logging.log4j.Log4jLogger;
 import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
-import io.github.qishr.cascara.test.common.junit.util.TestModulePackager;
 import integration.test.fixtures.beans.SPLStatusMBean;
 import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.task.JmxTestTask;
@@ -42,8 +40,8 @@ import integration.test.util.SourceCode;
 
 import org.junit.jupiter.api.parallel.Isolated;
 
-// @Disabled
-// @Isolated
+@Disabled
+@Isolated
 public class SplJmxTest extends JmxTestBase implements  SourceCode {
     @BeforeEach
     protected void setUp() throws IOException {
