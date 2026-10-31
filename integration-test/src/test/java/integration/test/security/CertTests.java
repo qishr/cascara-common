@@ -17,6 +17,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import integration.test.jar.JarManifestVerifier;
+import integration.test.jar.JarSigningTests;
 import integration.test.util.SourceCode;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
@@ -38,8 +40,8 @@ import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.common.util.ZipFile;
+import io.github.qishr.cascara.test.common.junit.base.TestBase;
 import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
-import io.github.qishr.cascara.test.common.junit.util.TestBase;
 import io.github.qishr.cascara.test.common.junit.util.TestJarSigner;
 
 public class CertTests extends TestBase implements SourceCode {
@@ -316,7 +318,6 @@ public class CertTests extends TestBase implements SourceCode {
     void test_invalid_expiredCertificate() throws Exception {
         // 1. Generate an expired self-signed certificate (validity ended yesterday)
         TestJarSigner jarSigner = new TestJarSigner();
-        // KeyPair keyPair = jarSigner.getKeyPair();
 
         X509Certificate expiredCert = jarSigner.generateExpiredSelfSignedCert("CN=Expired Signer, O=cascara");
 

@@ -59,7 +59,7 @@ import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
 import integration.test.fixtures.DemoSingleton;
 import integration.test.fixtures.TestService;
-import integration.test.security.JarSigningTests;
+import integration.test.jar.JarSigningTests;
 
 class ModuleRegistrationTests extends SplTestBase {
 

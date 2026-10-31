@@ -151,10 +151,6 @@ public class JarFile extends ZipFile {
         manifest = JarManifest.parse(jarManifest);
     }
 
-    public Path getPath() {
-        return archivePath;
-    }
-
     public JarManifest getManifest() {
         return manifest;
     }
@@ -164,7 +160,7 @@ public class JarFile extends ZipFile {
     }
 
     public List<JarEntry> getJarEntries() {
-        return listFiles().stream().map(f -> new JarEntry(f, getVerifier())).toList();
+        return getEntries().stream().map(f -> new JarEntry(f, getVerifier())).toList();
     }
 
     public InputStream getInputStream(JarEntry entry) throws LocalizableIOException {
@@ -189,7 +185,7 @@ public class JarFile extends ZipFile {
     // public List<List<String>> getServices() {
     //     try {
     //         List<List<String>> services = new ArrayList<>();
-    //         List<FileInfo> serviceFiles = listFiles("META-INF/services");
+    //         List<FileInfo> serviceFiles = getEntries("META-INF/services");
     //         for (FileInfo serviceFile : serviceFiles) {
     //             System.out.println("services: " + serviceFile.getPath());
     //             String serviceFileContent = new String(extractFile(serviceFile.getPath()));
@@ -284,7 +280,7 @@ public class JarFile extends ZipFile {
 
     // TODO:
     // - static Runtime.Version runtimeVersion()
-    // - streaming API
+    // - streaming API (in ZipFile?)
 
     //
     // Private Methods
@@ -303,7 +299,7 @@ public class JarFile extends ZipFile {
     @Nullable
     private String getPomPropertiesPath() {
         final String mavenDirectory = "META-INF/maven/";
-        List<ZipEntry> files = listFiles(mavenDirectory);
+        List<ZipEntry> files = getEntries(mavenDirectory);
         for (ZipEntry info : files) {
             if (info.getName().endsWith("pom.properties")) {
                 return info.getName();
@@ -337,11 +333,12 @@ public class JarFile extends ZipFile {
         }
     }
 
+    @SuppressWarnings("null")
     @NonNull
     private String getClassRoot() {
-        List<ZipEntry> versions = listFiles(META_INF_VERSIONS);
+        List<ZipEntry> versions = getEntries(META_INF_VERSIONS);
         for (ZipEntry entry : versions) {
-            String versionEntryName = entry.getName();
+            String versionEntryName = entry.getName() ;
             int slash = versionEntryName.indexOf("/", META_INF_VERSIONS.length() + 1);
             if (slash > -1) {
                 return versionEntryName.substring(0, slash + 1);
@@ -352,7 +349,7 @@ public class JarFile extends ZipFile {
 
     private void discoverClasses() {
         String classRoot = getClassRoot();
-        List<ZipEntry> allFiles = listFiles(classRoot);
+        List<ZipEntry> allFiles = getEntries(classRoot);
         classNames = new HashSet<>();
         for (ZipEntry entry : allFiles) {
             // String entryName = entry.getName();
@@ -378,7 +375,7 @@ public class JarFile extends ZipFile {
 
     private void discoverPackages() {
         packageNames = new HashSet<>();
-        List<ZipEntry> files = listFiles("");
+        List<ZipEntry> files = getEntries("");
         for (ZipEntry info : files) {
             String packageName = JarFile.getPackageName(info);
             if (packageName != null && !packageNames.contains(packageName)) {
@@ -445,7 +442,7 @@ public class JarFile extends ZipFile {
     }
 
     private Map<String,String> getKeyFiles() {
-        List<ZipEntry> metaInf = super.listFiles(META_INF);
+        List<ZipEntry> metaInf = super.getEntries(META_INF);
 
         // 1. Find SF files
         List<String> names = new ArrayList<>();
@@ -512,8 +509,8 @@ public class JarFile extends ZipFile {
 
     public class JarEntry extends java.util.jar.JarEntry {
         private Attributes attr;
-        private Certificate[] certs;
-        private CodeSigner[] signers;
+        // private Certificate[] certs;
+        // private CodeSigner[] signers;
         private String basename;
         private volatile JarVerifier jv;
 
@@ -529,8 +526,9 @@ public class JarFile extends ZipFile {
         JarEntry(JarEntry je) {
             this((ZipEntry)je);
             this.attr = je.attr;
-            this.certs = je.certs;
-            this.signers = je.signers;
+            // this.certs = je.certs;
+            // this.signers = je.signers;
+            this.basename = je.basename;
         }
 
         // Used by realEntry()
@@ -580,11 +578,11 @@ public class JarFile extends ZipFile {
         }
 
         @Override
-        @NonNull
         public String getName() {
             return basename;
         }
 
+        @NonNull
         JarEntry realEntry() {
             // TODO: How does this work with signing?
             if (isMultiRelease() && versionFeature != BASE_VERSION_FEATURE) {
@@ -596,6 +594,7 @@ public class JarFile extends ZipFile {
             return this;
         }
 
+        @NonNull
         JarEntry setBasename(String name) {
             basename = name;
             return this;

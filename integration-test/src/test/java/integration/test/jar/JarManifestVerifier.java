@@ -1,4 +1,4 @@
-package integration.test.security;
+package integration.test.jar;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

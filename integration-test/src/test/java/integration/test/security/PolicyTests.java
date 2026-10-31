@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import integration.test.jar.JarSigningTests;
 import integration.test.util.SourceCode;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
@@ -17,8 +18,8 @@ import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 import io.github.qishr.cascara.common.service.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
+import io.github.qishr.cascara.test.common.junit.base.TestBase;
 import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
-import io.github.qishr.cascara.test.common.junit.util.TestBase;
 import io.github.qishr.cascara.test.common.junit.util.TestCertificateAuthority;
 
 public class PolicyTests extends TestBase implements SourceCode {

@@ -1,4 +1,4 @@
-package integration.test.security;
+package integration.test.jar;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,7 +22,7 @@ public class JarSigningTests extends SplTestBase {
 
     @Test
     void testSignSyntheticJar() throws Exception {
-        SyntheticJar testJar = SyntheticJar.forUseIn(JarSigningTests.class)
+        SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
             .setPath(getTempDir().resolve("provider.jar"))
             .addSources(sourceCodeA())
             // XXX test with incorrect deps
@@ -46,7 +46,7 @@ public class JarSigningTests extends SplTestBase {
 
     @Test
     void testLoadSignedJar() throws Exception {
-        SyntheticJar testJar = SyntheticJar.forUseIn(JarSigningTests.class)
+        SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
             .setPath(getTempDir().resolve("provider.jar"))
             .addSources(sourceCodeA())
             .addDependencies("cascara-common", "integration-test-fixtures")

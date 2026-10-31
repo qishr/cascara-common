@@ -45,22 +45,27 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 
-public class ZipFile implements ArchiveFile, AutoCloseable {
+public class ZipFile implements ArchiveFile<ZipEntry> {
     protected Path archivePath = null;
     private boolean create;
 
@@ -93,6 +98,10 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
         }
         this.archivePath = archivePath;
         this.create = create;
+    }
+
+    public Path getPath() {
+        return archivePath;
     }
 
     // public void flush() {
@@ -138,21 +147,49 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
     }
 
     @Override
-    public List<ZipEntry> listFiles() {
+    public List<ZipEntry> getEntries() {
         try {
-            return listFiles(archivePath, null);
+            return listEntries(archivePath, null, true);
         } catch (LocalizableIOException e) {
             return List.of();
         }
     }
 
     @Override
-    public List<ZipEntry> listFiles(String entryName) {
+    public List<ZipEntry> getEntries(String entryName) {
+        return getEntries(entryName, true);
+    }
+
+    @Override
+    public List<ZipEntry> getEntries(String entryName, boolean subDirContents) {
         try {
-            return listFiles(archivePath, entryName);
+            return listEntries(archivePath, entryName, subDirContents);
         } catch (LocalizableIOException e) {
             return List.of();
         }
+    }
+
+    @Override
+    public Stream<ZipEntry> stream() {
+        // TODO Implement this
+        throw new UnimplementedMethodException();
+    }
+
+    @Override
+    public int size() {
+        int count = 0;
+        try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(archivePath))) {
+            while (zipInputStream.getNextEntry() != null) {
+                count++;
+            }
+        } catch (IOException e) {}
+        return count;
+    }
+
+    @Override
+    public String getComment() {
+        // TODO Implement this
+        throw new UnimplementedMethodException();
     }
 
     @Override
@@ -184,7 +221,12 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
     }
 
     @Override
-    public ZipFile addFile(String content, String entryName) throws LocalizableIOException {
+    public ZipFile addFile(String content, String entryName) throws IOException {
+        return addFile(content.getBytes(), entryName);
+    }
+
+    @Override
+    public ZipFile addFile(byte[] content, String entryName) throws IOException {
         // System.out.println("addFile: " + content + "\nentryName=" + entryName);
         try (FileSystem fileSystem = getFileSystem()) {
             addFileInternal(content, fileSystem.getPath(entryName));
@@ -195,11 +237,11 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
     }
 
     @Override
-    public ZipFile remove(String entryName) {
+    public ZipFile remove(String entryName) throws IOException {
         try (FileSystem fileSystem = getFileSystem()) {
             removeInternal(fileSystem.getPath(entryName));
         } catch (IOException e) {
-            // throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
+            throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
         return this;
     }
@@ -253,13 +295,11 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
             }
         } catch (IOException e) {
             throw new LocalizableIOException(e, FileMessage.READ_ERROR, entryName);
-            // e.printStackTrace();
-            // return new byte[0];
         }
         return new byte[0];
     }
 
-    protected static List<ZipEntry> listFiles(Path archivePath, String entryName) throws LocalizableIOException {
+    protected static List<ZipEntry> listEntries(Path archivePath, String entryName, boolean subDirContents) throws LocalizableIOException {
         if (entryName != null && !entryName.isEmpty() && !entryName.endsWith("/")) {
             entryName = entryName + "/";
         }
@@ -267,22 +307,29 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
         try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(archivePath))) {
             ZipEntry zipEntry;
             while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-
-
-
-                if (entryName == null) {
-                    // ZipEntry entry = new ZipEntry(zipEntry.getName());
-                    // entryList.add(entry);
+                if (entryName == null || entryName.isEmpty()) {
                     entryList.add(zipEntry);
-                } else
-                if (zipEntry.getName().startsWith(entryName) && !zipEntry.getName().equals(entryName)) {
-                    // ZipEntry entry = new ZipEntry(zipEntry.getName().substring(entryName.length()));
-                    // entryList.add(entry);
-                    entryList.add(zipEntry);
+                } else {
+                    String zipEntryName = zipEntry.getName();
+                    if (zipEntryName.startsWith(entryName)) {
+
+                        if (zipEntryName.equals(entryName)) {
+                            // Skip the entry for the specified directory itself
+                            continue;
+                        }
+
+                        if (!subDirContents) {
+                            // Skip if this entry in a subdirectory of specified directory
+                            String relativeName = zipEntryName.substring(entryName.length());
+                            int slash = relativeName.indexOf('/');
+                            if (slash > -1 && slash < relativeName.length() - 1) {
+                                continue;
+                            }
+                        }
+
+                        entryList.add(zipEntry);
+                    }
                 }
-
-
-
             }
         } catch (FileNotFoundException e) {
             throw new LocalizableIOException(e, FileMessage.FILE_NOT_FOUND, archivePath);
@@ -345,11 +392,10 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
         }
     }
 
-    private void addFileInternal(String content, Path entryPath) throws LocalizableIOException {
-        byte[] buf = content.getBytes();
+    private void addFileInternal(byte[] content, Path entryPath) throws LocalizableIOException {
         ensureParentExists(entryPath);
         try (OutputStream os = Files.newOutputStream(entryPath, StandardOpenOption.CREATE)) {
-            os.write(buf, 0, buf.length);
+            os.write(content, 0, content.length);
         } catch (IOException e) {
             throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
@@ -357,7 +403,23 @@ public class ZipFile implements ArchiveFile, AutoCloseable {
 
     private void removeInternal(Path entryPath) throws LocalizableIOException {
         try {
-            Files.delete(entryPath);
+            if (Files.isDirectory(entryPath)) {
+                Files.walkFileTree(entryPath, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Files.delete(file);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        Files.delete(dir);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            } else {
+                Files.delete(entryPath);
+            }
         } catch (IOException e) {
             throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }

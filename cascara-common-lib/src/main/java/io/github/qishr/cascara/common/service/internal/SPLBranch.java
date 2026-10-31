@@ -568,7 +568,7 @@ public class SPLBranch implements SPL {
 
     private void verifySignature(JarFile jar) {
         // TODO: Policcy
-        List<ZipEntry> entries = jar.listFiles();
+        List<ZipEntry> entries = jar.getEntries();
         for (ZipEntry entry : entries) {
             try (InputStream in = jar.getInputStream(entry)) {
                 in.transferTo(OutputStream.nullOutputStream());

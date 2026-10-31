@@ -263,61 +263,8 @@ public class ReflectionUtils {
         return Object.class;
     }
 
-    //
-    // The original
-    //
-
-    /// Unboxes a single-type parameter wrapper (such as Enum<T>) to expose
-    /// the underlying type argument, or passes the type through as-is if unparameterized.
-    public static Type getEnumType(Type jvmType) {
-        Type enumType;
-        if (jvmType instanceof ParameterizedType paramaterizedType) {
-        // "unbox" the enum type
-        Type[] paramTypes = paramaterizedType.getActualTypeArguments();
-        if (paramTypes != null && paramTypes.length == 1) {
-            enumType = paramTypes[0];
-            } else {
-                throw new IllegalStateException("not an enum");
-            }
-        } else {
-            enumType = jvmType;
-        }
-        return enumType;
-    }
-
-    //
-    // Updated to check enumType is an enumm (which breaks things)
-    //
-
-    // @NonNull
-    // public static Type getEnumType(Type enumType) {
-    //     Type actualEnumType;
-    //     if (enumType instanceof ParameterizedType paramaterizedType) {
-    //         Type rawType = paramaterizedType.getRawType();
-    //         if ((Class<?>) rawType != Enum.class) {
-    //             throw new IllegalArgumentException("not an enum");
-    //         }
-    //         // "unbox" the enum type
-    //         Type[] paramTypes = paramaterizedType.getActualTypeArguments();
-    //         // It's entirely not possible to be an enum and paramTypes
-    //         // not to contain exactly one param type.
-    //         actualEnumType = paramTypes[0];
-    //     } else {
-    //         if (!(enumType instanceof Class<?> rawClass)) {
-    //             throw new IllegalArgumentException("not an enum");
-    //         }
-    //         if (!rawClass.isEnum()) {
-    //             throw new IllegalArgumentException("not an enum");
-    //         }
-    //         actualEnumType = enumType;
-    //     }
-    //     return actualEnumType;
-    // }
-
-    //
-    //
-    //
-
+    @SuppressWarnings("null")
+    @NonNull
     public static Type getTypeArgumentTypeOfGenericType(Type jvmType, int paramIndex) {
         if (jvmType instanceof ParameterizedType parameterizedType) {
             Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
@@ -335,6 +282,24 @@ public class ReflectionUtils {
             return rawClass.componentType();
         }
         return null;
+    }
+
+    /// Unboxes a single-type parameter wrapper (such as Enum<T>) to expose
+    /// the underlying type argument, or passes the type through as-is if unparameterized.
+    public static Type getEnumType(Type jvmType) {
+        Type enumType;
+        if (jvmType instanceof ParameterizedType paramaterizedType) {
+        // "unbox" the enum type
+        Type[] paramTypes = paramaterizedType.getActualTypeArguments();
+        if (paramTypes != null && paramTypes.length == 1) {
+            enumType = paramTypes[0];
+            } else {
+                throw new IllegalStateException("not an enum");
+            }
+        } else {
+            enumType = jvmType;
+        }
+        return enumType;
     }
 
     public static String getEffectiveName(Field field) {

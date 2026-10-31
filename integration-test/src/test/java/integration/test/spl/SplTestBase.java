@@ -40,7 +40,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import integration.test.util.SourceCode;
-import io.github.qishr.cascara.test.common.junit.util.VfsTestBase;
+import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
 
 public class SplTestBase extends VfsTestBase implements SourceCode {
     @BeforeEach
