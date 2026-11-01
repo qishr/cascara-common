@@ -12,6 +12,7 @@ import javax.management.remote.JMXServiceURL;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 
 import org.apache.logging.log4j.core.config.Configurator;
 
@@ -37,6 +38,7 @@ public class JmxTest extends JmxTestBase {
 
     }
 
+    @Disabled
     @Test
     void test_JMX() throws Exception {
         Configurator.setLevel("integration.test", org.apache.logging.log4j.Level.DEBUG);

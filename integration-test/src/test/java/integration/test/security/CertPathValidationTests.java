@@ -10,6 +10,8 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.TrustStore;
 import io.github.qishr.cascara.common.security.cert.CertPathValidationResult;
 import io.github.qishr.cascara.common.security.cert.CertPathVerifier;
@@ -17,6 +19,7 @@ import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
 class CertPathValidationTests {
+    private static final Reporter REPORTER = Reporter.forClass(CertPathValidationTests.class);
 
     private static TestCertificateAuthority rootCA;
     private static TestCertificateAuthority intermediateCA;
@@ -41,6 +44,9 @@ class CertPathValidationTests {
         TrustStore trustStore = new TrustStore(Set.of(rootCA.certificate()));
 
         CertPathValidationResult result = CertPathVerifier.validatePath(chain, trustStore);
+        if (!result.isValid()) {
+            REPORTER.error(result.getCause().get(), GenericMessage.ERROR, result.getErrorMessage());
+        }
         assertTrue(result.isValid());
     }
 
@@ -51,6 +57,10 @@ class CertPathValidationTests {
         // Chain missing intermediate: only [leaf] provided
         List<X509Certificate> chain = List.of(leaf.certificate());
         TrustStore trustStore = new TrustStore(Set.of(rootCA.certificate()));
+
+        System.out.println("Leaf issuer: " + leaf.certificate().getIssuerX500Principal().getName());
+        System.out.println("Interm CA subject: " + intermediateCA.certificate().getSubjectX500Principal().getName());
+        System.out.println("Principals equal? " + leaf.certificate().getIssuerX500Principal().equals(intermediateCA.certificate().getSubjectX500Principal()));
 
         CertPathValidationResult result = CertPathVerifier.validatePath(chain, trustStore);
         assertFalse(result.isValid());
