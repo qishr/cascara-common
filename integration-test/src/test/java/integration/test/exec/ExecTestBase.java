@@ -12,7 +12,7 @@ import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
-import io.github.qishr.cascara.test.common.junit.util.ArtifactResolver;
+import io.github.qishr.cascara.test.common.util.ArtifactResolver;
 import integration.test.fixtures.payload.ReporterTestOutput;
 
 public class ExecTestBase extends VfsTestBase {

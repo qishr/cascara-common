@@ -10,14 +10,14 @@ import org.junit.jupiter.api.Test;
 
 import integration.test.spl.SplTestBase;
 import io.github.qishr.cascara.common.util.JarFile;
-import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
+import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 
 public class JarFileTests extends SplTestBase {
     @Test
-    void testSignSyntheticJar() throws Exception {
+    void testOpenSyntheticJar() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
             .setPath(createTempFile())
-            .addSources(sourceCodeA())
+            .addSources("code/ModuleInfoA.txt", "code/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
             .packageJar();
 

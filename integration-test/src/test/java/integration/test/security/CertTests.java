@@ -40,9 +40,9 @@ import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.common.util.ZipFile;
+import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.junit.base.TestBase;
-import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
-import io.github.qishr.cascara.test.common.junit.util.TestJarSigner;
+import io.github.qishr.cascara.test.common.security.TestJarSigner;
 
 public class CertTests extends TestBase implements SourceCode {
     private final static Reporter REPORTER = GlobalReporter.forClass(CertTests.class);

@@ -1,4 +1,4 @@
-package integration.test.security;
+package integration.test.spl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -18,9 +18,9 @@ import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 import io.github.qishr.cascara.common.service.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
+import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.junit.base.TestBase;
-import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
-import io.github.qishr.cascara.test.common.junit.util.TestCertificateAuthority;
+import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 
 public class PolicyTests extends TestBase implements SourceCode {
 

@@ -32,7 +32,7 @@ import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.logging.log4j.Log4jLogger;
-import io.github.qishr.cascara.test.common.junit.util.SyntheticJar;
+import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import integration.test.fixtures.beans.SPLStatusMBean;
 import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.task.JmxTestTask;
