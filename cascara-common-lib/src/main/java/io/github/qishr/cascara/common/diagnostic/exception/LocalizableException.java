@@ -66,4 +66,8 @@ public interface LocalizableException {
 
     StackTraceElement[] getStackTrace();
 
+    static String formatMessage(DiagnosticMessage message, Object... details) {
+        return AbstractLocalizableException.getLocalizer().format(message, details);
+    }
+
 }

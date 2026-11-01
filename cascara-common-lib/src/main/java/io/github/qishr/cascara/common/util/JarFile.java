@@ -62,7 +62,6 @@ import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOExceptio
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.security.*;
-import io.github.qishr.cascara.common.security.cms.SignatureStatus;
 import io.github.qishr.cascara.common.util.JarVerifier.VerifiedSigner;
 
 public class JarFile extends ZipFile {
