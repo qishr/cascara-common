@@ -393,12 +393,17 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
     private void assertGlobalInstance() {
         if (this != globalInstance) {
+            String msg;
             Pair<Class<?>,String> caller = ReflectionUtils.getCaller();
-            String methodName = caller.getR();
-            String msg = String.format(
-                "The method %s in GlobalReporter may only be called on the global instance.",
-                methodName
-            );
+            if (caller == null) {
+                msg = "A method in GlobalReporter was called which may only be called on the global instance.";
+            } else {
+                String methodName = caller.getR();
+                msg = String.format(
+                    "The method %s in GlobalReporter may only be called on the global instance.",
+                    methodName
+                );
+            }
             throw new UnsupportedOperationException(msg);
         }
     }

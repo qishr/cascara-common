@@ -47,6 +47,9 @@ public class UnimplementedMethodException extends LocalizableRuntimeException {
 
     private static Object[] buildMethoDetails() {
         Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
+        if (caller == null) {
+            return null;
+        }
         Object[] details = new Object[2];
         details[0] = caller.getL().getName();
         details[1] = caller.getR();

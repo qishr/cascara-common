@@ -3,7 +3,6 @@ package integration.test.jar;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.InputStream;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -18,6 +17,7 @@ public class JarFileTests extends SplTestBase {
         SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
             .setPath(createTempFile())
             .addSources("code/ModuleInfoA.txt", "code/ProviderA.txt")
+            // XXX test with incorrect deps
             .addDependencies("cascara-common", "integration-test-fixtures")
             .packageJar();
 

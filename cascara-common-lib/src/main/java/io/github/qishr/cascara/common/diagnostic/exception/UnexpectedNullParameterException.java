@@ -48,6 +48,9 @@ public class UnexpectedNullParameterException extends LocalizableRuntimeExceptio
     // TODO: Consistency with UnimplementedMethodException
     private static Object[] buildMethoDetails(String paramName) {
         Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
+        if (caller == null) {
+            return null;
+        }
         String className = caller.getL().getName();
         String methodName = caller.getR();
         Object[] details = new Object[2];

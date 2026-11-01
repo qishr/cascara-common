@@ -10,7 +10,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import integration.test.jar.JarSigningTests;
+import integration.test.jar.JarSignatureTests;
 import integration.test.util.SourceCode;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
@@ -75,7 +75,7 @@ public class PolicyTests extends TestBase implements SourceCode {
         TestCertificateAuthority foreignCA = TestCertificateAuthority.create("Foreign Root CA");
 
         // 2. Sign module with foreign identity
-        SyntheticJar foreignSignedJar = SyntheticJar.forUseIn(JarSigningTests.class)
+        SyntheticJar foreignSignedJar = SyntheticJar.forUseIn(JarSignatureTests.class)
             .setPath(getTempDir().resolve("foreign-provider.jar"))
             .addDependencies("cascara-common", "integration-test-fixtures")
             .addSources(sourceCodeA())
