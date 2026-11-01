@@ -37,6 +37,7 @@ package io.github.qishr.cascara.common.type.net;
 
 import java.net.URI;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -51,6 +52,7 @@ public class UriDescriptor extends AbstractScalarDescriptor<URI> {
         return URI.create(text);
     }
 
+    @NonNull
     @Override
     public String toPrimitive(URI jvmInstance) {
         return jvmInstance.toString();

@@ -36,6 +36,7 @@ package io.github.qishr.cascara.common.type.util;
 
 import java.util.TimeZone;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -52,6 +53,7 @@ public class TimeZoneDescriptor extends AbstractScalarDescriptor<TimeZone> {
         return TimeZone.getTimeZone(text);
     }
 
+    @NonNull
     @Override
     public String toPrimitive(TimeZone jvmInstance) {
         return jvmInstance.getID();

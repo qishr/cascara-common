@@ -6,7 +6,7 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.service.SplSignaturePolicy;
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.Classes;
 
 public class ClassJarPathTest {

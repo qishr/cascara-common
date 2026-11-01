@@ -36,6 +36,7 @@ package io.github.qishr.cascara.common.type.time;
 
 import java.time.ZoneOffset;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -51,6 +52,7 @@ public class ZoneOffsetDescriptor extends AbstractScalarDescriptor<ZoneOffset> {
         return text == null ? null : ZoneOffset.of(text);
     }
 
+    @NonNull
     @Override
     public String toPrimitive(ZoneOffset jvmInstance) {
         return jvmInstance.getId();

@@ -67,7 +67,9 @@ import io.github.qishr.cascara.common.util.Cascara;
 public class IpcServer implements AutoCloseable {
     public static final String SERIALIZATION_FORMAT = "application/json";
 
+    @NonNull
     private final Path socketPath;
+
     private final Serializer<?> serializer;
     private final ServerSocketChannel serverChannel;
     private final ConcurrentHashMap<String, List<Object>> payloadsByType = new ConcurrentHashMap<>();
@@ -112,6 +114,7 @@ public class IpcServer implements AutoCloseable {
         return socketPath;
     }
 
+    @SuppressWarnings("null")
     @NonNull
     public <T> List<T> getMessages(Class<T> type) {
         List<Object> rawList = payloadsByType.getOrDefault(type.getName(), List.of());

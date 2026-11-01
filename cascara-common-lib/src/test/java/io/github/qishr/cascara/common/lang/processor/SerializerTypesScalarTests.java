@@ -2,6 +2,7 @@ package io.github.qishr.cascara.common.lang.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.nio.CharBuffer;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
         AstNode root = serializer.toAst(types);
         JavaPrimitiveTest r = serializer.fromAst(root, JavaPrimitiveTest.class);
 
+        assertNotNull(r);
         assertEquals(types.p_long, r.p_long);
         assertEquals(types.p_int, r.p_int);
         assertEquals(types.p_float, r.p_float);
@@ -79,6 +81,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
         AstNode root = serializer.toAst(types);
         JavaReferenceTest r = serializer.fromAst(root, JavaReferenceTest.class);
 
+        assertNotNull(r);
         assertEquals(types.p_long, r.p_long);
         assertEquals(types.p_integer, r.p_integer);
         assertEquals(types.p_float, r.p_float);
@@ -117,6 +120,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
 
         JavaPrimitiveArrayTypeDescriptorTest r = serializer.fromAst(root, JavaPrimitiveArrayTypeDescriptorTest.class);
 
+        assertNotNull(r);
         assertEquals(types.p_byte[0], r.p_byte[0]);
         assertEquals(types.p_char[0], r.p_char[0]);
     }
@@ -145,6 +149,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
 
         JavaReferenceArrayTypeDescriptorTest r = serializer.fromAst(root, JavaReferenceArrayTypeDescriptorTest.class);
 
+        assertNotNull(r);
         assertEquals(types.p_byte[0], r.p_byte[0]);
         assertEquals(types.p_character[0], r.p_character[0]);
     }

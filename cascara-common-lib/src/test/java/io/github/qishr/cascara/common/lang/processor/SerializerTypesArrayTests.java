@@ -1,6 +1,7 @@
 package io.github.qishr.cascara.common.lang.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.nio.CharBuffer;
 
@@ -30,6 +31,7 @@ public class SerializerTypesArrayTests extends SerializerTestBase {
         AstNode root = serializer.toAst(types);
         JavaPrimitiveTest r = serializer.fromAst(root, JavaPrimitiveTest.class);
 
+        assertNotNull(r);
         assertEquals(types.p_long[0], r.p_long[0]);
         assertEquals(types.p_int[0], r.p_int[0]);
         assertEquals(types.p_float[0], r.p_float[0]);
@@ -67,6 +69,7 @@ public class SerializerTypesArrayTests extends SerializerTestBase {
         AstNode root = serializer.toAst(types);
         JavaReferenceTest r = serializer.fromAst(root, JavaReferenceTest.class);
 
+        assertNotNull(r);
         assertEquals(types.p_long[0], r.p_long[0]);
         assertEquals(types.p_integer[0], r.p_integer[0]);
         assertEquals(types.p_float[0], r.p_float[0]);

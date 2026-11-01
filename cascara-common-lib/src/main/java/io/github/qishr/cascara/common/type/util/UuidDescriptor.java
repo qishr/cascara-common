@@ -36,6 +36,7 @@ package io.github.qishr.cascara.common.type.util;
 
 import java.util.UUID;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -50,6 +51,7 @@ public class UuidDescriptor extends AbstractScalarDescriptor<UUID> {
         return UUID.fromString(text);
     }
 
+    @NonNull
     @Override
     public String toPrimitive(UUID jvmInstance) {
         return jvmInstance.toString();

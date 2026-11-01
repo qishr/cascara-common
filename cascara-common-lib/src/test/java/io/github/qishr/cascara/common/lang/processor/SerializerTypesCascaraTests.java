@@ -2,6 +2,7 @@ package io.github.qishr.cascara.common.lang.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +34,7 @@ public class SerializerTypesCascaraTests extends SerializerTestBase {
         DiagnosticMessage original = LangMessage.AMBIGUOUS_POLYMORPHIC;
         AstNode ast = serializer.toAst(original);
         DiagnosticMessage deserialized = serializer.fromAst(ast, DiagnosticMessage.class);
+        assertNotNull(deserialized);
         assertEquals("LANG-316", deserialized.getCode());
     }
 
@@ -50,6 +52,7 @@ public class SerializerTypesCascaraTests extends SerializerTestBase {
         GenericMessage original = GenericMessage.UNIMPLEMENTED_METHOD;
         AstNode ast = serializer.toAst(original);
         GenericMessage deserialized = serializer.fromAst(ast, GenericMessage.class);
+        assertNotNull(deserialized);
         assertEquals("ERROR-102", deserialized.getCode());
     }
 
@@ -77,6 +80,7 @@ public class SerializerTypesCascaraTests extends SerializerTestBase {
         AstNode ast = serializer.toAst(original);
         Diagnostic deserialized = serializer.fromAst(ast, Diagnostic.class);
 
+        assertNotNull(deserialized);
         assertEquals(Level.WARN, deserialized.getLevel());
         assertEquals("testWarning", deserialized.getFormattedMessage());
         assertEquals("WARN-101", deserialized.getMessage().getCode());

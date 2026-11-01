@@ -1,0 +1,70 @@
+package integration.test.jar;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.nio.file.Path;
+import java.security.cert.X509CRL;
+import java.util.Set;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import io.github.qishr.cascara.common.security.SignatureStatus;
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
+import io.github.qishr.cascara.common.security.TrustStore;
+import io.github.qishr.cascara.common.util.JarFile;
+import io.github.qishr.cascara.test.common.jar.SyntheticJar;
+import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
+import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
+
+class CrlRevocationTests {
+
+    private static TestCertificateAuthority ca;
+    private static TestSigningIdentity activeSigner;
+    private static TestSigningIdentity revokedSigner;
+    private static X509CRL crl;
+
+    @BeforeAll
+    static void setUp() throws Exception {
+        ca = TestCertificateAuthority.create("Revocation CA");
+        activeSigner = ca.issueIdentity("active-module");
+        revokedSigner = ca.issueIdentity("revoked-module");
+
+        // Generate a CRL revoking revokedSigner's serial number
+        crl = ca.generateCrl(Set.of(revokedSigner.certificate().getSerialNumber()));
+    }
+
+    @Test
+    void test_activeCert_notRevokedInCrl() {
+        assertFalse(crl.isRevoked(activeSigner.certificate()));
+    }
+
+    @Test
+    void test_revokedCert_detectedInCrl() {
+        assertTrue(crl.isRevoked(revokedSigner.certificate()));
+    }
+
+    @Test
+    void test_policyEvaluation_failsForRevokedModuleJar(@TempDir Path tempDir) throws Exception {
+        // Sign JAR with revoked identity
+        SyntheticJar jar = SyntheticJar.forUseIn(CrlRevocationTests.class)
+            .setPath(tempDir.resolve("revoked.jar"))
+            .addSources("code/ModuleInfoA.txt", "code/ProviderA.txt")
+            .signWith(revokedSigner)
+            .packageJar();
+
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+            .requireSigned(true)
+            .trustStore(new TrustStore(Set.of(ca.certificate())))
+            .addCrl(crl) // or enable CRL checking via PKIXParameters
+            .build();
+
+        try (JarFile jarFile = JarFile.open(jar.getPath())) {
+            SignatureStatus status = policy.evaluate(jarFile);
+            assertEquals(SignatureStatus.CERTIFICATE_REVOKED, status);
+        }
+    }
+}

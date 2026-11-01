@@ -2,6 +2,7 @@ package io.github.qishr.cascara.common.lang.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,7 @@ public class DeserializeParameterizedTypesTest extends SerializerTestBase {
 
         // Using a parameterized subclass of a generic base triggers the specialized parameterized code path
         Box<String> box = serializer.fromAst(ast0, new TypeReference<Box<String>>(){});
-
+        assertNotNull(box);
         assertInstanceOf(SpecializedBox1.class, box);
         assertEquals("secret", box.content);
 
@@ -66,7 +67,7 @@ public class DeserializeParameterizedTypesTest extends SerializerTestBase {
             .add(new GenericAstScalar("item"));
 
         SpecializedList<String> list = serializer.fromAst(ast, new TypeReference<SpecializedList<String>>(){});
-
+        assertNotNull(list);
         assertInstanceOf(SpecializedList.class, list);
         assertEquals("item", list.getFirst());
     }

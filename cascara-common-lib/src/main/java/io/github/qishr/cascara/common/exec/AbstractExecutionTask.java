@@ -42,6 +42,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
@@ -125,6 +126,10 @@ public abstract class AbstractExecutionTask<I, O> {
         String json = sb.toString();
 
         Serializer<?> serializer = IpcConfig.createSerializer();
+        if (serializer == null) {
+            // TODO: Better exception
+            throw new ExecutionException(GenericMessage.ERROR,"Serializer not available");
+        }
 
         I object = null;
         if (!json.isBlank()) {

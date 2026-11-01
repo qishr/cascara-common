@@ -36,6 +36,7 @@ package io.github.qishr.cascara.common.type.time;
 
 import java.time.ZoneId;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -51,6 +52,7 @@ public class ZoneIdDescriptor extends AbstractScalarDescriptor<ZoneId> {
         return text == null ? null : ZoneId.of(text);
     }
 
+    @NonNull
     @Override
     public String toPrimitive(ZoneId jvmInstance) {
         return jvmInstance.getId();

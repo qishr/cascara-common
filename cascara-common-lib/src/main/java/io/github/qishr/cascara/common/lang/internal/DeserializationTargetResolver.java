@@ -121,7 +121,7 @@ public class DeserializationTargetResolver {
     }
 
     @SuppressWarnings("unchecked")
-    @NonNull
+    @Nullable
     private <C> Class<? extends C> resolvePolymorphicTarget(MapAstNode<?,?,?> map, Class<C> baseClass, Set<Class<?>> candidates) {
         if (map == null) {
             return null;

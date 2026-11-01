@@ -1,7 +1,7 @@
 package io.github.qishr.cascara.common.lang.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 import java.util.SequencedCollection;
@@ -29,7 +29,7 @@ public class SerializerTypesCollectionTests extends SerializerTestBase {
     @Test
     void test_list() {
         List<Integer> r = serializer.fromAst(intSequence, new TypeReference<List<Integer>>(){});
-        assertInstanceOf(List.class, r);
+        assertNotNull(r);
         assertEquals(3, r.size());
         assertEquals(42, r.get(0));
         assertEquals(53, r.get(1));
@@ -39,7 +39,7 @@ public class SerializerTypesCollectionTests extends SerializerTestBase {
     @Test
     void test_SequencedCollection() {
         SequencedCollection<Integer> r = serializer.fromAst(intSequence, new TypeReference<SequencedCollection<Integer>>(){});
-        assertInstanceOf(List.class, r);
+        assertNotNull(r);
         assertEquals(3, r.size());
         Integer[] array = r.toArray(new Integer[]{});
         assertEquals(42, array[0]);

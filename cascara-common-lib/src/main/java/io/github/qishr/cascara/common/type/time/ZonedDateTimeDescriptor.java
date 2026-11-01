@@ -38,6 +38,7 @@ package io.github.qishr.cascara.common.type.time;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -52,6 +53,7 @@ public class ZonedDateTimeDescriptor extends AbstractScalarDescriptor<ZonedDateT
         return ZonedDateTime.parse(text);
     }
 
+    @NonNull
     @Override
     public String toPrimitive(ZonedDateTime jvmInstance) {
         return jvmInstance.toString();

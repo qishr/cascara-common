@@ -34,6 +34,7 @@
 
 package io.github.qishr.cascara.common.type.cascara;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
@@ -74,6 +75,7 @@ public class DiagnosticMessageDescriptor extends AbstractScalarDescriptor<Diagno
         return (DiagnosticMessage)value;
     }
 
+    @NonNull
     @Override
     public Object toPrimitive(DiagnosticMessage jvmInstance) {
         return jvmInstance.getClass().getName() + "." + jvmInstance.name();

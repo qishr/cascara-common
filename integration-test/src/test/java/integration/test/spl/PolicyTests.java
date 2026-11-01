@@ -15,7 +15,7 @@ import integration.test.util.SourceCode;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.security.SignatureStatus;
-import io.github.qishr.cascara.common.service.SplSignaturePolicy;
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;

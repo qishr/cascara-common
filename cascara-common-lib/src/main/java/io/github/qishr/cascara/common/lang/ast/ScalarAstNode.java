@@ -64,7 +64,10 @@ public interface ScalarAstNode<T extends AstNode> extends AstNode {
     /// Returns the string form or the primitive.
     /// If the primitive is `null`, an empty string is returned.
     default String asString() {
-        return getPrimitive() == null ? null : getPrimitive().toString();
+        Object p = getPrimitive();
+        return p == null
+            ? null
+            : p.toString();
     }
 
     default int asInteger() {

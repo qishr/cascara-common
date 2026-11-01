@@ -34,6 +34,7 @@
 
 package io.github.qishr.cascara.common.type.lang;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -49,6 +50,8 @@ public class RuntimeVersionDescriptor extends AbstractScalarDescriptor<Runtime.V
         return Runtime.Version.parse(text);
     }
 
+    @SuppressWarnings("null")
+    @NonNull
     @Override
     public String toPrimitive(Runtime.Version jvmInstance) {
         return jvmInstance.toString();

@@ -55,7 +55,8 @@ public class CollectingLogger implements Logger {
 
     public void flushTo(Logger delegateLogger) {
         diagnostics.stream()
-            .sorted(Comparator.comparing(Diagnostic::getTimestamp))
+            // .sorted(Comparator.comparing(Diagnostic::getTimestamp))
+            .sorted(Comparator.comparing(t -> t.getTimestamp()))
             .forEach(delegateLogger::log);
         delegateLogger.flush();
         diagnostics.clear();

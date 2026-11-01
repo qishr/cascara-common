@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 
 import io.github.qishr.cascara.common.annotation.NoAutoRegistration;
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.annotation.Priority;
 import io.github.qishr.cascara.common.annotation.SingletonInitializer;
@@ -295,7 +296,8 @@ public class SPLBranch implements SPL {
     // Neo-singletons
     //
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "null" })
+    @NonNull
     public <T> T getOrCreateSingleton(ServiceMetadata meta, Supplier<T> factory) {
         // Fast-path read (no locking)
         String singletonClassName = meta.getTypeName();

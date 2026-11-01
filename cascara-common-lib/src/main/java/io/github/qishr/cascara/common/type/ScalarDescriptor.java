@@ -41,7 +41,7 @@ import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
 public interface ScalarDescriptor<T> extends TypeDescriptor<T> {
     /// Converts the `text` into the JVM type specified by this TypeDescriptor.
-    @NonNull
+    @Nullable
     T toJvmType(String text);
 
     /// Converts the JVM type specified by this TypeDescriptor into a JSON Schema primitive type.

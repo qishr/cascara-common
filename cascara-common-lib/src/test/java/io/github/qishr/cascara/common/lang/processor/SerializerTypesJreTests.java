@@ -69,6 +69,7 @@ public class SerializerTypesJreTests extends SerializerTestBase {
         AstNode ast = serializer.toAst(original);
         StackTraceElement ste = serializer.fromAst(ast, StackTraceElement.class);
 
+        assertNotNull(ste);
         assertEquals("className1", ste.getClassName());
     }
 
@@ -119,6 +120,7 @@ public class SerializerTypesJreTests extends SerializerTestBase {
         // Run through and check what falls through or handles correctly
         JavaLangTypeDescriptorTest r = serializer.fromAst(root, JavaLangTypeDescriptorTest.class);
 
+        assertNotNull(r);
         assertEquals(types.p_character, r.p_character);
         assertEquals(types.p_charSequence.toString(), r.p_charSequence.toString());
         assertEquals(types.p_stringBuffer.toString(), r.p_stringBuffer.toString());
@@ -155,6 +157,8 @@ public class SerializerTypesJreTests extends SerializerTestBase {
         }
 
         JavaNetTypeDescriptorTest r = serializer.fromAst(root, JavaNetTypeDescriptorTest.class);
+
+        assertNotNull(r);
         assertEquals(types.p_uri, r.p_uri);
         assertEquals(types.p_url, r.p_url);
         assertEquals(types.p_inetAddress, r.p_inetAddress);
@@ -182,6 +186,8 @@ public class SerializerTypesJreTests extends SerializerTestBase {
         }
 
         JavaNioTypeDescriptorTest r = serializer.fromAst(root, JavaNioTypeDescriptorTest.class);
+
+        assertNotNull(r);
         assertEquals(types.p_path, r.p_path);
     }
 
@@ -227,6 +233,8 @@ public class SerializerTypesJreTests extends SerializerTestBase {
         }
 
         JavaTimeTypeDescriptorTest r = serializer.fromAst(root, JavaTimeTypeDescriptorTest.class);
+
+        assertNotNull(r);
         assertEquals(types.p_instant, r.p_instant);
         assertEquals(types.p_localDateTime, r.p_localDateTime);
         assertEquals(types.p_zonedDateTime, r.p_zonedDateTime);

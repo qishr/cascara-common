@@ -2,6 +2,7 @@ package io.github.qishr.cascara.common.lang.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.EnumMap;
@@ -66,7 +67,7 @@ public class SerializerEnumTests extends  SerializerTestBase {
         assertEquals("COFFEE", ((MapAstNode<?,?,?>)node).getString("p_enum"));
 
         EnumTest result = serializer.fromAst(node, EnumTest.class);
-
+        assertNotNull(result);
         assertEquals(original.p_enum, result.p_enum);
     }
 
@@ -78,6 +79,7 @@ public class SerializerEnumTests extends  SerializerTestBase {
         AstNode node = serializer.toAst(original);
         GenericEnumTest result = serializer.fromAst(node, GenericEnumTest.class);
 
+        assertNotNull(result);
         assertEquals(original.p_enum, result.p_enum);
     }
 
@@ -89,6 +91,7 @@ public class SerializerEnumTests extends  SerializerTestBase {
         AstNode node = serializer.toAst(original);
         InterfaceTypeTest result = serializer.fromAst(node, InterfaceTypeTest.class);
 
+        assertNotNull(result);
         assertEquals(original.p_set, result.p_set);
     }
 
@@ -103,6 +106,7 @@ public class SerializerEnumTests extends  SerializerTestBase {
         AstNode node = serializer.toAst(original);
         EnumTypeTest result = serializer.fromAst(node, EnumTypeTest.class);
 
+        assertNotNull(result);
         assertEquals(original.p_enumSet, result.p_enumSet);
         assertEquals(original.p_enumMap, result.p_enumMap);
         assertEquals(original.p_set, result.p_set);
@@ -133,6 +137,7 @@ public class SerializerEnumTests extends  SerializerTestBase {
         AstNode node = serializer.toAst(original);
         WildcardTypeTest result = serializer.fromAst(node, WildcardTypeTest.class);
 
+        assertNotNull(result);
         assertEquals(original.p_enumSet, result.p_enumSet);
         assertEquals(original.p_enumMap, result.p_enumMap);
     }

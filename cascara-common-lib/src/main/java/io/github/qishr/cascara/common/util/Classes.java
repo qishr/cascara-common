@@ -67,6 +67,7 @@ public class Classes {
         return set;
     }
 
+    @SuppressWarnings("null")
     @NonNull
     public static Instant getTimestamp() {
         return timestamp;
@@ -210,6 +211,7 @@ public class Classes {
             return with(annotation.getName());
         }
 
+        @SuppressWarnings("null")
         @NonNull
         public static Set<String> with(String annotation) {
             if (annoToClasses == null || timestamp.isBefore(Classes.getTimestamp())) {

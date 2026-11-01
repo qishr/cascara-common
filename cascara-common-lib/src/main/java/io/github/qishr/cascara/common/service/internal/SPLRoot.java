@@ -43,6 +43,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
@@ -89,6 +90,8 @@ public class SPLRoot extends SPLBranch {
 
     /// Retrieves the root Service Provider Layer.
     /// On the initial call, the root layer will be configured.
+    @SuppressWarnings("null")
+    @NonNull
     public static SPLRoot instance() {
         if (rootLayer == null) {
             rootLayer = new SPLRoot();

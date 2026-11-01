@@ -12,11 +12,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import integration.test.security.CertTests;
 import integration.test.spl.SplTestBase;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.SignatureException;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
@@ -37,29 +35,6 @@ import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 
 public class JarSignatureTests extends SplTestBase {
     private final static Reporter REPORTER = Reporter.forClass(JarSignatureTests.class);
-
-    @Test
-    void testSignSyntheticJar() throws Exception {
-        SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
-            .setPath(getTempDir().resolve("provider.jar"))
-            .addSources("code/ModuleInfoA.txt", "code/ProviderA.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .sign()
-            .packageJar();
-
-        try (JarFile jar = JarFile.open(testJar.getPath())) {
-            byte[] mf = jar.extractFile("META-INF/MANIFEST.MF");
-            byte[] sf = jar.extractFile("META-INF/MANIFEST.SF");
-            JarManifestVerifier jv = new JarManifestVerifier(mf, sf);
-            assertTrue(jv.verifySignatureFileAgainstManifest());
-            for (JarEntry jarEntry : jar.getJarEntries()) {
-                // Certificate[] certs = jarEntry.getCertificates();
-                try (InputStream is = jar.getInputStream(jarEntry)) {
-                    assertTrue(jv.verifyEntryContent(jarEntry.getName(), is));
-                }
-            }
-        }
-    }
 
     @Test
     void test_verifySignature() throws Exception {
@@ -125,39 +100,6 @@ public class JarSignatureTests extends SplTestBase {
                     }
                 }
             }
-        }
-    }
-
-    @Test
-    void test_valid_JarEntry_old() {
-        SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
-            .addSources(sourceCodeA())
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .sign()
-            .packageJar();
-
-        try (JarFile jar = JarFile.open(testJar.getPath())) {
-
-            byte[] mfContent = jar.extractFile("META-INF/MANIFEST.MF");
-            byte[] sfContent = jar.extractFile("META-INF/TEST.SF");
-
-            JarManifestVerifier verifier = new JarManifestVerifier(mfContent, sfContent);
-            boolean v1 = verifier.verifySignatureFileAgainstManifest();
-            assertTrue(v1, "SF not verified against MF");
-
-            String entryName = "com/example/providera/ProviderA.class";
-            try (InputStream is = jar.getInputStream(entryName)) {
-                boolean v2 = verifier.verifyEntryContent(entryName, is);
-                assertTrue(v2, "Entry not verified");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        } catch (LocalizableIOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

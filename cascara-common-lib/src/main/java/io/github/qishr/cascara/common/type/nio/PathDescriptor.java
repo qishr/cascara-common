@@ -37,6 +37,7 @@ package io.github.qishr.cascara.common.type.nio;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -51,6 +52,7 @@ public class PathDescriptor extends AbstractScalarDescriptor<Path> {
         return Path.of(text);
     }
 
+    @NonNull
     @Override
     public String toPrimitive(Path jvmInstance) {
         return jvmInstance.toString();

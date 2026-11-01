@@ -36,6 +36,7 @@ package io.github.qishr.cascara.common.type.time;
 
 import java.time.LocalTime;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -51,6 +52,7 @@ public class LocalTimeDescriptor extends AbstractScalarDescriptor<LocalTime> {
         return text == null ? null : LocalTime.parse(text);
     }
 
+    @NonNull
     @Override
     public String toPrimitive(LocalTime jvmInstance) {
         return jvmInstance.toString();

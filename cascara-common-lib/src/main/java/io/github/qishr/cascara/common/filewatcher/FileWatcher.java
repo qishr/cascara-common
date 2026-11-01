@@ -140,7 +140,7 @@ public class FileWatcher {
         running.set(false);
 
         // Cancel all keys to stop OS events immediately
-        keysToCallbacks.keySet().forEach(WatchKey::cancel);
+        keysToCallbacks.keySet().forEach(w -> w.cancel());
 
         keysToCallbacks.clear();
         keysToHandlers.clear();
@@ -202,7 +202,7 @@ public class FileWatcher {
                     // 2. Notify all Legacy/Simple Callbacks (Set-based)
                     Set<Runnable> callbacks = keysToCallbacks.get(key);
                     if (callbacks != null) {
-                        callbacks.forEach(Runnable::run);
+                        callbacks.forEach(c -> c.run());
                     }
 
                     // 3. Notify Specific File Specs

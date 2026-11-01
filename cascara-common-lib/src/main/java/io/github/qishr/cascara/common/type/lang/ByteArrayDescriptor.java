@@ -37,6 +37,7 @@ package io.github.qishr.cascara.common.type.lang;
 
 import java.util.Base64;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
@@ -60,10 +61,17 @@ public class ByteArrayDescriptor extends AbstractScalarDescriptor<byte[]> {
         }
     }
 
+    @NonNull
     @Override
     public String toPrimitive(byte[] jvmInstance) {
         if (jvmInstance == null) return "";
-        return Base64.getEncoder().encodeToString(jvmInstance);
+        try {
+            String encoded = Base64.getEncoder().encodeToString(jvmInstance);
+            if (encoded != null) {
+                return encoded;
+            }
+        } catch (Exception e) {}
+        return "";
     }
 
     @Override

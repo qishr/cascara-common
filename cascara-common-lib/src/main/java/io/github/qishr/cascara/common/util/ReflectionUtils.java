@@ -73,15 +73,17 @@ public class ReflectionUtils {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "null" })
+    @NonNull
     public static <T> T createInstanceUnsafe(Class<T> clazz) throws InstantiationException {
         return (T) UNSAFE.allocateInstance(clazz);
     }
 
+    @SuppressWarnings("null")
+    @NonNull
     public static <C> C createInstance(Class<C> targetClass) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, SecurityException {
         try {
-            C jvmInstance = targetClass.getConstructor().newInstance();
-            return jvmInstance;
+            return targetClass.getConstructor().newInstance();
         } catch (NoSuchMethodException e) {
             return createInstanceUnsafe(targetClass);
         }
@@ -316,6 +318,7 @@ public class ReflectionUtils {
         return getAllFields(clazz, null);
     }
 
+    @NonNull
     public static List<Field> getAllFields(Class<?> clazz, Function<Field,Boolean> excludeFunction) {
         List<Field> fields = new ArrayList<>();
         Class<?> currentClass = clazz;

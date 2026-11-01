@@ -52,7 +52,8 @@ public class TimeSequencedAggregatorLogger implements Logger {
         this.windowMillis = windowMillis;
         this.buffer = new PriorityBlockingQueue<>(
             100,
-            Comparator.comparing(Diagnostic::getTimestamp)
+            // Comparator.comparing(Diagnostic::getTimestamp)
+            Comparator.comparing(t -> t.getTimestamp())
         );
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
 

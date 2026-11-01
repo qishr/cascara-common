@@ -35,6 +35,7 @@
 
 package io.github.qishr.cascara.common.type.lang;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -52,6 +53,7 @@ public class CharArrayDescriptor extends AbstractScalarDescriptor<char[]> {
         return text.toCharArray();
     }
 
+    @NonNull
     @Override
     public String toPrimitive(char[] jvmInstance) {
         if (jvmInstance == null) return "";

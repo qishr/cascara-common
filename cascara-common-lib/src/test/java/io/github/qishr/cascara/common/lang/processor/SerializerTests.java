@@ -122,10 +122,9 @@ public class SerializerTests extends SerializerTestBase {
             );
 
         PackageJsonFile pjf = serializer.fromAst(map, PackageJsonFile.class);
+        assertNotNull(pjf);
 
         Map<String,List<Contribution>> contributes = pjf.contributes;
-
-        assertNotNull(pjf);
         List<Contribution> themes =  contributes.get("themes");
 
         assertNotNull(themes);
@@ -181,6 +180,7 @@ public class SerializerTests extends SerializerTestBase {
             );
 
         ObjectTestClass r = serializer.fromAst(map, ObjectTestClass.class);
+        assertNotNull(r);
         assertInstanceOf(Map.class, r.obj);
     }
 }

@@ -51,6 +51,7 @@ public class SemanticDiff {
         return sb.toString();
     }
 
+    @SuppressWarnings("null")
     private static boolean findMismatches(AstNode expectedNode, AstNode actualNode, String path, StringBuilder sb) {
         if (expectedNode == null && actualNode == null) {
             return false;

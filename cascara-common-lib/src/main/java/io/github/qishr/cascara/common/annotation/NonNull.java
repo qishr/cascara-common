@@ -36,7 +36,7 @@ package io.github.qishr.cascara.common.annotation;
 
 import java.lang.annotation.*;
 
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE})
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
 @Documented
 @Retention(RetentionPolicy.CLASS)
 public @interface NonNull {}

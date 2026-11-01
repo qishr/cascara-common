@@ -57,7 +57,11 @@ public class SPLUtils {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, serviceType);
         }
         Class<? extends ServiceProvider> clazz = metadata.getType();
-        return serviceType.cast(getInstance(clazz, metadata));
+        T result = serviceType.cast(getInstance(clazz, metadata));
+        if (result == null) {
+            throw new ServiceException(ServiceMessage.FAILED_TO_INSTANTIATE_CLASS, serviceType);
+        }
+        return result;
     }
 
     /// Returns an instance of a service provider.
@@ -116,7 +120,7 @@ public class SPLUtils {
 
     /// Instantiates a service provider
     /// @param providerClass The class of the provider to instantiate.
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "null" })
     @NonNull
     public static <T> T instantiate(Class<T> providerClass) {
         if (!ServiceProvider.class.isAssignableFrom(providerClass)) {

@@ -41,6 +41,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -58,6 +59,7 @@ public class InstantDescriptor extends AbstractScalarDescriptor<Instant> {
         return Instant.parse(text);
     }
 
+    @NonNull
     @Override
     public String toPrimitive(Instant jvmInstance) {
         return ZonedDateTime.ofInstant(jvmInstance, UTC).format(TIME_FORMAT);

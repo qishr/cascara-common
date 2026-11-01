@@ -97,6 +97,7 @@ public class ClassHierarchy {
         return map;
     }
 
+    @SuppressWarnings("null")
     @NonNull
     public static List<String> getSubclasses(String className) {
         Set<String> classes = ensureHierarchy().get(className);
@@ -109,6 +110,7 @@ public class ClassHierarchy {
         return Collections.unmodifiableMap(ensureHierarchy());
     }
 
+    @SuppressWarnings("null")
     @NonNull
     public static Instant getTimestamp() {
         return timestamp;

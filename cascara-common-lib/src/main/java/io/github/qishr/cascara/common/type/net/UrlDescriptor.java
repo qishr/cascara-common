@@ -37,6 +37,7 @@ package io.github.qishr.cascara.common.type.net;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -58,6 +59,7 @@ public class UrlDescriptor extends AbstractScalarDescriptor<URL> {
         }
     }
 
+    @NonNull
     @Override
     public String toPrimitive(URL jvmInstance) {
         return jvmInstance.toString();

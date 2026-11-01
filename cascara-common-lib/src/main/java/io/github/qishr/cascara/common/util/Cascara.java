@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.property.Properties;
@@ -103,6 +104,8 @@ public class Cascara {
         return instance().homeEnvVar;
     }
 
+    @SuppressWarnings("null")
+    @NonNull
     public static Path getHomePath() {
         return instance().homePath;
     }
@@ -126,10 +129,14 @@ public class Cascara {
     /// The path of the properties file containing definitions of default or preferred service providers
     /// If this file is empty, or if a service is not listed in it, when a provider is requested the
     /// first  matching provider will be returned by SPL.
+    @SuppressWarnings("null")
+    @NonNull
     public static Path getSplPropertiesPath() {
         return getActiveVersionPath().resolve(SPL_PREFS);
     }
 
+    @SuppressWarnings("null")
+    @NonNull
     public static Path getModulePath() {
         return getActiveVersionPath().resolve(MODULEPATH);
     }
@@ -152,7 +159,9 @@ public class Cascara {
 
         return versions;
     }
-    @Nullable
+
+    @SuppressWarnings("null")
+    @NonNull
     public static Path getActiveVersionPath() {
         String version = getActiveVersionString();
         if (version == null) {

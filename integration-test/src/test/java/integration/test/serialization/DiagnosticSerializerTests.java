@@ -56,6 +56,7 @@ public class DiagnosticSerializerTests extends SerializerTestBase {
         REPORTER.debug(json);
 
         StackTraceElement ste = serializer.fromString(json, StackTraceElement.class);
+        assertNotNull(ste);
         assertEquals("className1", ste.getClassName());
     }
 
@@ -82,7 +83,7 @@ public class DiagnosticSerializerTests extends SerializerTestBase {
         REPORTER.debug(json);
 
         Diagnostic diagnostic = serializer.fromString(json, Diagnostic.class);
-
+        assertNotNull(diagnostic);
         assertEquals(Level.WARN, diagnostic.getLevel());
         assertEquals("testWarning", diagnostic.getFormattedMessage());
         assertEquals("WARN-101", diagnostic.getMessage().getCode());

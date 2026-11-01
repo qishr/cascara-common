@@ -59,7 +59,6 @@ import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import integration.test.fixtures.DemoSingleton;
 import integration.test.fixtures.TestService;
-import integration.test.jar.JarSignatureTests;
 
 class ModuleRegistrationTests extends SplTestBase {
 

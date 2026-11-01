@@ -114,6 +114,9 @@ public final class IpcClient implements AutoCloseable {
 
         String className = message.getClass().getName();
         String json = serializer.toString(message);
+        if (json == null) {
+            return;
+        }
         String payloadJson = json.replace('\n', ' ');
 
         try {

@@ -37,6 +37,7 @@ package io.github.qishr.cascara.common.type.net;
 import java.net.HttpCookie;
 import java.util.List;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -57,9 +58,13 @@ public class HttpCookieDescriptor extends AbstractScalarDescriptor<HttpCookie> {
         return cookies.get(0);
     }
 
+    @NonNull
     @Override
     public String toPrimitive(HttpCookie jvmInstance) {
-        return jvmInstance.toString();
+        String result = jvmInstance.toString();
+        return result == null
+            ? ""
+            : result;
     }
 
     @Override

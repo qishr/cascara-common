@@ -2,6 +2,7 @@ package io.github.qishr.cascara.common.lang.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class SerializerTypesMapTests extends SerializerTestBase {
                 ));
 
         Map<String,List<Integer>> r = serializer.fromAst(map, new TypeReference<Map<String,List<Integer>>>(){});
-        assertInstanceOf(Map.class, r);
+        assertNotNull(r);
         List<Integer> list = r.get("k");
         assertInstanceOf(List.class, list);
     }
@@ -48,7 +49,7 @@ public class SerializerTypesMapTests extends SerializerTestBase {
             );
 
         Map<String,List<Map<String,String>>> r = serializer.fromAst(map, new TypeReference<Map<String,List<Map<String,String>>>>(){});
-        assertInstanceOf(Map.class, r);
+        assertNotNull(r);
         List<Map<String,String>> list = r.get("k");
         assertInstanceOf(List.class, list);
         Map<String,String> innerMap = list.getFirst();
@@ -70,7 +71,7 @@ public class SerializerTypesMapTests extends SerializerTestBase {
             );
 
         Map<String,List<TestObject>> r = serializer.fromAst(map, new TypeReference<Map<String,List<TestObject>>>(){});
-        assertInstanceOf(Map.class, r);
+        assertNotNull(r);
         List<TestObject> list = r.get("k");
         assertInstanceOf(List.class, list);
         TestObject innerMap = list.getFirst();

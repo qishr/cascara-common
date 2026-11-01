@@ -131,6 +131,7 @@ public abstract class AbstractSerializer<
         this.options = options;
     }
 
+    @NonNull
     protected abstract T self();
 
     protected abstract K serializeKey(Object key);
@@ -149,6 +150,7 @@ public abstract class AbstractSerializer<
         return self();
     }
 
+    @SuppressWarnings("null")
     @NonNull
     private Context getContext() {
         if (context == null) {
@@ -350,6 +352,7 @@ public abstract class AbstractSerializer<
         return sequence;
     }
 
+    @NonNull
     private N serializeEnum(Enum<?> enumValue, Type jvmType) {
         if (jvmType != null) {
             Type enumType = ReflectionUtils.getEnumType(jvmType);
@@ -621,6 +624,7 @@ public abstract class AbstractSerializer<
         return jvmInstance;
     }
 
+    @SuppressWarnings("null")
     @NonNull
     private Object deserializeArray(AstNode node, Type targetType, String fieldName, Annotation[] annotations) {
         if (node == null) {

@@ -7,7 +7,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.annotation.SchemaDefinition;
-import io.github.qishr.cascara.common.service.SplSignaturePolicy;
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 
 public class AnnotatedClassesTest extends ClassHierarchyTestBase {
     @Test
