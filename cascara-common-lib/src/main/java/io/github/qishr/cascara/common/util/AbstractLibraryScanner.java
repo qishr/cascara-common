@@ -115,7 +115,7 @@ public abstract class AbstractLibraryScanner {
             }
             addModuleLocation(jarModuleName, path);
             return jarModuleName;
-        } catch(LocalizableIOException e) {
+        } catch(IOException e) {
             error(e);
             return null;
         }

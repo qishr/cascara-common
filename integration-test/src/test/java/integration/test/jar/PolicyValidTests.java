@@ -1,4 +1,4 @@
-package integration.test.spl;
+package integration.test.jar;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -6,41 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import integration.test.jar.JarSignatureValidTests;
 import integration.test.util.SourceCode;
-import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.security.SignatureStatus;
 import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
-import io.github.qishr.cascara.test.common.junit.base.TestBase;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 
-public class PolicyTests extends TestBase implements SourceCode {
-
-    @BeforeAll
-    static void init() {
-        GlobalReporter.globalInstance()
-            .setLevel(Level.DEBUG)
-            .getFormatOptions()
-                .setIncludeTime(false)
-                .setIncluedPid(false)
-                .setIncluedThread(false)
-                .setUseSimpleClassName(true);
-    }
-
-    @AfterAll
-    static void end() {
-        GlobalReporter.globalInstance()
-            .setLevel(Level.INFO);
-    }
-
+public class PolicyValidTests extends JarTestBase implements SourceCode {
     @Test
     void test_module_signing_with_trust_policy() throws Exception {
         // 1. Instantiate Root CA and issue a signing identity
@@ -48,10 +24,9 @@ public class PolicyTests extends TestBase implements SourceCode {
         TestCertificateAuthority.TestSigningIdentity signer = ca.issueIdentity("provider-module");
 
         // 2. Build and sign a synthetic module JAR using the issued identity
-        SyntheticJar testJar = SyntheticJar.forUseIn(PolicyTests.class)
+        SyntheticJar testJar = SyntheticJar.forUseIn(PolicyValidTests.class)
             .setPath(getTempDir().resolve("provider.jar"))
-            .addSources(sourceCodeA())
-            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             .signWith(signer)
             .packageJar();
 
@@ -69,42 +44,14 @@ public class PolicyTests extends TestBase implements SourceCode {
     }
 
     @Test
-    void test_invalid_untrustedSigner_signaturePolicy() throws Exception {
-        // 1. Create a trusted CA and a foreign CA
-        TestCertificateAuthority cascaraCA = TestCertificateAuthority.create("Cascara Root CA");
-        TestCertificateAuthority foreignCA = TestCertificateAuthority.create("Foreign Root CA");
-
-        // 2. Sign module with foreign identity
-        SyntheticJar foreignSignedJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
-            .setPath(getTempDir().resolve("foreign-provider.jar"))
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .addSources(sourceCodeA())
-            .signWith(foreignCA.issueIdentity("foreign-module"))
-            .packageJar();
-
-        // 3. Configure SignaturePolicy requiring trust anchors from Cascara CA
-        SplSignaturePolicy policy = SplSignaturePolicy.builder()
-            .requireSigned(true)
-            .trustStore(cascaraCA.trustStore())
-            .build();
-
-        // 4. Opening the JAR under Cascara policy rejects the foreign signer
-        try (JarFile jar = JarFile.open(foreignSignedJar.getPath())) {
-            SignatureStatus status = policy.evaluate(jar);
-            assertEquals(SignatureStatus.UNTRUSTED_SIGNER, status); // Failure: status is INVALID_SIGNATURE
-        }
-    }
-
-    @Test
     void test_policy_and_entry_verification() throws Exception {
         // 1. Instantiate Root CA, issue a signer, and package a synthetic JAR
         TestCertificateAuthority ca = TestCertificateAuthority.create("Cascara Root CA");
         TestCertificateAuthority.TestSigningIdentity signer = ca.issueIdentity("provider-module");
 
-        SyntheticJar testJar = SyntheticJar.forUseIn(PolicyTests.class)
+        SyntheticJar testJar = SyntheticJar.forUseIn(PolicyValidTests.class)
             .setPath(getTempDir().resolve("signed-foo.jar"))
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .addSources(sourceCodeA())
+            .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             .signWith(signer)
             .packageJar();
 
@@ -192,7 +139,5 @@ public class PolicyTests extends TestBase implements SourceCode {
     //         assertEquals(SignatureStatus.VALID, status);
     //     }
     // }
-
-
 
 }

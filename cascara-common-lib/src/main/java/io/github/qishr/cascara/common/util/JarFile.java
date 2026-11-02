@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -121,16 +122,16 @@ public class JarFile extends ZipFile {
         }
     }
 
-    public static JarFile open(Path jarPath) throws LocalizableIOException {
+    public static JarFile open(Path jarPath) throws IOException {
         return new JarFile(jarPath, false, true, BASE_VERSION);
     }
 
     @Experimental
-    public static JarFile open(Path jarPath, boolean verify) throws LocalizableIOException {
+    public static JarFile open(Path jarPath, boolean verify) throws IOException {
         return new JarFile(jarPath, false, verify, BASE_VERSION);
     }
 
-    private JarFile(Path jarPath, boolean create, boolean verify, Runtime.Version version) throws LocalizableIOException {
+    private JarFile(Path jarPath, boolean create, boolean verify, Runtime.Version version) throws IOException {
         super(jarPath, create);
 
         this.verify = verify;
@@ -163,17 +164,17 @@ public class JarFile extends ZipFile {
         return getEntries().stream().map(f -> new JarEntry(f, getVerifier())).toList();
     }
 
-    public InputStream getInputStream(JarEntry entry) throws LocalizableIOException {
+    public InputStream getInputStream(JarEntry entry) throws IOException {
         verifyEntry(entry);
         return super.getInputStream(entry);
     }
 
-    public InputStream getInputStream(String entryName) throws LocalizableIOException {
+    public InputStream getInputStream(String entryName) throws IOException {
         verifyEntry(entryName);
         return super.getInputStream(entryName);
     }
 
-    public byte[] extractFile(String entryName) throws LocalizableIOException {
+    public byte[] extractFile(String entryName) throws IOException {
         verifyEntry(entryName);
         return super.extractFile(entryName);
     }
@@ -292,7 +293,7 @@ public class JarFile extends ZipFile {
         try {
             String mavenPropertiesString = new String(extractFile(mavenPropertiesPath));
             parseProperties(mavenPropertiesString, mavenProperties);
-        } catch (LocalizableIOException e) {
+        } catch (IOException e) {
         }
     }
 
@@ -469,27 +470,40 @@ public class JarFile extends ZipFile {
         return keyFiles;
     }
 
-    private void verifyEntry(String entryName) {
+    private void verifyEntry(JarEntry entry) throws IOException {
+        verifyEntry(entry.getName());
+    }
+
+    private void verifyEntry(String entryName) throws IOException {
         JarVerifier jv = getVerifier();
         if (jv != null) {
             if (!signaturesChecked) {
                 signaturesChecked = true;
                 jv.verifyJarSignature();
             }
-            if (jv.isTrustedManifestEntry(entryName)) {
-                try {
-                    byte[] content = super.extractFile(entryName);
-                    jv.verifyEntrySignature(entryName, content);
-                } catch (LocalizableIOException e) {
-                    // TODO: Proper error message
-                    throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Verification failed for " + entryName + " in " + getPath());
-                }
+
+            // Skip signature metadata files in META-INF that aren't content payloads
+            if (isSignatureMetadataEntry(entryName)) {
+                return;
             }
+
+            // For all other entries, extract and verify
+            // if (jv.isTrustedManifestEntry(entryName)) {
+                byte[] content = super.extractFile(entryName);
+                jv.verifyEntrySignature(entryName, content);
+            // }
         }
     }
 
-    private void verifyEntry(JarEntry entry) {
-        verifyEntry(entry.getName());
+    private static boolean isSignatureMetadataEntry(String entryName) {
+        String upper = entryName.toUpperCase(Locale.ROOT);
+        if (!upper.startsWith("META-INF/")) {
+            return false;
+        }
+        // Exclude manifest and signature block/file patterns
+        return upper.equals("META-INF/MANIFEST.MF") ||
+               upper.endsWith(".SF") || upper.endsWith(".RSA") ||
+               upper.endsWith(".DSA") || upper.endsWith(".EC");
     }
 
     //

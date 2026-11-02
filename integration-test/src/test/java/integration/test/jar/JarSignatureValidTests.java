@@ -12,14 +12,10 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import integration.test.spl.SplTestBase;
-import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.SignatureStatus;
 import io.github.qishr.cascara.common.security.SplSignaturePolicy;
@@ -42,26 +38,14 @@ import io.github.qishr.cascara.test.common.security.KeyAlgorithm;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
-public class JarSignatureValidTests extends SplTestBase {
+public class JarSignatureValidTests extends JarTestBase {
     private final static Reporter REPORTER = Reporter.forClass(JarSignatureValidTests.class);
-
-    @BeforeAll
-    static void startUp() {
-        GlobalReporter.globalInstance()
-            .setLevel(Level.DEBUG)
-            .getFormatOptions()
-                .setIncludeTime(false)
-                .setIncluedPid(false)
-                .setIncluedThread(false)
-                .setUseSimpleClassName(true);
-    }
 
     @Test
     void test_verifySignature() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
             .setPath(getTempDir().resolve("provider.jar"))
-            .addSources(sourceCodeA())
-            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             .sign()
             .packageJar();
 
@@ -127,8 +111,7 @@ public class JarSignatureValidTests extends SplTestBase {
     void test_valid_readJarEntries() {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
             .setPath(getTempDir().resolve("provider.jar"))
-            .addSources(sourceCodeA())
-            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             .sign()
             .packageJar();
 
@@ -159,9 +142,7 @@ public class JarSignatureValidTests extends SplTestBase {
         // 2. Build synthetic JAR signed with EC identity
         SyntheticJar ecSignedJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
                 .setPath(tempDir.resolve("ec-provider.jar"))
-                // .addDependencies("cascara-common")
-                // .addSources(sourceCodeA())
-                .addSources("code/ModuleInfoA.txt", "code/ProviderA.txt")
+                .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
                 .signWith(ecIdentity)
                 .packageJar();
 

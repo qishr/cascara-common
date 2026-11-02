@@ -73,6 +73,10 @@ public class SyntheticJar implements Locatable {
         for (String resPath : paths) {
             try (InputStream is = getClass().getClassLoader().getResourceAsStream(resPath)) {
 
+                if (is == null) {
+                    throw new IllegalStateException("Failed to read resource: " + resPath);
+                }
+
                 // 1.  Read source code
                 String sourceText = new BufferedReader(
                     new InputStreamReader(is, StandardCharsets.UTF_8))
@@ -86,8 +90,7 @@ public class SyntheticJar implements Locatable {
                 addSources(Map.of(className, sourceText));
 
             } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                throw new TestJarException(e, "Failed to read resource: " + resPath);
             }
 
         }

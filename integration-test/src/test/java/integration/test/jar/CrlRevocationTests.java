@@ -27,6 +27,8 @@ class CrlRevocationTests {
     private static TestSigningIdentity revokedSigner;
     private static X509CRL crl;
 
+    // TODO: Make this extend JarTestBase and use it's rootCA
+
     @BeforeAll
     static void setUp() throws Exception {
         ca = TestCertificateAuthority.create("Revocation CA");
@@ -52,7 +54,7 @@ class CrlRevocationTests {
         // Sign JAR with revoked identity
         SyntheticJar jar = SyntheticJar.forUseIn(CrlRevocationTests.class)
             .setPath(tempDir.resolve("revoked.jar"))
-            .addSources("code/ModuleInfoA.txt", "code/ProviderA.txt")
+            .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             .signWith(revokedSigner)
             .packageJar();
 

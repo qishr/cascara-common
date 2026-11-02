@@ -16,9 +16,8 @@ public class JarFileTests extends SplTestBase {
     void testOpenSyntheticJar() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
             .setPath(createTempFile())
-            .addSources("code/ModuleInfoA.txt", "code/ProviderA.txt")
-            // XXX test with incorrect deps
-            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
+            // TODO test with incorrect deps
             .packageJar();
 
         try (JarFile jar = JarFile.open(testJar.getPath())) {

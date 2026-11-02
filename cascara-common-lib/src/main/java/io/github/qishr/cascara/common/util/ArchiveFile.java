@@ -24,4 +24,5 @@ public interface ArchiveFile<T> extends Closeable {
     ArchiveFile<T> addFile(byte[] content, String entryName) throws IOException;
     ArchiveFile<T> addFile(String content, String entryName) throws IOException;
     ArchiveFile<T> remove(String entryName) throws IOException;
+    void close() throws IOException;
 }

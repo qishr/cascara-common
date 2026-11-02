@@ -69,15 +69,15 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
     protected Path archivePath = null;
     private boolean create;
 
-    public static ZipFile open(Path archivePath) throws LocalizableIOException {
+    public static ZipFile open(Path archivePath) throws IOException {
         return new ZipFile(archivePath, false);
     }
 
-    public static ZipFile create(Path archivePath) throws LocalizableIOException {
+    public static ZipFile create(Path archivePath) throws IOException {
         return new ZipFile(archivePath, true);
     }
 
-    protected ZipFile(Path archivePath, boolean create) throws LocalizableIOException {
+    protected ZipFile(Path archivePath, boolean create) throws IOException {
         // If it exists and it's not a directory, remove and re-create
         if (create) {
             if (Files.exists(archivePath)) {
@@ -112,7 +112,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
 
     // TODO: Implement
     @Override
-    public void close() throws LocalizableIOException {
+    public void close() throws IOException {
         // if (fileSystem != null) {
         //     fileSystem.close();
         // }
@@ -124,23 +124,23 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
     //
 
     @Override
-    public InputStream getInputStream(ZipEntry entry) throws LocalizableIOException {
+    public InputStream getInputStream(ZipEntry entry) throws IOException {
         byte[] byteArray = extractFileInternal(entry.getName());
         return new ByteArrayInputStream(byteArray);
     }
 
     @Override
-    public InputStream getInputStream(String entryName) throws LocalizableIOException {
+    public InputStream getInputStream(String entryName) throws IOException {
         byte[] byteArray = extractFileInternal(entryName);
         return new ByteArrayInputStream(byteArray);
     }
 
     @Override
-    public byte[] extractFile(String entryName) throws LocalizableIOException {
+    public byte[] extractFile(String entryName) throws IOException {
         return extractFile(archivePath, entryName);
     }
 
-    @Override
+    @Override // TODO: Entry details
     public ZipEntry getEntry(String name) {
         ZipEntry entry = new ZipEntry(name);
         return entry;
@@ -150,7 +150,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
     public List<ZipEntry> getEntries() {
         try {
             return listEntries(archivePath, null, true);
-        } catch (LocalizableIOException e) {
+        } catch (IOException e) {
             return List.of();
         }
     }
@@ -164,7 +164,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
     public List<ZipEntry> getEntries(String entryName, boolean subDirContents) {
         try {
             return listEntries(archivePath, entryName, subDirContents);
-        } catch (LocalizableIOException e) {
+        } catch (IOException e) {
             return List.of();
         }
     }
@@ -193,15 +193,15 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
     }
 
     @Override
-    public ZipFile addDirectory(Path entryName) throws LocalizableIOException {
+    public ZipFile addDirectory(Path entryName) throws IOException {
         addDirectory(entryName, "");
         return this;
     }
 
     @Override
-    public ZipFile addDirectory(Path sourcePath, String entryName) throws LocalizableIOException {
+    public ZipFile addDirectory(Path sourcePath, String entryName) throws IOException {
         // TODO: This pattern needs a less boilerplatey way of implementing
-        List<LocalizableIOException> exceptions = new ArrayList<>();
+        List<IOException> exceptions = new ArrayList<>();
         walk(sourcePath, entryName, exceptions, (source, entryPath) -> addFileInternalNoException(source, entryPath, exceptions));
         if (!exceptions.isEmpty()) {
             throw exceptions.getFirst();
@@ -210,7 +210,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
     }
 
     @Override
-    public ZipFile addFile(Path sourcePath, String entryName) throws LocalizableIOException {
+    public ZipFile addFile(Path sourcePath, String entryName) throws IOException {
         // System.out.println("addFile: sourcePath=" + sourcePath + ", entryName=" + entryName);
         try (FileSystem fileSystem = getFileSystem()) {
             addFileInternal(sourcePath, fileSystem.getPath(entryName));
@@ -250,7 +250,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
     //
     //
 
-    protected void walk(Path sourcePath, String entryName, List<LocalizableIOException> exceptions, BiConsumer<Path,Path> run) throws LocalizableIOException {
+    protected void walk(Path sourcePath, String entryName, List<IOException> exceptions, BiConsumer<Path,Path> run) throws LocalizableIOException {
         List<Path> directoryListing;
         try {
             directoryListing = Files.walk(sourcePath)
@@ -279,7 +279,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
         }
     }
 
-    protected static byte[] extractFile(Path archivePath, String entryName) throws LocalizableIOException {
+    protected static byte[] extractFile(Path archivePath, String entryName) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(archivePath))) {
             ZipEntry entry;
@@ -299,7 +299,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
         return new byte[0];
     }
 
-    protected static List<ZipEntry> listEntries(Path archivePath, String entryName, boolean subDirContents) throws LocalizableIOException {
+    protected static List<ZipEntry> listEntries(Path archivePath, String entryName, boolean subDirContents) throws IOException {
         if (entryName != null && !entryName.isEmpty() && !entryName.endsWith("/")) {
             entryName = entryName + "/";
         }
@@ -344,7 +344,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
     //
     //
 
-    private FileSystem getFileSystem() throws LocalizableIOException {
+    private FileSystem getFileSystem() throws IOException {
         Map<String, String> env = new HashMap<>();
         if (create) {
             env.put("create", "true");
@@ -362,19 +362,19 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
         }
     }
 
-    private byte[] extractFileInternal(String entryName) throws LocalizableIOException {
+    private byte[] extractFileInternal(String entryName) throws IOException {
         return extractFile(archivePath, entryName);
     }
 
-    private void addFileInternal(Path sourcePath, Path entryName) throws LocalizableIOException{
-        List<LocalizableIOException> exceptions = new ArrayList<>();
+    private void addFileInternal(Path sourcePath, Path entryName) throws IOException{
+        List<IOException> exceptions = new ArrayList<>();
         addFileInternalNoException(sourcePath, entryName, exceptions);
         if (!exceptions.isEmpty()) {
             throw exceptions.getFirst();
         }
     }
 
-    private void addFileInternalNoException(Path sourcePath, Path entryPath, List<LocalizableIOException> exceptions) {
+    private void addFileInternalNoException(Path sourcePath, Path entryPath, List<IOException> exceptions) {
         try (InputStream in = Files.newInputStream(sourcePath)) {
             byte[] buf = new byte[1024];
             int len;
