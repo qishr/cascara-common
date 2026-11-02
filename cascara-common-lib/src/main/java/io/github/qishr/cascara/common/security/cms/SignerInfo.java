@@ -14,6 +14,7 @@ import io.github.qishr.cascara.common.security.SecurityMessage;
 import io.github.qishr.cascara.common.security.SignatureException;
 import io.github.qishr.cascara.common.security.SignatureStatus;
 import io.github.qishr.cascara.common.security.UnsupportedAlgorithmException;
+import io.github.qishr.cascara.common.security.UnsupportedDigestException;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
@@ -267,7 +268,8 @@ public final class SignerInfo {
                 case "2.16.840.1.101.3.4.2.1" -> "SHA256withECDSA";
                 case "2.16.840.1.101.3.4.2.2" -> "SHA384withECDSA";
                 case "2.16.840.1.101.3.4.2.3" -> "SHA512withECDSA";
-                default                        -> "SHA256withECDSA";
+                // default                        -> "SHA256withECDSA";
+                default -> throw new UnsupportedDigestException(digestOid);
             };
 
             // RSA Encryption (rsaEncryption) -> combine with digestOid
@@ -277,7 +279,8 @@ public final class SignerInfo {
                 case "2.16.840.1.101.3.4.2.1" -> "SHA256withRSA";
                 case "2.16.840.1.101.3.4.2.2" -> "SHA384withRSA";
                 case "2.16.840.1.101.3.4.2.3" -> "SHA512withRSA";
-                default                        -> "SHA256withRSA";
+                // default                        -> "SHA256withRSA";
+                default -> throw new UnsupportedDigestException(digestOid);
             };
 
             // DSA
@@ -287,7 +290,9 @@ public final class SignerInfo {
             default -> {
                 // If you created SignatureAlgorithms.java:
                 // yield SignatureAlgorithms.getSignatureAlgorithmName(sigOid);
-                yield "SHA256withRSA";
+
+                // yield "SHA256withRSA";
+                throw new UnsupportedDigestException(digestOid);
             }
         };
     }

@@ -7,6 +7,9 @@ import java.security.interfaces.ECKey;
 import java.security.interfaces.RSAKey;
 import java.util.Map;
 
+import io.github.qishr.cascara.common.security.UnsupportedAlgorithmException;
+import io.github.qishr.cascara.common.security.UnsupportedDigestException;
+
 public final class SignatureAlgorithms {
 
     private SignatureAlgorithms() {}
@@ -69,7 +72,8 @@ public final class SignatureAlgorithms {
     public static String getSignatureAlgorithmName(String oid) throws NoSuchAlgorithmException {
         String name = OID_TO_JCA.get(oid);
         if (name == null) {
-            throw new NoSuchAlgorithmException("Unsupported signature algorithm OID: " + oid);
+            // throw new NoSuchAlgorithmException("Unsupported signature algorithm OID: " + oid);
+            throw new UnsupportedAlgorithmException(oid);
         }
         return name;
     }
@@ -77,7 +81,8 @@ public final class SignatureAlgorithms {
     public static String getSignatureOid(String jcaName) throws NoSuchAlgorithmException {
         String oid = JCA_TO_OID.get(jcaName.toUpperCase().replace("-", ""));
         if (oid == null) {
-            throw new NoSuchAlgorithmException("No known OID for signature algorithm: " + jcaName);
+            // throw new NoSuchAlgorithmException("No known OID for signature algorithm: " + jcaName);
+            throw new UnsupportedAlgorithmException(jcaName);
         }
         return oid;
     }
@@ -85,7 +90,8 @@ public final class SignatureAlgorithms {
     public static String getDigestName(String digestOid) throws NoSuchAlgorithmException {
         String name = DIGEST_OID_TO_NAME.get(digestOid);
         if (name == null) {
-            throw new NoSuchAlgorithmException("Unsupported digest algorithm OID: " + digestOid);
+            // throw new NoSuchAlgorithmException("Unsupported digest algorithm OID: " + digestOid);
+            throw new UnsupportedDigestException(digestOid);
         }
         return name;
     }

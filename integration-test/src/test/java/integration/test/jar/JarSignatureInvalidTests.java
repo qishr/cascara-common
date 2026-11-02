@@ -12,7 +12,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.security.SignatureException;
 import io.github.qishr.cascara.common.security.SignatureStatus;
 import io.github.qishr.cascara.common.util.JarFile;
@@ -314,5 +316,38 @@ public class JarSignatureInvalidTests extends JarTestBase {
             }
         });
         assertEquals(SignatureStatus.INVALID_SIGNATURE, ex.getSignatureStatus());
+    }
+
+    //
+    // Layer 3, we want to ensure that if a signer specifies an unknown digest algorithm OID in
+    // `SignerInfo` (e.g. an arbitrary dummy OID or an unsupported obsolete hash), the verifier
+    // detects it and aborts with `UnsupportedDigestException` / `SignatureStatus.UNSUPPORTED_ALGORITHM`.
+    //
+
+    @Test
+    void test_invalid_unsupportedDigestOid_failsVerification(@TempDir Path tempDir) throws Exception {
+
+        GlobalReporter.globalInstance().setLevel("io.github.qishr.cascara.test.common.security.TestCertificateAuthority", Level.DEBUG);
+        GlobalReporter.globalInstance().setLevel("io.github.qishr.cascara.test.common.security.TestJarSigner", Level.DEBUG);
+
+        TestSigningIdentity identity = rootCA.issueIdentity("unknown-digest-module");
+        Path jarPath = tempDir.resolve("unknown-digest.jar");
+
+        SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
+                .setPath(jarPath)
+                .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
+                .sign(s -> s
+                        .withIdentity(identity)
+                        .withDigestOid("1.2.3.4.5.6.7.8.9")) // Non-existent / unknown digest OID
+                .packageJar();
+
+        SignatureException ex = assertThrows(SignatureException.class, () -> {
+            try (JarFile jar = JarFile.open(jarPath)) {
+                // Extract a file, any file will cause the JAR's signature to be verified
+                jar.extractFile("META-INF/MANIFEST.MF");
+            }
+        });
+
+        assertEquals(SignatureStatus.UNSUPPORTED_ALGORITHM, ex.getSignatureStatus());
     }
 }

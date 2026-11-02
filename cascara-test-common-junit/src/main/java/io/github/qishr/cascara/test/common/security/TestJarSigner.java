@@ -17,6 +17,7 @@ import java.util.jar.Manifest;
 import javax.security.auth.x500.X500Principal;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.security.UnsupportedDigestException;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
@@ -54,6 +55,12 @@ public final class TestJarSigner {
     private KeyAlgorithm signatureAlgorithm;       // Optional override
     private boolean corruptSignatureBytes;  // Helpful for Layer 2 tests
     private boolean omitCertificates;        // For empty cert set test
+    private String digestOidOverride;
+
+    public TestJarSigner withDigestOid(String digestOid) {
+        this.digestOidOverride = digestOid;
+        return this;
+    }
 
     public TestJarSigner omitCertificates(boolean omit) {
         this.omitCertificates = omit;
@@ -233,16 +240,10 @@ public final class TestJarSigner {
         ASN1ObjectIdentifier pkcs7DataOid       = new ASN1ObjectIdentifier("1.2.840.113549.1.7.1");
 
         // 1. Resolve Digest OID matching the key / signature
-        // Default to SHA-256, or inspect bit size if P-384 / P-521
-        String digestOidStr = "2.16.840.1.101.3.4.2.1"; // SHA-256
-        if (publicKey instanceof java.security.interfaces.ECKey ecKey) {
-            int fieldSize = ecKey.getParams().getCurve().getField().getFieldSize();
-            if (fieldSize > 384) {
-                digestOidStr = "2.16.840.1.101.3.4.2.3"; // SHA-512
-            } else if (fieldSize > 256) {
-                digestOidStr = "2.16.840.1.101.3.4.2.2"; // SHA-384
-            }
-        }
+        String digestOidStr = this.digestOidOverride != null
+            ? this.digestOidOverride
+            : resolveDefaultDigestOid(publicKey);
+
         ASN1ObjectIdentifier digestOid = new ASN1ObjectIdentifier(digestOidStr);
         REPORTER.debug("  digestOidStr: " + digestOidStr);
 
@@ -424,4 +425,31 @@ public final class TestJarSigner {
         }
 
     }
+
+    // Default to SHA-256, or inspect bit size if P-384 / P-521
+    private String resolveDefaultDigestOid(PublicKey publicKey) {
+        String digestOidStr = "2.16.840.1.101.3.4.2.1"; // SHA-256
+        if (publicKey instanceof java.security.interfaces.ECKey ecKey) {
+            int fieldSize = ecKey.getParams().getCurve().getField().getFieldSize();
+            if (fieldSize > 384) {
+                digestOidStr = "2.16.840.1.101.3.4.2.3"; // SHA-512
+            } else if (fieldSize > 256) {
+                digestOidStr = "2.16.840.1.101.3.4.2.2"; // SHA-384
+            }
+        }
+        return digestOidStr;
+    }
+
+
+
+    // public static String resolveDigestAlgorithm(String oid) throws UnsupportedDigestException {
+    //     return switch (oid) {
+    //         case "1.3.14.3.2.26"           -> "SHA-1";
+    //         case "2.16.840.1.101.3.4.2.4" -> "SHA-224";
+    //         case "2.16.840.1.101.3.4.2.1" -> "SHA-256";
+    //         case "2.16.840.1.101.3.4.2.2" -> "SHA-384";
+    //         case "2.16.840.1.101.3.4.2.3" -> "SHA-512";
+    //         default -> throw new UnsupportedDigestException(oid);
+    //     };
+    // }
 }

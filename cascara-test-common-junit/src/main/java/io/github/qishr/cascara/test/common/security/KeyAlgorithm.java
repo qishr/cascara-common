@@ -4,6 +4,8 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.spec.ECGenParameterSpec;
 
+import io.github.qishr.cascara.common.security.UnsupportedDigestException;
+
 public enum KeyAlgorithm {
     RSA("RSA", "SHA256withRSA", "1.2.840.113549.1.1.11"),
     EC("EC", "SHA256withECDSA", "1.2.840.10045.4.3.2"),
@@ -28,7 +30,7 @@ public enum KeyAlgorithm {
             case "EC":
                 return EC;
             default:
-                return null;
+                throw new UnsupportedDigestException(name);
         }
     }
 

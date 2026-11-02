@@ -299,6 +299,9 @@ public class CascaraJarVerifier implements JarVerifier {
                         if (signerObj instanceof ASN1Sequence signerSeq) {
                             SignerInfo signerInfo = SignerInfo.parse(signerSeq);
                             X509Certificate cert = signerInfo.findSigningCertificate(k.getCertificates());
+                            if (cert == null) {
+                                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Signature verification failed for identity \"" + signerName + "\"");
+                            }
                             boolean verified = signerInfo.verifySignature(cert, sfBytes);
                             if (cert != null && verified) {
                                 signatureValid = true;
