@@ -162,7 +162,8 @@ public class JarSignatureInvalidTests extends JarTestBase {
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
                 .setPath(jarPath)
                 .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-                .signWith(identity)
+                // .signWith(identity)
+                .sign(s -> s.withIdentity(identity))
                 .packageJar();
 
         // 2. Tamper with META-INF/MANIFEST.MF directly inside the ZIP
@@ -189,7 +190,8 @@ public class JarSignatureInvalidTests extends JarTestBase {
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
                 .setPath(jarPath)
                 .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-                .signWith(identity)
+                // .signWith(identity)
+                .sign(s -> s.withIdentity(identity))
                 .packageJar();
 
         // Inject an unsigned file directly into the ZIP archive (not listed in MANIFEST.MF)
@@ -210,114 +212,107 @@ public class JarSignatureInvalidTests extends JarTestBase {
     // and `CascaraJarVerifier` catch low-level cryptographic tampering.
     //
 
-    // TODO: Uncomment when TestJarSigner is updated
+    @Test
+    void test_invalid_corruptedSignatureBytes_failsVerification(@TempDir Path tempDir) throws Exception {
+        TestSigningIdentity identity = rootCA.issueIdentity("corrupt-sig-bytes-module");
+        Path jarPath = tempDir.resolve("corrupt-sig.jar");
 
-    // @Test
-    // void test_invalid_corruptedSignatureBytes_failsVerification(@TempDir Path tempDir) throws Exception {
-    //     TestSigningIdentity identity = rootCA.issueIdentity("corrupt-sig-bytes-module");
-    //     Path jarPath = tempDir.resolve("corrupt-sig.jar");
+        SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
+                .setPath(jarPath)
+                .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
+                .sign(s -> s.withIdentity(identity))
+                .packageJar();
 
-    //     SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
-    //             .setPath(jarPath)
-    //             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-    //             .signWith(identity)
-    //             .packageJar();
+        // Tamper with the raw signature block file (META-INF/*.RSA or *.EC)
+        tamperZipEntry(jarPath, "META-INF/TEST.RSA", original -> {
+            byte[] copy = original.clone();
+            // Flip the last byte of the signature block
+            copy[copy.length - 1] ^= 0xFF;
+            return copy;
+        });
 
-    //     // Tamper with the raw signature block file (META-INF/*.RSA or *.EC)
-    //     tamperZipEntry(jarPath, "META-INF/KEY.RSA", original -> {
-    //         byte[] copy = original.clone();
-    //         // Flip the last byte of the signature block
-    //         copy[copy.length - 1] ^= 0xFF;
-    //         return copy;
-    //     });
+        SignatureException ex = assertThrows(SignatureException.class, () -> {
+            try (JarFile jar = JarFile.open(jarPath)) {
+                // Extract a file, any file will cause the JAR's signature to be verified
+                jar.extractFile("META-INF/MANIFEST.MF");
+            }
+        });
+        assertEquals(SignatureStatus.INVALID_SIGNATURE, ex.getSignatureStatus());
+    }
 
-    //     SignatureException ex = assertThrows(SignatureException.class, () -> {
-    //         try (JarFile jar = JarFile.open(jarPath)) {
-    //             // Extract a file, any file will cause the JAR's signature to be verified
-    //             jar.extractFile("META-INF/MANIFEST.MF");
-    //         }
-    //     });
-    //     assertEquals(SignatureStatus.INVALID_SIGNATURE, ex.getSignatureStatus());
-    // }
+    @Test
+    void test_invalid_mismatchedSignerCertificate_failsVerification(@TempDir Path tempDir) throws Exception {
+        TestSigningIdentity signerA = rootCA.issueIdentity("signer-a");
+        TestSigningIdentity signerB = rootCA.issueIdentity("signer-b");
+        Path jarPath = tempDir.resolve("mismatched-cert.jar");
 
-    // TODO: Uncomment when TestJarSigner is updated
+        // Package the JAR where the SF is signed by signerA's private key,
+        // but the PKCS#7 block packages signerB's certificate
+        SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
+                .setPath(jarPath)
+                .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
+                .sign(s -> s
+                    .withPrivateKey(signerA.privateKey())
+                    .withCertificate(signerB.certificate()))
+                .packageJar();
 
-    // @Test
-    // void test_invalid_mismatchedSignerCertificate_failsVerification(@TempDir Path tempDir) throws Exception {
-    //     TestSigningIdentity signerA = rootCA.issueIdentity("signer-a");
-    //     TestSigningIdentity signerB = rootCA.issueIdentity("signer-b");
-    //     Path jarPath = tempDir.resolve("mismatched-cert.jar");
+        SignatureException ex = assertThrows(SignatureException.class, () -> {
+            try (JarFile jar = JarFile.open(jarPath)) {
+                // Extract a file, any file will cause the JAR's signature to be verified
+                jar.extractFile("META-INF/MANIFEST.MF");
+            }
+        });
+        assertEquals(SignatureStatus.INVALID_SIGNATURE, ex.getSignatureStatus());
+    }
 
-    //     // Package the JAR where the SF is signed by signerA's private key,
-    //     // but the PKCS#7 block packages signerB's certificate
-    //     SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
-    //             .setPath(jarPath)
-    //             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-    //             .customSign((sfBytes) -> {
-    //                 byte[] sigBytesA = signData(sfBytes, signerA.privateKey());
-    //                 // Embed signerB's certificate with signerA's signature bytes
-    //                 return buildPkcs7SignedData(signerB.certificate(), sigBytesA);
-    //             })
-    //             .packageJar();
+    @Test
+    void test_invalid_tamperedSFWithSignedAttrs_failsVerification(@TempDir Path tempDir) throws Exception {
+        TestSigningIdentity identity = rootCA.issueIdentity("signed-attrs-module");
+        Path jarPath = tempDir.resolve("tampered-sf-attrs.jar");
 
-    //     SignatureException ex = assertThrows(SignatureException.class, () -> {
-    //         try (JarFile jar = JarFile.open(jarPath)) {
-    //             // Extract a file, any file will cause the JAR's signature to be verified
-    //             jar.extractFile("META-INF/MANIFEST.MF");
-    //         }
-    //     });
-    //     assertEquals(SignatureStatus.INVALID_SIGNATURE, ex.getSignatureStatus());
-    // }
+        SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
+                .setPath(jarPath)
+                .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
+                .sign(s -> s.withIdentity(identity)) // assuming signedAttrs are included or enabled
+                .packageJar();
 
-    // TODO: Uncomment when TestJarSigner is updated
+        // Alter the .SF file while keeping the PKCS#7 block intact
+        tamperZipEntry(jarPath, "META-INF/TEST.SF", original -> {
+            byte[] copy = original.clone();
+            copy[copy.length - 1] ^= 0x01;
+            return copy;
+        });
 
-    // @Test
-    // void test_invalid_tamperedSFWithSignedAttrs_failsVerification(@TempDir Path tempDir) throws Exception {
-    //     TestSigningIdentity identity = rootCA.issueIdentity("signed-attrs-module");
-    //     Path jarPath = tempDir.resolve("tampered-sf-attrs.jar");
+        SignatureException ex = assertThrows(SignatureException.class, () -> {
+            try (JarFile jar = JarFile.open(jarPath)) {
+                // Extract a file, any file will cause the JAR's signature to be verified
+                jar.extractFile("META-INF/MANIFEST.MF");
+            }
+        });
+        assertEquals(SignatureStatus.INVALID_SIGNATURE, ex.getSignatureStatus());
+    }
 
-    //     SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
-    //             .setPath(jarPath)
-    //             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-    //             .signWith(identity) // assuming signedAttrs are included or enabled
-    //             .packageJar();
+    @Test
+    void test_invalid_missingSignerCertInBlock_failsVerification(@TempDir Path tempDir) throws Exception {
+        TestSigningIdentity identity = rootCA.issueIdentity("missing-cert-module");
+        Path jarPath = tempDir.resolve("missing-cert-block.jar");
 
-    //     // Alter the .SF file while keeping the PKCS#7 block intact
-    //     tamperZipEntry(jarPath, "META-INF/KEY.SF", original -> {
-    //         byte[] copy = original.clone();
-    //         copy[copy.length - 1] ^= 0x01;
-    //         return copy;
-    //     });
+        // Package PKCS#7 block with an empty certificate set
+        SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
+                .setPath(jarPath)
+                .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
+                // .customSign((sfBytes) -> buildPkcs7SignedDataWithEmptyCerts(identity, sfBytes))
+                .sign(s -> s
+                    .withIdentity(identity)
+                    .omitCertificates(true))
+                .packageJar();
 
-    //     SignatureException ex = assertThrows(SignatureException.class, () -> {
-    //         try (JarFile jar = JarFile.open(jarPath)) {
-    //             // Extract a file, any file will cause the JAR's signature to be verified
-    //             jar.extractFile("META-INF/MANIFEST.MF");
-    //         }
-    //     });
-    //     assertEquals(SignatureStatus.INVALID_SIGNATURE, ex.getSignatureStatus());
-    // }
-
-    // TODO: Uncomment when TestJarSigner is updated
-
-    // @Test
-    // void test_invalid_missingSignerCertInBlock_failsVerification(@TempDir Path tempDir) throws Exception {
-    //     TestSigningIdentity identity = rootCA.issueIdentity("missing-cert-module");
-    //     Path jarPath = tempDir.resolve("missing-cert-block.jar");
-
-    //     // Package PKCS#7 block with an empty certificate set
-    //     SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
-    //             .setPath(jarPath)
-    //             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-    //             .customSign((sfBytes) -> buildPkcs7SignedDataWithEmptyCerts(identity, sfBytes))
-    //             .packageJar();
-
-    //     SignatureException ex = assertThrows(SignatureException.class, () -> {
-    //         try (JarFile jar = JarFile.open(jarPath)) {
-    //             // Extract a file, any file will cause the JAR's signature to be verified
-    //             jar.extractFile("META-INF/MANIFEST.MF");
-    //         }
-    //     });
-    //     assertEquals(SignatureStatus.INVALID_SIGNATURE, ex.getSignatureStatus());
-    // }
+        SignatureException ex = assertThrows(SignatureException.class, () -> {
+            try (JarFile jar = JarFile.open(jarPath)) {
+                // Extract a file, any file will cause the JAR's signature to be verified
+                jar.extractFile("META-INF/MANIFEST.MF");
+            }
+        });
+        assertEquals(SignatureStatus.INVALID_SIGNATURE, ex.getSignatureStatus());
+    }
 }

@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.exec.Locatable;
@@ -112,6 +113,23 @@ public class SyntheticJar implements Locatable {
         return signedBundle;
     }
 
+    //
+    // Signing Methods
+    //
+
+    /// The one method for all customized signing needs
+    public SyntheticJar sign(Consumer<TestJarSigner> config) {
+        TestJarSigner signer = new TestJarSigner();
+        config.accept(signer);
+        return sign(signer);
+    }
+
+    public SyntheticJar sign(TestJarSigner signer) {
+        ensureClassFiles();
+        this.signedBundle = signer.sign(classes);
+        return this;
+    }
+
     public SyntheticJar sign() {
         ensureClassFiles();
         try {
@@ -122,25 +140,9 @@ public class SyntheticJar implements Locatable {
         return this;
     }
 
-    // public SyntheticJar signWith(TestCertificateAuthority ca) {
-    //     ensureClassFiles();
-    //     // try {
-    //         signedBundle = new TestJarSigner().sign(classes, ca);
-    //     // } catch (Exception e) {
-    //     //     throw new TestJarException(e, "Failed to sign JAR");
-    //     // }
-    //     return this;
-    // }
-
-    public SyntheticJar signWith(TestSigningIdentity sa) {
-        ensureClassFiles();
-        // try {
-            signedBundle = new TestJarSigner().withIdentity(sa).sign(classes);
-        // } catch (Exception e) {
-        //     throw new TestJarException(e, "Failed to sign JAR");
-        // }
-        return this;
-    }
+    //
+    //
+    //
 
     private void ensureClassFiles() {
         if (classes.isEmpty()) {

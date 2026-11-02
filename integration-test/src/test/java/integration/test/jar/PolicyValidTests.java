@@ -27,7 +27,8 @@ public class PolicyValidTests extends JarTestBase implements SourceCode {
         SyntheticJar testJar = SyntheticJar.forUseIn(PolicyValidTests.class)
             .setPath(getTempDir().resolve("provider.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-            .signWith(signer)
+            // .signWith(signer)
+            .sign(s -> s.withIdentity(signer))
             .packageJar();
 
         // 3. Verify JAR under a SignaturePolicy backed by the CA's TrustStore
@@ -52,7 +53,8 @@ public class PolicyValidTests extends JarTestBase implements SourceCode {
         SyntheticJar testJar = SyntheticJar.forUseIn(PolicyValidTests.class)
             .setPath(getTempDir().resolve("signed-foo.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-            .signWith(signer)
+            // .signWith(signer)
+            .sign(s -> s.withIdentity(signer))
             .packageJar();
 
         // 2. Build SignaturePolicy backed by CA's TrustStore

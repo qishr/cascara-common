@@ -25,11 +25,14 @@ public class PolicyInvalidTests extends JarTestBase implements SourceCode {
         TestCertificateAuthority cascaraCA = TestCertificateAuthority.create("Cascara Root CA");
         TestCertificateAuthority foreignCA = TestCertificateAuthority.create("Foreign Root CA");
 
+        TestSigningIdentity identity = foreignCA.issueIdentity("foreign-module");
+
         // 2. Sign module with foreign identity
         SyntheticJar foreignSignedJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
             .setPath(getTempDir().resolve("foreign-provider.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-            .signWith(foreignCA.issueIdentity("foreign-module"))
+            // .signWith(foreignCA.issueIdentity("foreign-module"))
+            .sign(s -> s.withIdentity(identity))
             .packageJar();
 
         // 3. Configure SignaturePolicy requiring trust anchors from Cascara CA
@@ -55,7 +58,8 @@ public class PolicyInvalidTests extends JarTestBase implements SourceCode {
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
                 .setPath(jarPath)
                 .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-                .signWith(rogueIdentity)
+                // .signWith(rogueIdentity)
+                .sign(s -> s.withIdentity(rogueIdentity))
                 .packageJar();
 
         // Evaluate against our genuine TrustStore containing only Cascara Root CA
@@ -78,7 +82,8 @@ public class PolicyInvalidTests extends JarTestBase implements SourceCode {
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
                 .setPath(jarPath)
                 .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-                .signWith(validIdentity)
+                // .signWith(validIdentity)
+                .sign(s -> s.withIdentity(validIdentity))
                 .packageJar();
 
         // Empty TrustStore should fail to trust even a valid Cascara identity

@@ -55,7 +55,8 @@ class CrlRevocationTests {
         SyntheticJar jar = SyntheticJar.forUseIn(CrlRevocationTests.class)
             .setPath(tempDir.resolve("revoked.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-            .signWith(revokedSigner)
+            // .signWith(revokedSigner)
+            .sign(s -> s.withIdentity(revokedSigner))
             .packageJar();
 
         SplSignaturePolicy policy = SplSignaturePolicy.builder()

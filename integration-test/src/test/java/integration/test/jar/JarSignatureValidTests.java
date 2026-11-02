@@ -143,7 +143,7 @@ public class JarSignatureValidTests extends JarTestBase {
         SyntheticJar ecSignedJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
                 .setPath(tempDir.resolve("ec-provider.jar"))
                 .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
-                .signWith(ecIdentity)
+                .sign(s -> s.withIdentity(ecIdentity))
                 .packageJar();
 
         // 3. Verify under SignaturePolicy requiring ecCA trust anchor
