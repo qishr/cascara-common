@@ -2,9 +2,12 @@ package io.github.qishr.cascara.test.common.security;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -26,11 +29,13 @@ import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectId
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1BitString;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1UTCTime;
+import io.github.qishr.cascara.test.common.jar.TestJarException;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
 public final class TestJarSigner {
 
     private static final Reporter REPORTER = Reporter.forClass(TestJarSigner.class);
+
 
     public record SignedJarBundle(
             byte[] manifestMf,
@@ -42,6 +47,54 @@ public final class TestJarSigner {
     ) {}
 
     private KeyPair keyPair;
+
+    private TestSigningIdentity identity;
+    private X509Certificate certificate;     // If null, uses identity.certificate()
+    private PrivateKey privateKey;           // If null, uses identity.privateKey()
+    private KeyAlgorithm signatureAlgorithm;       // Optional override
+    private boolean corruptSignatureBytes;  // Helpful for Layer 2 tests
+    private boolean omitCertificates;        // For empty cert set test
+
+    public TestJarSigner withIdentity(TestSigningIdentity identity) {
+        this.identity = identity;
+        return this;
+    }
+
+    public TestJarSigner withCertificate(X509Certificate cert) {
+        this.certificate = cert;
+        return this;
+    }
+
+    public TestJarSigner withPrivateKey(PrivateKey key) {
+        this.privateKey = key;
+        return this;
+    }
+
+    public TestJarSigner corruptSignatureBytes(boolean corrupt) {
+        this.corruptSignatureBytes = corrupt;
+        return this;
+    }
+
+    public SignedJarBundle sign(Map<String, byte[]> classFiles) {
+        // Resolve effective cert and key
+        // X509Certificate cert = this.certificate != null ? this.certificate
+        //         : (identity != null ? identity.certificate() : defaultIdentity().certificate());
+        // PrivateKey key = this.privateKey != null ? this.privateKey
+        //         : (identity != null ? identity.privateKey() : defaultIdentity().privateKey());
+
+        X509Certificate cert = this.certificate != null ? this.certificate
+                : (identity != null ? identity.certificate() : generateSelfSignedCert("CN=Cascara Test Signer, OU=cascara, O=qishr, C=UK"));
+        PrivateKey key = this.privateKey != null ? this.privateKey
+                : (identity != null ? identity.privateKey() : keyPair.getPrivate());
+
+
+        // Perform standard signing...
+        // If corruptSignatureBytes == true, flip a byte in sigBytes before buildPkcs7SignedData
+
+        // X509Certificate cert = generateSelfSignedCert("CN=Cascara Test Signer, OU=cascara, O=qishr, C=UK");
+        return sign(classFiles, cert, key);
+    }
+
 
     public TestJarSigner() {
         // Generate In-Memory RSA KeyPair & Self-Signed X.509 Certificate
@@ -64,11 +117,11 @@ public final class TestJarSigner {
         return this;
     }
 
-    public X509Certificate generateSelfSignedCert(String dn) throws Exception {
+    public X509Certificate generateSelfSignedCert(String dn) {
         return generateCert(dn, false);
     }
 
-    public X509Certificate generateExpiredSelfSignedCert(String dn) throws Exception {
+    public X509Certificate generateExpiredSelfSignedCert(String dn) {
         return generateCert(dn, true);
     }
 
@@ -76,39 +129,46 @@ public final class TestJarSigner {
     //
     //
 
-    public SignedJarBundle sign(Map<String, byte[]> classFiles) throws Exception {
-        X509Certificate cert = generateSelfSignedCert("CN=Cascara Test Signer, OU=cascara, O=qishr, C=UK");
-        return sign(classFiles, cert);
-    }
+    // public SignedJarBundle sign(Map<String, byte[]> classFiles) throws Exception {
+    //     X509Certificate cert = generateSelfSignedCert("CN=Cascara Test Signer, OU=cascara, O=qishr, C=UK");
+    //     return sign(classFiles, cert);
+    // }
 
-    public SignedJarBundle sign(Map<String, byte[]> classFiles, X509Certificate cert) throws Exception {
+    public SignedJarBundle sign(Map<String, byte[]> classFiles, X509Certificate cert) {
         return sign(classFiles, cert, null);
     }
 
     // TODO: Remove this?
-    public SignedJarBundle sign(Map<String, byte[]> classFiles, TestCertificateAuthority ca) throws Exception {
-        // X509Certificate cert = generateSelfSignedCert("CN=Cascara Test Signer, OU=cascara, O=qishr, C=UK");
-        // return sign(classFiles, cert, ca);
-        return null;
-    }
+    // public SignedJarBundle sign(Map<String, byte[]> classFiles, TestCertificateAuthority ca) {
+    //     // X509Certificate cert = generateSelfSignedCert("CN=Cascara Test Signer, OU=cascara, O=qishr, C=UK");
+    //     // return sign(classFiles, cert, ca);
+    //     return null;
+    // }
 
-    public SignedJarBundle sign(Map<String, byte[]> classFiles, TestSigningIdentity sa) throws Exception {
-        return sign(classFiles, sa.certificate(), sa);
-    }
+    // public SignedJarBundle sign(Map<String, byte[]> classFiles, TestSigningIdentity sa) throws Exception {
+    //     return sign(classFiles, sa.certificate(), sa);
+    // }
 
-    public SignedJarBundle sign(Map<String, byte[]> classFiles, X509Certificate cert, TestSigningIdentity signingId) throws Exception {
-        if (signingId == null) {
-            REPORTER.debug("Signning with default identity");
-        } else {
-            REPORTER.debug("Signning with identity: " + signingId.alias());
-        }
+    // public SignedJarBundle sign(Map<String, byte[]> classFiles, X509Certificate cert, TestSigningIdentity signingId) throws Exception {
+    public SignedJarBundle sign(Map<String, byte[]> classFiles, X509Certificate cert, PrivateKey privateKey) {
+        // if (signingId == null) {
+        //     REPORTER.debug("Signning with default identity");
+        // } else {
+        //     REPORTER.debug("Signning with identity: " + signingId.alias());
+        // }
+        REPORTER.debug("Signning with private key algorithm: " + privateKey.getAlgorithm());
 
         // 2. Build MANIFEST.MF with SHA-256 digests for each class file
         Manifest mf = new Manifest();
         mf.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         mf.getMainAttributes().put(new Attributes.Name("Created-By"), "Cascara Test Harness");
 
-        MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+        MessageDigest sha256;
+        try {
+            sha256 = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new TestJarException(e, e.getMessage());
+        }
 
         for (Map.Entry<String, byte[]> entry : classFiles.entrySet()) {
             Attributes attrs = new Attributes();
@@ -118,7 +178,11 @@ public final class TestJarSigner {
         }
 
         ByteArrayOutputStream mfBaos = new ByteArrayOutputStream();
-        mf.write(mfBaos);
+        try {
+            mf.write(mfBaos);
+        } catch (IOException e) {
+            throw new TestJarException(e, e.getMessage());
+        }
         byte[] mfBytes = mfBaos.toByteArray();
 
         // 3. Build MANIFEST.SF with whole-manifest and entry digests
@@ -138,39 +202,50 @@ public final class TestJarSigner {
         }
 
         ByteArrayOutputStream sfBaos = new ByteArrayOutputStream();
-        sf.write(sfBaos);
+        try {
+            sf.write(sfBaos);
+        } catch (IOException e) {
+            throw new TestJarException(e, e.getMessage());
+        }
         byte[] sfBytes = sfBaos.toByteArray();
 
-        PrivateKey privateKey = signingId == null
-            ? keyPair.getPrivate()
-            : signingId.privateKey();
+        // PrivateKey privateKey = signingId == null
+        //     ? keyPair.getPrivate()
+        //     : signingId.privateKey();
 
         REPORTER.debug("  Private key: " + privateKey.getAlgorithm());
 
         // 4. Compute Digital Signature over MANIFEST.SF
-        // Signature signature = Signature.getInstance("SHA256withRSA");
-        String algName = signingId == null
-            ? KeyAlgorithm.RSA.getSignatureAlgorithm()
-            : signingId.algorithm().getSignatureAlgorithm();
+        // String algName = signingId == null
+        //     ? KeyAlgorithm.RSA.getSignatureAlgorithm()
+        //     : signingId.algorithm().getSignatureAlgorithm();
+
+        // String algName = privateKey.getAlgorithm();
+        String algName = KeyAlgorithm.of(privateKey.getAlgorithm()).getSignatureAlgorithm();
 
         REPORTER.debug("  Signature: " + algName);
 
-        Signature signature = Signature.getInstance(algName);
-        signature.initSign(privateKey);
-        signature.update(sfBytes);
-        byte[] signatureBytes = signature.sign();
+        try {
+            Signature signature = Signature.getInstance(algName);
+            signature.initSign(privateKey);
+            signature.update(sfBytes);
+            byte[] signatureBytes = signature.sign();
 
-        // 5. Build PKCS#7 SignedData (KEY.RSA) using Cascara ASN.1 objects
-        byte[] keyRsaBytes = buildPkcs7SignedData(cert, signatureBytes);
+            // 5. Build PKCS#7 SignedData (KEY.RSA) using Cascara ASN.1 objects
+            byte[] keyRsaBytes = buildPkcs7SignedData(cert, signatureBytes);
 
-        return new SignedJarBundle(mfBytes, sfBytes, keyRsaBytes, cert, privateKey, signingId == null ? null : signingId.algorithm());
+            // return new SignedJarBundle(mfBytes, sfBytes, keyRsaBytes, cert, privateKey, signingId == null ? null : signingId.algorithm());
+            return new SignedJarBundle(mfBytes, sfBytes, keyRsaBytes, cert, privateKey, signatureAlgorithm);
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            throw new TestJarException(e, e.getMessage());
+        }
     }
 
     //
     //
     //
 
-    private byte[] buildPkcs7SignedData(X509Certificate cert, byte[] sigBytes) throws Exception {
+    private byte[] buildPkcs7SignedData(X509Certificate cert, byte[] sigBytes) {
         DERDecoder decoder = new DERDecoder();
         PublicKey publicKey = cert.getPublicKey();
         String keyAlg = publicKey.getAlgorithm().toUpperCase();
@@ -208,6 +283,8 @@ public final class TestJarSigner {
         ASN1Sequence certSeq;
         try (ASN1InputStream ais = new ASN1InputStream(decoder, cert.getEncoded())) {
             certSeq = (ASN1Sequence) ais.readObject();
+        } catch (IOException | CertificateEncodingException e) {
+            throw new TestJarException(e, e.getMessage());
         }
         ASN1Set rawCertSet = new ASN1Set(Set.of(certSeq));
         ASN1TaggedObject implicitCerts = new ASN1TaggedObject(ASN1Tag.contextSpecific(0), rawCertSet, false);
@@ -216,6 +293,8 @@ public final class TestJarSigner {
         ASN1Sequence issuerSeq;
         try (ASN1InputStream ais = new ASN1InputStream(decoder, cert.getIssuerX500Principal().getEncoded())) {
             issuerSeq = (ASN1Sequence) ais.readObject();
+        } catch (IOException e) {
+            throw new TestJarException(e, e.getMessage());
         }
         ASN1Integer serialInt = new ASN1Integer(cert.getSerialNumber());
         ASN1Sequence issuerAndSerial = new ASN1Sequence(List.of(issuerSeq, serialInt));
@@ -269,7 +348,7 @@ public final class TestJarSigner {
         return outerContentInfo.getEncoded();
     }
 
-    private X509Certificate generateCert(String dn, boolean expired) throws Exception {
+    private X509Certificate generateCert(String dn, boolean expired) {
         DERDecoder decoder = new DERDecoder();
 
         // 1. Version: EXPLICIT INTEGER (v3 = 2)
@@ -294,6 +373,8 @@ public final class TestJarSigner {
         ASN1Sequence nameSeq = null;
         try (ASN1InputStream ais = new ASN1InputStream(decoder, principal.getEncoded())) {
             nameSeq = (ASN1Sequence) ais.readObject();
+        } catch (IOException e) {
+            throw new TestJarException(e, e.getMessage());
         }
 
         // 5. Validity: SEQUENCE { UTCTime (NotBefore), UTCTime (NotAfter) }
@@ -308,6 +389,8 @@ public final class TestJarSigner {
         ASN1Sequence spkiSeq = null;
         try (ASN1InputStream ais = new ASN1InputStream(decoder, keyPair.getPublic().getEncoded())) {
             spkiSeq = (ASN1Sequence) ais.readObject();
+        } catch (IOException e) {
+            throw new TestJarException(e, e.getMessage());
         }
 
         // 7. Assemble TBSCertificate SEQUENCE
@@ -323,10 +406,15 @@ public final class TestJarSigner {
 
         // 8. Sign encoded TBSCertificate bytes using RSA private key
         byte[] tbsBytes = tbsSeq.getEncoded();
-        Signature sig = Signature.getInstance("SHA256withRSA");
-        sig.initSign(keyPair.getPrivate());
-        sig.update(tbsBytes);
-        byte[] signatureBytes = sig.sign();
+        byte[] signatureBytes;
+        try {
+            Signature sig = Signature.getInstance("SHA256withRSA");
+            sig.initSign(keyPair.getPrivate());
+            sig.update(tbsBytes);
+            signatureBytes = sig.sign();
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            throw new TestJarException(e, e.getMessage());
+        }
 
         // 9. Assemble outer Certificate SEQUENCE: { tbsCertificate, signatureAlgorithm, signatureValue }
         ASN1BitString sigBitString = new ASN1BitString(signatureBytes, 0);
@@ -337,9 +425,14 @@ public final class TestJarSigner {
         ));
 
         // 10. Instantiate standard JDK X509Certificate from DER bytes
-        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-        return (X509Certificate) certFactory.generateCertificate(
-                new ByteArrayInputStream(certSeq.getEncoded())
-        );
+        try {
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            return (X509Certificate) certFactory.generateCertificate(
+                    new ByteArrayInputStream(certSeq.getEncoded())
+            );
+        } catch (CertificateException e) {
+            throw new TestJarException(e, e.getMessage());
+        }
+
     }
 }

@@ -122,23 +122,23 @@ public class SyntheticJar implements Locatable {
         return this;
     }
 
-    public SyntheticJar signWith(TestCertificateAuthority ca) {
-        ensureClassFiles();
-        try {
-            signedBundle = new TestJarSigner().sign(classes, ca);
-        } catch (Exception e) {
-            throw new TestJarException(e, "Failed to sign JAR");
-        }
-        return this;
-    }
+    // public SyntheticJar signWith(TestCertificateAuthority ca) {
+    //     ensureClassFiles();
+    //     // try {
+    //         signedBundle = new TestJarSigner().sign(classes, ca);
+    //     // } catch (Exception e) {
+    //     //     throw new TestJarException(e, "Failed to sign JAR");
+    //     // }
+    //     return this;
+    // }
 
     public SyntheticJar signWith(TestSigningIdentity sa) {
         ensureClassFiles();
-        try {
-            signedBundle = new TestJarSigner().sign(classes, sa);
-        } catch (Exception e) {
-            throw new TestJarException(e, "Failed to sign JAR");
-        }
+        // try {
+            signedBundle = new TestJarSigner().withIdentity(sa).sign(classes);
+        // } catch (Exception e) {
+        //     throw new TestJarException(e, "Failed to sign JAR");
+        // }
         return this;
     }
 

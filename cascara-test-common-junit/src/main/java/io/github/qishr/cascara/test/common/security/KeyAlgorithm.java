@@ -19,6 +19,19 @@ public enum KeyAlgorithm {
         this.signatureOid = signatureOid;
     }
 
+    public static KeyAlgorithm of(String name) {
+        switch(name.toUpperCase()) {
+            case "RSA":
+                return RSA;
+            case "DSA":
+                return DSA;
+            case "EC":
+                return EC;
+            default:
+                return null;
+        }
+    }
+
     public String getKeyAlgorithm() { return keyAlgorithm; }
     public String getSignatureAlgorithm() { return signatureAlgorithm; }
     public String getSignatureOid() { return signatureOid; }
