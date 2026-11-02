@@ -69,10 +69,8 @@ public class SyntheticJar implements Locatable {
     }
 
     public SyntheticJar addSources(String... paths) {
-
         for (String resPath : paths) {
             try (InputStream is = getClass().getClassLoader().getResourceAsStream(resPath)) {
-
                 if (is == null) {
                     throw new IllegalStateException("Failed to read resource: " + resPath);
                 }
@@ -88,11 +86,9 @@ public class SyntheticJar implements Locatable {
 
                 // 3. call addSources wit the map
                 addSources(Map.of(className, sourceText));
-
             } catch (IOException e) {
                 throw new TestJarException(e, "Failed to read resource: " + resPath);
             }
-
         }
         return this;
     }
@@ -121,8 +117,7 @@ public class SyntheticJar implements Locatable {
         try {
             signedBundle = new TestJarSigner().sign(classes);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new TestJarException(e, "Failed to sign JAR");
         }
         return this;
     }
@@ -132,8 +127,7 @@ public class SyntheticJar implements Locatable {
         try {
             signedBundle = new TestJarSigner().sign(classes, ca);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new TestJarException(e, "Failed to sign JAR");
         }
         return this;
     }
@@ -143,8 +137,7 @@ public class SyntheticJar implements Locatable {
         try {
             signedBundle = new TestJarSigner().sign(classes, sa);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new TestJarException(e, "Failed to sign JAR");
         }
         return this;
     }
@@ -153,7 +146,5 @@ public class SyntheticJar implements Locatable {
         if (classes.isEmpty()) {
             classes = TestModuleCompiler.compileSources(this);
         }
-
     }
-
 }
