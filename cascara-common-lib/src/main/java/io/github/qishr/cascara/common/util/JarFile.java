@@ -76,6 +76,7 @@ public class JarFile extends ZipFile {
     private boolean verify;
     private Version version;
     private boolean isMultiRelease;
+    private boolean signaturesChecked;
 
     private String moduleName = null;
     private Properties mavenProperties;
@@ -389,7 +390,7 @@ public class JarFile extends ZipFile {
         if (verify && verifier == null) {
             try {
                 verifier = createVerifier();
-            } catch (LocalizableIOException e) {
+            } catch (IOException e) {
                 // TODO: We might want to handle this differently
                 return null;
             }
@@ -397,41 +398,24 @@ public class JarFile extends ZipFile {
         return verifier;
     }
 
-    /// @throws SignatureException
     /// @throws IoException
-    private JarVerifier createVerifier() throws LocalizableIOException {
-        byte[] mf;
-        try {
-            mf = super.extractFile(MANIFEST_MF);
-        } catch (LocalizableIOException e) {
-            throw new LocalizableIOException(e, GenericMessage.ERROR, "No MANIFEST.MF");
-        }
+    private JarVerifier createVerifier() throws IOException {
+        byte[] mf = super.extractFile(MANIFEST_MF);
 
         Map<String, byte[]> signatures = new HashMap<>();
         Map<String, byte[]> keys = new HashMap<>();
-        Map<String, String> keyFileNames = getKeyFiles();
+        Map<String, String> keyFileNames = getKeyFilenamesByAlias();
 
         for (Entry<String, String> entry : keyFileNames.entrySet()) {
-            String identityName = entry.getKey();
+            String alias = entry.getKey();
 
-            String sfName = META_INF + identityName + DOT_SF;
-            try {
-                byte[] sfBytes;
-                sfBytes = super.extractFile(sfName);
-                signatures.put(identityName, sfBytes);
-            } catch (IOException e) {
-                // TODO: move this. check signature exists in verifier
-                throw new LocalizableIOException(e, GenericMessage.ERROR, "Error reading " + sfName);
-            }
+            String sfName = META_INF + alias + DOT_SF;
+            byte[] sfBytes = super.extractFile(sfName);
+            signatures.put(alias, sfBytes);
 
             String kfName = META_INF + entry.getValue();
-            try {
-                byte[] kfBytes = super.extractFile(kfName);
-                keys.put(identityName, kfBytes);
-            } catch (IOException e) {
-                // TODO: move this. check key exists in verifier
-                throw new LocalizableIOException(e, GenericMessage.ERROR, "Error reading " + kfName);
-            }
+            byte[] kfBytes = super.extractFile(kfName);
+            keys.put(alias, kfBytes);
         }
 
         return new CascaraJarVerifier()
@@ -440,44 +424,50 @@ public class JarFile extends ZipFile {
                 .setManifest(mf);
     }
 
-    private Map<String,String> getKeyFiles() {
+    private Map<String,String> getKeyFilenamesByAlias() {
         List<ZipEntry> metaInf = super.getEntries(META_INF);
 
         // 1. Find SF files
-        List<String> names = new ArrayList<>();
+        List<String> aliases = new ArrayList<>();
         for (ZipEntry entry : metaInf) {
             if (entry.getName().endsWith(DOT_SF)) {
-                String name = entry.getName().substring(META_INF.length(), entry.getName().length() -3);
-                names.add(name); // TODO: "alias" / "aliases"
+                aliases.add(entry.getName().substring(META_INF.length(), entry.getName().length() -3));
             }
         }
 
         // 2. Find matching keys
         Map<String,String> keyFiles = new HashMap<>();
         for (ZipEntry entry : metaInf) {
-            // String entryName = entry.getName();
-            String entryName = entry.getName().substring(META_INF.length());
-            if (!entryName.endsWith(DOT_SF)) {
-                int dot = entryName.lastIndexOf('.');
+            String fileName = entry.getName().substring(META_INF.length());
+            if (!fileName.endsWith(DOT_SF)) {
+                int dot = fileName.lastIndexOf('.');
                 if (dot > -1) {
-                    String name = entryName.substring(0, dot);
-                    if (names.contains(name)) {
-                        keyFiles.put(name, entryName);
-                    } else if (entryName.endsWith(".RSA")) {
-                        // TODO: other key types
-                        throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Missing SF file");
+                    String alias = fileName.substring(0, dot);
+                    String suffix = fileName.substring(dot + 1);
+
+                    switch (suffix) {
+                        case "DSA", "RSA", "EC":
+                            if (aliases.contains(alias)) {
+                                keyFiles.put(alias, fileName);
+                            } else {
+                                // TODO: This should be in CascaraJarVerifier...
+                                // TODO: Proper exception
+                                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Missing SF file");
+                            }
                     }
+
                 }
             }
         }
-        // TODO: move this. check key exists in verifier
-        if (keyFiles.size() < names.size()) {
+
+        // TODO: This should be in CascaraJarVerifier...
+        if (keyFiles.size() < aliases.size()) {
+            // TODO: Proper exception
             throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Missing key file");
         }
+
         return keyFiles;
     }
-
-    private boolean signaturesChecked;
 
     private void verifyEntry(String entryName) {
         JarVerifier jv = getVerifier();

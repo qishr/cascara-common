@@ -1,22 +1,32 @@
 package integration.test.jar;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
+import java.util.Set;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import integration.test.spl.SplTestBase;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.SignatureException;
+import io.github.qishr.cascara.common.security.SignatureStatus;
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
+import io.github.qishr.cascara.common.security.TrustStore;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
@@ -32,9 +42,23 @@ import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.common.util.ZipFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
+import io.github.qishr.cascara.test.common.security.KeyAlgorithm;
+import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
+import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
 public class JarSignatureTests extends SplTestBase {
     private final static Reporter REPORTER = Reporter.forClass(JarSignatureTests.class);
+
+    @BeforeAll
+    static void startUp() {
+        GlobalReporter.globalInstance()
+            .setLevel(Level.DEBUG)
+            .getFormatOptions()
+                .setIncludeTime(false)
+                .setIncluedPid(false)
+                .setIncluedThread(false)
+                .setUseSimpleClassName(true);
+    }
 
     @Test
     void test_verifySignature() throws Exception {
@@ -149,7 +173,9 @@ public class JarSignatureTests extends SplTestBase {
                 InputStream is = jar.getInputStream(entry.getName());
                 try {
                     is.close();
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                    reporter.error(e);
+                }
             }
         });
 
@@ -253,4 +279,31 @@ public class JarSignatureTests extends SplTestBase {
         } catch (Exception e) {}
     }
 
+
+    @Test
+    void test_ecSignedJar_evaluatesValid(@TempDir Path tempDir) throws Exception {
+        // 1. Create an EC Root CA
+        TestCertificateAuthority ecCA = TestCertificateAuthority.create("Cascara EC Root CA", KeyAlgorithm.EC);
+        TestSigningIdentity ecIdentity = ecCA.issueIdentity("ec-provider-module");
+
+        // 2. Build synthetic JAR signed with EC identity
+        SyntheticJar ecSignedJar = SyntheticJar.forUseIn(JarSignatureTests.class)
+                .setPath(tempDir.resolve("ec-provider.jar"))
+                // .addDependencies("cascara-common")
+                // .addSources(sourceCodeA())
+                .addSources("code/ModuleInfoA.txt", "code/ProviderA.txt")
+                .signWith(ecIdentity)
+                .packageJar();
+
+        // 3. Verify under SignaturePolicy requiring ecCA trust anchor
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+                .requireSigned(true)
+                .trustStore(new TrustStore(Set.of(ecCA.certificate())))
+                .build();
+
+        try (JarFile jar = JarFile.open(ecSignedJar.getPath())) {
+            SignatureStatus status = policy.evaluate(jar);
+            assertEquals(SignatureStatus.VALID, status);
+        }
+    }
 }

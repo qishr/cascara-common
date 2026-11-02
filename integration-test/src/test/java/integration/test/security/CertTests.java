@@ -59,7 +59,7 @@ public class CertTests extends TestBase implements SourceCode {
         // 4. Assert that SignerInfo or JarVerifier maps this to SignatureStatus.CERTIFICATE_EXPIRED
         DERDecoder decoder = new DERDecoder();
         ASN1Sequence rootSeq;
-        try (ASN1InputStream ais = new ASN1InputStream(decoder, bundle.keyRsa())) {
+        try (ASN1InputStream ais = new ASN1InputStream(decoder, bundle.key())) {
             rootSeq = (ASN1Sequence) ais.readObject();
         }
         SignedData sd = CMSUtils.signedDataOrNull(rootSeq);

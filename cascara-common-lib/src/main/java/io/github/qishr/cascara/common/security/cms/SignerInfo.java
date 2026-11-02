@@ -2,10 +2,12 @@ package io.github.qishr.cascara.common.security.cms;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
+import java.security.PublicKey;
 import java.security.Signature;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
+import io.github.qishr.cascara.common.security.SecurityMessage;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
@@ -14,6 +16,7 @@ import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Tagged
 import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1Integer;
 import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectIdentifier;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
+import io.github.qishr.cascara.common.security.cert.SignatureAlgorithms;
 
 public final class SignerInfo {
 
@@ -116,9 +119,39 @@ public final class SignerInfo {
      */
     public boolean verifySignature(X509Certificate cert, byte[] sfFileBytes) throws Exception {
         // Map OID to Standard Java Algorithm Name (e.g., "SHA256withRSA")
+
+
+
+
+
+
+        // TODO - this looks like what was already happening, so remove it.
+
+        // // Resolve the algorithm from either:
+        // // 1) The signatureAlgorithm OID in SignerInfo, OR
+        // // 2) The combination of digestAlgorithm OID and the signing certificate's public key
+        // String sigAlg = SignatureAlgorithms.resolveSignatureAlgorithm(
+        //         signerInfo.getDigestAlgorithmOid(),
+        //         signingCert.getPublicKey()
+        // );
+
+        // Signature verifier = Signature.getInstance(sigAlg);
+        // verifier.initVerify(signingCert.getPublicKey());
+        // verifier.update(signatureFileBytes);
+
+        // if (!verifier.verify(signerInfo.getEncryptedDigest())) {
+        //     throw new SignatureException(SecurityMessage.INVALID_SIGNATURE, ...);
+        // }
+
+
+
+
+
+
         String javaSigAlgorithm = resolveSignatureAlgorithm(digestAlgorithmOid, signatureAlgorithmOid);
         Signature sig = Signature.getInstance(javaSigAlgorithm);
-        sig.initVerify(cert.getPublicKey());
+        PublicKey publicKey = cert.getPublicKey();
+        sig.initVerify(publicKey);
 
         if (signedAttrs != null) {
             // A. Verify the MessageDigest attribute inside signedAttrs against hash(sfFileBytes)

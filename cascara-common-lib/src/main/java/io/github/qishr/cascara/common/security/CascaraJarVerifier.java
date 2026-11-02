@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -271,6 +272,16 @@ public class CascaraJarVerifier implements JarVerifier {
     private void verifySignaturesAgainstKeys() {
         signers = new HashMap<>();
         // `keys` cannot be null here due to earlier assertSetup() call
+
+        if (keys.size() < signatureFiles.size()) {
+            // TODO: Proper exception
+            throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Missing key file");
+        }
+        if (keys.size() > signatureFiles.size()) {
+            // TODO: Proper exception
+            throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Extra key file");
+        }
+
         for (Entry<String,SignatureBlock> entry : keys.entrySet()) {
 
             String signerName = entry.getKey();
@@ -320,11 +331,44 @@ public class CascaraJarVerifier implements JarVerifier {
         }
     }
 
+
+
+    //====================================================
+    // New methods:
+    public static String resolveSignatureAlgorithm(String digestOid, PublicKey publicKey) {
+        String keyAlg = publicKey.getAlgorithm(); // "RSA", "EC", "DSA"
+        String digestName = resolveDigestName(digestOid); // "SHA256", "SHA384", "SHA512", "SHA1"
+
+        if ("EC".equalsIgnoreCase(keyAlg)) {
+            return digestName + "withECDSA";
+        } else if ("DSA".equalsIgnoreCase(keyAlg)) {
+            return digestName + "withDSA";
+        } else if ("RSA".equalsIgnoreCase(keyAlg)) {
+            return digestName + "withRSA";
+        }
+
+        throw new UnsupportedAlgorithmException(keyAlg);
+    }
+    private static String resolveDigestName(String oid) {
+        return switch (oid) {
+            case "2.16.840.1.101.3.4.2.1" -> "SHA256";
+            case "2.16.840.1.101.3.4.2.2" -> "SHA384";
+            case "2.16.840.1.101.3.4.2.3" -> "SHA512";
+            case "1.3.14.3.2.26"           -> "SHA1";
+            default -> throw new UnsupportedDigestException(oid);
+        };
+    }
+    //
+    //====================================================
+
+
+
+
     private MessageDigest getAlgorithm(String name) {
         try {
             return MessageDigest.getInstance(name);
         } catch (NoSuchAlgorithmException e) {
-            throw new LocalizableNoSuchAlgorithmException(e, name);
+            throw new UnsupportedAlgorithmException(e, name);
         }
     }
 

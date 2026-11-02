@@ -1,0 +1,33 @@
+plugins {
+    id "java-library"
+    id 'eclipse'
+    id "io.github.qishr.cascara.conventions" version "0.1.0"
+    id "io.github.qishr.cascara.publish" version "0.1.1"
+}
+
+
+java { modularity.inferModulePath = true }
+
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+
+dependencies {
+    implementation(platform("io.github.qishr:cascara-meta-bom:$cascara_version"))
+
+    api 'org.junit.jupiter:junit-jupiter-api'
+    implementation 'org.junit.jupiter:junit-jupiter-params'
+    implementation 'org.junit.jupiter:junit-jupiter-engine'
+    implementation 'org.junit.platform:junit-platform-launcher'
+    implementation 'org.junit.platform:junit-platform-commons'
+
+    api project(':cascara-common-lib')
+}
+
+
+tasks.withType(Javadoc).configureEach {
+    options.addStringOption('Xdoclint:-missing', '-quiet')
+}
