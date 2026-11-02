@@ -18,7 +18,7 @@ public class SignatureException extends LocalizableSecurityException {
     }
 
     public SignatureException(Throwable t, SignatureStatus signatureStatus, DiagnosticMessage message, Object... details) {
-        super(message, details, t);
+        super(t, message, details);
         if (signatureStatus == null) {
             throw new UnexpectedNullParameterException("signatureStatus");
         }

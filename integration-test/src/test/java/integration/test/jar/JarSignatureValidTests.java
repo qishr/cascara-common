@@ -3,7 +3,6 @@ package integration.test.jar;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
@@ -20,10 +19,8 @@ import org.junit.jupiter.api.io.TempDir;
 import integration.test.spl.SplTestBase;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.security.SignatureException;
 import io.github.qishr.cascara.common.security.SignatureStatus;
 import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.TrustStore;
@@ -40,14 +37,13 @@ import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarFile.JarEntry;
-import io.github.qishr.cascara.common.util.ZipFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.KeyAlgorithm;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
-public class JarSignatureTests extends SplTestBase {
-    private final static Reporter REPORTER = Reporter.forClass(JarSignatureTests.class);
+public class JarSignatureValidTests extends SplTestBase {
+    private final static Reporter REPORTER = Reporter.forClass(JarSignatureValidTests.class);
 
     @BeforeAll
     static void startUp() {
@@ -62,7 +58,7 @@ public class JarSignatureTests extends SplTestBase {
 
     @Test
     void test_verifySignature() throws Exception {
-        SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureTests.class)
+        SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
             .setPath(getTempDir().resolve("provider.jar"))
             .addSources(sourceCodeA())
             .addDependencies("cascara-common", "integration-test-fixtures")
@@ -129,7 +125,7 @@ public class JarSignatureTests extends SplTestBase {
 
     @Test
     void test_valid_readJarEntries() {
-        SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureTests.class)
+        SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
             .setPath(getTempDir().resolve("provider.jar"))
             .addSources(sourceCodeA())
             .addDependencies("cascara-common", "integration-test-fixtures")
@@ -150,144 +146,18 @@ public class JarSignatureTests extends SplTestBase {
         }
     }
 
-    @Test
-    void test_invalid_missingKey_readJarEntries() throws LocalizableIOException {
-        SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
-            .addSources(sourceCodeA())
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .sign()
-            .packageJar();
-
-        // Remove the key file from the JAR
-        try (ZipFile jar = ZipFile.open(testJar.getPath())) {
-            jar.remove("META-INF/TEST.RSA");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Verify that an security exception is thrown
-        JarFile jar = JarFile.open(testJar.getPath());
-        assertThrows(LocalizableSecurityException.class, () -> {
-            for (JarEntry entry : jar.getJarEntries()) {
-                InputStream is = jar.getInputStream(entry.getName());
-                try {
-                    is.close();
-                } catch (Exception e) {
-                    reporter.error(e);
-                }
-            }
-        });
-
-        try {
-            jar.close();
-        } catch (Exception e) {}
-    }
-
-    @Test
-    void test_invalid_modifiedClass_readJarEntries() throws LocalizableIOException {
-        SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
-            .addSources(sourceCodeA())
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .sign()
-            .packageJar();
-
-        // Modify a class file in the JAR
-        try (ZipFile jar = ZipFile.open(testJar.getPath())) {
-            jar.addFile("garbage", "module-info.class");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Verify that an security exception is thrown
-        JarFile jar = JarFile.open(testJar.getPath());
-        assertThrows(SignatureException.class, () -> {
-            List<JarEntry> entries = jar.getJarEntries();
-            for (JarEntry entry : entries) {
-                InputStream is = jar.getInputStream(entry.getName());
-                try {
-                    is.close();
-                } catch (Exception e) {}
-            }
-        });
-
-        try {
-            jar.close();
-        } catch (Exception e) {}
-    }
-
-    @Test
-    void test_invalid_tamperedSF_readJarEntries() throws LocalizableIOException {
-        SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
-            .addSources(sourceCodeA())
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .sign()
-            .packageJar();
-
-        // Corrupt the .SF file in the JAR archive
-        try (ZipFile jar = ZipFile.open(testJar.getPath())) {
-            jar.addFile("SHA-256-Digest-Manifest: corruptedDigestValue==", "META-INF/TEST.SF");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Verify that a SecurityException is thrown due to .SF messageDigest mismatch in SignerInfo
-        JarFile jar = JarFile.open(testJar.getPath());
-        assertThrows(LocalizableSecurityException.class, () -> {
-            for (JarEntry entry : jar.getJarEntries()) {
-                try (InputStream is = jar.getInputStream(entry.getName())) {
-                    is.readAllBytes();
-                }
-            }
-        });
-
-        try {
-            jar.close();
-        } catch (Exception e) {}
-    }
-
-    @Test
-    void test_invalid_missingSF_readJarEntries() throws LocalizableIOException {
-        SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
-            .addSources(sourceCodeA())
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .sign()
-            .packageJar();
-
-        // Remove the .SF file while leaving TEST.RSA intact
-        try (ZipFile jar = ZipFile.open(testJar.getPath())) {
-            jar.remove("META-INF/TEST.SF");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Verify that a SecurityException is thrown when signature block lacks corresponding .SF
-        JarFile jar = JarFile.open(testJar.getPath());
-        assertThrows(LocalizableSecurityException.class, () -> {
-            for (JarEntry entry : jar.getJarEntries()) {
-                try (InputStream is = jar.getInputStream(entry.getName())) {
-                    is.readAllBytes();
-                }
-            }
-        });
-
-        try {
-            jar.close();
-        } catch (Exception e) {}
-    }
-
 
     @Test
     void test_ecSignedJar_evaluatesValid(@TempDir Path tempDir) throws Exception {
+        // GlobalReporter.globalInstance().setLevel("io.github.qishr.cascara.test.common.security.TestCertificateAuthority", Level.DEBUG);
+        // GlobalReporter.globalInstance().setLevel("io.github.qishr.cascara.test.common.security.TestJarSigner", Level.DEBUG);
+
         // 1. Create an EC Root CA
         TestCertificateAuthority ecCA = TestCertificateAuthority.create("Cascara EC Root CA", KeyAlgorithm.EC);
         TestSigningIdentity ecIdentity = ecCA.issueIdentity("ec-provider-module");
 
         // 2. Build synthetic JAR signed with EC identity
-        SyntheticJar ecSignedJar = SyntheticJar.forUseIn(JarSignatureTests.class)
+        SyntheticJar ecSignedJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
                 .setPath(tempDir.resolve("ec-provider.jar"))
                 // .addDependencies("cascara-common")
                 // .addSources(sourceCodeA())

@@ -324,7 +324,12 @@ public class CascaraJarVerifier implements JarVerifier {
                 throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Error reading certificate: " + e.getMessage());
             } catch (SignatureException e) {
                 throw e;
+            // } catch (InvalidKeyException e) {
+            //     // TODO: Better status code
+            //     // "No installed provider supports this key: sun.security.ec.ECPublicKeyImpl"
+            //     throw new LocalizableInvalidKeyException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Signature check failed: " + e.getMessage());
             } catch (Exception e) {
+                e.printStackTrace();
                 // TODO: Better status code
                 throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Signature check failed: " + e.getMessage());
             }

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import javax.security.auth.x500.X500Principal;
 
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.TrustStore;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
@@ -33,6 +34,7 @@ import io.github.qishr.cascara.common.security.asn1.types.string.ASN1UTCTime;
 import io.github.qishr.cascara.common.security.cert.SignatureAlgorithms;
 
 public final class TestCertificateAuthority {
+    private static final Reporter REPORTER = Reporter.forClass(TestCertificateAuthority.class);
 
     public record TestSigningIdentity(
             String alias,
@@ -49,6 +51,11 @@ public final class TestCertificateAuthority {
 
     /// @param rootCA if this constructor is creating the Root CA, rootCA should be null.
     private TestCertificateAuthority(TestCertificateAuthority rootCA, String caName) throws Exception {
+        this.algorithm = KeyAlgorithm.RSA;
+        REPORTER.debug(
+            "Creating " +(rootCA == null ? "root " :"") +
+            "CA ("+debugAlg(this.algorithm)+")"
+        );
         this.rootCA = rootCA == null
             ? this
             : rootCA;
@@ -56,12 +63,15 @@ public final class TestCertificateAuthority {
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(2048);
         this.caKeyPair = keyGen.generateKeyPair();
-        this.algorithm = KeyAlgorithm.RSA;
         this.caCertificate = createCertificate(caPrincipal, caPrincipal, caKeyPair.getPublic(), caKeyPair.getPrivate(), 3650, rootCA == null);
     }
 
     /// @param rootCA if this constructor is creating the Root CA, rootCA should be null.
     private TestCertificateAuthority(TestCertificateAuthority rootCA, String caName, KeyPair keyPair, X509Certificate subCert, KeyAlgorithm algorithm) throws Exception {
+        REPORTER.debug(
+            "Creating " +(rootCA == null ? "root " :"") +
+            "CA (" + debugAlg(algorithm) + ")"
+        );
         this.rootCA = rootCA == null
             ? this
             : rootCA;
@@ -70,12 +80,6 @@ public final class TestCertificateAuthority {
         this.algorithm = algorithm;
         this.caCertificate = subCert;
     }
-
-
-
-
-
-
 
     public static TestCertificateAuthority create(String commonName, KeyAlgorithm algorithm) throws Exception {
         KeyPair keyPair = algorithm.generateKeyPair();
@@ -93,13 +97,20 @@ public final class TestCertificateAuthority {
         return new TestCertificateAuthority(null, commonName, keyPair, rootCert, algorithm);
     }
 
+    private String debugAlg(KeyAlgorithm alg) {
+        return "k=" + alg.getKeyAlgorithm() +
+               " s=" + alg.getSignatureAlgorithm();
+    }
+
     // Issue an identity inheriting the CA's algorithm
     public TestSigningIdentity issueIdentity(String commonName) throws Exception {
+        REPORTER.debug("Creating identity with default algorithm (" + debugAlg(this.algorithm) + ")");
         return issueIdentity(commonName, this.algorithm);
     }
 
     // Or issue an identity with a specific key type
     public TestSigningIdentity issueIdentity(String commonName, KeyAlgorithm identityAlgorithm) throws Exception {
+        REPORTER.debug("Creating identity with specified algorithm (" + debugAlg(identityAlgorithm) + ")");
         KeyPair keyPair = identityAlgorithm.generateKeyPair();
         X500Principal subject = new X500Principal("CN=" + commonName);
 
@@ -128,7 +139,8 @@ public final class TestCertificateAuthority {
     }
 
     public TestCertificateAuthority createSubordinateCA(String commonName) throws Exception {
-        KeyPair subKeyPair = generateKeyPair();
+        REPORTER.debug("Creating subordinate CA with default algorithm (" + debugAlg(algorithm) + ")");
+        KeyPair subKeyPair = algorithm.generateKeyPair();
 
         // In the X.509 generation logic (whether BouncyCastle or Cascara ASN.1 / Java security builder):
         X500Principal subSubject = new X500Principal("CN=" + commonName);
@@ -171,11 +183,8 @@ public final class TestCertificateAuthority {
         return new TrustStore(Set.of(caCertificate));
     }
 
-    // public TestSigningIdentity issueIdentity(String name) throws Exception {
-    //     return issueIdentity(name, 365);
-    // }
-
     public TestSigningIdentity issueIdentity(String name, long validityDays, KeyAlgorithm algorithm) throws Exception {
+        REPORTER.debug("Issuing identity with algorithm (" + debugAlg(algorithm) + ")");
 
         // TODO:
         // KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
@@ -200,6 +209,7 @@ public final class TestCertificateAuthority {
     }
 
     public TestSigningIdentity issueExpiredIdentity(String name) throws Exception {
+        REPORTER.debug("Issuing expired identity with algorithm (RSA)");
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(2048);
         KeyPair childKeyPair = keyGen.generateKeyPair();
@@ -217,19 +227,8 @@ public final class TestCertificateAuthority {
         return new TestSigningIdentity(name, expiredCert, childKeyPair.getPrivate(), KeyAlgorithm.RSA);
     }
 
-    public static KeyPair generateKeyPair() {
-        try {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-            keyGen.initialize(2048);
-            return keyGen.generateKeyPair();
-        } catch (NoSuchAlgorithmException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     public X509CRL generateCrl(Set<BigInteger> revokedSerialNumbers) throws Exception {
+        REPORTER.debug("Creating CRL with algorithm (SHA256withRSA)");
         Instant now = Instant.now();
         Instant nextUpdate = now.plus(7, ChronoUnit.DAYS);
 
@@ -319,61 +318,20 @@ public final class TestCertificateAuthority {
         // 2. Serial Number
         ASN1Integer serialNumber = new ASN1Integer(new BigInteger(64, new SecureRandom()).abs());
 
-        // 3. Signature AlgorithmIdentifier: sha256WithRSAEncryption
-        // ASN1ObjectIdentifier sha256WithRsaOid = new ASN1ObjectIdentifier("1.2.840.113549.1.1.11");
-        // ASN1Sequence sigAlgSeq = new ASN1Sequence(List.of(sha256WithRsaOid, new ASN1Null()));
-
-
-
-
-
-        // TODO
-
-        // // Determine signature algorithm based on signingKey's algorithm
-        // String keyAlg = signingKey.getAlgorithm();
-        // String sigAlgName = "EC".equalsIgnoreCase(keyAlg) ? "SHA256withECDSA" : "SHA256withRSA";
-        // String sigAlgOid = "EC".equalsIgnoreCase(keyAlg)
-        //         ? "1.2.840.10045.4.3.2"       // ecdsa-with-SHA256
-        //         : "1.2.840.113549.1.1.11";     // sha256WithRSAEncryption
-
-        // // 3. Signature AlgorithmIdentifier
-        // ASN1ObjectIdentifier sigOid = new ASN1ObjectIdentifier(sigAlgOid);
-        // ASN1Sequence sigAlgSeq = new ASN1Sequence(List.of(sigOid, new ASN1Null()));
-
-        // // ... [version, serial, issuer, validity, subject, SPKI, extensions] ...
-
-        // // 8. Sign TBSCertificate using the dynamically determined algorithm
-        // Signature sig = Signature.getInstance(sigAlgName);
-        // sig.initSign(signingKey);
-        // sig.update(tbsSeq.getEncoded());
-        // byte[] signatureBytes = sig.sign();
-
-        // ----------------
-
         // Dynamically determine the signature algorithm matching the key
         String sigAlgName = SignatureAlgorithms.getDefaultSignatureAlgorithm(publicKey);
         String sigAlgOid = SignatureAlgorithms.getSignatureOid(sigAlgName);
 
+        REPORTER.debug("Creating cert");
+        REPORTER.debug("  Issuer: " + issuer.getName());
+        REPORTER.debug("  Subject: " + subject.getName());
+        REPORTER.debug("  Public key: " + publicKey.getAlgorithm());
+        REPORTER.debug("  Signing key: " + signingKey.getAlgorithm());
+        REPORTER.debug("  Signnature algorithm: " + sigAlgName);
+
         // 3. Signature AlgorithmIdentifier in ASN.1
         ASN1ObjectIdentifier sigOid = new ASN1ObjectIdentifier(sigAlgOid);
         ASN1Sequence sigAlgSeq = new ASN1Sequence(List.of(sigOid, new ASN1Null()));
-
-        // ... [TBSCertificate assembly] ...
-
-        // // 8. Sign TBSCertificate using the resolved algorithm
-        // Signature sig = Signature.getInstance(sigAlgName);
-        // sig.initSign(signingKey);
-        // sig.update(tbsSeq.getEncoded());
-        // byte[] signatureBytes = sig.sign();
-
-
-
-
-
-
-
-
-
 
         // 4. Issuer & Subject Sequences
         ASN1Sequence issuerSeq = null;
@@ -440,28 +398,11 @@ public final class TestCertificateAuthority {
         // Build TBSCertificate
         ASN1Sequence tbsSeq = new ASN1Sequence(tbsItems);
 
-
-
-
-        // // 8. Sign TBSCertificate with signing key
-        // Signature sig = Signature.getInstance("SHA256withRSA");
-        // sig.initSign(signingKey);
-        // sig.update(tbsSeq.getEncoded());
-        // byte[] signatureBytes = sig.sign();
-
-
-
         // 8. Sign TBSCertificate using the resolved algorithm
         Signature sig = Signature.getInstance(sigAlgName);
         sig.initSign(signingKey);
         sig.update(tbsSeq.getEncoded());
         byte[] signatureBytes = sig.sign();
-
-
-
-
-
-
 
         // 9. Outer Certificate Sequence
         ASN1BitString sigBitString = new ASN1BitString(signatureBytes, 0);

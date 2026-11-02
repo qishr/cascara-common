@@ -19,6 +19,7 @@ import java.util.jar.Manifest;
 
 import javax.security.auth.x500.X500Principal;
 
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
@@ -34,6 +35,8 @@ import io.github.qishr.cascara.common.security.asn1.types.string.ASN1UTCTime;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
 public final class TestJarSigner {
+
+    private static final Reporter REPORTER = Reporter.forClass(TestJarSigner.class);
 
     public record SignedJarBundle(
             byte[] manifestMf,
@@ -100,6 +103,11 @@ public final class TestJarSigner {
     }
 
     public SignedJarBundle sign(Map<String, byte[]> classFiles, X509Certificate cert, TestSigningIdentity signingId) throws Exception {
+        if (signingId == null) {
+            REPORTER.debug("Signning with default identity");
+        } else {
+            REPORTER.debug("Signning with identity: " + signingId.alias());
+        }
 
         // 2. Build MANIFEST.MF with SHA-256 digests for each class file
         Manifest mf = new Manifest();
@@ -143,11 +151,15 @@ public final class TestJarSigner {
             ? keyPair.getPrivate()
             : signingId.privateKey();
 
+        REPORTER.debug("  Private key: " + privateKey.getAlgorithm());
+
         // 4. Compute Digital Signature over MANIFEST.SF
         // Signature signature = Signature.getInstance("SHA256withRSA");
         String algName = signingId == null
             ? KeyAlgorithm.RSA.getSignatureAlgorithm()
             : signingId.algorithm().getSignatureAlgorithm();
+
+        REPORTER.debug("  Signature: " + algName);
 
         Signature signature = Signature.getInstance(algName);
         signature.initSign(privateKey);
@@ -157,7 +169,6 @@ public final class TestJarSigner {
         // 5. Build PKCS#7 SignedData (KEY.RSA) using Cascara ASN.1 objects
         byte[] keyRsaBytes = buildPkcs7SignedData(cert, signatureBytes);
 
-
         return new SignedJarBundle(mfBytes, sfBytes, keyRsaBytes, cert, privateKey, signingId == null ? null : signingId.algorithm());
     }
 
@@ -165,25 +176,105 @@ public final class TestJarSigner {
     //
     //
 
+    // private byte[] buildPkcs7SignedData(X509Certificate cert, byte[] sigBytes) throws Exception {
+    //     DERDecoder decoder = new DERDecoder();
+
+    //     // OIDs
+    //     ASN1ObjectIdentifier pkcs7SignedDataOid = new ASN1ObjectIdentifier("1.2.840.113549.1.7.2");
+    //     ASN1ObjectIdentifier pkcs7DataOid       = new ASN1ObjectIdentifier("1.2.840.113549.1.7.1");
+    //     ASN1ObjectIdentifier sha256Oid          = new ASN1ObjectIdentifier("2.16.840.1.101.3.4.2.1");
+    //     ASN1ObjectIdentifier rsaEncryptionOid   = new ASN1ObjectIdentifier("1.2.840.113549.1.1.1");
+
+    //     // DigestAlgorithms SET
+    //     ASN1Sequence digestAlgSeq = new ASN1Sequence(List.of(sha256Oid, new ASN1Null()));
+    //     ASN1Set digestAlgSet = new ASN1Set(Set.of(digestAlgSeq));
+
+    //     // EncapsulatedContentInfo: SEQUENCE { OID (data) }
+    //     ASN1Sequence encapsulatedContentInfo = new ASN1Sequence(List.of(pkcs7DataOid));
+
+    //     // Certificates IMPLICIT SET
+    //     // ASN1Sequence certSeq = (ASN1Sequence) new ASN1InputStream(decoder, cert.getEncoded()).readObject();
+    //     ASN1Sequence certSeq = null;
+    //     try (ASN1InputStream ais = new ASN1InputStream(decoder, cert.getEncoded())) {
+    //         certSeq = (ASN1Sequence) ais.readObject();
+    //     }
+    //     ASN1Set rawCertSet = new ASN1Set(Set.of(certSeq));
+    //     ASN1TaggedObject implicitCerts = new ASN1TaggedObject(ASN1Tag.contextSpecific(0), rawCertSet, false);
+
+    //     // IssuerAndSerialNumber: SEQUENCE { Issuer DN Sequence, SerialNumber }
+    //     // ASN1Sequence issuerSeq = (ASN1Sequence) new ASN1InputStream(decoder, cert.getIssuerX500Principal().getEncoded()).readObject();
+    //     ASN1Sequence issuerSeq = null;
+    //     try (ASN1InputStream ais = new ASN1InputStream(decoder, cert.getIssuerX500Principal().getEncoded())) {
+    //         issuerSeq = (ASN1Sequence) ais.readObject();
+    //     }
+    //     ASN1Integer serialInt = new ASN1Integer(cert.getSerialNumber());
+    //     ASN1Sequence issuerAndSerial = new ASN1Sequence(List.of(issuerSeq, serialInt));
+
+    //     // SignerInfo: SEQUENCE { version, issuerAndSerial, digestAlg, sigAlg, signatureOctets }
+    //     ASN1Sequence sigAlgSeq = new ASN1Sequence(List.of(rsaEncryptionOid, new ASN1Null()));
+    //     ASN1OctetString sigOctets = new ASN1OctetString(sigBytes);
+
+    //     ASN1Sequence signerInfoSeq = new ASN1Sequence(List.of(
+    //             new ASN1Integer(1),
+    //             issuerAndSerial,
+    //             digestAlgSeq,
+    //             sigAlgSeq,
+    //             sigOctets
+    //     ));
+    //     ASN1Set signerInfosSet = new ASN1Set(Set.of(signerInfoSeq));
+
+    //     // Inner SignedData Sequence
+    //     ASN1Sequence signedDataSeq = new ASN1Sequence(List.of(
+    //             new ASN1Integer(1),
+    //             digestAlgSet,
+    //             encapsulatedContentInfo,
+    //             implicitCerts,
+    //             signerInfosSet
+    //     ));
+
+    //     // Outer ContentInfo: SEQUENCE { OID (SignedData), EXPLICIT SignedData }
+    //     ASN1TaggedObject outerContent = new ASN1TaggedObject(ASN1Tag.contextSpecific(0), signedDataSeq, true);
+    //     ASN1Sequence outerContentInfo = new ASN1Sequence(List.of(pkcs7SignedDataOid, outerContent));
+
+    //     return outerContentInfo.getEncoded();
+    // }
+
     private byte[] buildPkcs7SignedData(X509Certificate cert, byte[] sigBytes) throws Exception {
         DERDecoder decoder = new DERDecoder();
+        PublicKey publicKey = cert.getPublicKey();
+        String keyAlg = publicKey.getAlgorithm().toUpperCase();
 
-        // OIDs
+        REPORTER.debug("Creating PKCS7");
+        REPORTER.debug("  Key Alg: " + keyAlg);
+
+
+        // Standard PKCS#7 ContentInfo OIDs
         ASN1ObjectIdentifier pkcs7SignedDataOid = new ASN1ObjectIdentifier("1.2.840.113549.1.7.2");
         ASN1ObjectIdentifier pkcs7DataOid       = new ASN1ObjectIdentifier("1.2.840.113549.1.7.1");
-        ASN1ObjectIdentifier sha256Oid          = new ASN1ObjectIdentifier("2.16.840.1.101.3.4.2.1");
-        ASN1ObjectIdentifier rsaEncryptionOid   = new ASN1ObjectIdentifier("1.2.840.113549.1.1.1");
+
+        // 1. Resolve Digest OID matching the key / signature
+        // Default to SHA-256, or inspect bit size if P-384 / P-521
+        String digestOidStr = "2.16.840.1.101.3.4.2.1"; // SHA-256
+        if (publicKey instanceof java.security.interfaces.ECKey ecKey) {
+            int fieldSize = ecKey.getParams().getCurve().getField().getFieldSize();
+            if (fieldSize > 384) {
+                digestOidStr = "2.16.840.1.101.3.4.2.3"; // SHA-512
+            } else if (fieldSize > 256) {
+                digestOidStr = "2.16.840.1.101.3.4.2.2"; // SHA-384
+            }
+        }
+        ASN1ObjectIdentifier digestOid = new ASN1ObjectIdentifier(digestOidStr);
+        REPORTER.debug("  digestOidStr: " + digestOidStr);
 
         // DigestAlgorithms SET
-        ASN1Sequence digestAlgSeq = new ASN1Sequence(List.of(sha256Oid, new ASN1Null()));
+        ASN1Sequence digestAlgSeq = new ASN1Sequence(List.of(digestOid, new ASN1Null()));
         ASN1Set digestAlgSet = new ASN1Set(Set.of(digestAlgSeq));
 
         // EncapsulatedContentInfo: SEQUENCE { OID (data) }
         ASN1Sequence encapsulatedContentInfo = new ASN1Sequence(List.of(pkcs7DataOid));
 
         // Certificates IMPLICIT SET
-        // ASN1Sequence certSeq = (ASN1Sequence) new ASN1InputStream(decoder, cert.getEncoded()).readObject();
-        ASN1Sequence certSeq = null;
+        ASN1Sequence certSeq;
         try (ASN1InputStream ais = new ASN1InputStream(decoder, cert.getEncoded())) {
             certSeq = (ASN1Sequence) ais.readObject();
         }
@@ -191,18 +282,37 @@ public final class TestJarSigner {
         ASN1TaggedObject implicitCerts = new ASN1TaggedObject(ASN1Tag.contextSpecific(0), rawCertSet, false);
 
         // IssuerAndSerialNumber: SEQUENCE { Issuer DN Sequence, SerialNumber }
-        // ASN1Sequence issuerSeq = (ASN1Sequence) new ASN1InputStream(decoder, cert.getIssuerX500Principal().getEncoded()).readObject();
-        ASN1Sequence issuerSeq = null;
+        ASN1Sequence issuerSeq;
         try (ASN1InputStream ais = new ASN1InputStream(decoder, cert.getIssuerX500Principal().getEncoded())) {
             issuerSeq = (ASN1Sequence) ais.readObject();
         }
         ASN1Integer serialInt = new ASN1Integer(cert.getSerialNumber());
         ASN1Sequence issuerAndSerial = new ASN1Sequence(List.of(issuerSeq, serialInt));
 
-        // SignerInfo: SEQUENCE { version, issuerAndSerial, digestAlg, sigAlg, signatureOctets }
-        ASN1Sequence sigAlgSeq = new ASN1Sequence(List.of(rsaEncryptionOid, new ASN1Null()));
+        // 2. Resolve DigestEncryptionAlgorithmIdentifier
+        ASN1Sequence sigAlgSeq;
+        if ("EC".equals(keyAlg) || "ECDSA".equals(keyAlg)) {
+            // For ECDSA, standard CMS uses id-ecPublicKey (1.2.840.10045.2.1)
+            // or the combined ecdsa-with-SHA* OID (e.g. 1.2.840.10045.4.3.2 for SHA256withECDSA)
+            // Parameters MUST be omitted for ECDSA (no ASN1Null).
+            String ecdsaOid = switch (digestOidStr) {
+                case "2.16.840.1.101.3.4.2.2" -> "1.2.840.10045.4.3.3"; // SHA384withECDSA
+                case "2.16.840.1.101.3.4.2.3" -> "1.2.840.10045.4.3.4"; // SHA512withECDSA
+                default                       -> "1.2.840.10045.4.3.2"; // SHA256withECDSA
+            };
+            REPORTER.debug("  ecdsaOid: " + ecdsaOid);
+            sigAlgSeq = new ASN1Sequence(List.of(new ASN1ObjectIdentifier(ecdsaOid)));
+        } else if ("DSA".equals(keyAlg)) {
+            // DSA with SHA-256 (2.16.840.1.101.3.4.3.2) or SHA-1 (1.2.840.10040.4.3)
+            sigAlgSeq = new ASN1Sequence(List.of(new ASN1ObjectIdentifier("2.16.840.1.101.3.4.3.2")));
+        } else {
+            // RSA: rsaEncryption (1.2.840.113549.1.1.1) with NULL parameters
+            sigAlgSeq = new ASN1Sequence(List.of(new ASN1ObjectIdentifier("1.2.840.113549.1.1.1"), new ASN1Null()));
+        }
+
         ASN1OctetString sigOctets = new ASN1OctetString(sigBytes);
 
+                // SignerInfo: SEQUENCE { version, issuerAndSerial, digestAlg, sigAlg, signatureOctets }
         ASN1Sequence signerInfoSeq = new ASN1Sequence(List.of(
                 new ASN1Integer(1),
                 issuerAndSerial,

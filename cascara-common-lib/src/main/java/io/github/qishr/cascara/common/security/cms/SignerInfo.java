@@ -1,13 +1,19 @@
 package io.github.qishr.cascara.common.security.cms;
 
 import java.math.BigInteger;
+// import java.security.InvalidKeyException;
 import java.security.MessageDigest;
+// import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.security.SecurityMessage;
+import io.github.qishr.cascara.common.security.SignatureException;
+import io.github.qishr.cascara.common.security.SignatureStatus;
+import io.github.qishr.cascara.common.security.UnsupportedAlgorithmException;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
@@ -17,6 +23,7 @@ import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1Integer;
 import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectIdentifier;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
 import io.github.qishr.cascara.common.security.cert.SignatureAlgorithms;
+import io.github.qishr.cascara.common.security.InvalidKeyException;
 
 public final class SignerInfo {
 
@@ -149,9 +156,30 @@ public final class SignerInfo {
 
 
         String javaSigAlgorithm = resolveSignatureAlgorithm(digestAlgorithmOid, signatureAlgorithmOid);
-        Signature sig = Signature.getInstance(javaSigAlgorithm);
-        PublicKey publicKey = cert.getPublicKey();
-        sig.initVerify(publicKey);
+        Signature sig;
+        PublicKey publicKey;
+
+        try {
+            sig = Signature.getInstance(javaSigAlgorithm);
+        } catch (java.security.NoSuchAlgorithmException e) {
+            // TODO: Better status code
+            // "No installed provider supports this key: sun.security.ec.ECPublicKeyImpl"
+            throw new UnsupportedAlgorithmException(e, javaSigAlgorithm);
+        } catch (Exception e) {
+            throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Invalid signature: " + e.getMessage());
+        }
+
+        publicKey = cert.getPublicKey();
+
+        try {
+            sig.initVerify(publicKey);
+        } catch (java.security.InvalidKeyException e) {
+            // TODO: Better status code
+            // "No installed provider supports this key: sun.security.ec.ECPublicKeyImpl"
+            throw new InvalidKeyException(e, publicKey.getClass().getName());
+        } catch (Exception e) {
+            throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Invalid signature: " + e.getMessage());
+        }
 
         if (signedAttrs != null) {
             // A. Verify the MessageDigest attribute inside signedAttrs against hash(sfFileBytes)
@@ -223,17 +251,44 @@ public final class SignerInfo {
     }
 
     private static String resolveSignatureAlgorithm(String digestOid, String sigOid) {
-        if ("1.2.840.113549.1.1.1".equals(sigOid) || "1.2.840.113549.1.1.12".equals(sigOid)) {
-            return switch (digestOid) {
-                case "1.3.14.3.2.26" -> "SHA1withRSA";
+        // Direct OID-to-Algorithm mappings (e.g. ecdsa-with-SHA256, sha256WithRSA, etc.)
+        return switch (sigOid) {
+            // ECDSA direct OIDs
+            case "1.2.840.10045.4.1"   -> "SHA1withECDSA";
+            case "1.2.840.10045.4.3.1" -> "SHA224withECDSA";
+            case "1.2.840.10045.4.3.2" -> "SHA256withECDSA";
+            case "1.2.840.10045.4.3.3" -> "SHA384withECDSA";
+            case "1.2.840.10045.4.3.4" -> "SHA512withECDSA";
+
+            // Generic EC public key (id-ecPublicKey) -> combine with digestOid
+            case "1.2.840.10045.2.1" -> switch (digestOid) {
+                case "1.3.14.3.2.26"           -> "SHA1withECDSA";
+                case "2.16.840.1.101.3.4.2.4" -> "SHA224withECDSA";
+                case "2.16.840.1.101.3.4.2.1" -> "SHA256withECDSA";
+                case "2.16.840.1.101.3.4.2.2" -> "SHA384withECDSA";
+                case "2.16.840.1.101.3.4.2.3" -> "SHA512withECDSA";
+                default                        -> "SHA256withECDSA";
+            };
+
+            // RSA Encryption (rsaEncryption) -> combine with digestOid
+            case "1.2.840.113549.1.1.1", "1.2.840.113549.1.1.11", "1.2.840.113549.1.1.12" -> switch (digestOid) {
+                case "1.3.14.3.2.26"           -> "SHA1withRSA";
+                case "2.16.840.1.101.3.4.2.4" -> "SHA224withRSA";
                 case "2.16.840.1.101.3.4.2.1" -> "SHA256withRSA";
                 case "2.16.840.1.101.3.4.2.2" -> "SHA384withRSA";
                 case "2.16.840.1.101.3.4.2.3" -> "SHA512withRSA";
-                default -> "SHA256withRSA";
+                default                        -> "SHA256withRSA";
             };
-        } else if ("1.2.840.10040.4.1".equals(sigOid) || "1.2.840.10040.4.3".equals(sigOid)) {
-            return "SHA256withDSA";
-        }
-        return "SHA256withRSA";
+
+            // DSA
+            case "1.2.840.10040.4.1", "1.2.840.10040.4.3" -> "SHA1withDSA";
+            case "2.16.840.1.101.3.4.3.2"                  -> "SHA256withDSA";
+
+            default -> {
+                // If you created SignatureAlgorithms.java:
+                // yield SignatureAlgorithms.getSignatureAlgorithmName(sigOid);
+                yield "SHA256withRSA";
+            }
+        };
     }
 }
