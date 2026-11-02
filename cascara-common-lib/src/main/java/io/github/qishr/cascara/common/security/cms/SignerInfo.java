@@ -128,34 +128,6 @@ public final class SignerInfo {
     public boolean verifySignature(X509Certificate cert, byte[] sfFileBytes) throws Exception {
         // Map OID to Standard Java Algorithm Name (e.g., "SHA256withRSA")
 
-
-
-
-
-
-        // TODO - this looks like what was already happening, so remove it.
-
-        // // Resolve the algorithm from either:
-        // // 1) The signatureAlgorithm OID in SignerInfo, OR
-        // // 2) The combination of digestAlgorithm OID and the signing certificate's public key
-        // String sigAlg = SignatureAlgorithms.resolveSignatureAlgorithm(
-        //         signerInfo.getDigestAlgorithmOid(),
-        //         signingCert.getPublicKey()
-        // );
-
-        // Signature verifier = Signature.getInstance(sigAlg);
-        // verifier.initVerify(signingCert.getPublicKey());
-        // verifier.update(signatureFileBytes);
-
-        // if (!verifier.verify(signerInfo.getEncryptedDigest())) {
-        //     throw new SignatureException(SecurityMessage.INVALID_SIGNATURE, ...);
-        // }
-
-
-
-
-
-
         String javaSigAlgorithm = resolveSignatureAlgorithm(digestAlgorithmOid, signatureAlgorithmOid);
         Signature sig;
         PublicKey publicKey;

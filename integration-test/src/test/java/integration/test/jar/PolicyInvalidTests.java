@@ -119,4 +119,29 @@ public class PolicyInvalidTests extends JarTestBase implements SourceCode {
         }
     }
 
+    @Test
+    void test_invalid_expiredCert_policyEvaluationFails(@TempDir Path tempDir) throws Exception {
+        // 1. Issue an expired identity
+        TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
+        Path jarPath = tempDir.resolve("expired-cert.jar");
+
+        // 2. Package and sign JAR
+        SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
+                .setPath(jarPath)
+                .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
+                .sign(s -> s.withIdentity(expiredIdentity))
+                .packageJar();
+
+        // 3. Configure policy requiring valid signatures trusted by rootCA
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+                .requireSigned(true)
+                .trustStore(new TrustStore(Set.of(rootCA.certificate())))
+                .build();
+
+        // 4. Policy evaluation must reject with CERTIFICATE_EXPIRED
+        try (JarFile jar = JarFile.open(jarPath)) {
+            SignatureStatus status = policy.evaluate(jar);
+            assertEquals(SignatureStatus.CERTIFICATE_EXPIRED, status);
+        }
+    }
 }
