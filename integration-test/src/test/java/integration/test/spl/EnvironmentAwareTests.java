@@ -51,9 +51,6 @@ public class EnvironmentAwareTests {
     @Test
     @EnabledIf("isModularEnvironment")
     void test_modularSpecificBehavior() {
-        SemVer version = Cascara.getVersion();
-        System.out.println("cascara version = " + version);
-
         Module module = getClass().getModule();
         assertTrue(module.isNamed());
         assertEquals("integration.test", module.getName());
@@ -61,9 +58,10 @@ public class EnvironmentAwareTests {
 
     @Test
     void test_commonBehaviorWorkOnBoth() {
+        // TODO
         // Runs regardless of environment
         SemVer version = Cascara.getVersion();
-        System.out.println("cascara version = " + version);
-        System.out.println("module name = " + getClass().getModule().getName());
+        // System.out.println("cascara version = " + version);
+        // System.out.println("module name = " + getClass().getModule().getName());
     }
 }

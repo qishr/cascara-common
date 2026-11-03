@@ -1,0 +1,11 @@
+package com.example.singleton;
+import java.util.UUID;
+import integration.test.fixtures.DemoSingleton;
+import io.github.qishr.cascara.common.annotation.SingletonInitializer;
+public final class DemoSingletonImpl implements DemoSingleton {
+    public static int initCount = 0;
+    public UUID uuid;
+    @SingletonInitializer private void init() { initCount++; uuid = UUID.randomUUID(); }
+    public int getInitCount() { return initCount; }
+    public UUID getUuid() { return uuid; }
+}

@@ -45,11 +45,7 @@ public abstract class SerializerTestBase {
 
     @BeforeEach
     protected void setUp() {
-        // GlobalReporter.globalInstance().setLevel(SPL.class.getName(), Level.TRACE);
-
         reporter = GlobalReporter.forClass(getClass());
-        // reporter.setLevel(Level.DEBUG);
-
         serializer = new SerializerImpl();
         serializer.setReporter(new LocalReporter());
     }

@@ -19,13 +19,13 @@ public abstract class JarTestBase extends VfsTestBase {
 
     @BeforeAll
     static void init() throws Exception {
-        GlobalReporter.globalInstance()
-            .setLevel(Level.DEBUG)
-            .getFormatOptions()
-                .setIncludeTime(false)
-                .setIncluedPid(false)
-                .setIncluedThread(false)
-                .setUseSimpleClassName(true);
+        // GlobalReporter.globalInstance()
+        //     .setLevel(Level.DEBUG)
+        //     .getFormatOptions()
+        //         .setIncludeTime(false)
+        //         .setIncluedPid(false)
+        //         .setIncluedThread(false)
+        //         .setUseSimpleClassName(true);
 
         rootCA = TestCertificateAuthority.create("Root CA");
     }

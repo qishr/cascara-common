@@ -9,12 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public abstract class TestBase {
-    private static final Level TEST_REPORTING_LEVEL = Level.INFO;
-
-    public GlobalReporter reporter;
+    private static final Reporter REPORTER = Reporter.forClass(TestBase.class);
 
     @TempDir
     public Path tempDir;
@@ -26,15 +26,22 @@ public abstract class TestBase {
 
             return tempFile;
         } catch (IOException e) {
-            // REPORTER.error(e);
+            REPORTER.error(e, GenericMessage.ERROR, "Failed to create temp file");
             return null;
         }
     }
 
     @BeforeEach
     protected void setUp() throws IOException {
-        GlobalReporter.globalInstance().setLevel(TEST_REPORTING_LEVEL);
-        reporter = GlobalReporter.forClass(getClass());
+        GlobalReporter.globalInstance().setLevel(Level.INFO);
+        GlobalReporter.globalInstance().setSystemOutputEnabled(true);
+        GlobalReporter.globalInstance().setLineConsumer(null);
+        GlobalReporter.globalInstance()
+            .getFormatOptions()
+                .setIncludeTime(false)
+                .setIncluedPid(false)
+                .setIncluedThread(false)
+                .setUseSimpleClassName(true);
     }
 
     @AfterEach

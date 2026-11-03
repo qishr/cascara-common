@@ -9,7 +9,6 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import integration.test.util.SourceCode;
 import io.github.qishr.cascara.common.security.SignatureStatus;
 import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.TrustStore;
@@ -18,7 +17,8 @@ import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
-public class PolicyInvalidTests extends JarTestBase implements SourceCode {
+public class PolicyInvalidTests extends JarTestBase {
+
     @Test
     void test_invalid_untrustedSigner_signaturePolicy() throws Exception {
         // 1. Create a trusted CA and a foreign CA

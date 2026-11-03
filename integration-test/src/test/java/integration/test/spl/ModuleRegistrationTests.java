@@ -48,6 +48,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.type.ScalarDescriptor;
 import io.github.qishr.cascara.common.lang.util.SourceBuffer;
@@ -61,6 +62,7 @@ import integration.test.fixtures.DemoSingleton;
 import integration.test.fixtures.TestService;
 
 class ModuleRegistrationTests extends SplTestBase {
+    private static final Reporter REPORTER = Reporter.forClass(ModuleRegistrationTests.class);
 
     @Test
     void loadsPreferredProviderFromVirtualHome() throws IOException {
@@ -99,12 +101,12 @@ class ModuleRegistrationTests extends SplTestBase {
             changes.add(change);
         });
 
-        reporter.info(GenericMessage.INFO, "Test registering JAR");
+        REPORTER.debug("Test registering JAR");
 
         SyntheticJar testJar = SyntheticJar.forUseIn(ModuleRegistrationTests.class)
             .setPath(Cascara.getModulePath().resolve("provider-a.jar"))
             .setMinCascaraVersion("0.10.0")
-            .addSources(sourceCodeA())
+            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();
@@ -150,7 +152,7 @@ class ModuleRegistrationTests extends SplTestBase {
         SyntheticJar testJar = SyntheticJar.forUseIn(ModuleRegistrationTests.class)
             .setPath(Cascara.getModulePath().resolve("singleton.jar"))
             .setMinCascaraVersion("0.10.0")
-            .addSources(sourceCodeS())
+            .addSources("code/singleton/module-info.txt", "code/singleton/DemoSingletonImpl.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();

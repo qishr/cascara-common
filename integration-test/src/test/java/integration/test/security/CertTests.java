@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import integration.test.jar.JarTestBase;
-import integration.test.util.SourceCode;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
@@ -24,7 +23,7 @@ import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 import io.github.qishr.cascara.test.common.security.TestJarSigner;
 
-public class CertTests extends JarTestBase implements SourceCode {
+public class CertTests extends JarTestBase {
 
     @Test
     void test_invalid_expiredCertificate() throws Exception {

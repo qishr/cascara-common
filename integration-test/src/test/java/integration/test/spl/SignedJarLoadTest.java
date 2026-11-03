@@ -12,11 +12,11 @@ import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 
 public class SignedJarLoadTest extends SplTestBase {
-        @Test
+    @Test
     void testLoadSignedJar() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
             .setPath(getTempDir().resolve("provider.jar"))
-            .addSources(sourceCodeA())
+            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();

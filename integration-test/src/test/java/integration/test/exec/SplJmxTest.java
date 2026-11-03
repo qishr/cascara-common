@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.diagnostic.log.TimeSequencedAggregatorLogger;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import io.github.qishr.cascara.common.exec.JvmProcess;
@@ -36,60 +37,30 @@ import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import integration.test.fixtures.beans.SPLStatusMBean;
 import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.task.JmxTestTask;
-import integration.test.util.SourceCode;
 
 import org.junit.jupiter.api.parallel.Isolated;
 
 @Disabled
 @Isolated
-public class SplJmxTest extends JmxTestBase implements  SourceCode {
+public class SplJmxTest extends JmxTestBase {
+    private static final Reporter REPORTER = Reporter.forClass(SplJmxTest.class);
+
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
     }
 
     private void displayBeanInfo(ClassLoadingMXBean classLoading) {
-        reporter.debug("Currently loaded: " + classLoading.getLoadedClassCount());
-        reporter.debug("Total loaded: " + classLoading.getTotalLoadedClassCount());
-        reporter.debug("Total unloaded: " + classLoading.getUnloadedClassCount());
+        REPORTER.debug("Currently loaded: " + classLoading.getLoadedClassCount());
+        REPORTER.debug("Total loaded: " + classLoading.getTotalLoadedClassCount());
+        REPORTER.debug("Total unloaded: " + classLoading.getUnloadedClassCount());
     }
 
     protected Path createModuleA() throws IOException {
-        // Path providerAJar = Cascara.getModulePath().resolve("provider-a.jar");
-
-        // // Synthetic Module A with explicit module-info
-        // TestModulePackager.packageModuleJar(
-        //     providerAJar,
-        //     "0.11.0",
-        //     Map.of(
-        //         "module-info",
-        //         "module provider.a { " +
-        //         "    requires cascara.common; " +
-        //         "    requires integration.test.fixtures; " +
-        //         "    exports com.example.providera; " +
-        //         "    opens com.example.providera to cascara.common; " +
-        //         "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
-        //         "        with com.example.providera.ProviderA;" +
-        //         "}",
-
-        //         "com.example.providera.ProviderA",
-        //         "package com.example.providera; " +
-        //         "import integration.test.fixtures.TestService; " +
-        //         "import io.github.qishr.cascara.common.property.Properties; " +
-        //         "public class ProviderA implements TestService { " +
-        //         "    public String getName() { return \"ProviderA\"; } " +
-        //         "    public Properties getServiceProperties() { return null; } " +
-        //         "}"
-        //     ),
-        //     List.of("cascara-common", "integration-test-fixtures"),
-        //     "integration-test"
-        // );
-        // return providerAJar;
-
         SyntheticJar testJar = SyntheticJar.forUseIn(SplJmxTest.class)
             .setPath(Cascara.getModulePath().resolve("provider-a.jar"))
             .setMinCascaraVersion("0.10.0")
-            .addSources(sourceCodeA())
+            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();
@@ -102,7 +73,7 @@ public class SplJmxTest extends JmxTestBase implements  SourceCode {
 
     @Test
     void test_1() throws Exception {
-        reporter.debug("CASC_HOME=" + getPhysicalHomePath());
+        REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString(input);
@@ -141,13 +112,13 @@ public class SplJmxTest extends JmxTestBase implements  SourceCode {
         AtomicBoolean finished = new AtomicBoolean(false);
 
         // Run sub-JVM process...
-        reporter.debug("Starting new JVM in background");
+        REPORTER.debug("Starting new JVM in background");
         JvmProcess.forClass(taskClass)
             .setOptions(options)
             .runAsync(json)
             .thenAccept(response -> {
                 // Callback executed upon child process completion
-                debug("Background process finished with exit code: " + response.exitCode);
+                REPORTER.debug("Background process finished with exit code: " + response.exitCode);
                 debug(response);
                 try {
                     ipcServer.close();
@@ -214,7 +185,7 @@ public class SplJmxTest extends JmxTestBase implements  SourceCode {
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
 
-        reporter.debug("CASC_HOME=" + getPhysicalHomePath());
+        REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString(input);
@@ -244,13 +215,13 @@ public class SplJmxTest extends JmxTestBase implements  SourceCode {
         AtomicBoolean finished = new AtomicBoolean(false);
 
         // Run sub-JVM process...
-        reporter.debug("Starting new JVM in background");
+        REPORTER.debug("Starting new JVM in background");
         JvmProcess.forClass(taskClass)
             .setOptions(options)
             .runAsync(json)
             .thenAccept(response -> {
                 // Callback executed upon child process completion
-                debug("Background process finished with exit code: " + response.exitCode);
+                REPORTER.debug("Background process finished with exit code: " + response.exitCode);
                 debug(response);
                 try {
                     ipcServer.close();
@@ -283,7 +254,7 @@ public class SplJmxTest extends JmxTestBase implements  SourceCode {
             // Thread.sleep(1000); //Tried removing this sleep
 
             for (String provieder : providers) {
-                reporter.debug("Provider: " + provieder);
+                REPORTER.debug("Provider: " + provieder);
             }
 
         } catch (Exception e) {

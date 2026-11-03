@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
@@ -30,6 +31,8 @@ public class GlobalReporterTests extends ExecTestBase {
     void test_debugLevel() throws Exception {
         ReporterTestInput input = new ReporterTestInput("debug-message");
 
+        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
         String classKey = "CASC_REPORT_LEVEL_" + GlobalReporterTestTask.class.getName().replace('.', '_').toUpperCase();
 
         JvmOptions options = new JvmOptions()
@@ -43,6 +46,7 @@ public class GlobalReporterTests extends ExecTestBase {
 
         Response<ReporterTestOutput> result = exec.run(input, options);
 
+        GlobalReporter.globalInstance().setSystemOutputEnabled(true);
         debug(result);
 
         ReporterTestOutput output = result.orElseThrow();

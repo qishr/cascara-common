@@ -26,7 +26,7 @@ import io.github.qishr.cascara.common.property.StringProperty;
 @Execution(ExecutionMode.SAME_THREAD)
 @ResourceLock(value = Resources.SYSTEM_PROPERTIES, mode = ResourceAccessMode.READ_WRITE)
 public class GlobalReporterTests {
-@BeforeEach
+    @BeforeEach
     void resetGlobalReporter() {
         GlobalReporter.globalInstance().setLineConsumer(null);
         GlobalReporter.globalInstance().setLevel(GlobalReporterTests.class.getName(), Level.INFO);

@@ -19,6 +19,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
@@ -32,6 +33,8 @@ import org.junit.jupiter.api.parallel.Isolated;
 
 @Isolated
 public class JmxTest extends JmxTestBase {
+    private static final Reporter REPORTER = Reporter.forClass(JmxTest.class);
+
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
@@ -45,7 +48,7 @@ public class JmxTest extends JmxTestBase {
         GlobalReporter.globalInstance().addLogger(new Log4jLogger());
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
-        reporter.debug("CASC_HOME=" + getPhysicalHomePath());
+        REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
         syncVfs();
 
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
@@ -76,7 +79,7 @@ public class JmxTest extends JmxTestBase {
             .runAsync(json)
             .thenAccept(response -> {
                 // Callback executed upon child process completion
-                debug("Background process finished with exit code: " + response.exitCode);
+                REPORTER.debug("Background process finished with exit code: " + response.exitCode);
                 debug(response);
                 try {
                     ipcServer.close();

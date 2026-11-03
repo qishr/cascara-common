@@ -8,7 +8,6 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
-import integration.test.util.SourceCode;
 import io.github.qishr.cascara.common.security.SignatureStatus;
 import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
@@ -16,7 +15,7 @@ import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 
-public class PolicyValidTests extends JarTestBase implements SourceCode {
+public class PolicyValidTests extends JarTestBase {
     @Test
     void test_module_signing_with_trust_policy() throws Exception {
         // 1. Instantiate Root CA and issue a signing identity

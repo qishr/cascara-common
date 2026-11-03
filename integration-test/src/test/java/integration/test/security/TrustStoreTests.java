@@ -35,19 +35,6 @@ class TrustStoreTests {
         }
     }
 
-    // private static void saveToKeyStore(Path path, char[] password, Map<String, Certificate> certs) throws Exception {
-    //     KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-    //     ks.load(null, password);
-
-    //     for (Map.Entry<String, Certificate> entry : certs.entrySet()) {
-    //         ks.setCertificateEntry(entry.getKey(), entry.getValue());
-    //     }
-
-    //     try (OutputStream os = Files.newOutputStream(path)) {
-    //         ks.store(os, password);
-    //     }
-    // }
-
     //
     //
     //

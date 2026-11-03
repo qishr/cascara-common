@@ -9,6 +9,7 @@ import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
@@ -26,7 +27,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
     @Test
     void test_IsolatedExecutor_1() throws Exception {
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
-
+        // GlobalReporter.globalInstance().setSystemOutputEnabled(false);
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
 
         exec.setOptions(new JvmOptions()
@@ -38,6 +39,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
         Response<ReporterTestOutput> result = exec.run(input);
 
+        // GlobalReporter.globalInstance().setSystemOutputEnabled(true);
         debug(result);
 
         assertTrue(result.isSuccess());
@@ -92,6 +94,8 @@ public class IsolatedExecutorTests extends ExecTestBase {
     void test_isolatedExecution_jpmsModuleMode() throws Exception {
         ReporterTestInput input = new ReporterTestInput("jpms-module-mode-test");
 
+        // GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
         JvmOptions options = new JvmOptions()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName()) // Forces --module-path launch
             .setModulePath(getModulePath())
@@ -104,6 +108,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
             ReporterTestOutput.class,
             options);
 
+        // GlobalReporter.globalInstance().setSystemOutputEnabled(true);
         debug(result);
 
         ReporterTestOutput output = result.orElseThrow();

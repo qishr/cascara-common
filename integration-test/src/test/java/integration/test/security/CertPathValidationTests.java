@@ -58,9 +58,9 @@ class CertPathValidationTests {
         List<X509Certificate> chain = List.of(leaf.certificate());
         TrustStore trustStore = new TrustStore(Set.of(rootCA.certificate()));
 
-        System.out.println("Leaf issuer: " + leaf.certificate().getIssuerX500Principal().getName());
-        System.out.println("Interm CA subject: " + intermediateCA.certificate().getSubjectX500Principal().getName());
-        System.out.println("Principals equal? " + leaf.certificate().getIssuerX500Principal().equals(intermediateCA.certificate().getSubjectX500Principal()));
+        // System.out.println("Leaf issuer: " + leaf.certificate().getIssuerX500Principal().getName());
+        // System.out.println("Interm CA subject: " + intermediateCA.certificate().getSubjectX500Principal().getName());
+        // System.out.println("Principals equal? " + leaf.certificate().getIssuerX500Principal().equals(intermediateCA.certificate().getSubjectX500Principal()));
 
         CertPathValidationResult result = CertPathVerifier.validatePath(chain, trustStore);
         assertFalse(result.isValid());

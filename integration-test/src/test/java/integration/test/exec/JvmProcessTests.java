@@ -64,6 +64,7 @@ public class JvmProcessTests extends ExecTestBase {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString(input);
 
+        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
         IpcServer ipcServer = IpcServer.start(true, false);
         Class<?> taskClass = GlobalReporterTestTask.class;
 
@@ -81,6 +82,7 @@ public class JvmProcessTests extends ExecTestBase {
         JvmProcess.Response response = JvmProcess.forClass(taskClass).setOptions(options).run(json);
         ipcServer.close();
 
+        GlobalReporter.globalInstance().setSystemOutputEnabled(true);
         debug(response);
 
         // Fetch diagnostics

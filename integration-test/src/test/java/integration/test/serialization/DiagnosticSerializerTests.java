@@ -11,11 +11,15 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
 import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public class DiagnosticSerializerTests extends SerializerTestBase {
+    private static final Reporter REPORTER = Reporter.forClass(DiagnosticSerializerTests.class);
 
-@Test
+    @Test
     void test_serializeThrowable() {
+        // TODO: Allow limit on how far stack trace in serialized exception goes
+
         // Construct a Throwable with a nested cause to test recursive AST serialization
         Exception cause = new IllegalArgumentException("Invalid argument value");
         RuntimeException original = new RuntimeException("Outer execution failed", cause);

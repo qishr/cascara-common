@@ -1,3 +1,0 @@
-module provider.a {
-    exports com.example.providera;
-}

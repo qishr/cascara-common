@@ -7,7 +7,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.ReportWriter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.util.Pair;
@@ -16,15 +19,12 @@ import io.github.qishr.cascara.test.common.util.ArtifactResolver;
 import integration.test.fixtures.payload.ReporterTestOutput;
 
 public class ExecTestBase extends VfsTestBase {
-    protected static final boolean TEST_DEBUG_ENABLED = true;
+    protected static final boolean TEST_DEBUG_ENABLED = false;
     protected static final boolean PROCESS_DEBUG_ENABLED = false;
 
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
-        if (TEST_DEBUG_ENABLED) {
-            reporter.setLevel(Level.DEBUG);
-        }
     }
 
     @AfterEach
@@ -45,12 +45,13 @@ public class ExecTestBase extends VfsTestBase {
         return modulePath;
     }
 
-    protected void debug(String msg) {
-        reporter.debug(msg);
-    }
+    // protected void debug(String msg) {
+    //     reporter.debug(msg);
+    // }
 
     protected void debug(Response<ReporterTestOutput> response) {
         if (TEST_DEBUG_ENABLED) {
+            Reporter reporter = new LocalReporter();
             ReportWriter writer = reporter.getWriter(Level.DEBUG);
             if (!response.getSystemOut().isBlank()) {
                 reporter.debug("System.out was:\n");
@@ -65,6 +66,7 @@ public class ExecTestBase extends VfsTestBase {
 
     protected void debug(JvmProcess.Response response) {
         if (TEST_DEBUG_ENABLED) {
+            Reporter reporter = new LocalReporter();
             ReportWriter writer = reporter.getWriter(Level.DEBUG);
             if (!response.out.isBlank()) {
                 reporter.debug("JvmProcess.Response.out was:\n");
