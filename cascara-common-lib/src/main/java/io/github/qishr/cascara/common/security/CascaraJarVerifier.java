@@ -302,7 +302,7 @@ public class CascaraJarVerifier implements JarVerifier {
                             if (cert == null) {
                                 throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Signature verification failed for identity \"" + signerName + "\"");
                             }
-                            cert.checkValidity();
+                            // cert.checkValidity();
                             boolean verified = signerInfo.verifySignature(cert, sfBytes);
                             if (cert != null && verified) {
                                 signatureValid = true;
@@ -322,12 +322,13 @@ public class CascaraJarVerifier implements JarVerifier {
 
                 VerifiedSigner signer = new VerifiedSigner(k.getCertificates());
                 signers.put(signerName, signer);
-            } catch (java.security.cert.CertificateExpiredException e) {
-                throw new SignatureException(e, SignatureStatus.CERTIFICATE_EXPIRED, GenericMessage.ERROR, "Certificate Expired");
-            } catch (java.security.cert.CertificateNotYetValidException e) {
-                throw new SignatureException(e, SignatureStatus.NOT_YET_VALID, GenericMessage.ERROR, "Certificate not yet valid");
+            // } catch (java.security.cert.CertificateExpiredException e) {
+            //     throw new SignatureException(e, SignatureStatus.CERTIFICATE_EXPIRED, GenericMessage.ERROR, "Certificate Expired");
+            // } catch (java.security.cert.CertificateNotYetValidException e) {
+            //     throw new SignatureException(e, SignatureStatus.NOT_YET_VALID, GenericMessage.ERROR, "Certificate not yet valid");
             } catch (CertificateException e) {
-                System.err.println(e.getClass().getName());
+                // e.printStackTrace();
+                // System.err.println(e.getClass().getName());
                 // TODO: Better status code
                 throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Error reading certificate: " + e.getMessage());
             } catch (SignatureException e) {

@@ -127,10 +127,9 @@ public class PolicyInvalidTests extends JarTestBase implements SourceCode {
 
         // 2. Package and sign JAR
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
-                .setPath(jarPath)
                 .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
                 .sign(s -> s.withIdentity(expiredIdentity))
-                .packageJar();
+                .packageJar(jarPath);
 
         // 3. Configure policy requiring valid signatures trusted by rootCA
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
@@ -142,6 +141,31 @@ public class PolicyInvalidTests extends JarTestBase implements SourceCode {
         try (JarFile jar = JarFile.open(jarPath)) {
             SignatureStatus status = policy.evaluate(jar);
             assertEquals(SignatureStatus.CERTIFICATE_EXPIRED, status);
+        }
+    }
+
+    @Test
+    void test_invalid_notYetValidCert_policyEvaluationFails(@TempDir Path tempDir) throws Exception {
+        // 1. Issue an identity whose validity window starts in the future
+        TestSigningIdentity futureIdentity = rootCA.issueFutureIdentity("future-module");
+        Path jarPath = tempDir.resolve("not-yet-valid-cert.jar");
+
+        // 2. Package and sign JAR
+        SyntheticJar.forUseIn(PolicyInvalidTests.class)
+                .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
+                .sign(s -> s.withIdentity(futureIdentity))
+                .packageJar(jarPath);
+
+        // 3. Configure policy requiring valid signatures trusted by rootCA
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+                .requireSigned(true)
+                .trustStore(new TrustStore(Set.of(rootCA.certificate())))
+                .build();
+
+        // 4. Policy evaluation must reject with NOT_YET_VALID
+        try (JarFile jar = JarFile.open(jarPath)) {
+            SignatureStatus status = policy.evaluate(jar);
+            assertEquals(SignatureStatus.NOT_YET_VALID, status);
         }
     }
 }

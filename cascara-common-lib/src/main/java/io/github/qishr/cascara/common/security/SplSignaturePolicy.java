@@ -79,6 +79,22 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                 return SignatureStatus.NOT_SIGNED;
             }
 
+            // TODO: This is handled by CascaraJarVerifier
+            // Do we really need it here?
+            if (checkExpiry) {
+                for (Certificate cert : certs) {
+                    if (cert instanceof X509Certificate x509) {
+                        try {
+                            x509.checkValidity();
+                        } catch (CertificateExpiredException e) {
+                            return SignatureStatus.CERTIFICATE_EXPIRED;
+                        } catch (CertificateNotYetValidException e) {
+                            return SignatureStatus.NOT_YET_VALID;
+                        }
+                    }
+                }
+            }
+
             // If no trust store is configured, check revocation if CRL present, otherwise VALID
             if (trustStore == null) {
                 for (Certificate cert : certs) {
@@ -149,28 +165,30 @@ public final class SplSignaturePolicy implements SignaturePolicy {
     //     }
     // }
 
-    // The old evaluate method...
-    @Deprecated
-    @NonNull
-    public SignatureStatus evaluateCert(X509Certificate cert) {
-        if (cert == null) {
-            return requireSigned ? SignatureStatus.NOT_SIGNED : SignatureStatus.VALID;
-        }
+    // // The old evaluate method...
+    // @Deprecated
+    // @NonNull
+    // public SignatureStatus evaluateCert(X509Certificate cert) {
+    //     if (cert == null) {
+    //         return requireSigned ? SignatureStatus.NOT_SIGNED : SignatureStatus.VALID;
+    //     }
 
-        if (checkExpiry) {
-            try {
-                cert.checkValidity();
-            } catch (CertificateExpiredException | CertificateNotYetValidException e) {
-                return SignatureStatus.CERTIFICATE_EXPIRED;
-            }
-        }
+    //     if (checkExpiry) {
+    //         try {
+    //             cert.checkValidity();
+    //         } catch (CertificateExpiredException e) {
+    //             return SignatureStatus.CERTIFICATE_EXPIRED;
+    //         } catch (CertificateNotYetValidException e) {
+    //             return SignatureStatus.NOT_YET_VALID;
+    //         }
+    //     }
 
-        if (!trustStore.getCertificates().isEmpty() && !trustStore.contains(cert)) {
-            return SignatureStatus.UNTRUSTED_SIGNER;
-        }
+    //     if (!trustStore.getCertificates().isEmpty() && !trustStore.contains(cert)) {
+    //         return SignatureStatus.UNTRUSTED_SIGNER;
+    //     }
 
-        return SignatureStatus.VALID;
-    }
+    //     return SignatureStatus.VALID;
+    // }
 
     /// Checks whether a certificate is directly trusted by the TrustStore or issued by a CA anchor in the TrustStore.
     private boolean isCertificateTrusted(X509Certificate cert) {

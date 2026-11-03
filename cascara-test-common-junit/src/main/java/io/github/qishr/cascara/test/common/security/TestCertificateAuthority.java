@@ -1,9 +1,11 @@
 package io.github.qishr.cascara.test.common.security;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
@@ -32,6 +34,7 @@ import io.github.qishr.cascara.common.security.asn1.types.string.ASN1BitString;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1UTCTime;
 import io.github.qishr.cascara.common.security.cert.SignatureAlgorithms;
+import io.github.qishr.cascara.test.common.jar.TestJarException;
 
 public final class TestCertificateAuthority {
     private static final Reporter REPORTER = Reporter.forClass(TestCertificateAuthority.class);
@@ -63,7 +66,21 @@ public final class TestCertificateAuthority {
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(2048);
         this.caKeyPair = keyGen.generateKeyPair();
-        this.caCertificate = createCertificate(caPrincipal, caPrincipal, caKeyPair.getPublic(), caKeyPair.getPrivate(), 3650, rootCA == null);
+
+        int validityDays = 3650;
+        Instant now = Instant.now();
+        Instant notBeforeInst = validityDays < 0 ? now.minus(30, ChronoUnit.DAYS) : now.minus(1, ChronoUnit.DAYS);
+        Instant notAfterInst  = validityDays < 0 ? now.minus(1, ChronoUnit.DAYS)  : now.plus(validityDays, ChronoUnit.DAYS);
+
+        this.caCertificate = createCertificate(
+            caPrincipal,
+            caPrincipal,
+            caKeyPair.getPublic(),
+            caKeyPair.getPrivate(),
+            notBeforeInst,
+            notAfterInst,
+            rootCA == null
+        );
     }
 
     /// @param rootCA if this constructor is creating the Root CA, rootCA should be null.
@@ -81,51 +98,6 @@ public final class TestCertificateAuthority {
         this.caCertificate = subCert;
     }
 
-    public static TestCertificateAuthority create(String commonName, KeyAlgorithm algorithm) throws Exception {
-        KeyPair keyPair = algorithm.generateKeyPair();
-        X500Principal principal = new X500Principal("CN=" + commonName);
-
-        X509Certificate rootCert = createCertificate(
-                principal,
-                principal,
-                keyPair.getPublic(),
-                keyPair.getPrivate(),
-                3650,
-                true // isCA = true
-        );
-
-        return new TestCertificateAuthority(null, commonName, keyPair, rootCert, algorithm);
-    }
-
-    private String debugAlg(KeyAlgorithm alg) {
-        return "k=" + alg.getKeyAlgorithm() +
-               " s=" + alg.getSignatureAlgorithm();
-    }
-
-    // Issue an identity inheriting the CA's algorithm
-    public TestSigningIdentity issueIdentity(String commonName) throws Exception {
-        REPORTER.debug("Creating identity with default algorithm (" + debugAlg(this.algorithm) + ")");
-        return issueIdentity(commonName, this.algorithm);
-    }
-
-    // Or issue an identity with a specific key type
-    public TestSigningIdentity issueIdentity(String commonName, KeyAlgorithm identityAlgorithm) throws Exception {
-        REPORTER.debug("Creating identity with specified algorithm (" + debugAlg(identityAlgorithm) + ")");
-        KeyPair keyPair = identityAlgorithm.generateKeyPair();
-        X500Principal subject = new X500Principal("CN=" + commonName);
-
-        X509Certificate cert = createCertificate(
-                this.caCertificate.getSubjectX500Principal(),
-                subject,
-                keyPair.getPublic(),
-                this.caKeyPair.getPrivate(),
-                365,
-                false // isCA = false
-        );
-
-        return new TestSigningIdentity(subject.getName(), cert, keyPair.getPrivate(), identityAlgorithm);
-    }
-
     //
     //
     //
@@ -138,6 +110,32 @@ public final class TestCertificateAuthority {
         return new TestCertificateAuthority(null, name);
     }
 
+    public static TestCertificateAuthority create(String commonName, KeyAlgorithm algorithm) throws Exception {
+        KeyPair keyPair = algorithm.generateKeyPair();
+        X500Principal principal = new X500Principal("CN=" + commonName);
+
+        int validityDays = 3650;
+        Instant now = Instant.now();
+        Instant notBeforeInst = validityDays < 0 ? now.minus(30, ChronoUnit.DAYS) : now.minus(1, ChronoUnit.DAYS);
+        Instant notAfterInst  = validityDays < 0 ? now.minus(1, ChronoUnit.DAYS)  : now.plus(validityDays, ChronoUnit.DAYS);
+
+        X509Certificate rootCert = createCertificate(
+                principal,
+                principal,
+                keyPair.getPublic(),
+                keyPair.getPrivate(),
+                notBeforeInst,
+                notAfterInst,
+                    true // isCA = true
+        );
+
+        return new TestCertificateAuthority(null, commonName, keyPair, rootCert, algorithm);
+    }
+
+    //
+    //
+    //
+
     public TestCertificateAuthority createSubordinateCA(String commonName) throws Exception {
         REPORTER.debug("Creating subordinate CA with default algorithm (" + debugAlg(algorithm) + ")");
         KeyPair subKeyPair = algorithm.generateKeyPair();
@@ -145,20 +143,19 @@ public final class TestCertificateAuthority {
         // In the X.509 generation logic (whether BouncyCastle or Cascara ASN.1 / Java security builder):
         X500Principal subSubject = new X500Principal("CN=" + commonName);
 
-        // Build intermediate certificate:
-        // - Issuer: this.caCertificate.getSubjectX500Principal()
-        // - Subject: subSubject
-        // - Public Key: subKeyPair.getPublic()
-        // - BasicConstraints: isCA = true, pathLen = 0 or unconstrained
-        // - KeyUsage: digitalSignature, keyCertSign, cRLSign
-        // - Signed by: this.privateKey (Parent CA private key)
+        int validityDays = 90;
+        Instant now = Instant.now();
+        Instant notBeforeInst = validityDays < 0 ? now.minus(30, ChronoUnit.DAYS) : now.minus(1, ChronoUnit.DAYS);
+        Instant notAfterInst  = validityDays < 0 ? now.minus(1, ChronoUnit.DAYS)  : now.plus(validityDays, ChronoUnit.DAYS);
+
         X509Certificate subCert = createCertificate(
             this.caCertificate.getSubjectX500Principal(),
             subSubject,
             subKeyPair.getPublic(),
             rootCA.caKeyPair.getPrivate(),
-            90,
-            true
+            notBeforeInst,
+            notAfterInst,
+        true
         );
 
         return new TestCertificateAuthority(rootCA, subSubject.getName(), subKeyPair, subCert, KeyAlgorithm.RSA);
@@ -183,16 +180,49 @@ public final class TestCertificateAuthority {
         return new TrustStore(Set.of(caCertificate));
     }
 
+    //
+    // Identity
+    //
+
+    // Issue an identity inheriting the CA's algorithm
+    public TestSigningIdentity issueIdentity(String commonName) throws Exception {
+        return issueIdentity(commonName, this.algorithm);
+    }
+
+    // Or issue an identity with a specific key type
+    public TestSigningIdentity issueIdentity(String commonName, KeyAlgorithm identityAlgorithm) throws Exception {
+        return issueIdentity(commonName, 365, identityAlgorithm);
+    }
+
     public TestSigningIdentity issueIdentity(String name, long validityDays, KeyAlgorithm algorithm) throws Exception {
+        Instant now = Instant.now();
+        Instant notBeforeInst = validityDays < 0 ? now.minus(30, ChronoUnit.DAYS) : now.minus(1, ChronoUnit.DAYS);
+        Instant notAfterInst  = validityDays < 0 ? now.minus(1, ChronoUnit.DAYS)  : now.plus(validityDays, ChronoUnit.DAYS);
+        return issueIdentity(name, notBeforeInst, notAfterInst, algorithm);
+    }
+
+    public TestSigningIdentity issueExpiredIdentity(String name) throws Exception {
+        Instant notBefore = Instant.now().minus(10, ChronoUnit.DAYS);
+        Instant notAfter  = Instant.now().minus(1, ChronoUnit.DAYS);
+        return issueIdentity(name, notBefore, notAfter, KeyAlgorithm.RSA);
+    }
+
+    public TestSigningIdentity issueFutureIdentity(String name) {
+        // Validity starts 10 days in the future, ends 40 days in the future
+        Instant notBefore = Instant.now().plus(10, ChronoUnit.DAYS);
+        Instant notAfter  = Instant.now().plus(40, ChronoUnit.DAYS);
+        return issueIdentity(name, notBefore, notAfter, KeyAlgorithm.RSA);
+    }
+
+    public TestSigningIdentity issueIdentity(String name, Instant notBeforeInst, Instant notAfterInst, KeyAlgorithm algorithm) {
         REPORTER.debug("Issuing identity with algorithm (" + debugAlg(algorithm) + ")");
 
-        // TODO:
-        // KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm.getKeyAlgorithm());
-        keyGen.initialize(2048);
-        KeyPair childKeyPair = keyGen.generateKeyPair();
-
-
+        KeyPair childKeyPair;
+        try {
+            childKeyPair = algorithm.generateKeyPair();
+        } catch (Exception e) {
+            throw new TestJarException(e, e.getMessage());
+        }
 
         X500Principal childPrincipal = new X500Principal("CN=" + name + ", OU=cascara-module, O=qishr, C=UK");
         X509Certificate childCert = createCertificate(
@@ -201,31 +231,17 @@ public final class TestCertificateAuthority {
                 childPrincipal,           // Subject = Module Identity
                 childKeyPair.getPublic(), // Child Public Key
                 caKeyPair.getPrivate(),   // Signed by CA Private Key
-                validityDays,
+                notBeforeInst,
+                notAfterInst,
                 false
         );
 
         return new TestSigningIdentity(name, childCert, childKeyPair.getPrivate(), algorithm);
     }
 
-    public TestSigningIdentity issueExpiredIdentity(String name) throws Exception {
-        REPORTER.debug("Issuing expired identity with algorithm (RSA)");
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-        keyGen.initialize(2048);
-        KeyPair childKeyPair = keyGen.generateKeyPair();
-
-        X500Principal childPrincipal = new X500Principal("CN=" + name + ", OU=cascara-module, O=qishr, C=UK");
-        X509Certificate expiredCert = createCertificate(
-                caPrincipal,
-                childPrincipal,
-                childKeyPair.getPublic(),
-                caKeyPair.getPrivate(),
-                -1, // Validity expired 1 day ago
-                false
-        );
-
-        return new TestSigningIdentity(name, expiredCert, childKeyPair.getPrivate(), KeyAlgorithm.RSA);
-    }
+    //
+    // CRL
+    //
 
     public X509CRL generateCrl(Set<BigInteger> revokedSerialNumbers) throws Exception {
         REPORTER.debug("Creating CRL with algorithm (SHA256withRSA)");
@@ -303,9 +319,9 @@ public final class TestCertificateAuthority {
             X500Principal subject,
             PublicKey publicKey,
             PrivateKey signingKey,
-            long validityDays,
+            Instant notBeforeInst, Instant notAfterInst,
             boolean isCA
-    ) throws Exception {
+    ) {
         DERDecoder decoder = new DERDecoder();
 
         // 1. Version v3 (INTEGER 2)
@@ -320,7 +336,12 @@ public final class TestCertificateAuthority {
 
         // Dynamically determine the signature algorithm matching the key
         String sigAlgName = SignatureAlgorithms.getDefaultSignatureAlgorithm(publicKey);
-        String sigAlgOid = SignatureAlgorithms.getSignatureOid(sigAlgName);
+        String sigAlgOid;
+        try {
+            sigAlgOid = SignatureAlgorithms.getSignatureOid(sigAlgName);
+        } catch (NoSuchAlgorithmException e) {
+            throw new TestJarException(e, e.getMessage());
+        }
 
         REPORTER.debug("Creating cert");
         REPORTER.debug("  Issuer: " + issuer.getName());
@@ -337,17 +358,17 @@ public final class TestCertificateAuthority {
         ASN1Sequence issuerSeq = null;
         try (ASN1InputStream ais = new ASN1InputStream(decoder, issuer.getEncoded())) {
             issuerSeq = (ASN1Sequence) ais.readObject();
+        } catch (IOException e) {
+            throw new TestJarException(e, e.getMessage());
         }
         ASN1Sequence subjectSeq = null;
         try (ASN1InputStream ais = new ASN1InputStream(decoder, subject.getEncoded())) {
             subjectSeq = (ASN1Sequence) ais.readObject();
+        } catch (IOException e) {
+            throw new TestJarException(e, e.getMessage());
         }
 
         // 5. Validity Period
-        Instant now = Instant.now();
-        Instant notBeforeInst = validityDays < 0 ? now.minus(30, ChronoUnit.DAYS) : now.minus(1, ChronoUnit.DAYS);
-        Instant notAfterInst  = validityDays < 0 ? now.minus(1, ChronoUnit.DAYS)  : now.plus(validityDays, ChronoUnit.DAYS);
-
         ASN1UTCTime notBefore = new ASN1UTCTime(formatUtcTime(notBeforeInst).getBytes(StandardCharsets.US_ASCII));
         ASN1UTCTime notAfter  = new ASN1UTCTime(formatUtcTime(notAfterInst).getBytes(StandardCharsets.US_ASCII));
         ASN1Sequence validitySeq = new ASN1Sequence(List.of(notBefore, notAfter));
@@ -356,6 +377,8 @@ public final class TestCertificateAuthority {
         ASN1Sequence spkiSeq = null;
         try (ASN1InputStream ais = new ASN1InputStream(decoder, publicKey.getEncoded())) {
             spkiSeq = (ASN1Sequence) ais.readObject();
+        } catch (IOException e) {
+            throw new TestJarException(e, e.getMessage());
         }
 
         // 7. Extensions: EXPLICIT Extensions OPTIONAL
@@ -399,17 +422,26 @@ public final class TestCertificateAuthority {
         ASN1Sequence tbsSeq = new ASN1Sequence(tbsItems);
 
         // 8. Sign TBSCertificate using the resolved algorithm
-        Signature sig = Signature.getInstance(sigAlgName);
-        sig.initSign(signingKey);
-        sig.update(tbsSeq.getEncoded());
-        byte[] signatureBytes = sig.sign();
+        byte[] signatureBytes;
+        try {
+            Signature sig = Signature.getInstance(sigAlgName);
+            sig.initSign(signingKey);
+            sig.update(tbsSeq.getEncoded());
+            signatureBytes = sig.sign();
+        } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
+            throw new TestJarException(e, e.getMessage());
+        }
 
         // 9. Outer Certificate Sequence
         ASN1BitString sigBitString = new ASN1BitString(signatureBytes, 0);
         ASN1Sequence certSeq = new ASN1Sequence(List.of(tbsSeq, sigAlgSeq, sigBitString));
 
-        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-        return (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(certSeq.getEncoded()));
+        try {
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            return (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(certSeq.getEncoded()));
+        } catch (CertificateException e) {
+            throw new TestJarException(e, e.getMessage());
+        }
     }
 
     private static String formatUtcTime(Instant instant) {
@@ -421,5 +453,10 @@ public final class TestCertificateAuthority {
                 zdt.getHour(),
                 zdt.getMinute(),
                 zdt.getSecond());
+    }
+
+    private String debugAlg(KeyAlgorithm alg) {
+        return "k=" + alg.getKeyAlgorithm() +
+               " s=" + alg.getSignatureAlgorithm();
     }
 }

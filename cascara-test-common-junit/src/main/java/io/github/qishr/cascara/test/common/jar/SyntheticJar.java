@@ -15,9 +15,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.exec.Locatable;
-import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.security.TestJarSigner;
-import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 import io.github.qishr.cascara.test.common.security.TestJarSigner.SignedJarBundle;
 
 public class SyntheticJar implements Locatable {
@@ -105,8 +103,16 @@ public class SyntheticJar implements Locatable {
     }
 
     public SyntheticJar packageJar() {
+        if (path == null) {
+            throw new TestJarException("Path not set");
+        }
         SyntheticJar testJar = TestModulePackager.packageJar(this);
         return testJar;
+    }
+
+    public SyntheticJar packageJar(Path path) {
+        this.path = path;
+        return packageJar();
     }
 
     public SignedJarBundle getSignedBundle() {

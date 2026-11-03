@@ -14,4 +14,7 @@ public class TestJarException extends LocalizableRuntimeException {
     public TestJarException(Throwable t, String msg) {
         super(t, GenericMessage.ERROR, msg);
     }
+    public TestJarException(String msg) {
+        super(GenericMessage.ERROR, msg);
+    }
 }
