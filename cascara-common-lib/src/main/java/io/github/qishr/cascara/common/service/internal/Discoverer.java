@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ClassPath;
 import io.github.qishr.cascara.common.util.ModulePath;
 import io.github.qishr.cascara.common.util.Pair;
@@ -14,7 +15,7 @@ public class Discoverer {
         Set<String> classes = new HashSet<>();
 
         // Discover classes on the module path
-        ModulePath modulePath = new ModulePath(null, excludePackages, null);
+        ModulePath modulePath = new ModulePath(null, excludePackages, Cascara.getModulePath());
         classes.addAll(modulePath.getClasses());
 
         // Get the set of modulepath entries

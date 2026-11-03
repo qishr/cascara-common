@@ -42,11 +42,16 @@ import java.util.function.Predicate;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.data.TreeNode;
+import io.github.qishr.cascara.common.security.SignaturePolicy;
 import io.github.qishr.cascara.common.service.internal.SPLRoot;
 import io.github.qishr.cascara.common.service.internal.SPLUtils;
 import io.github.qishr.cascara.common.trackable.TrackableArray;
 
 public interface SPL extends TreeNode<SPL> {
+    public static final String CASCARA_SPL_DISCOVER = "cascara.spl.discover";
+    public static final String CASCARA_SEC_VERIFY = "cascara.spl.verify";
+    public static final String CASCARA_SPL_POLICY_CHECK_EXPIRY = "cascara.spl.policy.require.signed";
+
     public static final String SERVICE_NAME = "serviceName";
     public static final String JAR_PATH = "jarPath";
     public static final String PROVIDER_NAME = "providerName";
@@ -69,6 +74,11 @@ public interface SPL extends TreeNode<SPL> {
     @Experimental
     static boolean hasBooted() {
         return SPLRoot.hasBooted();
+    }
+
+    @Experimental
+    static void setSignaturePolicy(SignaturePolicy policy) {
+        SPLRoot.setSignaturePolicy(policy);
     }
 
     /// Returns an instance of a specific service provider.

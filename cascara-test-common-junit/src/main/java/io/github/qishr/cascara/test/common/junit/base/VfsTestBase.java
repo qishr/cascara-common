@@ -16,6 +16,7 @@ import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 
 public class VfsTestBase extends TestBase {
+    private static final String vfsHomeDir = "/.cascara";
 
     private SPL rootLayer;
     private FileSystem vFs;
@@ -42,6 +43,7 @@ public class VfsTestBase extends TestBase {
         }
         try {
             vFs = FileSystems.newFileSystem(vfsUri, Map.of());
+            Cascara.setHomePath(vFs.getPath(vfsHomeDir));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -56,7 +58,6 @@ public class VfsTestBase extends TestBase {
         vfsUri = URI.create("jar:" + zipFile.toUri());
 
         vFs = FileSystems.newFileSystem(vfsUri, Map.of("create", "true"));
-        String vfsHomeDir = "/.cascara";
         Path vHome = vFs.getPath(vfsHomeDir);
         Files.createDirectories(vHome);
 

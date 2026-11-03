@@ -69,6 +69,10 @@ import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.security.SignatureException;
+import io.github.qishr.cascara.common.security.SignaturePolicy;
+import io.github.qishr.cascara.common.security.SignatureStatus;
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.service.ContentTypeProvider;
 import io.github.qishr.cascara.common.service.SPL;
@@ -79,6 +83,7 @@ import io.github.qishr.cascara.common.service.ServiceProvider;
 import io.github.qishr.cascara.common.trackable.TrackableArray;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ClassHierarchy;
+import io.github.qishr.cascara.common.util.Classes;
 import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarManifest;
@@ -88,8 +93,6 @@ import io.github.qishr.cascara.common.util.ReflectionUtils;
 public class SPLBranch implements SPL {
     protected static final Reporter REPORTER = GlobalReporter.forClass(SPL.class);
 
-    protected static final String CASCARA_SPL_DISCOVER = "cascara.spl.discover";
-    protected static final String CASCARA_SEC_VERIFY = "cascara.sec.verify";
 
     protected static SPLRoot rootLayer;
 
@@ -405,15 +408,7 @@ public class SPLBranch implements SPL {
         JarManifest manifest;
         Set<String> classes;
 
-
-
-
-        // TODO: Make verify part of a policy
         boolean verify = isVerifyEnabled();
-
-
-
-
         try (JarFile jar = JarFile.open(jarPath, verify)) {
             moduleName = jar.getModuleName();
             if (moduleName == null || moduleName.isEmpty()) {
@@ -421,7 +416,7 @@ public class SPLBranch implements SPL {
             }
             manifest = jar.getManifest();
             classes = jar.getClassNames();
-            verifySignature(jar);
+            if (verify) {verifySignature(jar);}
         } catch(LocalizableIOException e) {
             throw new ServiceException(e, ServiceMessage.FAILED_TO_READ_JAR, jarPath, e.getMessage());
         } catch (Exception e) {
@@ -464,6 +459,9 @@ public class SPLBranch implements SPL {
 
         addModuleToMap(moduleName);
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
+
+        // TODO: These should use the same source
+        Classes.invalidate();
         ClassHierarchy.invalidate();
     }
 
@@ -548,9 +546,9 @@ public class SPLBranch implements SPL {
                     }
                 } catch (ClassNotFoundException | NoClassDefFoundError e) {
                     if (isAutoRegistration) {
-                        REPORTER.debug("NoClassDefFoundError: " + className);
+                        REPORTER.debug("Class not found: " + className);
                     } else {
-                        registrationFailure("NoClassDefFoundError: " + className, jarPath, e, isAutoRegistration);
+                        registrationFailure("Class not found: " + className, jarPath, e, isAutoRegistration);
                     }
                 } catch (ServiceException e) {
                     if (isAutoRegistration) {
@@ -574,13 +572,25 @@ public class SPLBranch implements SPL {
         for (ZipEntry entry : entries) {
             try (InputStream in = jar.getInputStream(entry)) {
                 in.transferTo(OutputStream.nullOutputStream());
-            } catch (LocalizableIOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            // } catch (LocalizableIOException e) {
+            //     // TODO Auto-generated catch block
+            //     e.printStackTrace();
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+        }
+
+        SignaturePolicy policy = SPLRoot.getSignaturePolicy();
+
+        SignatureStatus status = policy.evaluate(jar);
+        if (status != SignatureStatus.VALID) {
+            throw new SignatureException(
+                status,
+                ServiceMessage.VERIFICATION_FAILED,
+                jar.getPath(),
+                status
+            );
         }
     }
 

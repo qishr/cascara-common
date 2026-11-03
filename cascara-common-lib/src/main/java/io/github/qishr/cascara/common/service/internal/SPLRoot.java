@@ -50,6 +50,8 @@ import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.filewatcher.FileWatcher;
 import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.security.SignaturePolicy;
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
@@ -60,6 +62,8 @@ import io.github.qishr.cascara.common.util.Pair;
 
 public class SPLRoot extends SPLBranch {
     private static final Properties EMPTY_PROPERTIES = new Properties();
+
+    private static SignaturePolicy signaturePolicy;
 
     static boolean hasBooted = false;
     static boolean isBooting = false;
@@ -79,6 +83,7 @@ public class SPLRoot extends SPLBranch {
         rootLayer = this;
         name = "root";
         contentTypes = new HashSet<>();
+        loadPolicy();
         loadPreferences();
         displayEnvironmentInformation();
         if (isAutoDiscoverEnabled()) {
@@ -105,6 +110,14 @@ public class SPLRoot extends SPLBranch {
 
     public static boolean isBooting() {
         return isBooting;
+    }
+
+    public static SignaturePolicy getSignaturePolicy() {
+        return signaturePolicy;
+    }
+
+    public static void setSignaturePolicy(SignaturePolicy policy) {
+        signaturePolicy = policy;
     }
 
     public Set<ContentType> getContentTypes() {
@@ -189,7 +202,12 @@ public class SPLRoot extends SPLBranch {
 
         if (REPORTER.getLevel().includes(Level.TRACE)) {
             REPORTER.trace("classes: ");
-            classes.stream().sorted().forEach(s -> REPORTER.trace("  " + s));
+            // classes.stream().sorted().forEach(s -> REPORTER.trace("  " + s));
+            classes.stream().sorted().forEach(s -> {
+                if (s.contains("ProviderA")) {
+                    REPORTER.debug("PROVIDER A");
+                }
+            });
         }
 
         REPORTER.debug("Discovered %d classes in %d ms", classes.size(), (int)timeElapsed);
@@ -210,6 +228,21 @@ public class SPLRoot extends SPLBranch {
         // TODO: Use propsFile for this too
         String autoDiscover = System.getProperty(CASCARA_SPL_DISCOVER);
         return !"false".equalsIgnoreCase(autoDiscover);
+    }
+
+    private void loadPolicy() {
+        // TODO: Also allow loading from SPL properties file
+
+        Properties sysprops = Properties.fromSystemProperties();
+
+        // System.err.println(sysprops.getBoolean(CASCARA_SPL_POLICY_CHECK_EXPIRY, false));
+
+        signaturePolicy = SplSignaturePolicy.builder()
+        //CASCARA_SPL_POLICY_REQUIRE_SIGNED
+            .checkExpiry(sysprops.getBoolean(CASCARA_SPL_POLICY_CHECK_EXPIRY, false))
+            .build();
+
+
     }
 
     private void loadPreferences() {

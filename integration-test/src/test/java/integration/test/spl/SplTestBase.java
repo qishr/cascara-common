@@ -37,11 +37,20 @@ package integration.test.spl;
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
+import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 
 public class SplTestBase extends VfsTestBase {
+    protected static TestCertificateAuthority rootCA;
+
+    @BeforeAll
+    static void init() throws Exception {
+        rootCA = TestCertificateAuthority.create("Root CA");
+    }
+
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();

@@ -53,7 +53,8 @@ public enum ServiceMessage implements DiagnosticMessage {
     NO_PROVIDER_REGISTERED("SPL-308", "No \"{0}\" providers registered"),
     NO_PROVIDER_REGISTERED_FOR("SPL-309", "No \"{0}\" providers registered for {1}"),
     NO_SINGLETON_METHOD("SPL-310", "Class \"{0}\" has no singleton method"),
-    INVALID_SINGLETON_INITIALIZER("SPL-311", "Invalid singleton initializer {0}: {1}");
+    INVALID_SINGLETON_INITIALIZER("SPL-311", "Invalid singleton initializer {0}: {1}"),
+    VERIFICATION_FAILED("SPL-312", "Verification failed for {0} with {1}");
 
     private final String code;
     private final String format;

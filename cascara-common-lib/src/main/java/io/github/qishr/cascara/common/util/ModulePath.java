@@ -75,6 +75,11 @@ public class ModulePath extends AbstractLibraryScanner {
         loadPatchedModules();
     }
 
+    public ModulePath(Path virtualReferencePath) {
+        this(null, null, null, virtualReferencePath);
+        loadPatchedModules();
+    }
+
     public ModulePath(String modulePath) {
         this(null, pathSet(modulePath), null, null);
     }
@@ -95,6 +100,7 @@ public class ModulePath extends AbstractLibraryScanner {
         if (reporter != null) {
             this.reporter = reporter;
         }
+        System.out.println("P="+virtualReferencePath);
         if (modulePaths == null || modulePaths.isEmpty()) {
             modulePaths = new HashSet<>();
             if (PATHS != null) {
@@ -232,9 +238,10 @@ public class ModulePath extends AbstractLibraryScanner {
             if (modulePathString.isBlank()) continue;
 
             // Parse path using virtual file system if provided, otherwise default OS file system
-            Path path = (virtualReferencePath != null)
-                    ? virtualReferencePath.getFileSystem().getPath(modulePathString)
-                    : Path.of(modulePathString);
+            Path path = getPath(modulePathString);
+            // Path path = (virtualReferencePath != null)
+            //         ? virtualReferencePath.getFileSystem().getPath(modulePathString)
+            //         : Path.of(modulePathString);
 
             if (!Files.exists(path)) {
                 reporter.warn(GenericMessage.WARN, "Non-existant module path: " + path);
@@ -278,5 +285,15 @@ public class ModulePath extends AbstractLibraryScanner {
         }
         moduleClasses.add(className);
         classNames.add(className);
+    }
+
+    private Path getPath(String pathString) {
+        if (virtualReferencePath != null) {
+            Path virtualPath = virtualReferencePath.getFileSystem().getPath(pathString);
+            if (Files.exists(virtualPath)) {
+                return virtualPath;
+            }
+        }
+        return Path.of(pathString);
     }
 }
