@@ -409,6 +409,7 @@ public class SPLBranch implements SPL {
         Set<String> classes;
 
         boolean verify = isVerifyEnabled();
+
         try (JarFile jar = JarFile.open(jarPath, verify)) {
             moduleName = jar.getModuleName();
             if (moduleName == null || moduleName.isEmpty()) {
@@ -416,7 +417,10 @@ public class SPLBranch implements SPL {
             }
             manifest = jar.getManifest();
             classes = jar.getClassNames();
-            if (verify) {verifySignature(jar);}
+
+            if (verify) {
+                verifySignature(jar);
+            }
 
             SemVer moduleBuildCascaraVersion = new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
             SemVer moduleMinCascaraVersion = new SemVer(manifest.getString("Min-Cascara-Version", moduleBuildCascaraVersion.toString()));
@@ -521,9 +525,9 @@ public class SPLBranch implements SPL {
             if (moduleName == null){
                 continue;
             }
-            Path jarPath = modulePath.getPathForModule(moduleName);
-            enumerateProviders(candidateClassNames, module, jarPath, false);
-            // enumerateProviders(candidateClassNames, module, jar, false);
+            // Path jarPath = modulePath.getPathForModule(moduleName);
+            // enumerateProviders(candidateClassNames, module, jarPath, false);
+            enumerateProviders(candidateClassNames, module, jar.getPath(), false);
         }
     }
 
@@ -579,7 +583,6 @@ public class SPLBranch implements SPL {
     }
 
     private void verifySignature(JarFile jar) {
-        // TODO: Policcy
         List<ZipEntry> entries = jar.getEntries();
         for (ZipEntry entry : entries) {
             try (InputStream in = jar.getInputStream(entry)) {
@@ -594,6 +597,10 @@ public class SPLBranch implements SPL {
         }
 
         SignaturePolicy policy = SPLRoot.getSignaturePolicy();
+
+        if (policy == null) {
+            return;
+        }
 
         SignatureStatus status = policy.evaluate(jar);
         if (status != SignatureStatus.VALID) {
@@ -661,10 +668,11 @@ public class SPLBranch implements SPL {
     //
 
     private boolean isVerifyEnabled() {
-        return false;
-        // // TODO: Use propsFile for this too
-        // String verify = System.getProperty(CASCARA_SEC_VERIFY);
+        // return false;
+        // TODO: Use propsFile for this too
+        String verify = System.getProperty(CASCARA_SEC_VERIFY);
         // return !"false".equalsIgnoreCase(verify);
+        return "true".equalsIgnoreCase(verify);
     }
 
     private boolean isRegistered(String providerFqcn) {

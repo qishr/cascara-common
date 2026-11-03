@@ -38,7 +38,6 @@ import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 
-@Disabled
 public class SplPolicyTests extends ExecTestBase {
 
     @Test
@@ -60,6 +59,7 @@ public class SplPolicyTests extends ExecTestBase {
                 .trustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();
 
+        System.setProperty(SPL.CASCARA_SEC_VERIFY, "true");
         SPL.setSignaturePolicy(policy);
         SPL layer = spl.create("testLayer");
         try {
@@ -104,6 +104,7 @@ public class SplPolicyTests extends ExecTestBase {
     @TempDir
     public Path tempDir;
 
+    @Disabled
     @Test
     void test_isolatedWithHostFS_splWithPolicy_rejects_expiredCert(@TempDir Path tempDir) throws Exception {
         // 1. Issue an expired identity
@@ -157,6 +158,7 @@ public class SplPolicyTests extends ExecTestBase {
 
     // TODO: Check this works with cascara.sec.verify = false
 
+    @Disabled
     @Test
     void test_isolatedWithVFS_splWithPolicy_rejects_expiredCert(@TempDir Path tempDir) throws Exception {
         // 1. Issue an expired identity
