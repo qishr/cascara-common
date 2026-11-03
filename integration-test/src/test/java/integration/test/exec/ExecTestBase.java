@@ -20,7 +20,7 @@ import io.github.qishr.cascara.test.common.util.ArtifactResolver;
 import integration.test.fixtures.payload.ReporterTestOutput;
 
 public class ExecTestBase extends VfsTestBase {
-    protected static final boolean TEST_DEBUG_ENABLED = true;
+    protected static final boolean TEST_DEBUG_ENABLED = false;
     protected static final boolean PROCESS_DEBUG_ENABLED = false;
 
     protected static TestCertificateAuthority rootCA;

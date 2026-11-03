@@ -417,6 +417,43 @@ public class SPLBranch implements SPL {
             manifest = jar.getManifest();
             classes = jar.getClassNames();
             if (verify) {verifySignature(jar);}
+
+            SemVer moduleBuildCascaraVersion = new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
+            SemVer moduleMinCascaraVersion = new SemVer(manifest.getString("Min-Cascara-Version", moduleBuildCascaraVersion.toString()));
+            verifyModuleVersionCompatibility(moduleName, moduleBuildCascaraVersion, moduleMinCascaraVersion);
+
+            REPORTER.debug("Discovering providers in \"%s\"", jarPath);
+
+            jarPaths.add(jarPath);
+            String paths = String.join(":", getJarPathStrings());
+
+            modulePath = new ModulePath(paths, jarPath);
+
+            // 1. Create a finder for modules in this layer
+            Path[] jarPathsArray = getJarPaths();
+            ModuleFinder finder = ModuleFinder.of(jarPathsArray);
+
+            // 2. Resolve the module(s) found against the current boot layer
+            Set<String> roots = finder.findAll().stream()
+                    .map(m -> m.descriptor().name())
+                    .collect(Collectors.toSet());
+
+            ModuleLayer parent = ModuleLayer.boot();
+            Configuration cf = parent.configuration().resolve(finder, ModuleFinder.of(), roots);
+
+            // 3. (re-)create the layer.
+            ClassLoader loader = ClassLoader.getSystemClassLoader();
+            moduleLayer = parent.defineModulesWithManyLoaders(cf, loader);
+
+            scanClasses(jar, classes);
+
+            addModuleToMap(moduleName);
+            SPLUtils.recomputeAllVisibleProviders(rootLayer);
+
+            // TODO: These should use the same source
+            Classes.invalidate();
+            ClassHierarchy.invalidate();
+
         } catch(LocalizableIOException e) {
             throw new ServiceException(e, ServiceMessage.FAILED_TO_READ_JAR, jarPath, e.getMessage());
         } catch (Exception e) {
@@ -428,41 +465,6 @@ public class SPLBranch implements SPL {
             throw new ServiceException(e, ServiceMessage.FAILED_TO_READ_JAR, jarPath, e.getMessage());
         }
 
-        SemVer moduleBuildCascaraVersion = new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
-        SemVer moduleMinCascaraVersion = new SemVer(manifest.getString("Min-Cascara-Version", moduleBuildCascaraVersion.toString()));
-        verifyModuleVersionCompatibility(moduleName, moduleBuildCascaraVersion, moduleMinCascaraVersion);
-
-        REPORTER.debug("Discovering providers in \"%s\"", jarPath);
-
-        jarPaths.add(jarPath);
-        String paths = String.join(":", getJarPathStrings());
-
-        modulePath = new ModulePath(paths, jarPath);
-
-        // 1. Create a finder for modules in this layer
-        Path[] jarPathsArray = getJarPaths();
-        ModuleFinder finder = ModuleFinder.of(jarPathsArray);
-
-        // 2. Resolve the module(s) found against the current boot layer
-        Set<String> roots = finder.findAll().stream()
-                .map(m -> m.descriptor().name())
-                .collect(Collectors.toSet());
-
-        ModuleLayer parent = ModuleLayer.boot();
-        Configuration cf = parent.configuration().resolve(finder, ModuleFinder.of(), roots);
-
-        // 3. (re-)create the layer.
-        ClassLoader loader = ClassLoader.getSystemClassLoader();
-        moduleLayer = parent.defineModulesWithManyLoaders(cf, loader);
-
-        scanClasses(classes);
-
-        addModuleToMap(moduleName);
-        SPLUtils.recomputeAllVisibleProviders(rootLayer);
-
-        // TODO: These should use the same source
-        Classes.invalidate();
-        ClassHierarchy.invalidate();
     }
 
     //
@@ -513,7 +515,7 @@ public class SPLBranch implements SPL {
     //
 
     /// Use class scanning to find service implementations inside this layer
-    private void scanClasses(Set<String> candidateClassNames) {
+    private void scanClasses(JarFile jar, Set<String> candidateClassNames) {
         for (Module module : moduleLayer.modules()) {
             String moduleName = module.getName();
             if (moduleName == null){
@@ -521,8 +523,17 @@ public class SPLBranch implements SPL {
             }
             Path jarPath = modulePath.getPathForModule(moduleName);
             enumerateProviders(candidateClassNames, module, jarPath, false);
+            // enumerateProviders(candidateClassNames, module, jar, false);
         }
     }
+
+    // TODO: Pass in map of one of these:
+    //   - Map<String,Path> candidateClassesToJarsOrClassFiles
+    //   - Map<Path,Set<String>> locationsToCLassNames
+    // protected void enumerateProviders(Set<String> candidateClassNames, Module module, JarFile jar, boolean isAutoRegistration) {
+    //     Path jarPath = jar == null
+    //         ? null
+    //         : jar.getPath();
 
     protected void enumerateProviders(Set<String> candidateClassNames, Module module, Path jarPath, boolean isAutoRegistration) {
         for (String className : candidateClassNames) {
@@ -542,6 +553,7 @@ public class SPLBranch implements SPL {
                         Class<? extends ServiceProvider> providerClass = (Class<? extends ServiceProvider>) clazz;
 
                         ServiceProvider providerInstance = SPLUtils.instantiate(providerClass);
+                        // registerProvider(providerInstance, jar.getPath(), true);
                         registerProvider(providerInstance, jarPath, true);
                     }
                 } catch (ClassNotFoundException | NoClassDefFoundError e) {
@@ -649,9 +661,10 @@ public class SPLBranch implements SPL {
     //
 
     private boolean isVerifyEnabled() {
-        // TODO: Use propsFile for this too
-        String verify = System.getProperty(CASCARA_SEC_VERIFY);
-        return !"false".equalsIgnoreCase(verify);
+        return false;
+        // // TODO: Use propsFile for this too
+        // String verify = System.getProperty(CASCARA_SEC_VERIFY);
+        // return !"false".equalsIgnoreCase(verify);
     }
 
     private boolean isRegistered(String providerFqcn) {

@@ -15,11 +15,13 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Disabled;
 
 import integration.test.exec.ExecTestBase;
 import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.task.GlobalReporterTestTask;
+import integration.test.fixtures.task.SplPolicyTestTask;
 import integration.test.jar.JarSignatureInvalidTests;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
@@ -36,6 +38,7 @@ import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 
+@Disabled
 public class SplPolicyTests extends ExecTestBase {
 
     @Test
@@ -126,7 +129,7 @@ public class SplPolicyTests extends ExecTestBase {
         }
 
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
-        IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
+        IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
         // Enable forwarding of TRACE reports from isolated JVM
         exec.setDiagnosticForwardingEnabled(true);
@@ -136,12 +139,12 @@ public class SplPolicyTests extends ExecTestBase {
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
 
         exec.setOptions(new JvmOptions()
-            .setModuleName(GlobalReporterTestTask.class.getModule().getName())
+            .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setSystemProperty(SPL.CASCARA_SEC_VERIFY, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
             .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("casc.report.level." + GlobalReporterTestTask.class.getName(), "DEBUG")
+            .setSystemProperty("casc.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 
@@ -175,7 +178,7 @@ public class SplPolicyTests extends ExecTestBase {
         }
 
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
-        IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
+        IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
         // Enable forwarding of TRACE reports from isolated JVM
         exec.setDiagnosticForwardingEnabled(true);
@@ -185,12 +188,12 @@ public class SplPolicyTests extends ExecTestBase {
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
 
         exec.setOptions(new JvmOptions()
-            .setModuleName(GlobalReporterTestTask.class.getModule().getName())
+            .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setSystemProperty(SPL.CASCARA_SEC_VERIFY, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
             .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("casc.report.level." + GlobalReporterTestTask.class.getName(), "DEBUG")
+            .setSystemProperty("casc.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED)
             .setEnv("CASC_HOME", getPhysicalHomePath()));

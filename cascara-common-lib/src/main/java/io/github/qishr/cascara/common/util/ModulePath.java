@@ -100,7 +100,7 @@ public class ModulePath extends AbstractLibraryScanner {
         if (reporter != null) {
             this.reporter = reporter;
         }
-        System.out.println("P="+virtualReferencePath);
+        // System.out.println("P="+virtualReferencePath);
         if (modulePaths == null || modulePaths.isEmpty()) {
             modulePaths = new HashSet<>();
             if (PATHS != null) {
