@@ -5,13 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
+import java.util.jar.JarEntry;
 
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.security.SignatureStatus;
 import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
-import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 

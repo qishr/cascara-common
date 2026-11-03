@@ -17,7 +17,6 @@ import java.util.jar.Manifest;
 import javax.security.auth.x500.X500Principal;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.security.UnsupportedDigestException;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
@@ -53,7 +52,7 @@ public final class TestJarSigner {
     private X509Certificate certificate;     // If null, uses identity.certificate()
     private PrivateKey privateKey;           // If null, uses identity.privateKey()
     private KeyAlgorithm signatureAlgorithm;       // Optional override
-    private boolean corruptSignatureBytes;  // Helpful for Layer 2 tests
+    // private boolean corruptSignatureBytes;  // Helpful for Layer 2 tests
     private boolean omitCertificates;        // For empty cert set test
     private String digestOidOverride;
 
@@ -82,10 +81,10 @@ public final class TestJarSigner {
         return this;
     }
 
-    public TestJarSigner corruptSignatureBytes(boolean corrupt) {
-        this.corruptSignatureBytes = corrupt;
-        return this;
-    }
+    // public TestJarSigner corruptSignatureBytes(boolean corrupt) {
+    //     this.corruptSignatureBytes = corrupt;
+    //     return this;
+    // }
 
     public TestJarSigner() {
         // Generate In-Memory RSA KeyPair & Self-Signed X.509 Certificate

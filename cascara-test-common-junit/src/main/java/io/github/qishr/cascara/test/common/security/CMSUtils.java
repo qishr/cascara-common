@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.security.cms;
+package io.github.qishr.cascara.test.common.security;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
@@ -10,6 +10,7 @@ import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Tagged
 import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectIdentifier;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1PrintableString;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1UTCTime;
+import io.github.qishr.cascara.common.security.cms.SignedData;
 
 @Experimental
 public class CMSUtils {

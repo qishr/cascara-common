@@ -59,11 +59,9 @@ import java.util.zip.ZipEntry;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.security.*;
-import io.github.qishr.cascara.common.util.JarVerifier.VerifiedSigner;
 
 public class JarFile extends ZipFile {
     private static final String META_INF = "META-INF/";
@@ -156,15 +154,15 @@ public class JarFile extends ZipFile {
         return manifest;
     }
 
-    public JarEntry getJarEntry(String name) {
-        return new JarEntry(getEntry(name), getVerifier());
+    public java.util.jar.JarEntry getJarEntry(String name) {
+        return new JarFileEntry(getEntry(name), getVerifier());
     }
 
-    public List<JarEntry> getJarEntries() {
-        return getEntries().stream().map(f -> new JarEntry(f, getVerifier())).toList();
+    public List<java.util.jar.JarEntry> getJarEntries() {
+        return getEntries().stream().map(f -> (java.util.jar.JarEntry) new JarFileEntry(f, getVerifier())).toList();
     }
 
-    public InputStream getInputStream(JarEntry entry) throws IOException {
+    public InputStream getInputStream(JarFileEntry entry) throws IOException {
         verifyEntry(entry);
         return super.getInputStream(entry);
     }
@@ -270,14 +268,6 @@ public class JarFile extends ZipFile {
         return isMultiRelease;
     }
 
-    @Nullable
-    public Map<String,VerifiedSigner> getSigners() {
-        JarVerifier jv = getVerifier();
-        if (jv == null) {
-            return null;
-        }
-        return jv.getSigners();
-    }
 
     // TODO:
     // - static Runtime.Version runtimeVersion()
@@ -470,7 +460,7 @@ public class JarFile extends ZipFile {
         return keyFiles;
     }
 
-    private void verifyEntry(JarEntry entry) throws IOException {
+    private void verifyEntry(JarFileEntry entry) throws IOException {
         verifyEntry(entry.getName());
     }
 
@@ -510,38 +500,38 @@ public class JarFile extends ZipFile {
     //
     //
 
-    public class JarEntry extends java.util.jar.JarEntry {
+    public class JarFileEntry extends java.util.jar.JarEntry {
         private Attributes attr;
-        // private Certificate[] certs;
-        // private CodeSigner[] signers;
+        private Certificate[] certs;
+        private CodeSigner[] signers;
         private String basename;
         private volatile JarVerifier jv;
 
-        public JarEntry(String name) {
+        public JarFileEntry(String name) {
             super(name);
             this.basename = name;
         }
 
-        public JarEntry(ZipEntry ze) {
+        public JarFileEntry(ZipEntry ze) {
             super(ze);
         }
 
-        JarEntry(JarEntry je) {
+        JarFileEntry(JarFileEntry je) {
             this((ZipEntry)je);
             this.attr = je.attr;
-            // this.certs = je.certs;
-            // this.signers = je.signers;
+            this.certs = je.certs;
+            this.signers = je.signers;
             this.basename = je.basename;
         }
 
         // Used by realEntry()
-        JarEntry(String name, ZipEntry vze) {
+        JarFileEntry(String name, ZipEntry vze) {
             super(vze);
             this.basename = name;
         }
 
         // Used by getJarEntries()
-        JarEntry(ZipEntry ze, JarVerifier jv) {
+        JarFileEntry(ZipEntry ze, JarVerifier jv) {
             super(ze);
             this.jv = jv;
             this.basename = ze.getName();
@@ -558,22 +548,28 @@ public class JarFile extends ZipFile {
 
         @Override
         public Certificate[] getCertificates() {
-            JarVerifier.VerifiedSigner signer = jv == null
-                ? null
-                : jv.getSigner(getName());
-            return signer == null
-                ? null
-                : signer.certificates();
+            if (certs == null) {
+                JarVerifier.VerifiedSigner signer = jv == null
+                    ? null
+                    : jv.getSigner(getName());
+                certs = signer == null
+                    ? null
+                    : signer.certificates();
+            }
+            return certs;
         }
 
         @Override
         public CodeSigner[] getCodeSigners() {
-            JarVerifier.VerifiedSigner signer = jv == null
-                ? null
-                : jv.getSigner(getName());
-            return signer == null
-                ? null
-                : signer.codeSigners();
+            if (signers == null) {
+                JarVerifier.VerifiedSigner signer = jv == null
+                    ? null
+                    : jv.getSigner(getName());
+                signers = signer == null
+                    ? null
+                    : signer.codeSigners();
+            }
+            return signers;
         }
 
         public String getRealName() {
@@ -586,19 +582,19 @@ public class JarFile extends ZipFile {
         }
 
         @NonNull
-        JarEntry realEntry() {
+        JarFileEntry realEntry() {
             // TODO: How does this work with signing?
             if (isMultiRelease() && versionFeature != BASE_VERSION_FEATURE) {
                 String entryName = super.getName();
                 return entryName == basename || entryName.equals(basename)
                     ? this
-                    : new JarEntry(entryName, this);
+                    : new JarFileEntry(entryName, this);
             }
             return this;
         }
 
         @NonNull
-        JarEntry setBasename(String name) {
+        JarFileEntry setBasename(String name) {
             basename = name;
             return this;
         }

@@ -29,7 +29,8 @@ import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Set;
-import io.github.qishr.cascara.common.security.cms.CMSUtils;
+import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1TaggedObject;
+import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectIdentifier;
 import io.github.qishr.cascara.common.security.cms.CertificateSet;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
@@ -426,10 +427,10 @@ public class CascaraJarVerifier implements JarVerifier {
                 ASN1Sequence seq = ais.readObject();
 
                 // A simple wrapper that checks the structure an calls SignedData.parse
-                sd = CMSUtils.signedDataOrNull(seq);
-
-                // TODO: Null check
-                // also this needs re-written to not use CMSUtils which can then be removed.
+                sd = signedDataOrNull(seq);
+                if (sd == null) {
+                    throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Unable to load signed data");
+                }
 
                 // 1. Parse the tagged object as an implicit ASN1Set
                 ASN1Set certSet = sd.certificates().getObject(ASN1Tag.SET);
@@ -454,5 +455,28 @@ public class CascaraJarVerifier implements JarVerifier {
                 throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, e.getMessage());
             }
         }
+    }
+
+    public static SignedData signedDataOrNull(ASN1Sequence seq) {
+        // OID 1.2.840.113549
+        if (seq.size() > 0 && seq.get(1) instanceof ASN1TaggedObject tagged) {
+            if (tagged.getObject() instanceof ASN1Sequence certSeq) {
+                SignedData signed = signedData(certSeq);
+                return signed;
+            }
+        }
+        return null;
+    }
+
+    private static SignedData signedData(ASN1Sequence seq) {
+        if (seq.size() > 3 && seq.get(2) instanceof ASN1Sequence oidSeq) {
+            if (oidSeq.size() > 0 && oidSeq.get(0) instanceof ASN1ObjectIdentifier oid) {
+                if (oid.getValue().startsWith("1.2.840.113549.")) {
+                    SignedData signed = SignedData.parse(seq);
+                    return signed;
+                }
+            }
+        }
+        return null;
     }
 }

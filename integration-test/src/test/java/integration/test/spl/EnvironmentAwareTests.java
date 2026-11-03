@@ -40,9 +40,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
-import io.github.qishr.cascara.common.semver.SemVer;
-import io.github.qishr.cascara.common.util.Cascara;
-
 public class EnvironmentAwareTests {
     static boolean isModularEnvironment() {
         return EnvironmentAwareTests.class.getModule().isNamed();
@@ -60,7 +57,7 @@ public class EnvironmentAwareTests {
     void test_commonBehaviorWorkOnBoth() {
         // TODO
         // Runs regardless of environment
-        SemVer version = Cascara.getVersion();
+        // SemVer version = Cascara.getVersion();
         // System.out.println("cascara version = " + version);
         // System.out.println("module name = " + getClass().getModule().getName());
     }

@@ -7,6 +7,7 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.util.Set;
+import java.util.jar.JarEntry;
 
 import io.github.qishr.cascara.common.annotation.DataIgnore;
 import io.github.qishr.cascara.common.annotation.Experimental;
@@ -16,7 +17,6 @@ import io.github.qishr.cascara.common.annotation.SchemaProperty;
 import io.github.qishr.cascara.common.annotation.SchemaID;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.util.JarFile;
-import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 
 @Experimental
 @SchemaDefinition(title = "SPL Signature Policy")

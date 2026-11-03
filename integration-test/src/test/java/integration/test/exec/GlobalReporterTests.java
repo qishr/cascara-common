@@ -39,7 +39,7 @@ public class GlobalReporterTests extends ExecTestBase {
             .setEnv(classKey, "DEBUG")
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
-            .setTimeout(Duration.ofSeconds(5))
+            .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED);
 
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);

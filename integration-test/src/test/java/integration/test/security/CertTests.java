@@ -16,11 +16,11 @@ import integration.test.jar.JarTestBase;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
-import io.github.qishr.cascara.common.security.cms.CMSUtils;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
+import io.github.qishr.cascara.test.common.security.CMSUtils;
 import io.github.qishr.cascara.test.common.security.TestJarSigner;
 
 public class CertTests extends JarTestBase {

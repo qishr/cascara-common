@@ -1,7 +1,6 @@
 package io.github.qishr.cascara.common.security.cert;
 
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.ECKey;
 import java.security.interfaces.RSAKey;

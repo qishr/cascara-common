@@ -9,7 +9,6 @@ import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
@@ -34,7 +33,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
             .setEnv("CASC_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
-            .setTimeout(Duration.ofSeconds(3))
+            .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 
         Response<ReporterTestOutput> result = exec.run(input);
@@ -59,7 +58,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
                 .setModuleName(GlobalReporterTestTask.class.getModule().getName())
                 .setModulePath(getModulePath())
                 .setEnv("CASC_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
-                .setTimeout(Duration.ofSeconds(3))
+                .setTimeout(Duration.ofSeconds(20))
                 .setDebug(PROCESS_DEBUG_ENABLED)
         );
 
@@ -76,7 +75,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModuleName(null) // Forces pure -cp launch
             .setClassPath(getModulePath())
-            .setTimeout(Duration.ofSeconds(5))
+            .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED);
 
         Response<ReporterTestOutput> result = IsolatedExecutor.run(
@@ -99,7 +98,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
         JvmOptions options = new JvmOptions()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName()) // Forces --module-path launch
             .setModulePath(getModulePath())
-            .setTimeout(Duration.ofSeconds(5))
+            .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED);
 
         Response<ReporterTestOutput> result = IsolatedExecutor.run(

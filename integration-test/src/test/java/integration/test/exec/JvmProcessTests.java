@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,7 @@ public class JvmProcessTests extends ExecTestBase {
         String json = serializer.toString(input);
 
         JvmOptions options = new JvmOptions()
+            .setTimeout(Duration.ofHours(24))
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED);
@@ -71,6 +73,7 @@ public class JvmProcessTests extends ExecTestBase {
         String classKey = "CASC_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
 
         JvmOptions options = new JvmOptions()
+            .setTimeout(Duration.ofHours(24))
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
@@ -106,6 +109,7 @@ public class JvmProcessTests extends ExecTestBase {
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
         JvmOptions options = new JvmOptions()
+            .setTimeout(Duration.ofHours(24))
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)

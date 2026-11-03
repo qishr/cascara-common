@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.jar.JarEntry;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
@@ -17,13 +18,12 @@ import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Set;
-import io.github.qishr.cascara.common.security.cms.CMSUtils;
 import io.github.qishr.cascara.common.security.cms.CertificateSet;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
 import io.github.qishr.cascara.common.util.JarFile;
-import io.github.qishr.cascara.common.util.JarFile.JarEntry;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
+import io.github.qishr.cascara.test.common.security.CMSUtils;
 import io.github.qishr.cascara.test.common.security.TestJarSigner;
 import io.github.qishr.cascara.test.common.security.TestJarSigner.SignedJarBundle;
 
