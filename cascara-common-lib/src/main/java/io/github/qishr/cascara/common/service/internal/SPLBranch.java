@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.jar.JarEntry;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 
@@ -72,7 +73,6 @@ import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.security.SignatureException;
 import io.github.qishr.cascara.common.security.SignaturePolicy;
 import io.github.qishr.cascara.common.security.SignatureStatus;
-import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.service.ContentTypeProvider;
 import io.github.qishr.cascara.common.service.SPL;
@@ -89,6 +89,7 @@ import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.JarManifest;
 import io.github.qishr.cascara.common.util.ModulePath;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
+import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
 public class SPLBranch implements SPL {
     protected static final Reporter REPORTER = GlobalReporter.forClass(SPL.class);
@@ -449,14 +450,18 @@ public class SPLBranch implements SPL {
             ClassLoader loader = ClassLoader.getSystemClassLoader();
             moduleLayer = parent.defineModulesWithManyLoaders(cf, loader);
 
-            scanClasses(jar, classes);
+            // moduleLayer.findModule(moduleName).ifPresent(module -> {
+                DiscoveredModule dm = new DiscoveredModule(moduleName, classes, jarPath);
+                enumerateProviders(dm, verify);
+                // scanClasses(jar, dm);
 
-            addModuleToMap(moduleName);
-            SPLUtils.recomputeAllVisibleProviders(rootLayer);
+                addModuleToMap(moduleName);
+                SPLUtils.recomputeAllVisibleProviders(rootLayer);
 
-            // TODO: These should use the same source
-            Classes.invalidate();
-            ClassHierarchy.invalidate();
+                // TODO: These should use the same source
+                Classes.invalidate();
+                ClassHierarchy.invalidate();
+            // });
 
         } catch(LocalizableIOException e) {
             throw new ServiceException(e, ServiceMessage.FAILED_TO_READ_JAR, jarPath, e.getMessage());
@@ -518,29 +523,13 @@ public class SPLBranch implements SPL {
     // Discovery
     //
 
-    /// Use class scanning to find service implementations inside this layer
-    private void scanClasses(JarFile jar, Set<String> candidateClassNames) {
-        for (Module module : moduleLayer.modules()) {
-            String moduleName = module.getName();
-            if (moduleName == null){
-                continue;
-            }
-            // Path jarPath = modulePath.getPathForModule(moduleName);
-            // enumerateProviders(candidateClassNames, module, jarPath, false);
-            enumerateProviders(candidateClassNames, module, jar.getPath(), false);
-        }
-    }
+    protected void enumerateProviders(DiscoveredModule dm, boolean isAutoRegistration) {
+        Module module = dm.getName() == null
+            ? null
+            : moduleLayer.findModule(dm.getName()).orElse(null);
 
-    // TODO: Pass in map of one of these:
-    //   - Map<String,Path> candidateClassesToJarsOrClassFiles
-    //   - Map<Path,Set<String>> locationsToCLassNames
-    // protected void enumerateProviders(Set<String> candidateClassNames, Module module, JarFile jar, boolean isAutoRegistration) {
-    //     Path jarPath = jar == null
-    //         ? null
-    //         : jar.getPath();
-
-    protected void enumerateProviders(Set<String> candidateClassNames, Module module, Path jarPath, boolean isAutoRegistration) {
-        for (String className : candidateClassNames) {
+        Path jarPath = dm.getJarPath();
+        for (String className : dm.getClasses()) {
             if (!isRegistered(className)) {
                 try {
                     Class<?> clazz = module == null
@@ -582,14 +571,52 @@ public class SPLBranch implements SPL {
         }
     }
 
-    private void verifySignature(JarFile jar) {
+    // TODO: Loading class from VFS
+
+    // private Class<?> loadProviderClass(ProviderCandidate candidate, ClassLoader parentLoader) throws ClassNotFoundException {
+    //     Path origin = candidate.originPath();
+
+    //     // If the path is not a default filesystem path (i.e. it's in the Cascara VFS)
+    //     // or not on the JVM's physical classpath/modulepath:
+    //     if (!origin.getFileSystem().equals(FileSystems.getDefault())) {
+    //         ClassLoader vfsLoader = new VfsJarClassLoader(origin, parentLoader);
+    //         return Class.forName(candidate.providerClassName(), true, vfsLoader);
+    //     }
+
+    //     // Otherwise, standard resolution
+    //     return Class.forName(candidate.providerClassName(), true, parentLoader);
+    // }
+
+    public class VfsJarClassLoader extends ClassLoader {
+        private final Path jarPath;
+        public VfsJarClassLoader(Path jarPath, ClassLoader parent) {
+            super(parent);
+            this.jarPath = jarPath;
+        }
+        @Override
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
+            // Convert FQCN to JAR entry path: com.example.Foo -> com/example/Foo.class
+            String entryPath = name.replace('.', '/') + ".class";
+            try (JarFile jar = JarFile.open(jarPath)) {
+                JarEntry entry = jar.getJarEntry(entryPath);
+                if (entry != null) {
+                    try (InputStream in = jar.getInputStream(entry)) {
+                        byte[] classBytes = in.readAllBytes();
+                        return defineClass(name, classBytes, 0, classBytes.length);
+                    }
+                }
+            } catch (IOException e) {
+                throw new ClassNotFoundException("Failed to read class " + name + " from " + jarPath, e);
+            }
+            throw new ClassNotFoundException(name);
+        }
+    }
+
+    protected static void verifySignature(JarFile jar) {
         List<ZipEntry> entries = jar.getEntries();
         for (ZipEntry entry : entries) {
             try (InputStream in = jar.getInputStream(entry)) {
                 in.transferTo(OutputStream.nullOutputStream());
-            // } catch (LocalizableIOException e) {
-            //     // TODO Auto-generated catch block
-            //     e.printStackTrace();
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -607,8 +634,8 @@ public class SPLBranch implements SPL {
             throw new SignatureException(
                 status,
                 ServiceMessage.VERIFICATION_FAILED,
-                jar.getPath(),
-                status
+                status,
+                jar.getPath()
             );
         }
     }
@@ -667,7 +694,7 @@ public class SPLBranch implements SPL {
     // Registration
     //
 
-    private boolean isVerifyEnabled() {
+    protected static boolean isVerifyEnabled() {
         // return false;
         // TODO: Use propsFile for this too
         String verify = System.getProperty(CASCARA_SEC_VERIFY);

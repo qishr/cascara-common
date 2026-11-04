@@ -36,7 +36,6 @@ package io.github.qishr.cascara.common.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.module.ModuleDescriptor;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -46,7 +45,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class ClassPath extends AbstractLibraryScanner {
+public class ClassPath extends AbstractClassFinder {
     // private static final Reporter REPORTER = GlobalReporter.forClass(ClassPath.class);
     private static final String PATHS = System.getProperty("java.class.path");
 
@@ -76,23 +75,6 @@ public class ClassPath extends AbstractLibraryScanner {
         loadClassPath(classPaths);
     }
 
-    // @Override
-    // protected Reporter getReporter() {
-    //     return REPORTER;
-    // }
-
-    @Override
-    protected void addModuleDescriptor(String moduleName, ModuleDescriptor descriptor) {
-    }
-
-    @Override
-    protected void addModuleLocation(String moduleName, Path path) {
-    }
-
-    @Override
-    protected void addClassToModule(String className, String moduleName) {
-    }
-
     private void loadClassPath(Set<String> classPaths) {
         if (classPaths == null || classPaths.isEmpty()) {
             classPaths = new HashSet<>();
@@ -110,7 +92,6 @@ public class ClassPath extends AbstractLibraryScanner {
                     : Path.of(pathString);
 
             if (!Files.exists(path)) {
-                // REPORTER.debug("Non-existant class path: " + path);
                 continue;
             }
 
@@ -124,17 +105,33 @@ public class ClassPath extends AbstractLibraryScanner {
     }
 
     protected String scanDirectoryUrl(Path directory, URL[] urls, String moduleName) {
+        // TODO: Why not this...
+        // ClassLoader cl = JreUtils.getEffectiveClassLoader();
+        // Enumeration<URL> roots = cl.getResources("");
+        // while (roots.hasMoreElements()) {
+        //     URL root = roots.nextElement();
+        //     if ("file".equals(root.getProtocol())) {
+        //         Path dirPath = Path.of(root.toURI());
+        //         if (Files.isDirectory(dirPath)) {
+        //             scanDirectory(dirPath, "", classNames);
+        //         }
+        //     }
+        // }
+
         try (URLClassLoader classLoader = new URLClassLoader(urls)) {
             try(Stream<Path> classFiles = Files.walk(directory)) {
+                Set<String> discovered = new HashSet<>();
                 for (Path classFile : classFiles.toList()) {
                     if (classFile.toString().endsWith(DOT_CLASS)) {
                         String relativePath = directory.toUri().relativize(classFile.toUri()).getPath();
                         String className = relativePath.replace(File.separatorChar, '.').replace(DOT_CLASS, "");
-                        if (!isExcluded(className)) {
-                            addClass(className);
+                        if (!className.equals("module-info")) {
+                            // TODO: Scan class file. Without doing that we miss nested classes.
+                            discovered.add(className);
                         }
                     }
                 }
+                register(discovered, null, null);
             }
         } catch (IOException e) {
             error(e);

@@ -47,7 +47,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -56,14 +55,10 @@ import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 @Experimental
-public class ModulePath extends AbstractLibraryScanner {
+public class ModulePath extends AbstractClassFinder {
     private static final String PATHS = System.getProperty("jdk.module.path");
 
     private Set<String> moduleNames = new HashSet<>();
-    private Map<String, String> classToModule = new HashMap<>();
-    private Map<String, Set<String>> moduleToClasses = new HashMap<>();
-    private Map<String, ModuleDescriptor> descriptors = new HashMap<>();
-    private Map<String, Path> moduleToPath = new HashMap<>();
 
     public ModulePath(Reporter reporter) {
         this(reporter, null, null, null);
@@ -100,7 +95,6 @@ public class ModulePath extends AbstractLibraryScanner {
         if (reporter != null) {
             this.reporter = reporter;
         }
-        // System.out.println("P="+virtualReferencePath);
         if (modulePaths == null || modulePaths.isEmpty()) {
             modulePaths = new HashSet<>();
             if (PATHS != null) {
@@ -112,7 +106,7 @@ public class ModulePath extends AbstractLibraryScanner {
         loadModulePath(modulePaths);
     }
 
-    public Set<String> getModules() {
+    public Set<String> getModuleNames() {
         return moduleNames;
     }
 
@@ -121,7 +115,16 @@ public class ModulePath extends AbstractLibraryScanner {
     }
 
     public Path getPathForModule(String moduleName) {
-        return moduleToPath.get(moduleName);
+        DiscoveredModule mod;
+        if (moduleName == null) {
+            mod = discoveredModules.get(DiscoveredModule.UNNAMED);
+        } else {
+            mod = discoveredModules.get(moduleName);
+        }
+        if (mod == null) {
+            throw new IllegalArgumentException("No module named " + moduleName);
+        }
+        return mod.getJarPath();
     }
 
     public String getModuleForClass(String className) {
@@ -132,13 +135,27 @@ public class ModulePath extends AbstractLibraryScanner {
         return moduleNames.contains(moduleName);
     }
 
-    public boolean containsClass(String className) {
-        return classNames.contains(className);
-    }
-
     //
     // Private Methods
     //
+
+    protected String scanDirectoryUrl(Path directory, URL[] urls, String moduleName) {
+        // This is called from ModulePathTests
+        Set<String> discovered = new HashSet<>();
+        try (URLClassLoader classLoader = new URLClassLoader(urls)) {
+            try(Stream<Path> classFiles = Files.walk(directory)) {
+                for (Path classFile : classFiles.toList()) {
+                    if (classFile.toString().endsWith(DOT_CLASS)) {
+                        moduleName = scanClassFile(directory, classFile, classLoader, moduleName, discovered);
+                    }
+                }
+                register(discovered, moduleName, null);
+            }
+        } catch (IOException e) {
+            error(e);
+        }
+        return moduleName;
+    }
 
     private void loadPatchedModules() {
         reporter.info(GenericMessage.INFO, "Scanning patched modules");
@@ -157,29 +174,6 @@ public class ModulePath extends AbstractLibraryScanner {
                 parsePatchModuleOption(patchValue);
             }
         }
-    }
-
-    public String scanDirectoryUrl(Path directory, URL[] urls, String moduleName) {
-        // This is called from ModulePathTests
-        Set<String> discovered = new HashSet<>();
-        try (URLClassLoader classLoader = new URLClassLoader(urls)) {
-            try(Stream<Path> classFiles = Files.walk(directory)) {
-                for (Path classFile : classFiles.toList()) {
-                    if (classFile.toString().endsWith(DOT_CLASS)) {
-                        moduleName = scanClassFile(directory, classFile, classLoader, moduleName, discovered);
-                    }
-                }
-                for (String className : discovered) {
-                    if (!isExcluded(className)) {
-                        addClassToModule(className, moduleName);
-                        addClass(className);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            error(e);
-        }
-        return moduleName;
     }
 
     private void parsePatchModuleOption(String option) {
@@ -213,15 +207,13 @@ public class ModulePath extends AbstractLibraryScanner {
             }
         } catch (IOException ignored) {}
 
-        for (String className : discovered) {
-            addClassToModule(className, targetModuleName);
-        }
+        register(discovered, targetModuleName, null);
     }
 
     private void loadModulePath(Set<String> modulePaths) {
         moduleNames = new HashSet<>();
         classToModule = new HashMap<>();
-        moduleToClasses = new HashMap<>();
+        // moduleToClasses = new HashMap<>();
 
         if (modulePaths == null || modulePaths.isEmpty()) {
             reporter.warn(GenericMessage.WARN, "No module path");
@@ -239,9 +231,6 @@ public class ModulePath extends AbstractLibraryScanner {
 
             // Parse path using virtual file system if provided, otherwise default OS file system
             Path path = getPath(modulePathString);
-            // Path path = (virtualReferencePath != null)
-            //         ? virtualReferencePath.getFileSystem().getPath(modulePathString)
-            //         : Path.of(modulePathString);
 
             if (!Files.exists(path)) {
                 reporter.warn(GenericMessage.WARN, "Non-existant module path: " + path);
@@ -254,39 +243,10 @@ public class ModulePath extends AbstractLibraryScanner {
             } else if (path.toString().toLowerCase().endsWith(DOT_JAR)) {
                 moduleName = scanJar(path, moduleName);
             }
-
-            // if (moduleName != null && !moduleName.isEmpty()) {
-            //     moduleNames.add(moduleName);
-            // }
         }
     }
 
-    @Override
-    protected void addModuleDescriptor(String moduleName, ModuleDescriptor descriptor) {
-        descriptors.put(moduleName, descriptor);
-    }
-
-    @Override
-    protected void addModuleLocation(String moduleName, Path path) {
-        moduleToPath.put(moduleName, path);
-    }
-
-    @Override
-    protected void addClassToModule(String className, String moduleName) {
-        if (moduleName == null) {
-            moduleName = ""; // UNNAMED modules
-        }
-        classToModule.put(className, moduleName);
-        Set<String> moduleClasses = moduleToClasses.get(moduleName);
-        if (moduleClasses == null) {
-            moduleClasses = new HashSet<>();
-            moduleToClasses.put(moduleName, moduleClasses);
-            moduleNames.add(moduleName);
-        }
-        moduleClasses.add(className);
-        classNames.add(className);
-    }
-
+    /// Parse path using virtual file system if provided, otherwise default OS file system
     private Path getPath(String pathString) {
         if (virtualReferencePath != null) {
             Path virtualPath = virtualReferencePath.getFileSystem().getPath(pathString);
@@ -295,5 +255,39 @@ public class ModulePath extends AbstractLibraryScanner {
             }
         }
         return Path.of(pathString);
+    }
+
+    public static class DiscoveredModule {
+        public static final String UNNAMED = "UNNAMED";
+
+        private final String name;
+        private final Set<String> classes;
+        private final Path jarPath;
+
+        public DiscoveredModule(String name, Set<String> classes, Path jarPath) {
+            this.name = name;
+            this.classes = classes;
+            this.jarPath = jarPath;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Set<String> getClasses() {
+            return classes;
+        }
+
+        public Path getJarPath() {
+            return jarPath;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof DiscoveredModule other)) {
+                return false;
+            }
+            return name.equals(other.name);
+        }
     }
 }

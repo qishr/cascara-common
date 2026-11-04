@@ -1,22 +1,22 @@
 package io.github.qishr.cascara.common.service.internal;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ClassPath;
 import io.github.qishr.cascara.common.util.ModulePath;
-import io.github.qishr.cascara.common.util.Pair;
+import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
 public class Discoverer {
-    public static Pair<Set<String>,Set<String>> discoverModulesAndClasses(Set<String> excludePackages) {
-        Set<String> classes = new HashSet<>();
-
+    public static Set<DiscoveredModule> discoverModulesAndClasses(Set<String> excludePackages) {
         // Discover classes on the module path
         ModulePath modulePath = new ModulePath(null, excludePackages, Cascara.getModulePath());
-        classes.addAll(modulePath.getClasses());
+        Set<DiscoveredModule> modules = modulePath.getDiscoveredModules();
 
         // Get the set of modulepath entries
         Set<String> modulePathSet = pathSet(System.getProperty("jdk.module.path"));
@@ -28,10 +28,12 @@ public class Discoverer {
         classPathSet.removeAll(modulePathSet);
 
         // Discover classes in the abridged classpath set
-        ClassPath classPath = new ClassPath(classPathSet, excludePackages);
-        classes.addAll(classPath.getClasses());
+        ClassPath classPath = new ClassPath(classPathSet, excludePackages, Cascara.getModulePath());
+        Set<DiscoveredModule> cpModules = classPath.getDiscoveredModules();
 
-        return Pair.of(modulePath.getModules(), classes);
+        modules.addAll(cpModules);
+
+        return modules;
     }
 
     private static Set<String> pathSet(String paths) {

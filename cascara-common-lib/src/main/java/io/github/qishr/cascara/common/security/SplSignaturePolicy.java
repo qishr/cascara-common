@@ -131,65 +131,6 @@ public final class SplSignaturePolicy implements SignaturePolicy {
         }
     }
 
-    // @Override
-    // @NonNull
-    // public SignatureStatus evaluate(JarFile jarFile) {
-    //     try {
-    //         JarEntry manifestEntry = jarFile.getJarEntry("META-INF/MANIFEST.MF");
-    //         if (manifestEntry == null) {
-    //             return SignatureStatus.NOT_SIGNED;
-    //         }
-
-    //         Certificate[] certs = manifestEntry.getCertificates();
-    //         if (certs == null || certs.length == 0) {
-    //             return SignatureStatus.NOT_SIGNED;
-    //         }
-
-    //         // If no trust store is configured, any cryptographically valid signature passes
-    //         if (trustStore == null) {
-    //             return SignatureStatus.VALID;
-    //         }
-
-    //         // Check if any signing certificate is trusted by the TrustStore
-    //         for (Certificate cert : certs) {
-    //             if (cert instanceof X509Certificate x509 && isCertificateTrusted(x509)) {
-    //                 return SignatureStatus.VALID;
-    //             }
-    //         }
-
-    //         return SignatureStatus.UNTRUSTED_SIGNER;
-
-    //     } catch (SignatureException e) {
-    //         REPORTER.error(e);
-    //         return e.getSignatureStatus();
-    //     }
-    // }
-
-    // // The old evaluate method...
-    // @Deprecated
-    // @NonNull
-    // public SignatureStatus evaluateCert(X509Certificate cert) {
-    //     if (cert == null) {
-    //         return requireSigned ? SignatureStatus.NOT_SIGNED : SignatureStatus.VALID;
-    //     }
-
-    //     if (checkExpiry) {
-    //         try {
-    //             cert.checkValidity();
-    //         } catch (CertificateExpiredException e) {
-    //             return SignatureStatus.CERTIFICATE_EXPIRED;
-    //         } catch (CertificateNotYetValidException e) {
-    //             return SignatureStatus.NOT_YET_VALID;
-    //         }
-    //     }
-
-    //     if (!trustStore.getCertificates().isEmpty() && !trustStore.contains(cert)) {
-    //         return SignatureStatus.UNTRUSTED_SIGNER;
-    //     }
-
-    //     return SignatureStatus.VALID;
-    // }
-
     /// Checks whether a certificate is directly trusted by the TrustStore or issued by a CA anchor in the TrustStore.
     private boolean isCertificateTrusted(X509Certificate cert) {
         if (trustStore == null) {

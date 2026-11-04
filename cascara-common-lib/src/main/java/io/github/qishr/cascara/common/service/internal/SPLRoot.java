@@ -53,12 +53,16 @@ import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.security.SignaturePolicy;
 import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.ServiceException;
+import io.github.qishr.cascara.common.service.ServiceMessage;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.ContentTypeResolver;
+import io.github.qishr.cascara.common.util.JarFile;
+import io.github.qishr.cascara.common.util.JarManifest;
 import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.Pair;
+import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
 public class SPLRoot extends SPLBranch {
     private static final Properties EMPTY_PROPERTIES = new Properties();
@@ -83,6 +87,7 @@ public class SPLRoot extends SPLBranch {
         rootLayer = this;
         name = "root";
         contentTypes = new HashSet<>();
+        moduleLayer = ModuleLayer.boot();
         loadPolicy();
         loadPreferences();
         displayEnvironmentInformation();
@@ -193,26 +198,42 @@ public class SPLRoot extends SPLBranch {
         excludePackages.add("worker.org.gradle");
 
         long start = System.currentTimeMillis();
-        Pair<Set<String>,Set<String>> discovered = Discoverer.discoverModulesAndClasses(excludePackages);
-        Set<String> modules = discovered.getL();
-        Set<String> classes = discovered.getR();
+
+        Set<DiscoveredModule> discovered = Discoverer.discoverModulesAndClasses(excludePackages);
+
+        Set<String> modules = new HashSet<>();
+        for (DiscoveredModule dm : discovered) {
+            if (dm.getName() != null) {
+                modules.add(dm.getName());
+            }
+        }
 
         long finish = System.currentTimeMillis();
         long timeElapsed = finish - start;
-
-        if (REPORTER.getLevel().includes(Level.TRACE)) {
-            REPORTER.trace("classes: ");
-            // classes.stream().sorted().forEach(s -> REPORTER.trace("  " + s));
-            classes.stream().sorted().forEach(s -> {
-                if (s.contains("ProviderA")) {
-                    REPORTER.debug("PROVIDER A");
-                }
-            });
+        int classCount = 0;
+        for (DiscoveredModule dm : discovered) {
+            classCount += dm.getClasses().size();
         }
 
-        REPORTER.debug("Discovered %d classes in %d ms", classes.size(), (int)timeElapsed);
+        REPORTER.debug("Discovered %d classes in %d ms", classCount, (int)timeElapsed);
 
-        enumerateProviders(classes, null, null, true);
+        boolean verify = isVerifyEnabled();
+
+        for (DiscoveredModule dm : discovered) {
+            Path jarPath = dm.getJarPath();
+            if (jarPath != null) {
+                try (JarFile jar = JarFile.open(jarPath, verify)) {
+                    jar.getManifest();
+                    if (verify) {
+                        verifySignature(jar);
+                    }
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                    continue;
+                }
+            }
+            enumerateProviders(dm, true);
+        }
 
         this.modules.addAll(modules);
     }

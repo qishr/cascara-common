@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Disabled;
 import integration.test.exec.ExecTestBase;
 import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.payload.ReporterTestOutput;
-import integration.test.fixtures.task.GlobalReporterTestTask;
 import integration.test.fixtures.task.SplPolicyTestTask;
 import integration.test.jar.JarSignatureInvalidTests;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
@@ -104,7 +103,8 @@ public class SplPolicyTests extends ExecTestBase {
     @TempDir
     public Path tempDir;
 
-    @Disabled
+    // TODO
+    // @Disabled
     @Test
     void test_isolatedWithHostFS_splWithPolicy_rejects_expiredCert(@TempDir Path tempDir) throws Exception {
         // 1. Issue an expired identity
@@ -122,19 +122,19 @@ public class SplPolicyTests extends ExecTestBase {
             .sign(s -> s.withIdentity(expiredIdentity))
             .packageJar(jarPath);
 
-        syncVfs();
-        try(Stream<Path> jarFiles = Files.walk(Cascara.getModulePath())) {
-            for (Path jarFile : jarFiles.toList()) {
-                System.out.println("> " + jarFile);
-            }
-        }
+        // try(Stream<Path> jarFiles = Files.walk(Cascara.getModulePath())) {
+        //     for (Path jarFile : jarFiles.toList()) {
+        //         System.out.println("> " + jarFile);
+        //     }
+        // }
 
         ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
         IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
         // Enable forwarding of TRACE reports from isolated JVM
         exec.setDiagnosticForwardingEnabled(true);
-        GlobalReporter.forClass(SPL.class).setLevel(Level.TRACE);
+        GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
+        GlobalReporter.globalInstance().getFormatOptions().setIncluedPid(true);
 
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;

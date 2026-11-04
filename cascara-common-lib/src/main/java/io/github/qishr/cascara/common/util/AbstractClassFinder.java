@@ -44,7 +44,9 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -53,23 +55,35 @@ import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOExceptio
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
-public abstract class AbstractLibraryScanner {
+public abstract class AbstractClassFinder {
     protected static final String DOT_CLASS = ".class";
     protected static final String DOT_JAR = ".jar";
     protected static final String MODULE_INFO = "module-info";
 
     protected Reporter reporter = new NoOpReporter();
-    protected abstract void addModuleDescriptor(String moduleName, ModuleDescriptor descriptor);
-    protected abstract void addModuleLocation(String moduleName, Path path);
-    protected abstract void addClassToModule(String className, String moduleName);
+
+    protected abstract String scanDirectoryUrl(Path directory, URL[] urls, String moduleName);
 
     protected Set<String> classNames = new HashSet<>();
     protected Path virtualReferencePath;
     protected Set<String> excluded;
+    protected Map<String, DiscoveredModule> discoveredModules = new HashMap<>();
+    protected Map<String, String> classToModule = new HashMap<>();
+    protected Map<String, ModuleDescriptor> descriptors = new HashMap<>();
+
 
     public Set<String> getClasses() {
         return classNames;
+    }
+
+    public boolean containsClass(String className) {
+        return classNames.contains(className);
+    }
+
+    public Set<DiscoveredModule> getDiscoveredModules() {
+        return new HashSet<DiscoveredModule>(discoveredModules.values());
     }
 
     protected static Set<String> pathSet(String classPath) {
@@ -85,6 +99,7 @@ public abstract class AbstractLibraryScanner {
     @Nullable
     protected String scanJar(Path path, String moduleName) {
         try{
+            // TODO: Try-with
             JarFile jar = JarFile.open(path);
             String jarModuleName = jar.getModuleName();
             Set<String> jarClassNames = jar.getClassNames();
@@ -97,23 +112,39 @@ public abstract class AbstractLibraryScanner {
             } else {
                 reporter.warn(GenericMessage.WARN, "Scanning modular (" + jarModuleName + ") JAR: " + path);
             }
-            for (String className : jarClassNames) {
-                if (!isExcluded(className)) {
-                    if (!(reporter instanceof NoOpReporter)) {
-                        reporter.debug("  Found class: " + className);
-                    }
-                    addClassToModule(className, jarModuleName);
-                    addClass(className);
-                } else {
-                    if (!(reporter instanceof NoOpReporter)) {
-                        reporter.trace("  Class excluded: " + className);
-                    }
-                }
-            }
+            // Set<String> classNames = new HashSet<>();
+            // for (String className : jarClassNames) {
+
+
+            //     if (className.equals("io.github.qishr.cascara.common.security.InvalidKeyException")) {
+            //         System.out.println("Debug");
+            //     }
+
+
+            //     if (!isExcluded(className)) {
+            //         if (!(reporter instanceof NoOpReporter)) {
+            //             reporter.debug("  Found class: " + className);
+            //         }
+
+            //         // addClassToModule(className, jarModuleName);
+            //         // classNames.add(className);
+
+            //         addClass(className); // ------------------------------------------------ 1
+            //     } else {
+            //         if (!(reporter instanceof NoOpReporter)) {
+            //             reporter.trace("  Class excluded: " + className);
+            //         }
+            //     }
+            // }
+
+            // TODO: Scan class file. Without doing that we miss nested classes.
+
+            register(jarClassNames, jarModuleName, path);
+
             if (jarModuleName == null) {
                 return moduleName;
             }
-            addModuleLocation(jarModuleName, path);
+
             return jarModuleName;
         } catch(IOException e) {
             error(e);
@@ -126,7 +157,6 @@ public abstract class AbstractLibraryScanner {
             URL url = URL.of(directory.toUri(), null);
             URL[] urls = new URL[] {url};
             scanDirectoryUrl(directory, urls, moduleName);
-
             try(Stream<Path> jarFiles = Files.walk(directory)) {
                 for (Path jarFile : jarFiles.toList()) {
                     if (jarFile.toString().endsWith(DOT_JAR)) {
@@ -142,28 +172,7 @@ public abstract class AbstractLibraryScanner {
         return moduleName;
     }
 
-    //
-    //
-    //
-
-    protected boolean isExcluded(String className) {
-        if (excluded != null) {
-            for (String prefix : excluded) {
-                if (className.startsWith(prefix)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    protected void addClass(String className) {
-        classNames.add(className);
-    }
-
-    protected abstract String scanDirectoryUrl(Path directory, URL[] urls, String moduleName);
-
-    public String scanClassFile(Path directory, Path file, URLClassLoader classLoader, String moduleName, Set<String> discovered) throws LocalizableIOException {
+    protected String scanClassFile(Path directory, Path file, URLClassLoader classLoader, String moduleName, Set<String> discovered) throws LocalizableIOException {
         String className = "";
         String relativePath = "";
         try {
@@ -176,12 +185,13 @@ public abstract class AbstractLibraryScanner {
                 }
                 moduleName = descriptor.name();
                 addModuleDescriptor(moduleName, descriptor);
-                addModuleLocation(moduleName, file.getParent());
             } else {
                 Class<?> clazz = classLoader.loadClass(className);
                 discovered.add(clazz.getName());
                 for (Class<?> declaredClass : clazz.getDeclaredClasses()) {
-                    discovered.add(declaredClass.getName());
+                    if (!isExcluded(declaredClass.getName())) {
+                        discovered.add(declaredClass.getName());
+                    }
                 }
             }
         } catch (IllegalAccessError e) {
@@ -192,6 +202,48 @@ public abstract class AbstractLibraryScanner {
             error(e);
         }
         return moduleName;
+    }
+
+    protected void register(Set<String> discovered, String moduleName, Path jarPath) {
+        if (moduleName == null) {
+            DiscoveredModule mod = discoveredModules.get(DiscoveredModule.UNNAMED);
+            if (mod == null) {
+                mod = new DiscoveredModule(DiscoveredModule.UNNAMED, discovered, jarPath);
+                discoveredModules.put(DiscoveredModule.UNNAMED, mod);
+            } else {
+                mod.getClasses().addAll(discovered);
+            }
+            for (String className : discovered) {
+                if (!isExcluded(className)) {
+                    classNames.add(className);
+                }
+            }
+        } else {
+            DiscoveredModule mod = new DiscoveredModule(moduleName, discovered, jarPath);
+            discoveredModules.put(moduleName, mod);
+            for (String className : discovered) {
+                if (!isExcluded(className)) {
+                    classToModule.put(className, moduleName);
+                    classNames.add(className);
+                }
+            }
+        }
+    }
+
+    protected void addModuleDescriptor(String moduleName, ModuleDescriptor descriptor) {
+        descriptors.put(moduleName, descriptor);
+    }
+
+    protected boolean isExcluded(String classOrPkgName) {
+        String name = classOrPkgName + ".";
+        if (excluded != null) {
+            for (String prefix : excluded) {
+                if (name.startsWith(prefix)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     protected void error(Throwable t) {

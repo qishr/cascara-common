@@ -1,6 +1,7 @@
 package io.github.qishr.cascara.common.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -23,7 +24,16 @@ import org.junit.jupiter.api.Disabled;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+
 public class ModulePathTests {
+    private static final Reporter REPORTER = Reporter.forClass(ModulePathTests.class);
+
+    private static boolean isJpmsEnvironment() {
+        String moduleName = ModulePathTests.class.getModule().getName();
+        return moduleName != null && !moduleName.isEmpty();
+    }
+
     public static abstract class TestBase {
         public String x;
     }
@@ -33,37 +43,41 @@ public class ModulePathTests {
     }
 
     @Test
-    void testModulePath() {
-        String mouleName = getClass().getModule().getName();
-        if (mouleName == null || mouleName.isEmpty()) {
-            System.out.println("Skipping testModulePath in non-JPMS environment");
-        } else {
+    void test_findsTestClass() {
+        if (isJpmsEnvironment()) {
             ModulePath mp = new ModulePath();
             assertTrue(mp.containsClass(TestBase.class.getName()));
+        } else {
+            REPORTER.debug("Skipping testModulePath in non-JPMS environment");
         }
     }
 
-        // @Mock static Reporter reporter = new LocalReporter();
-//    {
-//        @Override
-//        public void print(Kind kind, String message) {
-//            System.out.println(kind + ": " + message);
-//        }
-//
-//        @Override
-//        public void print(Kind kind, DocTreePath path, String message) {
-//            // Do nothing
-//        }
-//
-//        @Override
-//        public void print(Kind kind, Element element, String message) {
-//            // Do nothing
-//        }
-//    };
+    @Test
+    void test_doesNotFindExcludedClass() {
+        if (isJpmsEnvironment()) {
+            Set<String> excluded = Set.of(
+                "org.mockito.", "jdk.", "sun.", "com.sun.", "net.bytebuddy.",
+                "worker.org.gradle.", "org.objenesis.", "org.opentest4j.",
+                "org.jcp.xml.dsig.internal.", "org.junit",
+                "com.apple", "apple.laf", "apple.security",
+                "java.awt.", "javax.swing."
+            );
+
+            ModulePath mp = new ModulePath(null, null, excluded, null);
+
+            for (String ex : excluded) {
+                assertFalse(mp.containsClass(ex), ex + " should have been excluded");
+            }
+
+            // assertFalse(mp.containsClass(Test.class.getName()));
+        } else {
+            REPORTER.debug("Skipping testModulePath in non-JPMS environment");
+        }
+    }
 
     @Disabled
     @Test
-    void processDirectoryUrl_callsProcessClassFileForClassFiles() throws Exception {
+    void test_processDirectoryUrl_callsProcessClassFileForClassFiles() throws Exception {
         Path tempDir = Files.createTempDirectory("lr-processdir");
         File dir = tempDir.toFile();
         try {
@@ -97,7 +111,7 @@ public class ModulePathTests {
     }
 
     @Test
-    void processClassFile_readsModuleInfoAndSetsSiblingModuleName() throws Exception {
+    void test_processClassFile_readsModuleInfoAndSetsSiblingModuleName() throws Exception {
         Path tempDir = Files.createTempDirectory("lr-moduleinfo");
         File dir = tempDir.toFile();
         File moduleInfo = new File(dir, "module-info.class");
