@@ -42,14 +42,6 @@ public class CertTests extends JarTestBase {
         // // 1. Generate an expired self-signed certificate (validity ended yesterday)
         // TestJarSigner jarSigner = new TestJarSigner();
 
-        // X509Certificate expiredCert = jarSigner.generateExpiredSelfSignedCert("CN=Expired Signer, O=cascara");
-
-        // // 2. Sign test jar bytes with the expired certificate
-        // Map<String, byte[]> classFiles = Map.of(
-        //     "io/github/qishr/cascara/Foo.class", "class bytes".getBytes(StandardCharsets.UTF_8)
-        // );
-        // TestJarSigner.SignedJarBundle bundle = jarSigner.sign(classFiles, expiredCert);
-
         // 3. Verify checkValidity throws CertificateExpiredException
         assertThrows(CertificateExpiredException.class, expiredCert::checkValidity);
 

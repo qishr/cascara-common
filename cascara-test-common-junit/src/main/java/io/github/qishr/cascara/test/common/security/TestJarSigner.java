@@ -19,6 +19,7 @@ import javax.security.auth.x500.X500Principal;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
+import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Set;
@@ -55,6 +56,8 @@ public final class TestJarSigner {
     // private boolean corruptSignatureBytes;  // Helpful for Layer 2 tests
     private boolean omitCertificates;        // For empty cert set test
     private String digestOidOverride;
+    private List<X509Certificate> certificateChain = new ArrayList<>();
+
 
     public TestJarSigner withDigestOid(String digestOid) {
         this.digestOidOverride = digestOid;
@@ -66,8 +69,27 @@ public final class TestJarSigner {
         return this;
     }
 
+    // public TestJarSigner withIdentity(TestSigningIdentity identity) {
+    //     this.identity = identity;
+    //     return this;
+    // }
+
     public TestJarSigner withIdentity(TestSigningIdentity identity) {
         this.identity = identity;
+        // Default to the identity's own cert if none explicitly provided
+        if (this.certificateChain.isEmpty() && identity != null) {
+            this.certificateChain.add(identity.certificate());
+        }
+        return this;
+    }
+
+    public TestJarSigner withCertificateChain(X509Certificate... certificates) {
+        this.certificateChain = Arrays.asList(certificates);
+        return this;
+    }
+
+    public TestJarSigner withCertificateChain(List<X509Certificate> certificates) {
+        this.certificateChain = new ArrayList<>(certificates);
         return this;
     }
 
@@ -85,6 +107,8 @@ public final class TestJarSigner {
     //     this.corruptSignatureBytes = corrupt;
     //     return this;
     // }
+
+
 
     public TestJarSigner() {
         // Generate In-Memory RSA KeyPair & Self-Signed X.509 Certificate
@@ -119,22 +143,12 @@ public final class TestJarSigner {
     //
     //
 
+    // TODO: This needs to be updated to use the cert chain
     public SignedJarBundle sign(Map<String, byte[]> classFiles) {
-        // Resolve effective cert and key
-        // X509Certificate cert = this.certificate != null ? this.certificate
-        //         : (identity != null ? identity.certificate() : defaultIdentity().certificate());
-        // PrivateKey key = this.privateKey != null ? this.privateKey
-        //         : (identity != null ? identity.privateKey() : defaultIdentity().privateKey());
-
         X509Certificate cert = this.certificate != null ? this.certificate
                 : (identity != null ? identity.certificate() : generateSelfSignedCert("CN=Cascara Test Signer, OU=cascara, O=qishr, C=UK"));
         PrivateKey key = this.privateKey != null ? this.privateKey
                 : (identity != null ? identity.privateKey() : keyPair.getPrivate());
-
-
-        // TODO///
-        // Perform standard signing...
-        // If corruptSignatureBytes == true, flip a byte in sigBytes before buildPkcs7SignedData
 
         return sign(classFiles, cert, key);
     }
@@ -215,8 +229,16 @@ public final class TestJarSigner {
             signature.update(sfBytes);
             byte[] signatureBytes = signature.sign();
 
-            // 5. Build PKCS#7 SignedData (KEY.RSA) using Cascara ASN.1 objects
-            byte[] keyRsaBytes = buildPkcs7SignedData(cert, signatureBytes);
+            // // 5. Build PKCS#7 SignedData (KEY.RSA) using Cascara ASN.1 objects
+            // byte[] keyRsaBytes = buildPkcs7SignedData(cert, signatureBytes);
+            // Resolve the certificate chain to embed (defaults to just the signing cert if no chain specified)
+            List<X509Certificate> certChain = (this.certificateChain != null && !this.certificateChain.isEmpty())
+                    ? this.certificateChain
+                    : List.of(cert);
+
+            // 5. Build PKCS#7 SignedData (KEY.RSA / KEY.EC) using Cascara ASN.1 objects
+            byte[] keyRsaBytes = buildPkcs7SignedData(certChain, signatureBytes);
+
 
             // return new SignedJarBundle(mfBytes, sfBytes, keyRsaBytes, cert, privateKey, signingId == null ? null : signingId.algorithm());
             return new SignedJarBundle(mfBytes, sfBytes, keyRsaBytes, cert, privateKey, signatureAlgorithm);
@@ -225,9 +247,16 @@ public final class TestJarSigner {
         }
     }
 
-    private byte[] buildPkcs7SignedData(X509Certificate cert, byte[] sigBytes) {
+    // private byte[] buildPkcs7SignedData(X509Certificate cert, byte[] sigBytes) {
+    private byte[] buildPkcs7SignedData(List<X509Certificate> certChain, byte[] sigBytes) {
+        // The leaf / signing cert is the first in the chain
+        X509Certificate signingCert = certChain.get(0);
+        PublicKey publicKey = signingCert.getPublicKey();
+        X509Certificate cert = certChain.get(0);
+
+
         DERDecoder decoder = new DERDecoder();
-        PublicKey publicKey = cert.getPublicKey();
+        // PublicKey publicKey = cert.getPublicKey();
         String keyAlg = publicKey.getAlgorithm().toUpperCase();
 
         REPORTER.debug("Creating PKCS7");
@@ -258,20 +287,60 @@ public final class TestJarSigner {
 
         // Certificates IMPLICIT SET
 
+        // ASN1TaggedObject implicitCerts;
+        // if (omitCertificates) {
+        //     // Empty SET OF Certificate: [0] IMPLICIT SET {}
+        //     ASN1Set emptyCertSet = new ASN1Set(Collections.emptySet());
+        //     implicitCerts = new ASN1TaggedObject(ASN1Tag.contextSpecific(0), emptyCertSet, false);
+        // } else {
+
+        //     ASN1Sequence certSeq;
+        //     try (ASN1InputStream ais = new ASN1InputStream(decoder, cert.getEncoded())) {
+        //         certSeq = (ASN1Sequence) ais.readObject();
+        //     } catch (IOException | CertificateEncodingException e) {
+        //         throw new TestJarException(e, e.getMessage());
+        //     }
+        //     ASN1Set rawCertSet = new ASN1Set(Set.of(certSeq));
+        //     implicitCerts = new ASN1TaggedObject(ASN1Tag.contextSpecific(0), rawCertSet, false);
+        // }
+        // Certificates IMPLICIT SET
+
+        // if (omitCertificates) {
+        //     // Empty SET OF Certificate: IMPLICIT SET {}
+        //     ASN1Set emptyCertSet = new ASN1Set(Collections.emptySet());
+        //     implicitCerts = new ASN1TaggedObject(ASN1Tag.contextSpecific(0), emptyCertSet, false);
+        // } else {
+        //     Set<ASN1Encodable> certSetElements = new LinkedHashSet<>();
+        //     for (X509Certificate cert : certChain) {
+        //         try (ASN1InputStream ais = new ASN1InputStream(decoder, cert.getEncoded())) {
+        //             ASN1Sequence certSeq = (ASN1Sequence) ais.readObject();
+        //             certSetElements.add(certSeq);
+        //         } catch (IOException | CertificateEncodingException e) {
+        //             throw new TestJarException(e, e.getMessage());
+        //         }
+        //     }
+
+        //     ASN1Set rawCertSet = new ASN1Set(certSetElements);
+        //     implicitCerts = new ASN1TaggedObject(ASN1Tag.contextSpecific(0), rawCertSet, false);
+        // }
+
+        // Certificates IMPLICIT SET
         ASN1TaggedObject implicitCerts;
         if (omitCertificates) {
-            // Empty SET OF Certificate: [0] IMPLICIT SET {}
+            // Empty SET OF Certificate: IMPLICIT SET {}
             ASN1Set emptyCertSet = new ASN1Set(Collections.emptySet());
             implicitCerts = new ASN1TaggedObject(ASN1Tag.contextSpecific(0), emptyCertSet, false);
         } else {
-
-            ASN1Sequence certSeq;
-            try (ASN1InputStream ais = new ASN1InputStream(decoder, cert.getEncoded())) {
-                certSeq = (ASN1Sequence) ais.readObject();
-            } catch (IOException | CertificateEncodingException e) {
-                throw new TestJarException(e, e.getMessage());
+            Set<ASN1Object<?>> certSetElements = new LinkedHashSet<>();
+            for (X509Certificate c : certChain) {
+                try (ASN1InputStream ais = new ASN1InputStream(decoder, c.getEncoded())) {
+                    ASN1Sequence certSeq = (ASN1Sequence) ais.readObject();
+                    certSetElements.add(certSeq);
+                } catch (IOException | CertificateEncodingException e) {
+                    throw new TestJarException(e, e.getMessage());
+                }
             }
-            ASN1Set rawCertSet = new ASN1Set(Set.of(certSeq));
+            ASN1Set rawCertSet = new ASN1Set(certSetElements);
             implicitCerts = new ASN1TaggedObject(ASN1Tag.contextSpecific(0), rawCertSet, false);
         }
 

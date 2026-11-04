@@ -46,6 +46,10 @@ public class SyntheticJar implements Locatable {
         classes = new HashMap<>();
     }
 
+    public SignedJarBundle getSignedBundle() {
+        return signedBundle;
+    }
+
     @Override
     public Path getPath() {
         return path;
@@ -110,15 +114,6 @@ public class SyntheticJar implements Locatable {
         return testJar;
     }
 
-    public SyntheticJar packageJar(Path path) {
-        this.path = path;
-        return packageJar();
-    }
-
-    public SignedJarBundle getSignedBundle() {
-        return signedBundle;
-    }
-
     //
     // Signing Methods
     //
@@ -144,6 +139,11 @@ public class SyntheticJar implements Locatable {
             throw new TestJarException(e, "Failed to sign JAR");
         }
         return this;
+    }
+
+    public SyntheticJar packageJar(Path path) {
+        this.path = path;
+        return packageJar();
     }
 
     //

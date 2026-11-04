@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarEntry;
 
 import org.junit.jupiter.api.Test;
@@ -17,9 +18,12 @@ import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityEx
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.SignatureException;
 import io.github.qishr.cascara.common.security.SignatureStatus;
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
+import io.github.qishr.cascara.common.security.TrustStore;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ZipFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
+import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
 public class JarSignatureInvalidTests extends JarTestBase {
@@ -348,5 +352,35 @@ public class JarSignatureInvalidTests extends JarTestBase {
         });
 
         assertEquals(SignatureStatus.UNSUPPORTED_ALGORITHM, ex.getSignatureStatus());
+    }
+
+    @Test
+    void test_invalid_intermediateNotCA_failsValidation(@TempDir Path tempDir) throws Exception {
+        // 1. Root CA issues an intermediate that is NOT a CA (isCA = false)
+        TestCertificateAuthority fakeSubCA = rootCA.issueUnauthorizedSubCA("unauthorized-sub-ca");
+
+        // 2. That unauthorized intermediate signs a leaf identity
+        TestSigningIdentity leafIdentity = fakeSubCA.issueIdentity("provider-module");
+
+        // 3. Package and sign JAR with leaf + intermediate in the cert bundle
+        Path jarPath = tempDir.resolve("unauthorized-intermediate.jar");
+        SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
+                .setPath(jarPath)
+                .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
+                .sign(s -> s.withIdentity(leafIdentity)
+                            .withCertificateChain(leafIdentity.certificate(), fakeSubCA.certificate()))
+                .packageJar();
+
+        // 4. Configure policy requiring valid signatures anchored at rootCA
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+                .requireSigned(true)
+                .trustStore(new TrustStore(Set.of(rootCA.certificate())))
+                .build();
+
+        // 5. Evaluate policy
+        try (JarFile jar = JarFile.open(jarPath)) {
+            SignatureStatus status = policy.evaluate(jar);
+            assertEquals(SignatureStatus.UNTRUSTED_SIGNER, status);
+        }
     }
 }

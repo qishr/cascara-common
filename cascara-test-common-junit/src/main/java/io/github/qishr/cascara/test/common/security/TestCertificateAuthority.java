@@ -143,22 +143,34 @@ public final class TestCertificateAuthority {
         // In the X.509 generation logic (whether BouncyCastle or Cascara ASN.1 / Java security builder):
         X500Principal subSubject = new X500Principal("CN=" + commonName);
 
-        int validityDays = 90;
-        Instant now = Instant.now();
-        Instant notBeforeInst = validityDays < 0 ? now.minus(30, ChronoUnit.DAYS) : now.minus(1, ChronoUnit.DAYS);
-        Instant notAfterInst  = validityDays < 0 ? now.minus(1, ChronoUnit.DAYS)  : now.plus(validityDays, ChronoUnit.DAYS);
-
         X509Certificate subCert = createCertificate(
             this.caCertificate.getSubjectX500Principal(),
             subSubject,
             subKeyPair.getPublic(),
             rootCA.caKeyPair.getPrivate(),
-            notBeforeInst,
-            notAfterInst,
         true
         );
 
         return new TestCertificateAuthority(rootCA, subSubject.getName(), subKeyPair, subCert, KeyAlgorithm.RSA);
+    }
+
+    public TestCertificateAuthority issueUnauthorizedSubCA(String commonName) throws Exception {
+        // Generate keypair
+        KeyPair keyPair = KeyAlgorithm.RSA.generateKeyPair();
+
+        X500Principal subSubject = new X500Principal("CN=" + commonName);
+
+        // Construct certificate WITHOUT isCA=true:
+        // e.g., BasicConstraints(false) or omitting the extension
+        X509Certificate cert = createCertificate(
+            this.caCertificate.getSubjectX500Principal(),
+            subSubject,
+            keyPair.getPublic(),
+            rootCA.caKeyPair.getPrivate(),
+            false /* isCA = false */
+        );
+
+        return new TestCertificateAuthority(rootCA, commonName, keyPair, cert, KeyAlgorithm.RSA);
     }
 
     public X509Certificate rootCertificate() {
@@ -313,6 +325,20 @@ public final class TestCertificateAuthority {
     //
     // Private Methods
     //
+
+    private static X509Certificate createCertificate(
+        X500Principal issuer,
+        X500Principal subject,
+        PublicKey publicKey,
+        PrivateKey signingKey,
+        boolean isCA
+    ) {
+        int validityDays = 90;
+        Instant now = Instant.now();
+        Instant notBeforeInst = validityDays < 0 ? now.minus(30, ChronoUnit.DAYS) : now.minus(1, ChronoUnit.DAYS);
+        Instant notAfterInst  = validityDays < 0 ? now.minus(1, ChronoUnit.DAYS)  : now.plus(validityDays, ChronoUnit.DAYS);
+        return createCertificate(issuer, subject, publicKey, signingKey, notBeforeInst, notAfterInst, isCA);
+    }
 
     private static X509Certificate createCertificate(
             X500Principal issuer,

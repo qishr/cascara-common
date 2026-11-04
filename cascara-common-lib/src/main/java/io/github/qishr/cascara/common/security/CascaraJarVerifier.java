@@ -8,14 +8,19 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+
+import javax.security.auth.x500.X500Principal;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
@@ -299,14 +304,20 @@ public class CascaraJarVerifier implements JarVerifier {
                     for (ASN1Object<?> signerObj : sd.signerInfos()) {
                         if (signerObj instanceof ASN1Sequence signerSeq) {
                             SignerInfo signerInfo = SignerInfo.parse(signerSeq);
-                            X509Certificate cert = signerInfo.findSigningCertificate(k.getCertificates());
-                            if (cert == null) {
+                            X509Certificate leafCert = signerInfo.findSigningCertificate(k.getCertificates());
+                            if (leafCert == null) {
                                 throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Signature verification failed for identity \"" + signerName + "\"");
                             }
-                            // cert.checkValidity();
-                            boolean verified = signerInfo.verifySignature(cert, sfBytes);
-                            if (cert != null && verified) {
+
+                            if (leafCert != null && signerInfo.verifySignature(leafCert, sfBytes)) {
                                 signatureValid = true;
+
+                                // Build the ordered chain [leaf, fakeSubCA, ...]
+                                List<X509Certificate> certChain = buildChain(leafCert, k.getCertificates());
+
+                                // Store with leaf & full chain
+                                VerifiedSigner signer = new VerifiedSigner(certChain);
+                                signers.put(signerName, signer);
                                 break;
                             }
                         }
@@ -314,22 +325,11 @@ public class CascaraJarVerifier implements JarVerifier {
                 }
 
                 if (!signatureValid) {
-                    // TODO: This happens when the SF file's digest doesn't match the signature
                     // TODO: Proper exception
-
-                    // FAILURE: Test test_invalid_untrustedSigner_signaturePolicy expects UNTRUSTED_SIGNER
                     throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Signature verification failed for identity \"" + signerName + "\"");
                 }
 
-                VerifiedSigner signer = new VerifiedSigner(k.getCertificates());
-                signers.put(signerName, signer);
-            // } catch (java.security.cert.CertificateExpiredException e) {
-            //     throw new SignatureException(e, SignatureStatus.CERTIFICATE_EXPIRED, GenericMessage.ERROR, "Certificate Expired");
-            // } catch (java.security.cert.CertificateNotYetValidException e) {
-            //     throw new SignatureException(e, SignatureStatus.NOT_YET_VALID, GenericMessage.ERROR, "Certificate not yet valid");
             } catch (CertificateException e) {
-                // e.printStackTrace();
-                // System.err.println(e.getClass().getName());
                 // TODO: Better status code
                 throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Error reading certificate: " + e.getMessage());
             } catch (SignatureException e) {
@@ -342,7 +342,62 @@ public class CascaraJarVerifier implements JarVerifier {
         }
     }
 
+    /**
+     * Constructs an ordered certificate chain [leaf, intermediate1, intermediate2, ...]
+     * from a target leaf certificate and an unordered collection of certificates found
+     * in the PKCS#7 / CMS signature block.
+     */
+    public static List<X509Certificate> buildChain(
+            X509Certificate leaf,
+            Collection<X509Certificate> certificates) {
 
+        if (leaf == null) {
+            return Collections.emptyList();
+        }
+
+        List<X509Certificate> chain = new ArrayList<>();
+        chain.add(leaf);
+
+        if (certificates == null || certificates.isEmpty()) {
+            return chain;
+        }
+
+        X509Certificate current = leaf;
+
+        while (true) {
+            // If current cert is self-signed, we've reached the root/anchor in the bundle
+            if (current.getSubjectX500Principal().equals(current.getIssuerX500Principal())) {
+                break;
+            }
+
+            X500Principal issuerDn = current.getIssuerX500Principal();
+            X509Certificate nextIssuer = null;
+
+            for (X509Certificate candidate : certificates) {
+                // Find certificate whose subject matches the current issuer DN
+                if (candidate.getSubjectX500Principal().equals(issuerDn)) {
+                    // Verify that candidate actually signed current
+                    try {
+                        current.verify(candidate.getPublicKey());
+                        nextIssuer = candidate;
+                        break;
+                    } catch (Exception ignored) {
+                        // DN matched but signature didn't (e.g., re-keyed CA or duplicate DN)
+                    }
+                }
+            }
+
+            // If no issuer found in the bundle or we've hit a loop, finish
+            if (nextIssuer == null || chain.contains(nextIssuer)) {
+                break;
+            }
+
+            chain.add(nextIssuer);
+            current = nextIssuer;
+        }
+
+        return chain;
+    }
 
     //====================================================
     // New methods:

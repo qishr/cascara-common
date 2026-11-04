@@ -1,11 +1,14 @@
 package io.github.qishr.cascara.common.security;
 
+import java.security.cert.CertPathValidatorException;
 import java.security.cert.Certificate;
 
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 
@@ -16,6 +19,8 @@ import io.github.qishr.cascara.common.annotation.SchemaDefinition;
 import io.github.qishr.cascara.common.annotation.SchemaProperty;
 import io.github.qishr.cascara.common.annotation.SchemaID;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.security.cert.CertPathValidationResult;
+import io.github.qishr.cascara.common.security.cert.CertPathVerifier;
 import io.github.qishr.cascara.common.util.JarFile;
 
 @Experimental
@@ -79,8 +84,6 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                 return SignatureStatus.NOT_SIGNED;
             }
 
-            // TODO: This is handled by CascaraJarVerifier
-            // Do we really need it here?
             if (checkExpiry) {
                 for (Certificate cert : certs) {
                     if (cert instanceof X509Certificate x509) {
@@ -103,6 +106,31 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                     }
                 }
                 return SignatureStatus.VALID;
+            }
+
+            List<X509Certificate> signerCertChain = Arrays.stream(certs)
+                    .filter(c -> c instanceof X509Certificate)
+                    .map(c -> (X509Certificate) c)
+                    .toList();
+
+            if (signerCertChain.isEmpty()) {
+                return SignatureStatus.NOT_SIGNED;
+            }
+
+            // Evaluate the certificate chain extracted from PKCS#7 SignedData
+            CertPathValidationResult vr = CertPathVerifier.validatePath(signerCertChain, this.trustStore); // Runs PKIX CertPathValidator
+            if (!vr.isValid()) {
+                Throwable cause = vr.getCause().orElse(null);
+
+                if (cause instanceof CertificateExpiredException) {
+                    return SignatureStatus.CERTIFICATE_EXPIRED;
+                }
+                if (cause instanceof CertificateNotYetValidException) {
+                    return SignatureStatus.NOT_YET_VALID;
+                }
+
+                // CertPathValidatorException (BasicConstraints failure, untrusted root, broken chain, etc.)
+                return SignatureStatus.UNTRUSTED_SIGNER;
             }
 
             boolean anyRevoked = false;
