@@ -34,7 +34,6 @@
 
 package io.github.qishr.cascara.common.type.util;
 
-import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -62,11 +61,10 @@ public class SimpleTimeZoneDescriptor extends AbstractScalarDescriptor<SimpleTim
         return new SimpleTimeZone(rawOffset, id);
     }
 
-    @NonNull
     @Override
     public String toPrimitive(SimpleTimeZone jvmInstance) {
         if (jvmInstance == null) {
-            return "";
+            return null;
         }
         // Encode ID and raw offset to ensure precise reconstruction of SimpleTimeZone
         return jvmInstance.getID() + ":" + jvmInstance.getRawOffset();

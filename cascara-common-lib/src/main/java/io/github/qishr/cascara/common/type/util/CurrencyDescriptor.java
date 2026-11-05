@@ -36,7 +36,6 @@ package io.github.qishr.cascara.common.type.util;
 
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.type.PrimitiveType;
-import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 
@@ -57,11 +56,10 @@ public class CurrencyDescriptor extends AbstractScalarDescriptor<Currency> {
         return Currency.getInstance(text.trim());
     }
 
-    @NonNull
     @Override
     public String toPrimitive(Currency jvmInstance) {
         if (jvmInstance == null) {
-            return "";
+            return null;
         }
         return jvmInstance.getCurrencyCode();
     }

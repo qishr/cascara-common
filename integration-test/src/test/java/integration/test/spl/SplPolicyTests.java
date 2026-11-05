@@ -34,7 +34,6 @@ import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
-import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 

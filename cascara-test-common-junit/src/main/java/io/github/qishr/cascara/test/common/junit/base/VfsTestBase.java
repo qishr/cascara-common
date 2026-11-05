@@ -49,7 +49,7 @@ public class VfsTestBase extends TestBase {
         if (rootLayer != null && spl != null) {
             rootLayer.remove(spl.getName());
         }
-        Cascara.instance().reset();
+        Cascara.reset();
         if (vFs != null && vFs.isOpen()) {
             vFs.close();
         }

@@ -146,7 +146,7 @@ import static io.github.qishr.cascara.common.util.CommandLine.Help.Column.Overfl
  * <img src="doc-files/class-diagram-parsing.png" alt="Classes Related to Parsing Command Line Arguments">
  * </p>
  */
-@SuppressWarnings({"unused", "rawtypes"})
+@SuppressWarnings({"unused", "rawtypes", "null"})
 public class CommandLine {
 
     /** This is picocli version {@value}. */

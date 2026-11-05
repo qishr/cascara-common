@@ -1,10 +1,8 @@
 package io.github.qishr.cascara.common.service.internal;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.util.Cascara;

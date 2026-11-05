@@ -36,7 +36,6 @@ package io.github.qishr.cascara.common.type.time;
 
 import java.time.Duration;
 
-import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
@@ -52,9 +51,11 @@ public class DurationDescriptor extends AbstractScalarDescriptor<Duration> {
         return text == null ? null : Duration.parse(text);
     }
 
-    @NonNull
     @Override
     public String toPrimitive(Duration jvmInstance) {
+        if (jvmInstance == null) {
+            return null;
+        }
         return jvmInstance.toString();
     }
 

@@ -199,10 +199,18 @@ public abstract class AbstractSerializer<
                 // Custom serializer
                 if (typeDescriptor instanceof TypeSerializer typeSerializer) {
                     AstNode rawNode = typeSerializer.serialize(jvmInstance, jvmType, getContext());
+                    if (rawNode == null) {
+                        return createScalar(null);
+                    }
                     if (astConverter == null) {
                         return castToNode(rawNode);
                     } else {
-                        return castToNode(astConverter.fromAst(rawNode));
+                        AstNode node = astConverter.fromAst(rawNode);
+                        if (node == null) {
+                            return createScalar(null);
+                        } else {
+                            return castToNode(node);
+                        }
                     }
                 }
 
@@ -825,12 +833,17 @@ public abstract class AbstractSerializer<
     private Object deserializeScalarWithDescriptor(ScalarAstNode<?> scalar, ScalarDescriptor<?> descriptor) {
         Object val = scalar.getPrimitive();
         String stringValue = val != null ? val.toString() : "";
+        Object result = null;
         try {
             // toJvmType never returns null but may throw a RuntimeException
-            return descriptor.toJvmType(stringValue);
+            result = descriptor.toJvmType(stringValue);
         } catch (Exception e) {
-            throw new SerializerException(scalar, e, LangMessage.FAILED_TO_MAP_TYPE, descriptor.getJvmType().getName(), e.getMessage());
+            throw new SerializerException(scalar, e, LangMessage.FAILED_TO_MAP_TYPE_REASON, descriptor.getJvmType().getName(), e.getMessage());
         }
+        if (result == null) {
+            throw new SerializerException(scalar, LangMessage.FAILED_TO_MAP_TYPE, descriptor.getJvmType().getName());
+        }
+        return result;
     }
 
     //
@@ -1031,7 +1044,7 @@ public abstract class AbstractSerializer<
 
     @SuppressWarnings("unchecked")
     @NonNull
-    private <V extends AstNode> N castToNode(V node) {
+    private <V extends AstNode> N castToNode(@NonNull  V node) {
         return (N) node;
     }
 
@@ -1154,6 +1167,7 @@ public abstract class AbstractSerializer<
         return self();
     }
 
+    @SuppressWarnings("null")
     @Override
     @NonNull
     public Properties getServiceProperties() {

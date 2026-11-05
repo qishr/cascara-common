@@ -44,6 +44,7 @@ import java.lang.reflect.Type;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.report.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
@@ -139,6 +140,7 @@ public interface Serializer<N extends AstNode> extends Processor {
 
     @Experimental
     public interface Serialize {
+        @NonNull
         AstNode serialize(Object jvmInstance, Type jvmType);
     }
 
@@ -157,13 +159,15 @@ public interface Serializer<N extends AstNode> extends Processor {
         private final Serialize serialize;
         private final Deserialize deserialize;
         private final DeserializeEnum deserializeEnum;
-        private final Reporter reporter;
+        @NonNull private final Reporter reporter;
 
         public Context(Serialize serialize, Deserialize deserialize, DeserializeEnum deserializeEnum, Reporter reporter) {
             this.serialize = serialize;
             this.deserialize = deserialize;
             this.deserializeEnum = deserializeEnum;
-            this.reporter = reporter;
+            this.reporter = reporter == null
+                ? new NoOpReporter()
+                : reporter;
         }
 
         @NonNull

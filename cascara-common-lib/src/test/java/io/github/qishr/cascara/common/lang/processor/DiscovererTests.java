@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.service.internal.Discoverer;
 import io.github.qishr.cascara.common.type.net.UriDescriptor;
-import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
 public class DiscovererTests {
