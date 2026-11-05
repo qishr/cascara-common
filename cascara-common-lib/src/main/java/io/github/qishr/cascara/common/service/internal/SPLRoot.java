@@ -53,15 +53,12 @@ import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.security.SignaturePolicy;
 import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.ServiceException;
-import io.github.qishr.cascara.common.service.ServiceMessage;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.ContentTypeResolver;
 import io.github.qishr.cascara.common.util.JarFile;
-import io.github.qishr.cascara.common.util.JarManifest;
 import io.github.qishr.cascara.common.util.JreUtils;
-import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
 public class SPLRoot extends SPLBranch {
@@ -253,17 +250,19 @@ public class SPLRoot extends SPLBranch {
 
     private void loadPolicy() {
         // TODO: Also allow loading from SPL properties file
+        // but provide a utility class that handles env vars,
+        // properties, and properties files which can be reused
+        // by other parts of Cascara. This should use the
+        // policy class's (or whatever other class it's reading
+        // settings for) schema to validate the settings.
 
+        // Access system properties through Cascara Properties class
         Properties sysprops = Properties.fromSystemProperties();
 
-        // System.err.println(sysprops.getBoolean(CASCARA_SPL_POLICY_CHECK_EXPIRY, false));
-
         signaturePolicy = SplSignaturePolicy.builder()
-        //CASCARA_SPL_POLICY_REQUIRE_SIGNED
+            .requireSigned(sysprops.getBoolean(CASCARA_SPL_POLICY_REQUIRE_SIGNED, false))
             .checkExpiry(sysprops.getBoolean(CASCARA_SPL_POLICY_CHECK_EXPIRY, false))
             .build();
-
-
     }
 
     private void loadPreferences() {

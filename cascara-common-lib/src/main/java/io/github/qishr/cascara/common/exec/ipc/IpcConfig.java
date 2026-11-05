@@ -5,6 +5,7 @@ import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.service.SPL;
+import io.github.qishr.cascara.common.service.ServiceException;
 
 public class IpcConfig {
     public static final String SERIALIZER_CLASS = "io.github.qishr.cascara.lang.json.processor.JsonSerializer";
@@ -28,7 +29,11 @@ public class IpcConfig {
 
     @Nullable
     public static Serializer<?> createSerializer() {
-        Serializer<?> serializer = new ProcessorFactory().createSerializer(SERIALIZATION_FORMAT);
+        Serializer<?> serializer = null;
+        try {
+            serializer = new ProcessorFactory().createSerializer(SERIALIZATION_FORMAT);
+        } catch (ServiceException e) {
+        }
         if (serializer == null) {
             try {
                 Class<?> serializerClass = Class.forName(IpcConfig.SERIALIZER_CLASS);

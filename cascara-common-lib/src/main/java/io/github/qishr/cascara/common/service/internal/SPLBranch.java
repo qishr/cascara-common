@@ -806,7 +806,7 @@ public class SPLBranch implements SPL {
     private Properties getServiceProperties(Class<ServiceProvider> serviceInterface) {
         Properties properties = new Properties();
         setModuleProperties(properties, serviceInterface);
-        properties.set(SPL.SERVICE_NAME, serviceInterface.getSimpleName());
+        properties.set(SPL.SP_SERVICE_NAME, serviceInterface.getSimpleName());
         return properties;
     }
 
@@ -814,9 +814,9 @@ public class SPLBranch implements SPL {
         Properties properties = new Properties();
         setModuleProperties(properties, provider.getClass());
         if (jarPath != null) {
-            properties.set(SPL.JAR_PATH, jarPath.toString());
+            properties.set(SPL.SP_JAR_PATH, jarPath.toString());
         }
-        properties.set(SPL.PROVIDER_NAME, provider.getClass().getSimpleName());
+        properties.set(SPL.SP_PROVIDER_NAME, provider.getClass().getSimpleName());
         Properties declaredCapabilities = provider.getServiceProperties();
         if (declaredCapabilities != null) {
             properties.addAll(declaredCapabilities);
@@ -826,11 +826,11 @@ public class SPLBranch implements SPL {
 
     private void setModuleProperties(Properties properties, Class<?> type) {
         Module module = type.getModule();
-        properties.set(SPL.MODULE_NAME, module.getName());
+        properties.set(SPL.SP_MODULE_NAME, module.getName());
         ModuleDescriptor descriptor = module.getDescriptor();
         if (descriptor != null) {
             descriptor.rawVersion().ifPresent(moduleVersion -> {
-                properties.set(SPL.MODULE_VERSION, moduleVersion);
+                properties.set(SPL.SP_MODULE_VERSION, moduleVersion);
             });
         }
     }

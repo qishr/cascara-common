@@ -51,7 +51,7 @@ public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
         // this(jvmType.getName(), schemaType);
         this.jvmType = jvmType;
         this.schemaType = schemaType;
-        properties.set(SPL.JVM_TYPE, jvmType.getName());
+        properties.set(SPL.SP_JVM_TYPE, jvmType.getName());
         if (schemaType != null) {
             properties.set(KEYWORD_TYPE, schemaType.asString());
         }
@@ -66,7 +66,7 @@ public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
             e.printStackTrace();
         }
         this.schemaType = schemaType;
-        properties.set(SPL.JVM_TYPE, jvmFqcn);
+        properties.set(SPL.SP_JVM_TYPE, jvmFqcn);
         if (schemaType != null) {
             properties.set(KEYWORD_TYPE, schemaType.asString());
         }

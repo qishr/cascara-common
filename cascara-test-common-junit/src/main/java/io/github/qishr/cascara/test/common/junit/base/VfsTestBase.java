@@ -22,9 +22,38 @@ public class VfsTestBase extends TestBase {
     private FileSystem vFs;
     private String physicalHome;
     private URI vfsUri;
-
-
     public SPL spl;
+
+    @BeforeEach
+    protected void setUp() throws IOException {
+        super.setUp();
+
+        Path zipFile = tempDir.resolve("cascara-vfs.zip");
+        physicalHome = zipFile.toString() + "!" + vfsHomeDir;
+
+        vfsUri = URI.create("jar:" + zipFile.toUri());
+        vFs = FileSystems.newFileSystem(vfsUri, Map.of("create", "true"));
+        Path vHome = vFs.getPath(vfsHomeDir);
+
+        Files.createDirectories(vHome);
+        Cascara.setHomePath(vHome);
+        Files.createDirectories(Cascara.getModulePath());
+
+        rootLayer = SPL.getRoot();
+        spl = rootLayer.create("baseTestLayer");
+    }
+
+    @AfterEach
+    protected void tearDown() throws IOException {
+        super.tearDown();
+        if (rootLayer != null && spl != null) {
+            rootLayer.remove(spl.getName());
+        }
+        Cascara.reset();
+        if (vFs != null && vFs.isOpen()) {
+            vFs.close();
+        }
+    }
 
     protected String getPhysicalHomePath() {
         return physicalHome;
@@ -50,39 +79,6 @@ public class VfsTestBase extends TestBase {
         }
     }
 
-    @BeforeEach
-    protected void setUp() throws IOException {
-        super.setUp();
-        // Points ZipFS to a writable temp file path provided by JUnit
-        Path zipFile = tempDir.resolve("cascara-vfs.zip");
-        vfsUri = URI.create("jar:" + zipFile.toUri());
-
-        vFs = FileSystems.newFileSystem(vfsUri, Map.of("create", "true"));
-        Path vHome = vFs.getPath(vfsHomeDir);
-        Files.createDirectories(vHome);
-
-        Cascara.setHomePath(vHome);
-
-        physicalHome = zipFile.toString() + "!" + vfsHomeDir;
-
-        Files.createDirectories(Cascara.getModulePath());
-
-        rootLayer = SPL.getRoot();
-
-        spl = rootLayer.create("baseTestLayer");
-    }
-
-    @AfterEach
-    protected void tearDown() throws IOException {
-        super.tearDown();
-        if (rootLayer != null && spl != null) {
-            rootLayer.remove(spl.getName());
-        }
-        if (vFs != null && vFs.isOpen()) {
-            vFs.close();
-        }
-    }
-
     protected void displayVfs() {
         if (vFs != null && vFs.isOpen()) {
             try (Stream<Path> walk = Files.walk(vFs.getPath("/"))) {
@@ -92,12 +88,4 @@ public class VfsTestBase extends TestBase {
             }
         }
     }
-
-    // void copyToVfsAndRegister(String mavenName, SPL layer) throws IOException {
-    //     Path testJarPath = ArtifactResolver.resolveJarPath(mavenName);
-    //     Path vfsTestJarPath = Cascara.getModulePath().resolve(testJarPath.getFileName().toString());
-    //     Files.copy(testJarPath, vfsTestJarPath);
-    //     layer.registerJar(vfsTestJarPath);
-    // }
-
 }

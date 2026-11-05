@@ -1,6 +1,12 @@
 package io.github.qishr.cascara.common.security;
 
-import java.security.cert.CertPathValidatorException;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
 
 import java.security.cert.CertificateExpiredException;
@@ -76,12 +82,20 @@ public final class SplSignaturePolicy implements SignaturePolicy {
         try {
             JarEntry manifestEntry = jarFile.getJarEntry("META-INF/MANIFEST.MF");
             if (manifestEntry == null) {
-                return SignatureStatus.NOT_SIGNED;
+                if (requireSigned) {
+                    return SignatureStatus.NOT_SIGNED;
+                } else {
+                    return SignatureStatus.VALID;
+                }
             }
 
             Certificate[] certs = manifestEntry.getCertificates();
             if (certs == null || certs.length == 0) {
-                return SignatureStatus.NOT_SIGNED;
+                if (requireSigned) {
+                    return SignatureStatus.NOT_SIGNED;
+                } else {
+                    return SignatureStatus.VALID;
+                }
             }
 
             if (checkExpiry) {
@@ -157,6 +171,78 @@ public final class SplSignaturePolicy implements SignaturePolicy {
             REPORTER.error(e);
             return e.getSignatureStatus();
         }
+    }
+
+    @Override
+    public SignatureStatus evaluate(Class<?> type) {
+        ProtectionDomain pd = type.getProtectionDomain();
+        CodeSource cs = (pd != null) ? pd.getCodeSource() : null;
+
+        if (cs == null || cs.getLocation() == null) {
+            // Loose in-memory class, bootstrap class, or synthetic generated class
+            if (requireSigned) {
+                return SignatureStatus.NOT_SIGNED;
+            } else {
+                return SignatureStatus.VALID;
+            }
+        }
+
+        // 1. If CodeSource certificates are already attached by the classloader:
+        java.security.cert.Certificate[] certs = cs.getCertificates();
+        if (certs != null && certs.length > 0) {
+            // Evaluate the cert chain against policy
+            List<X509Certificate> chain = Arrays.stream(certs)
+                    .filter(c -> c instanceof X509Certificate)
+                    .map(c -> (X509Certificate) c)
+                    .toList();
+
+            CertPathValidationResult vr = CertPathVerifier.validatePath(chain, trustStore);
+            if (!vr.isValid()) {
+                // TODO: This is code douplication from evaluate(JarFile)
+                Throwable cause = vr.getCause().orElse(null);
+
+                if (cause instanceof CertificateExpiredException) {
+                    return SignatureStatus.CERTIFICATE_EXPIRED;
+                }
+                if (cause instanceof CertificateNotYetValidException) {
+                    return SignatureStatus.NOT_YET_VALID;
+                }
+
+                // CertPathValidatorException (BasicConstraints failure, untrusted root, broken chain, etc.)
+                return SignatureStatus.UNTRUSTED_SIGNER;
+            }
+        }
+
+        // 2. If the classloader didn't pre-populate certs on CodeSource, inspect the location JAR:
+        URL locationUrl = cs.getLocation();
+        try {
+            Path jarPath = Path.of(locationUrl.toURI());
+            if (!Files.isRegularFile(jarPath)) {
+                // Exploded directory on classpath, not a JAR
+                if (requireSigned) {
+                    return SignatureStatus.NOT_SIGNED;
+                } else {
+                    return SignatureStatus.VALID;
+                }
+            }
+
+            // Evaluate the JAR file using Cascara's JarFile & policy
+            try (JarFile jar = JarFile.open(jarPath)) {
+                SignatureStatus status = evaluate(jar);
+                if (status != SignatureStatus.VALID) {
+                    return status;
+                }
+            }
+        } catch (URISyntaxException | IOException e) {
+            if (requireSigned) {
+                return SignatureStatus.NOT_SIGNED;
+            } else {
+                return SignatureStatus.VALID;
+            }
+        }
+
+        // TODO: Is this right?
+        return SignatureStatus.VALID;
     }
 
     /// Checks whether a certificate is directly trusted by the TrustStore or issued by a CA anchor in the TrustStore.

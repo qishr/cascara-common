@@ -55,12 +55,12 @@ import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.semver.SemVerException;
 
 public class Cascara {
-    private static Cascara INSTANCE;
+    private static final ThreadLocal<Cascara> INSTANCE = ThreadLocal.withInitial(Cascara::new);
     private static final String ACTIVE_VERSION = "active-version";
     private static final String CASCARA_PROPERTIES = "cascara.properties";
     private static final String CONTENT_TYPES = "content-types.yaml";
     private static final String SCHEMAS = "schemas";
-    private static final String SPL_PREFS = "spl.properties";
+    private static final String SPL_PROPRTTIES = "spl.properties";
     private static final String MODULEPATH = "modulepath";
 
     private String homeEnvVar;
@@ -72,11 +72,20 @@ public class Cascara {
     }
 
     private static Cascara instance() {
-        if (INSTANCE == null) {
-            INSTANCE = new Cascara();
-        }
-        return INSTANCE;
+        return INSTANCE.get();
     }
+
+    public static void reset() {
+        Cascara current = INSTANCE.get();
+        if (current != null) {
+            current.closeVfs();
+        }
+        INSTANCE.remove();
+    }
+
+    //
+    //
+    //
 
     public static boolean isFileTimeSupported() {
         return !getHomePath().toUri().getScheme().equals("jar");
@@ -132,7 +141,7 @@ public class Cascara {
     @SuppressWarnings("null")
     @NonNull
     public static Path getSplPropertiesPath() {
-        return getActiveVersionPath().resolve(SPL_PREFS);
+        return getActiveVersionPath().resolve(SPL_PROPRTTIES);
     }
 
     @SuppressWarnings("null")
@@ -206,7 +215,7 @@ public class Cascara {
     // Private path-related methods
     //
 
-    private void setHomePathInternal(Path path) {
+    private void closeVfs() {
         if (vfs != null && vfs.isOpen()) {
             try {
                 vfs.close();
@@ -215,6 +224,10 @@ public class Cascara {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void setHomePathInternal(Path path) {
+        closeVfs();
 
         Pair<Path,String> zipPaths = splitZipPath(path);
 
@@ -232,8 +245,7 @@ public class Cascara {
                 e.printStackTrace();
             }
 
-            path = vfs.getPath(entryPath);
-            homePath = path;
+            homePath = vfs.getPath(entryPath);
         }
     }
 

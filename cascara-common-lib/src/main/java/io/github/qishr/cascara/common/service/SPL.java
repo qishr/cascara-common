@@ -50,16 +50,18 @@ import io.github.qishr.cascara.common.trackable.TrackableArray;
 public interface SPL extends TreeNode<SPL> {
     public static final String CASCARA_SPL_DISCOVER = "cascara.spl.discover";
     public static final String CASCARA_SEC_VERIFY = "cascara.spl.verify";
-    public static final String CASCARA_SPL_POLICY_CHECK_EXPIRY = "cascara.spl.policy.require.signed";
+    public static final String CASCARA_SPL_POLICY_REQUIRE_SIGNED = "cascara.spl.policy.require.signed";
+    public static final String CASCARA_SPL_POLICY_CHECK_EXPIRY = "cascara.spl.policy.check.expiry";
 
-    public static final String SERVICE_NAME = "serviceName";
-    public static final String JAR_PATH = "jarPath";
-    public static final String PROVIDER_NAME = "providerName";
-    public static final String MODULE_NAME = "moduleName";
-    public static final String MODULE_VERSION = "moduleVersion";
-    public static final String JVM_TYPE = "jvmType";
-    public static final String TITLE = "title";
-    public static final String CONTENT_TYPE = "contentType";
+    // Property names used in service capabilities
+    public static final String SP_SERVICE_NAME = "serviceName";
+    public static final String SP_JAR_PATH = "jarPath";
+    public static final String SP_PROVIDER_NAME = "providerName";
+    public static final String SP_MODULE_NAME = "moduleName";
+    public static final String SP_MODULE_VERSION = "moduleVersion";
+    public static final String SP_JVM_TYPE = "jvmType";
+    public static final String SP_TITLE = "title";
+    public static final String SP_CONTENT_TYPE = "contentType";
 
     /// Retrieves the root Service Provider Layer.
     @NonNull
