@@ -76,38 +76,12 @@ public class Cascara {
     }
 
     public static void reset() {
-        Cascara current = INSTANCE.get();
-        if (current != null) {
-            current.closeVfs();
-        }
         INSTANCE.remove();
     }
 
     //
     //
     //
-
-    public static boolean isFileTimeSupported() {
-        return !getHomePath().toUri().getScheme().equals("jar");
-    }
-
-    public static SemVer getVersion() {
-        try {
-            JarManifest manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
-            return new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
-        } catch (IOException e) {
-            return new SemVer("0.0.0");
-        }
-    }
-
-    public static SemVer getCommonVersion() {
-        try {
-            JarManifest manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
-            return new SemVer(manifest.getString("Implementation-Version", "0.0.0"));
-        } catch (IOException e) {
-            return new SemVer("0.0.0");
-        }
-    }
 
     public static String getHomeEnvVar() {
         return instance().homeEnvVar;
@@ -133,6 +107,10 @@ public class Cascara {
     /// The path of the schema store irectory.
     public static Path getSchemasPath() {
         return getSharedPath().resolve(SCHEMAS);
+    }
+
+    public static Path getSharedPath() {
+        return getHomePath().resolve("shared");
     }
 
     /// The path of the properties file containing definitions of default or preferred service providers
@@ -167,6 +145,24 @@ public class Cascara {
         }
 
         return versions;
+    }
+
+    public static SemVer getVersion() {
+        try {
+            JarManifest manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
+            return new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
+        } catch (IOException e) {
+            return new SemVer("0.0.0");
+        }
+    }
+
+    public static SemVer getCommonVersion() {
+        try {
+            JarManifest manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
+            return new SemVer(manifest.getString("Implementation-Version", "0.0.0"));
+        } catch (IOException e) {
+            return new SemVer("0.0.0");
+        }
     }
 
     @SuppressWarnings("null")
@@ -207,8 +203,8 @@ public class Cascara {
         return highestVersionString;
     }
 
-    public static Path getSharedPath() {
-        return getHomePath().resolve("shared");
+    public static boolean isFileTimeSupported() {
+        return !getHomePath().toUri().getScheme().equals("jar");
     }
 
     //
