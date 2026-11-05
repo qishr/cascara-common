@@ -37,5 +37,4 @@ public abstract class ASN1PrimitiveValue<T> extends ASN1Object<T> implements ASN
     protected int valueHash() {
         return Arrays.hashCode(valueBytes);
     }
-
 }

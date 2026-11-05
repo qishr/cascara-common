@@ -47,11 +47,6 @@ public class ASN1Enumerated extends ASN1PrimitiveValue<BigInteger> {
         return value;
     }
 
-    public byte[] getValueBytes() {
-        // TODO
-        return new byte[]{};
-    }
-
     public static class Parser extends ASN1Parser<ASN1Enumerated> {
         public Parser(ASN1Decoder decoder) {
             super(decoder);

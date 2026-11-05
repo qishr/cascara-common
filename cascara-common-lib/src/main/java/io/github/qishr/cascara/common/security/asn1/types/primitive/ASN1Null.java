@@ -37,11 +37,6 @@ public class ASN1Null extends ASN1PrimitiveValue<Void> {
         return null;
     }
 
-    public byte[] getValueBytes() {
-        // TODO
-        return new byte[]{};
-    }
-
     @Override
     protected int valueHash() {
         return 0;

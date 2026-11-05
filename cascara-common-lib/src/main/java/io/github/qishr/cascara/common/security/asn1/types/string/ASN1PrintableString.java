@@ -11,18 +11,7 @@ import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Encoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 
-// 19
 public final class ASN1PrintableString extends ASN1String<byte[]> {
-
-    // public static final ASN1Tag<ASN1PrintableString> TAG =
-    //     register(
-    //         ASN1TagClass.UNIVERSAL,
-    //         ASN1Encoding.PRIMITIVE,
-    //         19,
-    //         ASN1PrintableString.Parser::new,
-    //         ASN1PrintableString.Serializer::new
-    //     );
-
     public ASN1PrintableString(byte[] bytes) {
         super(ASN1Tag.PRINTABLE_STRING, bytes);
     }

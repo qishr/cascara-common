@@ -47,10 +47,6 @@ public class ASN1Set extends ASN1Object<Set<ASN1Object<?>>> implements ASN1Const
         return new HashSet<>(objects);
     }
 
-    public byte[] getValueBytes() {
-        return bytes;
-    }
-
     public Iterator<ASN1Object<?>> iterator() {
         return new HashSet<>(objects).iterator();
     }

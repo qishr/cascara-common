@@ -48,10 +48,6 @@ public class ASN1Sequence extends ASN1Object<List<ASN1Object<?>>> implements ASN
         return new ArrayList<>(objects);
     }
 
-    public byte[] getValueBytes() {
-        return bytes;
-    }
-
     @Override
     public Iterator<ASN1Object<?>> iterator() {
         return new ArrayList<>(objects).iterator();

@@ -148,8 +148,7 @@ public abstract class ASN1Tag<T extends ASN1Object<?>> {
     };
 
 
-    public static final ASN1Tag<ASN1UTCTime> UTC_TIME = new ASN1Tag<ASN1UTCTime>(UNIVERSAL, 23, of(ASN1Encoding.PRIMITIVE, ASN1Encoding.CONSTRUCTED)) {
-    // public static final ASN1Tag<?> UTC_TIME = new ASN1Tag(UNIVERSAL, 23, ASN1Encoding.CONSTRUCTED) {
+    public static final ASN1Tag<ASN1UTCTime> UTC_TIME = new ASN1Tag<ASN1UTCTime>(UNIVERSAL, 0x17, of(ASN1Encoding.PRIMITIVE, ASN1Encoding.CONSTRUCTED)) {
         @Override
         public ASN1Parser<ASN1UTCTime> newParser(ASN1Decoder decoder) {
             return new ASN1UTCTime.Parser(decoder);
@@ -233,8 +232,7 @@ public abstract class ASN1Tag<T extends ASN1Object<?>> {
     public static ASN1Tag<? extends ASN1Object<?>> forTag(ASN1TagClass asn1TagClass, int tag) {
         switch (asn1TagClass) {
             case UNIVERSAL:
-                Collection<ASN1Tag<?>> asn1tags = tags.values();
-                for (ASN1Tag<?> asn1Tag : asn1tags) {
+                for (ASN1Tag<?> asn1Tag : tags.values()) {
                     if (asn1Tag.tag == tag && asn1TagClass == asn1Tag.asn1TagClass) {
                         return asn1Tag;
                     }

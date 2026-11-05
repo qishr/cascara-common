@@ -32,8 +32,6 @@ public abstract class ASN1Object<T> {
 
     public abstract T getValue();
 
-    public abstract byte[] getValueBytes();
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

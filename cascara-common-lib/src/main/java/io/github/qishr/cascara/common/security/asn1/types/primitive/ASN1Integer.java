@@ -51,11 +51,6 @@ public class ASN1Integer extends ASN1PrimitiveValue<BigInteger> {
         return value.intValue();
     }
 
-    public byte[] getValueBytes() {
-        // TODO
-        return new byte[]{};
-    }
-
     @Override
     protected int valueHash() {
         return value.hashCode();
