@@ -15,7 +15,7 @@ import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 public class Discoverer {
     public static Set<DiscoveredModule> discoverModulesAndClasses(Set<String> excludePackages) {
         // Discover classes on the module path
-        ModulePath modulePath = new ModulePath(null, excludePackages, Cascara.getModulePath());
+        ModulePath modulePath = new ModulePath(null, excludePackages, Cascara.instance().getModulePath());
         Set<DiscoveredModule> modules = modulePath.getDiscoveredModules();
 
         // Get the set of modulepath entries
@@ -28,7 +28,7 @@ public class Discoverer {
         classPathSet.removeAll(modulePathSet);
 
         // Discover classes in the abridged classpath set
-        ClassPath classPath = new ClassPath(classPathSet, excludePackages, Cascara.getModulePath());
+        ClassPath classPath = new ClassPath(classPathSet, excludePackages, Cascara.instance().getModulePath());
         Set<DiscoveredModule> cpModules = classPath.getDiscoveredModules();
 
         modules.addAll(cpModules);

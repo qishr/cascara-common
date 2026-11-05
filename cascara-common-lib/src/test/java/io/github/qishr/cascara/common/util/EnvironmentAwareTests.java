@@ -26,7 +26,7 @@ public class EnvironmentAwareTests {
         // assertNotNull(jarCascaraVersion);
         // assertNotEquals("0.0.0", jarCascaraVersion.toString());
 
-        // SemVer cascaraVersion = Cascara.getVersion();
+        // SemVer cascaraVersion = Cascara.instance().getVersion();
         // assertEquals(jarCascaraVersion, cascaraVersion);
     }
 
@@ -45,7 +45,7 @@ public class EnvironmentAwareTests {
         // assertNotNull(jarCascaraVersion);
         // assertNotEquals("0.0.0", jarCascaraVersion.toString());
 
-        // SemVer cascaraVersion = Cascara.getVersion();
+        // SemVer cascaraVersion = Cascara.instance().getVersion();
         // assertEquals(jarCascaraVersion, cascaraVersion);
     }
 
@@ -67,7 +67,7 @@ public class EnvironmentAwareTests {
     @Test
     @Tag("no-jar")
     void test_cascaraVersionWithoutJar() throws Exception {
-        // // SemVer cascaraVersion = Cascara.getVersion();
+        // // SemVer cascaraVersion = Cascara.instance().getVersion();
         // // assertEquals("0.0.0", cascaraVersion.toString());
         // // // assertEquals("0.11.0", cascaraVersion.toString());
 
@@ -80,7 +80,7 @@ public class EnvironmentAwareTests {
         // assertNotNull(jarCascaraVersion);
         // assertNotEquals("0.0.0", jarCascaraVersion.toString());
 
-        // SemVer cascaraVersion = Cascara.getVersion();
+        // SemVer cascaraVersion = Cascara.instance().getVersion();
         // assertEquals(jarCascaraVersion, cascaraVersion);
     }
 }

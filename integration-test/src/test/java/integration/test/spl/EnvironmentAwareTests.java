@@ -57,7 +57,7 @@ public class EnvironmentAwareTests {
     void test_commonBehaviorWorkOnBoth() {
         // TODO
         // Runs regardless of environment
-        // SemVer version = Cascara.getVersion();
+        // SemVer version = Cascara.instance().getVersion();
         // System.out.println("cascara version = " + version);
         // System.out.println("module name = " + getClass().getModule().getName());
     }

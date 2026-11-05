@@ -144,9 +144,9 @@ public class SPLRoot extends SPLBranch {
     }
 
     public Properties getProperties() {
-        Path propsFile = Cascara.getSplPropertiesPath();
+        Path propsFile = Cascara.instance().getSplPropertiesPath();
 
-        if (!Cascara.isFileTimeSupported()) {
+        if (!Cascara.instance().isFileTimeSupported()) {
             if (Files.exists(propsFile)) {
                 try {
                     properties = Properties.load(propsFile);
@@ -252,7 +252,7 @@ public class SPLRoot extends SPLBranch {
         // TODO: Also allow loading from SPL properties file
         // but provide a utility class that handles env vars,
         // properties, and properties files which can be reused
-        // by other parts of Cascara. This should use the
+        // by other parts of Cascara.instance(). This should use the
         // policy class's (or whatever other class it's reading
         // settings for) schema to validate the settings.
 
@@ -267,9 +267,9 @@ public class SPLRoot extends SPLBranch {
 
     private void loadPreferences() {
         // TODO see above
-        Path propsFile = Cascara.getSplPropertiesPath();
+        Path propsFile = Cascara.instance().getSplPropertiesPath();
 
-        if (Cascara.isFileTimeSupported()) {
+        if (Cascara.instance().isFileTimeSupported()) {
             if (!Files.exists(propsFile)) {
                 try {
                     Files.createFile(propsFile);
@@ -299,8 +299,8 @@ public class SPLRoot extends SPLBranch {
     private void displayEnvironmentInformation() {
         if (GlobalReporter.globalInstance().getLevel().includes(Level.DEBUG)) {
             REPORTER.debug("Environment Information:");
-            REPORTER.debug("  Cascara version: " + Cascara.getVersion());
-            REPORTER.debug("  Module cascara.common version: " + Cascara.getCommonVersion());
+            REPORTER.debug("  Cascara version: " + Cascara.instance().getVersion());
+            REPORTER.debug("  Module cascara.common version: " + Cascara.instance().getCommonVersion());
             REPORTER.debug("  JPMS Enabled: " + JreUtils.isJpmsEnabled());
             displayPaths("Module Path", System.getProperty("jdk.module.path"));
             displayPaths("Class Path", System.getProperty("java.class.path"));

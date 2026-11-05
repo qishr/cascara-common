@@ -46,7 +46,7 @@ public class SplPolicyTests extends ExecTestBase {
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
         // 2. Package and sign JAR
-        Path jarPath = Cascara.getModulePath().resolve("provider-a.jar");
+        Path jarPath = Cascara.instance().getModulePath().resolve("provider-a.jar");
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
@@ -78,7 +78,7 @@ public class SplPolicyTests extends ExecTestBase {
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
         // 2. Package and sign JAR
-        Path jarPath = Cascara.getModulePath().resolve("provider-a.jar");
+        Path jarPath = Cascara.instance().getModulePath().resolve("provider-a.jar");
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
@@ -121,7 +121,7 @@ public class SplPolicyTests extends ExecTestBase {
             .sign(s -> s.withIdentity(expiredIdentity))
             .packageJar(jarPath);
 
-        // try(Stream<Path> jarFiles = Files.walk(Cascara.getModulePath())) {
+        // try(Stream<Path> jarFiles = Files.walk(Cascara.instance().getModulePath())) {
         //     for (Path jarFile : jarFiles.toList()) {
         //         System.out.println("> " + jarFile);
         //     }
@@ -164,7 +164,7 @@ public class SplPolicyTests extends ExecTestBase {
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
         // 2. Package and sign JAR
-        Path jarPath = Cascara.getModulePath().resolve("provider-a.jar");
+        Path jarPath = Cascara.instance().getModulePath().resolve("provider-a.jar");
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
@@ -172,7 +172,7 @@ public class SplPolicyTests extends ExecTestBase {
             .packageJar(jarPath);
 
         syncVfs();
-        try(Stream<Path> jarFiles = Files.walk(Cascara.getModulePath())) {
+        try(Stream<Path> jarFiles = Files.walk(Cascara.instance().getModulePath())) {
             for (Path jarFile : jarFiles.toList()) {
                 System.out.println("> " + jarFile);
             }

@@ -179,7 +179,7 @@ public class IpcServer implements AutoCloseable {
 
             // Send server PID header as the first line
             IpcConfig config = new IpcConfig();
-            config.setVersion(Cascara.getVersion());
+            config.setVersion(Cascara.instance().getVersion());
             config.setIpcServerPid(ProcessHandle.current().pid());
             config.setIpcDebug(ipcDebugEnabled);
             config.setIpcSerializer(serializer.getClass().getName());

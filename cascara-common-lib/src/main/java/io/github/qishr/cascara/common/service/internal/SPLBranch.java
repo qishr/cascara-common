@@ -641,7 +641,7 @@ public class SPLBranch implements SPL {
     }
 
     private void verifyModuleVersionCompatibility(String moduleName, SemVer moduleBuildCascaraVersion, SemVer moduleMinCascaraVersion) {
-        SemVer activeCascaraVersion = Cascara.getVersion();
+        SemVer activeCascaraVersion = Cascara.instance().getVersion();
 
         boolean hasMinVersion = !"0.0.0".equals(moduleMinCascaraVersion.toString());
         boolean hasBuildVersion = !"0.0.0".equals(moduleBuildCascaraVersion.toString());

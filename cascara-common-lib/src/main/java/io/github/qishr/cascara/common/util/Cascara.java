@@ -71,7 +71,7 @@ public class Cascara {
         setHomePathInternal(resolvePath(getHome()));
     }
 
-    private static Cascara instance() {
+    public static Cascara instance() {
         return INSTANCE.get();
     }
 
@@ -83,33 +83,33 @@ public class Cascara {
     //
     //
 
-    public static String getHomeEnvVar() {
-        return instance().homeEnvVar;
+    public String getHomeEnvVar() {
+        return homeEnvVar;
     }
 
     @SuppressWarnings("null")
     @NonNull
-    public static Path getHomePath() {
-        return instance().homePath;
+    public Path getHomePath() {
+        return homePath;
     }
 
     @Experimental
-    public static void setHomePath(Path path) {
-        instance().homeEnvVar = null;
-        instance().setHomePathInternal(path);
+    public void setHomePath(Path path) {
+        homeEnvVar = null;
+        setHomePathInternal(path);
     }
 
     /// The path of the content types registry file.
-    public static Path getContentTypesPath() {
+    public Path getContentTypesPath() {
         return getSharedPath().resolve(CONTENT_TYPES);
     }
 
     /// The path of the schema store irectory.
-    public static Path getSchemasPath() {
+    public Path getSchemasPath() {
         return getSharedPath().resolve(SCHEMAS);
     }
 
-    public static Path getSharedPath() {
+    public Path getSharedPath() {
         return getHomePath().resolve("shared");
     }
 
@@ -118,17 +118,17 @@ public class Cascara {
     /// first  matching provider will be returned by SPL.
     @SuppressWarnings("null")
     @NonNull
-    public static Path getSplPropertiesPath() {
+    public Path getSplPropertiesPath() {
         return getActiveVersionPath().resolve(SPL_PROPRTTIES);
     }
 
     @SuppressWarnings("null")
     @NonNull
-    public static Path getModulePath() {
+    public Path getModulePath() {
         return getActiveVersionPath().resolve(MODULEPATH);
     }
 
-    public static List<String> getInstalledVersions() {
+    public List<String> getInstalledVersions() {
         List<String> versions = new ArrayList<>();
         Path homePath = getHomePath();
 
@@ -147,7 +147,7 @@ public class Cascara {
         return versions;
     }
 
-    public static SemVer getVersion() {
+    public SemVer getVersion() {
         try {
             JarManifest manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
             return new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
@@ -156,7 +156,7 @@ public class Cascara {
         }
     }
 
-    public static SemVer getCommonVersion() {
+    public SemVer getCommonVersion() {
         try {
             JarManifest manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
             return new SemVer(manifest.getString("Implementation-Version", "0.0.0"));
@@ -167,7 +167,7 @@ public class Cascara {
 
     @SuppressWarnings("null")
     @NonNull
-    public static Path getActiveVersionPath() {
+    public Path getActiveVersionPath() {
         String version = getActiveVersionString();
         if (version == null) {
             return getHomePath();
@@ -177,7 +177,7 @@ public class Cascara {
 
     // TODO: Cache this and only re-calculate if properties file is modified
     @Nullable
-    public static String getActiveVersionString() {
+    public String getActiveVersionString() {
         List<String> installedVersions = getInstalledVersions();
         Path path = getSharedPath().resolve(CASCARA_PROPERTIES);
         if (Files.isRegularFile(path)) {
@@ -203,7 +203,7 @@ public class Cascara {
         return highestVersionString;
     }
 
-    public static boolean isFileTimeSupported() {
+    public boolean isFileTimeSupported() {
         return !getHomePath().toUri().getScheme().equals("jar");
     }
 

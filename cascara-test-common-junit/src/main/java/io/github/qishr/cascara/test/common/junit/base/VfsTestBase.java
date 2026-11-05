@@ -36,8 +36,8 @@ public class VfsTestBase extends TestBase {
         Path vHome = vFs.getPath(vfsHomeDir);
 
         Files.createDirectories(vHome);
-        Cascara.setHomePath(vHome);
-        Files.createDirectories(Cascara.getModulePath());
+        Cascara.instance().setHomePath(vHome);
+        Files.createDirectories(Cascara.instance().getModulePath());
 
         rootLayer = SPL.getRoot();
         spl = rootLayer.create("baseTestLayer");
@@ -49,7 +49,7 @@ public class VfsTestBase extends TestBase {
         if (rootLayer != null && spl != null) {
             rootLayer.remove(spl.getName());
         }
-        Cascara.reset();
+        Cascara.instance().reset();
         if (vFs != null && vFs.isOpen()) {
             vFs.close();
         }
@@ -72,7 +72,7 @@ public class VfsTestBase extends TestBase {
         }
         try {
             vFs = FileSystems.newFileSystem(vfsUri, Map.of());
-            Cascara.setHomePath(vFs.getPath(vfsHomeDir));
+            Cascara.instance().setHomePath(vFs.getPath(vfsHomeDir));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
