@@ -1,30 +1,10 @@
 package io.github.qishr.cascara.test.common.junit.extension;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
-import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.opentest4j.AssertionFailedError;
 
-import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 
-public class AssertReportedExtension implements BeforeTestExecutionCallback, AfterTestExecutionCallback {
-    private final List<Diagnostic> diagnostics = new ArrayList<>();
-
-    @Override
-    public void beforeTestExecution(ExtensionContext context) {
-        GlobalReporter.globalInstance().setDiagnosticConsumer(d -> diagnostics.add(d));
-    }
-
-    @Override
-    public void afterTestExecution(ExtensionContext context) {
-        diagnostics.clear();
-    }
-
+public class AssertReportedExtension extends AbstractDiagnosticExtension {
     public void error(String expectedMessage) {
         assertReported(expectedMessage, Level.ERROR);
     }
@@ -45,8 +25,6 @@ public class AssertReportedExtension implements BeforeTestExecutionCallback, Aft
         assertReported(expectedMessage, Level.TRACE);
     }
 
-
-
     public void errorContains(String expectedSubstring) {
         assertReportContains(expectedSubstring, Level.ERROR);
     }
@@ -66,9 +44,6 @@ public class AssertReportedExtension implements BeforeTestExecutionCallback, Aft
     public void traceContains(String expectedSubstring) {
         assertReportContains(expectedSubstring, Level.TRACE);
     }
-
-
-
 
     private void assertReported(String message, Level level) {
         diagnostics.stream()

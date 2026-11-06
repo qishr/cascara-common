@@ -34,6 +34,8 @@
 
 package io.github.qishr.cascara.common.diagnostic.report;
 
+import java.util.function.Consumer;
+
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 
@@ -68,8 +70,8 @@ public class SilentCollectingReporter extends AbstractReporter<SilentCollectingR
     @Override
     protected void report(Diagnostic diagnostic) {
         if (this.level.compareTo(diagnostic.getLevel()) >= 0) {
-            if (getDiagnosticConsumer() != null) {
-                getDiagnosticConsumer().accept(diagnostic);
+            for (Consumer<Diagnostic> consumer : diagnosticConsumers) {
+                consumer.accept(diagnostic);
             }
         }
 

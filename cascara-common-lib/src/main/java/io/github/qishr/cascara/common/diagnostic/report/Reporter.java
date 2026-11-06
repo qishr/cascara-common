@@ -61,9 +61,15 @@ public interface Reporter {
     /// Registers a consumer to receive all diagnostics processed by this reporter.
     /// This includes debugging info, trace states, warnings, and error diagnostics.
     ///
-    /// @param colconsumerlector The consumer that processes each produced [Diagnostic].
+    /// @param consumer The consumer that processes each produced [Diagnostic].
     @Experimental
-    Reporter setDiagnosticConsumer(Consumer<Diagnostic> consumer);
+    Reporter addDiagnosticConsumer(Consumer<Diagnostic> consumer);
+
+    /// Unregisters a consumer of diagnostic reports.
+    ///
+    /// @param consumer The consumer that processes each produced [Diagnostic].
+    @Experimental
+    Reporter removeDiagnosticConsumer(Consumer<Diagnostic> consumer);
 
     /// Registers a consumer to receive only problem-level diagnostics.
     /// This collector is filtered to intercept only `Level.WARN` and `Level.ERROR` items.

@@ -38,7 +38,9 @@ import java.net.URI;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
@@ -75,7 +77,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     /// Consumes diagnostics included in the current Level or more
     /// important, with ERROR being the most important.
-    protected Consumer<Diagnostic> diagnosticConsumer;
+    protected Set<Consumer<Diagnostic>> diagnosticConsumers = new HashSet<>();
 
     /// Consumes ERROR, WARN, and INFO diagnostics.
     protected Consumer<Diagnostic> problemConsumer;
@@ -89,8 +91,8 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     protected boolean ansiColoringEnabled;
 
 
-    // TODO: Lazy getters for these...
     protected AbstractReporter() {
+        // TODO: Lazy getters for these...
         writers[Level.ERROR.ordinal()] = new ReportWriter(this, Level.ERROR);
         writers[Level.WARN.ordinal()] = new ReportWriter(this, Level.WARN);
         writers[Level.INFO.ordinal()] = new ReportWriter(this, Level.INFO);
@@ -139,15 +141,23 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     }
 
     @Experimental
-    protected Consumer<Diagnostic> getDiagnosticConsumer() {
-        return diagnosticConsumer;
+    protected Set<Consumer<Diagnostic>> getDiagnosticConsumers() {
+        return diagnosticConsumers;
     }
 
     /// {@inheritDoc}
     @Experimental
     @Override
-    public T setDiagnosticConsumer(Consumer<Diagnostic> consumer) {
-        diagnosticConsumer = consumer;
+    public T addDiagnosticConsumer(Consumer<Diagnostic> consumer) {
+        diagnosticConsumers.add(consumer);
+        return self();
+    }
+
+    /// {@inheritDoc}
+    @Experimental
+    @Override
+    public T removeDiagnosticConsumer(Consumer<Diagnostic> consumer) {
+        diagnosticConsumers.remove(consumer);
         return self();
     }
 
@@ -522,8 +532,8 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected void reportAnyLevel(Diagnostic diagnostic) {
         log(diagnostic);
-        if (getDiagnosticConsumer() != null) {
-            getDiagnosticConsumer().accept(diagnostic);
+        for (Consumer<Diagnostic> consumer : diagnosticConsumers) {
+            consumer.accept(diagnostic);
         }
         if (getProblemConsumer() != null && isProblem(level)) {
             getProblemConsumer().accept(diagnostic);

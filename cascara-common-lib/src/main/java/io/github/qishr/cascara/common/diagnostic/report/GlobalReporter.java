@@ -38,9 +38,11 @@ package io.github.qishr.cascara.common.diagnostic.report;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
@@ -228,9 +230,16 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     @Override
-    public GlobalReporter setDiagnosticConsumer(Consumer<Diagnostic> collector) {
+    public GlobalReporter addDiagnosticConsumer(Consumer<Diagnostic> collector) {
         assertGlobalInstance();
-        super.setDiagnosticConsumer(collector);
+        super.addDiagnosticConsumer(collector);
+        return this;
+    }
+
+    @Override
+    public GlobalReporter removeDiagnosticConsumer(Consumer<Diagnostic> collector) {
+        assertGlobalInstance();
+        super.removeDiagnosticConsumer(collector);
         return this;
     }
 
@@ -254,9 +263,14 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     @Override
-    protected Consumer<Diagnostic> getDiagnosticConsumer() {
-        return this == globalInstance ? diagnosticConsumer : globalInstance.getDiagnosticConsumer();
+    protected Set<Consumer<Diagnostic>> getDiagnosticConsumers() {
+        return this == globalInstance ? diagnosticConsumers : globalInstance.getDiagnosticConsumers();
     }
+
+    // @Override
+    // protected Consumer<Diagnostic> getDiagnosticConsumer() {
+    //     return this == globalInstance ? diagnosticConsumer : globalInstance.getDiagnosticConsumer();
+    // }
 
     @Override
     protected Consumer<Diagnostic> getProblemConsumer() {

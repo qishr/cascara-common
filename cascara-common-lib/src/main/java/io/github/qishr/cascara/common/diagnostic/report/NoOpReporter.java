@@ -80,7 +80,12 @@ public class NoOpReporter implements Reporter {
     }
 
     @Override
-    public NoOpReporter setDiagnosticConsumer(Consumer<Diagnostic> diagnosticCollector) {
+    public NoOpReporter addDiagnosticConsumer(Consumer<Diagnostic> diagnosticCollector) {
+        return this;
+    }
+
+    @Override
+    public NoOpReporter removeDiagnosticConsumer(Consumer<Diagnostic> diagnosticCollector) {
         return this;
     }
 
