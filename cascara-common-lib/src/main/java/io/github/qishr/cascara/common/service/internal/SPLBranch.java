@@ -456,7 +456,7 @@ public class SPLBranch implements SPL {
             moduleLayer = parent.defineModulesWithManyLoaders(cf, loader);
 
             DiscoveredModule dm = new DiscoveredModule(moduleName, classes, jarPath);
-            enumerateProviders(dm, verify);
+            registerProviders(dm, verify);
 
             addModuleToMap(moduleName);
             SPLUtils.recomputeAllVisibleProviders(rootLayer);
@@ -517,7 +517,7 @@ public class SPLBranch implements SPL {
     // Discovery
     //
 
-    protected void enumerateProviders(DiscoveredModule dm, boolean isAutoRegistration) {
+    protected void registerProviders(DiscoveredModule dm, boolean isAutoRegistration) {
         Module module = dm.getName() == null
             ? null
             : moduleLayer.findModule(dm.getName()).orElse(null);

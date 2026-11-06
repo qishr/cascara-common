@@ -217,7 +217,7 @@ public class SPLRoot extends SPLBranch {
 
         boolean verify = isVerifyEnabled();
 
-        REPORTER.debug("Discovering providers");
+        REPORTER.debug("Registering providers");
 
         for (DiscoveredModule dm : discovered) {
             Path jarPath = dm.getJarPath();
@@ -241,7 +241,7 @@ public class SPLRoot extends SPLBranch {
                     continue;
                 }
             }
-            enumerateProviders(dm, true);
+            registerProviders(dm, true);
         }
 
         this.modules.addAll(modules);
@@ -315,17 +315,29 @@ public class SPLRoot extends SPLBranch {
     }
 
     private void displayEnvironmentInformation() {
-        // TODO: JVM info
         if (REPORTER.getLevel().includes(Level.DEBUG)) {
             REPORTER.debug("Environment Information:");
+
+            REPORTER.debug("  JVM Vendor: " + System.getProperty("java.vendor"));
+            REPORTER.debug("  JVM Version: " + System.getProperty("java.version"));
+            REPORTER.debug("  JVM Home: " + System.getProperty("java.home"));
+            REPORTER.debug("  Operating System: " +
+                System.getProperty("os.name") + " " +
+                System.getProperty("os.version") + " " +
+                System.getProperty("os.arch")
+            );
+
             REPORTER.debug("  Cascara version: " + Cascara.instance().getVersion());
             REPORTER.debug("  Module cascara.common version: " + Cascara.instance().getCommonVersion());
+            REPORTER.debug("  SPL Signature Verification: " + isVerifyEnabled());
+
             REPORTER.debug("  JPMS Enabled: " + JreUtils.isJpmsEnabled());
             displayPaths("Module Path", System.getProperty("jdk.module.path"));
             displayPaths("Class Path", System.getProperty("java.class.path"));
-            REPORTER.debug("  Terminal: " + JreUtils.isRunningInTerminal());
-            REPORTER.debug("  Eclipse: " + JreUtils.isRunningViaEclipse());
-            REPORTER.debug("  Gradle: " + JreUtils.isRunningViaGradle());
+
+            REPORTER.debug("  Console: " + JreUtils.isRunningInTerminal());
+            // REPORTER.debug("  Eclipse: " + JreUtils.isRunningViaEclipse());
+            // REPORTER.debug("  Gradle: " + JreUtils.isRunningViaGradle());
         }
     }
 
