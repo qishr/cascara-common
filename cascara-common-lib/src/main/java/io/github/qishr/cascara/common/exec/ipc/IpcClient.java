@@ -78,7 +78,7 @@ public final class IpcClient implements AutoCloseable {
             UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
             SocketChannel channel = SocketChannel.open(address);
 
-            // Read the handshake header from the server
+            // Read the IPC handshake header from the server
             BufferedReader reader = new BufferedReader(
                 Channels.newReader(channel, StandardCharsets.UTF_8)
             );
@@ -86,7 +86,7 @@ public final class IpcClient implements AutoCloseable {
             IpcConfig config = new IpcConfig();
             while (true) {
                 String line = reader.readLine();
-                if (line.startsWith("---")) {
+                if (line.startsWith(IpcConfig.HEADER_SEPARATOR)) {
                     break;
                 }
                 config.set(line);
@@ -120,7 +120,7 @@ public final class IpcClient implements AutoCloseable {
         String payloadJson = json.replace('\n', ' ');
 
         try {
-            String line = className + "|" + payloadJson + "\n";
+            String line = className + IpcConfig.PAYLOAD_SEPARATOR + payloadJson + "\n";
 
             if (config.ipcDebug()) {
                 System.out.println("CLIENT: " + className + ": " + json);

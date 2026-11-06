@@ -67,7 +67,13 @@ public class JvmProcessTests extends ExecTestBase {
         String json = serializer.toString(input);
 
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
-        IpcServer ipcServer = IpcServer.start(true, false);
+
+        // IpcServer ipcServer = IpcServer.start(true, false);
+        IpcServer ipcServer = new IpcServer()
+            .setDiagnosticForwarding(true)
+            .setIpcDebug(false)
+            .start();
+
         Class<?> taskClass = GlobalReporterTestTask.class;
 
         String classKey = "CASC_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
@@ -102,7 +108,12 @@ public class JvmProcessTests extends ExecTestBase {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString(input);
 
-        IpcServer ipcServer = IpcServer.start(true, false);
+        // IpcServer ipcServer = IpcServer.start(true, false);
+        IpcServer ipcServer = new IpcServer()
+            .setDiagnosticForwarding(true)
+            .setIpcDebug(false)
+            .start();
+
         Class<?> taskClass = GlobalReporterTestTask.class;
 
         GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);

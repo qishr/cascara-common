@@ -62,7 +62,6 @@ import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.annotation.Priority;
 import io.github.qishr.cascara.common.annotation.SingletonInitializer;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
@@ -400,7 +399,6 @@ public class SPLBranch implements SPL {
             return;
         }
 
-        // TODO: verify
         boolean verify = isVerifyEnabled();
         if (verify) {
             verifySignature(type);
@@ -457,30 +455,19 @@ public class SPLBranch implements SPL {
             ClassLoader loader = ClassLoader.getSystemClassLoader();
             moduleLayer = parent.defineModulesWithManyLoaders(cf, loader);
 
-            // moduleLayer.findModule(moduleName).ifPresent(module -> {
-                DiscoveredModule dm = new DiscoveredModule(moduleName, classes, jarPath);
-                enumerateProviders(dm, verify);
-                // scanClasses(jar, dm);
+            DiscoveredModule dm = new DiscoveredModule(moduleName, classes, jarPath);
+            enumerateProviders(dm, verify);
 
-                addModuleToMap(moduleName);
-                SPLUtils.recomputeAllVisibleProviders(rootLayer);
+            addModuleToMap(moduleName);
+            SPLUtils.recomputeAllVisibleProviders(rootLayer);
 
-                // TODO: These should use the same source
-                Classes.invalidate();
-                ClassHierarchy.invalidate();
-            // });
+            // TODO: These should use the same source
+            Classes.invalidate();
+            ClassHierarchy.invalidate();
 
-        } catch(LocalizableIOException e) {
-            throw new ServiceException(e, ServiceMessage.FAILED_TO_READ_JAR, jarPath, e.getMessage());
-        } catch (Exception e) {
-            // TODO: The above catch block should be catching all exceptions
-            // that JarFile.open can throw. This block should be removed.
-            if (e instanceof ServiceException e2) {
-                throw e2;
-            }
+        } catch(IOException | SecurityException e) {
             throw new ServiceException(e, ServiceMessage.FAILED_TO_READ_JAR, jarPath, e.getMessage());
         }
-
     }
 
     //
@@ -553,7 +540,6 @@ public class SPLBranch implements SPL {
                         Class<? extends ServiceProvider> providerClass = (Class<? extends ServiceProvider>) clazz;
 
                         ServiceProvider providerInstance = SPLUtils.instantiate(providerClass);
-                        // registerProvider(providerInstance, jar.getPath(), true);
                         registerProvider(providerInstance, jarPath, true);
                     }
                 } catch (ClassNotFoundException | NoClassDefFoundError e) {
@@ -568,6 +554,7 @@ public class SPLBranch implements SPL {
                     } else {
                         registrationFailure("ServiceException while loading class " + className, jarPath, e, isAutoRegistration);
                     }
+                // } catch (InstantiationException e) {
                 } catch (AbstractMethodError | ServiceConfigurationError e) {
                     registrationFailure("Incompatible module.", jarPath, e, isAutoRegistration);
                 } catch (Exception e) {
@@ -577,22 +564,6 @@ public class SPLBranch implements SPL {
             }
         }
     }
-
-    // TODO: Loading class from VFS
-
-    // private Class<?> loadProviderClass(ProviderCandidate candidate, ClassLoader parentLoader) throws ClassNotFoundException {
-    //     Path origin = candidate.originPath();
-
-    //     // If the path is not a default filesystem path (i.e. it's in the Cascara VFS)
-    //     // or not on the JVM's physical classpath/modulepath:
-    //     if (!origin.getFileSystem().equals(FileSystems.getDefault())) {
-    //         ClassLoader vfsLoader = new VfsJarClassLoader(origin, parentLoader);
-    //         return Class.forName(candidate.providerClassName(), true, vfsLoader);
-    //     }
-
-    //     // Otherwise, standard resolution
-    //     return Class.forName(candidate.providerClassName(), true, parentLoader);
-    // }
 
     public class VfsJarClassLoader extends ClassLoader {
         private final Path jarPath;
@@ -678,9 +649,6 @@ public class SPLBranch implements SPL {
             )) ||
             (hasBuildVersion && activeCascaraVersion.getMajor() != moduleBuildCascaraVersion.getMajor())
         ) {
-            // System.out.println("activeCascaraVersion: " + activeCascaraVersion);
-            // System.out.println("moduleBuildCascaraVersion: " + moduleBuildCascaraVersion);
-            // System.out.println("moduleMinCascaraVersion: " + moduleMinCascaraVersion);
             throw new ServiceException(
                 ServiceMessage.INCOMPATIBLE_MODULE_VERSION,
                 moduleName, moduleMinCascaraVersion, activeCascaraVersion
@@ -720,20 +688,10 @@ public class SPLBranch implements SPL {
     //
 
     protected static boolean isVerifyEnabled() {
-        // return false;
         // TODO: Use propsFile for this too
         String verify = System.getProperty(CASCARA_SPL_VERIFY);
-        // return !"false".equalsIgnoreCase(verify);
         return "true".equalsIgnoreCase(verify);
     }
-
-    // protected static boolean isVerifyClassEnabled() {
-    //     // return false;
-    //     // TODO: Use propsFile for this too
-    //     String verify = System.getProperty(CASCARA_SPL_VERIFY);
-    //     // return !"false".equalsIgnoreCase(verify);
-    //     return "true".equalsIgnoreCase(verify);
-    // }
 
     private boolean isRegistered(String providerFqcn) {
         return rootLayer.bootProviders.contains(providerFqcn) || providersByFqcn.containsKey(providerFqcn);
@@ -779,10 +737,13 @@ public class SPLBranch implements SPL {
                 // We probably want services to spply an array/list of content types
                 ContentType contentType = null;
                 if (instance instanceof ContentTypeProvider ctp) {
-                    contentType = ctp.getContentType();
-                    if (contentType != null) {
-                        rootLayer.storeContentType(contentType);
-                    }
+                    try {
+                        // TODO: Any methods called of the provider should have try/catch
+                        contentType = ctp.getContentType();
+                        if (contentType != null) {
+                            rootLayer.storeContentType(contentType);
+                        }
+                    } catch(Exception e){}
                 }
 
                 boolean isSingleton = false;

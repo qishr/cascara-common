@@ -52,9 +52,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         StringTaskInput input = new StringTaskInput("hello-isolated-world");
         IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
-        // Enable forwarding of TRACE reports from isolated JVM
+        // Enable forwarding of DEBUG reports from isolated JVM
         exec.setDiagnosticForwardingEnabled(true);
-        GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
         GlobalReporter.globalInstance().getFormatOptions().setIncluedPid(true);
 
         // Add the JAR to the module path
@@ -63,6 +62,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         exec.setOptions(new JvmOptions()
             .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
+            .setEnv(CASCARA_HOME, getPhysicalHomePath())
             .setSystemProperty(SPL.CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
             .setSystemProperty(SPL.CASCARA_SPL_VERIFY, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
@@ -98,7 +98,6 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
         // Enable forwarding of TRACE reports from isolated JVM
         exec.setDiagnosticForwardingEnabled(true);
-        GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
         GlobalReporter.globalInstance().getFormatOptions().setIncluedPid(true);
 
         // Add the JAR to the module path
@@ -107,6 +106,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         exec.setOptions(new JvmOptions()
             .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
+            .setEnv(CASCARA_HOME, getPhysicalHomePath())
             .setSystemProperty(SPL.CASCARA_SPL_VERIFY, "false")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
             .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
@@ -148,7 +148,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
         // Enable forwarding of TRACE reports from isolated JVM
         exec.setDiagnosticForwardingEnabled(true);
-        GlobalReporter.forClass(SPL.class).setLevel(Level.TRACE);
+        GlobalReporter.globalInstance().getFormatOptions().setIncluedPid(true);
 
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
@@ -156,13 +156,14 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         exec.setOptions(new JvmOptions()
             .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
+            .setEnv(CASCARA_HOME, getPhysicalHomePath())
             .setSystemProperty(SPL.CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
             .setSystemProperty(SPL.CASCARA_SPL_VERIFY, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
             .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
             .setSystemProperty("casc.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
             .setTimeout(Duration.ofSeconds(20))
-            .setDebug(true||PROCESS_DEBUG_ENABLED)
+            .setDebug(PROCESS_DEBUG_ENABLED)
             .setEnv("CASC_HOME", getPhysicalHomePath()));
 
         Response<ReporterTestOutput> result = exec.run(input);
@@ -172,21 +173,17 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         assertTrue(result.getSystemErr().contains("EXPIRED"));
     }
 
-    // TODO: Use IsolatedExecurot for end to end tests of SPL Policy re unsigned JARs
-
-    // Unsigned jar on module path loaded by jvm at boot time
-    // will be rejected by SPL, then try to register it via
-    // SPL.registerClass() in SplRegisterClassTestTask. with
-    // CASCARA_SPL_POLICY_REQUIRE_CLASS, that should alsso fail.
+    /// Unsigned jar on module path loaded by jvm at boot time
+    /// will be rejected by SPL, then try to register it via
+    /// SPL.registerClass() in SplRegisterClassTestTask. with
+    /// CASCARA_SPL_POLICY_REQUIRE_CLASS, that should alsso fail.
     @Test
     void test_reject_registerClass_unsignedJar(@TempDir Path tempDir) throws Exception {
-        // 2. Package and sign JAR
         Path jarPath = tempDir.resolve("provider-a.jar");
 
         SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
-            //.sign(s -> s.withIdentity(expiredIdentity))
             .packageJar(jarPath);
 
         // Add the JAR to the module path
@@ -198,18 +195,13 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
 
         // Enable forwarding of DEBUG reports from isolated JVM
-        // TODO: instead of setting level here, have global
-        // reporter in this process default to report all forwarded
-        // reportsbrregardless of level, and have opyion to filter
-        // forwarded reports by local level.
         exec.setDiagnosticForwardingEnabled(true);
-        GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
         GlobalReporter.globalInstance().getFormatOptions().setIncluedPid(true);
 
         exec.setOptions(new JvmOptions()
             .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
             .setModulePath(modulePath)
-            // .setSystemProperty(SPL.CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
+            .setEnv(CASCARA_HOME, getPhysicalHomePath())
             .setSystemProperty(SPL.CASCARA_SPL_VERIFY, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_REQUIRE_SIGNED, "true")

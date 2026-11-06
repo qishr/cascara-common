@@ -17,11 +17,12 @@ import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.util.ArtifactResolver;
-import integration.test.fixtures.payload.ReporterTestOutput;
 
 public class ExecTestBase extends VfsTestBase {
     protected static final boolean TEST_DEBUG_ENABLED = true;
     protected static final boolean PROCESS_DEBUG_ENABLED = false;
+
+    protected static final String CASCARA_HOME = "CASCARA_HOME";
 
     protected static TestCertificateAuthority rootCA;
 

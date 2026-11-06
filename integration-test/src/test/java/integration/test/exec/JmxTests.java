@@ -59,7 +59,12 @@ public class JmxTests extends JmxTestBase {
 
         Class<?> taskClass = JmxTestTask.class;
         GlobalReporter.forClass(taskClass).setLevel(Level.DEBUG);
-        IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+
+        // IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+        IpcServer ipcServer = new IpcServer()
+            .setDiagnosticForwarding(true)
+            .setIpcDebug(ipcDebug)
+            .start();
 
         int jmxPort = findFreePort();
 

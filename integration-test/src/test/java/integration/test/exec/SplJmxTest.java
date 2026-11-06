@@ -93,7 +93,12 @@ public class SplJmxTest extends JmxTestBase {
         createModuleA();
         syncVfs();
 
-        IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+        // IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+        IpcServer ipcServer = new IpcServer()
+            .setDiagnosticForwarding(true)
+            .setIpcDebug(ipcDebug)
+            .start();
+
         int jmxPort = findFreePort();
 
         JvmOptions options = newJmxTestOptions(jmxPort)
@@ -199,7 +204,11 @@ public class SplJmxTest extends JmxTestBase {
         createModuleA();
         syncVfs();
 
-        IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+        // IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+        IpcServer ipcServer = new IpcServer()
+            .setDiagnosticForwarding(true)
+            .setIpcDebug(ipcDebug)
+            .start();
 
         int jmxPort = findFreePort();
 

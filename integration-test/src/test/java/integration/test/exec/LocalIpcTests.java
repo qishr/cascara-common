@@ -23,7 +23,11 @@ public class LocalIpcTests extends ExecTestBase {
     @Test
     void test_IPC_doesntForwardToSamePID() throws IOException {
 
-        IpcServer ipcServer = IpcServer.start(true, false);
+        // IpcServer ipcServer = IpcServer.start(true, false);
+        IpcServer ipcServer = new IpcServer()
+            .setDiagnosticForwarding(true)
+            .setIpcDebug(false)
+            .start();
 
         System.setProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
 

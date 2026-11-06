@@ -35,7 +35,7 @@ public class SerializerTypesCascaraTests extends SerializerTestBase {
         AstNode ast = serializer.toAst(original);
         DiagnosticMessage deserialized = serializer.fromAst(ast, DiagnosticMessage.class);
         assertNotNull(deserialized);
-        assertEquals("LANG-316", deserialized.getCode());
+        assertEquals("LANG-317", deserialized.getCode());
     }
 
     // This was only working because the serializer was treating GenericMessage as a regular Enum.

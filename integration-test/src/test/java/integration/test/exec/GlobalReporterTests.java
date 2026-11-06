@@ -43,6 +43,7 @@ public class GlobalReporterTests extends ExecTestBase {
             .setDebug(PROCESS_DEBUG_ENABLED);
 
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
+        exec.setDiagnosticForwardingEnabled(true);
 
         Response<ReporterTestOutput> result = exec.run(input, options);
 

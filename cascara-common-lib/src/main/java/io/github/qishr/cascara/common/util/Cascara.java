@@ -55,6 +55,9 @@ import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.semver.SemVerException;
 
 public class Cascara {
+    private static final String CASCARA_HOME = "CASCARA_HOME";
+    private static final String CASC_HOME = "CASC_HOME";
+
     private static final ThreadLocal<Cascara> INSTANCE = ThreadLocal.withInitial(Cascara::new);
     private static final String ACTIVE_VERSION = "active-version";
     private static final String CASCARA_PROPERTIES = "cascara.properties";
@@ -267,9 +270,9 @@ public class Cascara {
 
     @Nullable
     private String getHome() {
-        String home = getHomeFromEnvVar("CASCARA_HOME");
+        String home = getHomeFromEnvVar(CASCARA_HOME);
         if (home == null) {
-            home = getHomeFromEnvVar("CASC_HOME");
+            home = getHomeFromEnvVar(CASC_HOME);
         }
         if (home == null) {
             String userHome = System.getProperty("user.home");

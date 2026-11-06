@@ -287,7 +287,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         }
     }
 
-    /// Central reporting method. All other rporting methods call this.
+    /// Central reporting method. All other reporting methods call this.
     @Override
     public void report(Diagnostic diagnostic) {
         if (this == globalInstance) {
@@ -349,8 +349,6 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
             try {
                 ipcClient = IpcClient.tryConnect(serializer);
             } catch (Exception e) {
-                // TODO: Remove this
-                System.err.println("*** CONN FAIL ***");
                 // There was no IpcServer to connect to, which is okay
                 ipcUnavailable = true;
             }
@@ -358,6 +356,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
 
         if (ipcUnavailable || ipcClient == null) {
             // Discard queued diagnostics
+            // TODO:  write them to System.err if allowed by option (see below)
             queue.clear();
         } else {
             try {

@@ -39,8 +39,6 @@ import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ServiceConfigurationError;
 
-import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
-
 public interface DiagnosticMessage {
     String name();
     String getCode();

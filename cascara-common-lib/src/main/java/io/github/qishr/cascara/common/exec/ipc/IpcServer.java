@@ -57,13 +57,13 @@ import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.ReportWriter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.exec.ExecutionException;
 import io.github.qishr.cascara.common.exec.ExecutionMessage;
-import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.util.Cascara;
@@ -73,24 +73,24 @@ public class IpcServer implements AutoCloseable {
 
     private static final Reporter REPORTER = Reporter.forClass(IpcServer.class);
 
-    @NonNull
-    private final Path socketPath;
-
-    private final Serializer<?> serializer;
-    private final ServerSocketChannel serverChannel;
+    private Path socketPath;
+    private Serializer<?> serializer;
+    private ServerSocketChannel serverChannel;
     private final ConcurrentHashMap<String, List<Object>> payloadsByType = new ConcurrentHashMap<>();
     private final Phaser activeConnections = new Phaser(1); // 1 registered for the server itself
     private CompletableFuture<Void> listenerFuture;
     private boolean diagnosticForwarding;
+    private boolean filterDiagnosticsByLevel;
     private boolean ipcDebugEnabled;
 
-    private IpcServer(Path socketPath, boolean diagnosticForwarding, boolean ipcDebugEnabled) throws IOException {
+    private IpcServer(Path socketPath, boolean diagnosticForwarding, boolean filterDiagnosticsByLevel, boolean ipcDebugEnabled) throws IOException {
         if (socketPath == null) {
             throw new UnexpectedNullParameterException("socketPath");
         }
         this.socketPath = socketPath;
         this.serializer = IpcConfig.createSerializer();
         this.diagnosticForwarding = diagnosticForwarding;
+        this.filterDiagnosticsByLevel = filterDiagnosticsByLevel;
         this.ipcDebugEnabled = ipcDebugEnabled;
 
         UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
@@ -98,21 +98,64 @@ public class IpcServer implements AutoCloseable {
         this.serverChannel.bind(address);
     }
 
-    @NonNull
-    public static IpcServer start(boolean diagnosticForwarding, boolean ipcDebugEnabled) throws IOException {
-        Path tempSocket = Files.createTempFile("cascara-ipc-", ".sock");
-        Files.deleteIfExists(tempSocket);
+    // @NonNull
+    // public static IpcServer start(boolean diagnosticForwarding, boolean ipcDebugEnabled) throws IOException {
+    //     return start(diagnosticForwarding, false, ipcDebugEnabled);
+    // }
 
-        IpcServer server = new IpcServer(tempSocket, diagnosticForwarding, ipcDebugEnabled);
-        server.listenAsync();
-        return server;
+    // @NonNull
+    // public static IpcServer start(boolean diagnosticForwarding, boolean filterDiagnosticsByLevel, boolean ipcDebugEnabled) throws IOException {
+    //     Path tempSocket = Files.createTempFile("cascara-ipc-", ".sock");
+    //     Files.deleteIfExists(tempSocket);
+
+    //     IpcServer server = new IpcServer(tempSocket, diagnosticForwarding, filterDiagnosticsByLevel, ipcDebugEnabled);
+    //     server.listenAsync();
+    //     return server;
+    // }
+
+    public IpcServer() throws IOException {
+
+        // IpcServer server = new IpcServer(tempSocket, diagnosticForwarding, filterDiagnosticsByLevel, ipcDebugEnabled);
+        // if (socketPath == null) {
+        //     throw new UnexpectedNullParameterException("socketPath");
+        // }
+        // this.socketPath = socketPath;
     }
 
-    public synchronized void listenAsync() {
-        if (listenerFuture != null && !listenerFuture.isDone()) {
-            return;
-        }
-        this.listenerFuture = CompletableFuture.runAsync(this::listenLoop);
+    public IpcServer setDiagnosticForwarding(boolean b) {
+        this.diagnosticForwarding = b;
+        return this;
+    }
+
+    public IpcServer setFilterDiagnosticsByLevel(boolean b) {
+        this.filterDiagnosticsByLevel = b;
+        return this;
+    }
+
+    public IpcServer setIpcDebug(boolean b) {
+        this.ipcDebugEnabled = b;
+        return this;
+    }
+
+    public IpcServer start() throws IOException {
+        // this.socketPath = socketPath;
+        // this.diagnosticForwarding = diagnosticForwarding;
+        // this.filterDiagnosticsByLevel = filterDiagnosticsByLevel;
+        // this.ipcDebugEnabled = ipcDebugEnabled;
+
+        socketPath = Files.createTempFile("cascara-ipc-", ".sock");
+        // if (socketPath == null) {
+        //     throw new UnexpectedNullReturnException("Files", "createTempFile");
+        // }
+        Files.deleteIfExists(socketPath);
+        UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
+        this.serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
+        this.serverChannel.bind(address);
+
+        this.serializer = IpcConfig.createSerializer();
+
+        listenAsync();
+        return this;
     }
 
     @NonNull
@@ -157,6 +200,13 @@ public class IpcServer implements AutoCloseable {
         }
     }
 
+    private synchronized void listenAsync() {
+        if (listenerFuture != null && !listenerFuture.isDone()) {
+            return;
+        }
+        this.listenerFuture = CompletableFuture.runAsync(this::listenLoop);
+    }
+
     private void listenLoop() {
         while (serverChannel.isOpen()) {
             try {
@@ -182,19 +232,17 @@ public class IpcServer implements AutoCloseable {
              BufferedReader reader = new BufferedReader(
                  Channels.newReader(clientChannel, StandardCharsets.UTF_8))) {
 
-
-            // Send server PID header as the first line
+            // Send server PID etc in the IPC handshake header
             IpcConfig config = new IpcConfig();
             config.setVersion(Cascara.instance().getVersion());
             config.setIpcServerPid(ProcessHandle.current().pid());
             config.setIpcDebug(ipcDebugEnabled);
             config.setIpcSerializer(serializer.getClass().getName());
-            String header = config.toString() + "---\n";
+            String header = config.toString() + IpcConfig.HEADER_SEPARATOR + "\n";
             ByteBuffer buffer = ByteBuffer.wrap(header.getBytes(StandardCharsets.UTF_8));
             while (buffer.hasRemaining()) {
                 clientChannel.write(buffer);
             }
-
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -204,7 +252,7 @@ public class IpcServer implements AutoCloseable {
                     System.out.println("SERVER: " + line);
                 }
 
-                int delimiterIdx = line.indexOf('|');
+                int delimiterIdx = line.indexOf(IpcConfig.PAYLOAD_SEPARATOR);
                 if (delimiterIdx == -1) continue;
 
                 String className = line.substring(0, delimiterIdx).trim();
@@ -217,27 +265,29 @@ public class IpcServer implements AutoCloseable {
                     try {
                         payload = serializer.fromString(payloadJson, targetClass);
                     } catch (SerializerException e) {
-                        // REPORTER.debug("Failed to deserialize: ");
-                        // ReportWriter writer = REPORTER.getWriter(Level.DEBUG);
-                        // writer.write(2, payloadJson);
-
-                        // System.err.println(StringUtils.debugString(payloadJson));
-
-                        // throw new ExecutionException(e, ExecutionMessage.DESERIALIZATION_FAILED, e.getMessage());
-
                         REPORTER.error(e, GenericMessage.ERROR, "Failed to deserialize payload: " + e.getMessage());
                         ReportWriter writer = REPORTER.getWriter(Level.ERROR);
                         writer.write(2, payloadJson);
 
                         // This will close the connection and the client will
                         // output future diagnostics to System.err.
-                        // TODO: Should this be optional?
+                        // Should this be optional?
                         return;
                     }
 
+                    // Forward diagnostics from the child JVM process
                     if (diagnosticForwarding && payload instanceof Diagnostic diagnostic) {
-                        GlobalReporter reporter = GlobalReporter.forSource(diagnostic.getSource());
-                        if (reporter != null) {
+                        // TODO: Make the following two ways of doing this configurable.
+
+                        if (filterDiagnosticsByLevel) {
+                            // This reports forwarded diagnostics that are included in the source's level:
+                            GlobalReporter reporter = GlobalReporter.forSource(diagnostic.getSource());
+                            if (reporter != null) {
+                                reporter.report(diagnostic);
+                            }
+                        } else {
+                            // This reports all forwarded diagnostics:
+                            GlobalReporter reporter = GlobalReporter.globalInstance();
                             reporter.report(diagnostic);
                         }
                     }

@@ -34,8 +34,6 @@
 
 package io.github.qishr.cascara.common.service.internal;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +45,7 @@ import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.common.service.ServiceProvider;
 import io.github.qishr.cascara.common.trackable.TrackableArray;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public class SPLUtils {
 
@@ -120,27 +119,28 @@ public class SPLUtils {
 
     /// Instantiates a service provider
     /// @param providerClass The class of the provider to instantiate.
-    @SuppressWarnings({ "unchecked", "null" })
+    // @SuppressWarnings({ "unchecked", "null" })
     @NonNull
     public static <T> T instantiate(Class<T> providerClass) {
         if (!ServiceProvider.class.isAssignableFrom(providerClass)) {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, providerClass);
         }
         try {
-            Constructor<?> constructor = providerClass.getDeclaredConstructor();
-            if (constructor == null) {
-                throw new ServiceException(ServiceMessage.NOARGS_CONSTRUCTOR_REQUIRED, providerClass.getName());
-            } else {
-                // Make the constructor accessible. This allows instantiation
-                // of classes with a private noo-arg constructor, like neo-singletons.
-                if (!constructor.canAccess(null)) {
-                    constructor.trySetAccessible();
-                }
-                ServiceProvider instance = (ServiceProvider) constructor.newInstance();
-                return (T)instance;
-            }
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-                | NoSuchMethodException e) {
+            return (T) ReflectionUtils.createInstance(providerClass);
+            // Constructor<?> constructor = providerClass.getDeclaredConstructor();
+            // if (constructor == null) {
+            //     throw new ServiceException(ServiceMessage.NOARGS_CONSTRUCTOR_REQUIRED, providerClass.getName());
+            // } else {
+
+            //     // Make the constructor accessible. This allows instantiation
+            //     // of classes with a private noo-arg constructor, like neo-singletons.
+            //     if (!constructor.canAccess(null)) {
+            //         constructor.trySetAccessible();
+            //     }
+            //     ServiceProvider instance = (ServiceProvider) constructor.newInstance();
+            //     return (T)instance;
+            // }
+        } catch (InstantiationException e) {
             // e.printStackTrace();
             throw new ServiceException(e, ServiceMessage.FAILED_TO_INSTANTIATE_CLASS, providerClass.getName(), e.getMessage());
         }

@@ -229,11 +229,7 @@ public class SPLRoot extends SPLBranch {
                     if (isLoggingBootErrorsToConsole()) {
                         System.err.println(e.getMessage());
                     }
-                    // REPORTER.error(e);
-
                     REPORTER.warn(e);
-                    // TODO:
-                    // System.err.println(" ***************" + REPORTER.getLevel());
                     continue;
                 } catch (Exception e) {
                     System.err.println(e.getMessage());

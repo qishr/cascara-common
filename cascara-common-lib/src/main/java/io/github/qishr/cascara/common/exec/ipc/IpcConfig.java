@@ -11,6 +11,9 @@ public class IpcConfig {
     public static final String SERIALIZER_CLASS = "io.github.qishr.cascara.lang.json.processor.JsonSerializer";
     public static final String SERIALIZATION_FORMAT = "application/json";
 
+    public static final String HEADER_SEPARATOR = "---";
+    public static final String PAYLOAD_SEPARATOR = ":";
+
     public static final String VERSION = "cascara.version";
 
     public static final String IPC_SERVER_PID = "cascara.ipc.server.pid";

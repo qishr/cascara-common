@@ -54,7 +54,8 @@ public class IsolatedExecutor {
     private final Class<? extends AbstractExecutionTask<?,?>> task;
     private final Serializer<?> serializer;
     private boolean ipcDebugEnabled;
-    private boolean diagnisticForwardingEnabled;
+    private boolean diagnosticForwardingEnabled;
+    private boolean filterDiagnosticsByLevel;
 
     private IsolatedExecutor(Class<? extends AbstractExecutionTask<?,?>> task, Class<?> response) {
         this.jvmProcess = JvmProcess.forClass(task);
@@ -81,13 +82,23 @@ public class IsolatedExecutor {
         return  this;
     }
 
+    /// Enable debug output of IPC communications.
     public IsolatedExecutor setIpcDebugEnabled(boolean enabled) {
         this.ipcDebugEnabled = enabled;
         return  this;
     }
 
+    /// Forward diagnostics from the child JVM process to this
+    /// process's GlobalReporter.
     public IsolatedExecutor setDiagnosticForwardingEnabled(boolean enabled) {
-        this.diagnisticForwardingEnabled = enabled;
+        this.diagnosticForwardingEnabled = enabled;
+        return  this;
+    }
+
+    /// Filter forwarded diagnostic reporting by the level specified in
+    /// this process's GlobalReporter.
+    public IsolatedExecutor setFilterDiagnosticsByLevel(boolean enabled) {
+        this.filterDiagnosticsByLevel = enabled;
         return  this;
     }
 
@@ -109,7 +120,12 @@ public class IsolatedExecutor {
 
         IpcServer ipcServer;
         try {
-            ipcServer = IpcServer.start(diagnisticForwardingEnabled, ipcDebugEnabled);
+            // ipcServer = IpcServer.start(diagnosticForwardingEnabled, ipcDebugEnabled);
+            ipcServer = new IpcServer()
+                .setDiagnosticForwarding(diagnosticForwardingEnabled)
+                .setFilterDiagnosticsByLevel(filterDiagnosticsByLevel)
+                .setIpcDebug(ipcDebugEnabled)
+                .start();
 
             options.setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
             jvmProcess.setOptions(options);

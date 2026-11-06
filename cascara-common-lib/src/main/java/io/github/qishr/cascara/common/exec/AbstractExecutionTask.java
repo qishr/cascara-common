@@ -37,9 +37,11 @@ package io.github.qishr.cascara.common.exec;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
@@ -48,10 +50,10 @@ import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
+import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public abstract class AbstractExecutionTask<I, O> {
-
     protected abstract O run(I input) throws Exception;
 
     @SuppressWarnings("unchecked")
@@ -70,19 +72,14 @@ public abstract class AbstractExecutionTask<I, O> {
         AbstractExecutionTask<Object, Object> task;
         try {
             // Find the concrete subclass that was passed to the 'java' command
-            // TODO: ReflectionUtils.getClass()
             targetClass = (Class<AbstractExecutionTask<Object, Object>>) Class.forName(targetClassName);
-            // Instantiate the subclass
-            // @SuppressWarnings("unchecked")
-            // task = (AbstractExecutionTask<Object, Object>) targetClass.getDeclaredConstructor().newInstance();
             task = ReflectionUtils.createInstance(targetClass);
         } catch (InstantiationException | IllegalArgumentException | SecurityException | ClassNotFoundException e) {
             throw new ExecutionException(e, DiagnosticMessage.forException(e), targetClassName);
         }
 
-
-            // Execute the lifecycle (read stdin -> run task -> write to IPC/stdout)
-            task.executeLifecycle(targetClass);
+        // Execute the lifecycle (read stdin -> run task -> write to IPC/stdout)
+        task.executeLifecycle(targetClass);
     }
 
     @SuppressWarnings("unchecked")
@@ -173,6 +170,16 @@ public abstract class AbstractExecutionTask<I, O> {
                 // Fallback to stdout if socket transmit fails
                 System.out.println(serializer.toString(response));
             }
+        }
+    }
+
+    protected void displayHomeContents() {
+        try(Stream<Path> jarFiles = Files.walk(Cascara.instance().getHomePath())) {
+            for (Path jarFile : jarFiles.toList()) {
+                System.out.println("> " + jarFile);
+            }
+        } catch (IOException e) {
+            error(e, "Failed to display VFS contents");
         }
     }
 
