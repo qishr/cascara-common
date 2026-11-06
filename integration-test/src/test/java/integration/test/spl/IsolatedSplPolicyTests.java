@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 
 import integration.test.exec.ExecTestBase;
@@ -28,9 +29,16 @@ import io.github.qishr.cascara.common.exec.JvmOptions;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
+import io.github.qishr.cascara.test.common.junit.extension.AssertNotReportedExtension;
+import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
 public class IsolatedSplPolicyTests extends ExecTestBase {
+    @RegisterExtension
+    static final AssertReportedExtension assertReported = new AssertReportedExtension();
+
+    @RegisterExtension
+    static final AssertNotReportedExtension assertNotReported = new AssertNotReportedExtension();
 
     @TempDir
     public Path tempDir;
@@ -75,7 +83,11 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
         debug(result);
 
-        assertTrue(result.getSystemErr().contains("EXPIRED"));
+        assertTrue(result.getSystemErr().contains("CERTIFICATE_EXPIRED"));
+
+        // TODO:
+        // This needs addDiagnosticConsumer to work...
+        // assertReported.warnContains("CERTIFICATE_EXPIRED");
     }
 
     // The above, but with cascara.sec.verify = false
@@ -107,6 +119,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setEnv(CASCARA_HOME, getPhysicalHomePath())
+            .setSystemProperty(SPL.CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
             .setSystemProperty(SPL.CASCARA_SPL_VERIFY, "false")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
             .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
@@ -118,7 +131,10 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
         debug(result);
 
-        assertFalse(result.getSystemErr().contains("Verification failed"));
+        assertFalse(result.getSystemErr().contains("CERTIFICATE_EXPIRED"));
+
+        // This needs addDiagnosticConsumer to work...
+        // assertNotReported.warnContains("CERTIFICATE_EXPIRED");
     }
 
     // TODO: Fix this
@@ -216,6 +232,10 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
         debug(result);
 
+        // Expect an error written to System.err.
+        // Since cascara-lang-json here is unsigned and SPL in the child
+        // JVM rejects unsigned JARs on the module path, SPL will throw
+        // an exception and the child JVM will terminate.
         assertTrue(result.getSystemErr().contains("NOT_SIGNED"));
     }
 }

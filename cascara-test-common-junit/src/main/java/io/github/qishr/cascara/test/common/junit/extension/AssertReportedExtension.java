@@ -26,31 +26,65 @@ public class AssertReportedExtension implements BeforeTestExecutionCallback, Aft
     }
 
     public void error(String expectedMessage) {
-        assertLogged(expectedMessage, Level.ERROR);
+        assertReported(expectedMessage, Level.ERROR);
     }
 
     public void warn(String expectedMessage) {
-        assertLogged(expectedMessage, Level.WARN);
+        assertReported(expectedMessage, Level.WARN);
     }
 
     public void info(String expectedMessage) {
-        assertLogged(expectedMessage, Level.INFO);
+        assertReported(expectedMessage, Level.INFO);
     }
 
     public void debug(String expectedMessage) {
-        assertLogged(expectedMessage, Level.DEBUG);
+        assertReported(expectedMessage, Level.DEBUG);
     }
 
     public void trace(String expectedMessage) {
-        assertLogged(expectedMessage, Level.TRACE);
+        assertReported(expectedMessage, Level.TRACE);
     }
 
-    private void assertLogged(String message, Level level) {
+
+
+    public void errorContains(String expectedSubstring) {
+        assertReportContains(expectedSubstring, Level.ERROR);
+    }
+
+    public void warnContains(String expectedSubstring) {
+        assertReportContains(expectedSubstring, Level.WARN);
+    }
+
+    public void infoContains(String expectedSubstring) {
+        assertReportContains(expectedSubstring, Level.INFO);
+    }
+
+    public void debugContains(String expectedMessage) {
+        assertReportContains(expectedMessage, Level.DEBUG);
+    }
+
+    public void traceContains(String expectedSubstring) {
+        assertReportContains(expectedSubstring, Level.TRACE);
+    }
+
+
+
+
+    private void assertReported(String message, Level level) {
         diagnostics.stream()
             .filter(e -> e.getLevel().equals(level))
             .filter(e -> e.getFormattedMessage().equals(message))
             .findAny()
-            .orElseThrow(() -> new AssertionFailedError("Log message '" + message + "' with level '" + level +
-                                                        "' was expected, but not logged."));
+            .orElseThrow(() -> new AssertionFailedError("Diagnostic report message '" + message + "' with level '" + level +
+                                                        "' was expected, but not reported."));
+    }
+
+    private void assertReportContains(String substring, Level level) {
+        diagnostics.stream()
+            .filter(e -> e.getLevel().equals(level))
+            .filter(e -> e.getFormattedMessage().contains(substring))
+            .findAny()
+            .orElseThrow(() -> new AssertionFailedError("Diagnostic report message containing '" + substring + "' with level '" + level +
+                                                        "' was expected, but not reported."));
     }
 }

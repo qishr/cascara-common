@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
@@ -15,7 +14,6 @@ import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
-import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.util.ArtifactResolver;
 
 public class ExecTestBase extends VfsTestBase {
@@ -23,13 +21,6 @@ public class ExecTestBase extends VfsTestBase {
     protected static final boolean PROCESS_DEBUG_ENABLED = false;
 
     protected static final String CASCARA_HOME = "CASCARA_HOME";
-
-    protected static TestCertificateAuthority rootCA;
-
-    @BeforeAll
-    static void init() throws Exception {
-        rootCA = TestCertificateAuthority.create("Root CA");
-    }
 
     @BeforeEach
     protected void setUp() throws IOException {

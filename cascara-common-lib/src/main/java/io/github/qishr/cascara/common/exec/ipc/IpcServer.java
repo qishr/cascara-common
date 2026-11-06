@@ -56,8 +56,6 @@ import java.util.concurrent.Phaser;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
-import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.ReportWriter;
@@ -83,43 +81,7 @@ public class IpcServer implements AutoCloseable {
     private boolean filterDiagnosticsByLevel;
     private boolean ipcDebugEnabled;
 
-    private IpcServer(Path socketPath, boolean diagnosticForwarding, boolean filterDiagnosticsByLevel, boolean ipcDebugEnabled) throws IOException {
-        if (socketPath == null) {
-            throw new UnexpectedNullParameterException("socketPath");
-        }
-        this.socketPath = socketPath;
-        this.serializer = IpcConfig.createSerializer();
-        this.diagnosticForwarding = diagnosticForwarding;
-        this.filterDiagnosticsByLevel = filterDiagnosticsByLevel;
-        this.ipcDebugEnabled = ipcDebugEnabled;
-
-        UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
-        this.serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
-        this.serverChannel.bind(address);
-    }
-
-    // @NonNull
-    // public static IpcServer start(boolean diagnosticForwarding, boolean ipcDebugEnabled) throws IOException {
-    //     return start(diagnosticForwarding, false, ipcDebugEnabled);
-    // }
-
-    // @NonNull
-    // public static IpcServer start(boolean diagnosticForwarding, boolean filterDiagnosticsByLevel, boolean ipcDebugEnabled) throws IOException {
-    //     Path tempSocket = Files.createTempFile("cascara-ipc-", ".sock");
-    //     Files.deleteIfExists(tempSocket);
-
-    //     IpcServer server = new IpcServer(tempSocket, diagnosticForwarding, filterDiagnosticsByLevel, ipcDebugEnabled);
-    //     server.listenAsync();
-    //     return server;
-    // }
-
     public IpcServer() throws IOException {
-
-        // IpcServer server = new IpcServer(tempSocket, diagnosticForwarding, filterDiagnosticsByLevel, ipcDebugEnabled);
-        // if (socketPath == null) {
-        //     throw new UnexpectedNullParameterException("socketPath");
-        // }
-        // this.socketPath = socketPath;
     }
 
     public IpcServer setDiagnosticForwarding(boolean b) {
@@ -138,27 +100,16 @@ public class IpcServer implements AutoCloseable {
     }
 
     public IpcServer start() throws IOException {
-        // this.socketPath = socketPath;
-        // this.diagnosticForwarding = diagnosticForwarding;
-        // this.filterDiagnosticsByLevel = filterDiagnosticsByLevel;
-        // this.ipcDebugEnabled = ipcDebugEnabled;
-
         socketPath = Files.createTempFile("cascara-ipc-", ".sock");
-        // if (socketPath == null) {
-        //     throw new UnexpectedNullReturnException("Files", "createTempFile");
-        // }
         Files.deleteIfExists(socketPath);
         UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
         this.serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
         this.serverChannel.bind(address);
-
         this.serializer = IpcConfig.createSerializer();
-
         listenAsync();
         return this;
     }
 
-    @NonNull
     public Path getSocketPath() {
         return socketPath;
     }

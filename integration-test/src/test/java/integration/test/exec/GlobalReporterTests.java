@@ -8,12 +8,13 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
+import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
 import integration.test.fixtures.payload.StringTaskInput;
 import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.task.GlobalReporterTestTask;
@@ -22,6 +23,9 @@ import integration.test.fixtures.task.GlobalReporterTestTask;
 // ./gradlew :spl-test:build -x javadoc :spl-test:test --tests "*GlobalReporterTests*"
 
 public class GlobalReporterTests extends ExecTestBase {
+    @RegisterExtension
+    static final AssertReportedExtension assertReported = new AssertReportedExtension();
+
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
@@ -53,8 +57,7 @@ public class GlobalReporterTests extends ExecTestBase {
         ReporterTestOutput output = result.orElseThrow();
         assertEquals(42, output.n());
         assertTrue(output.s().contains("debug-message"));
-        assertEquals(1, result.getDiagnostics().size());
-        Diagnostic diagnostic = result.getDiagnostics().getFirst();
-        assertTrue(diagnostic.getFormattedMessage().contains("debug-message"));
+
+        assertReported.debug("debug-message");
     }
 }
