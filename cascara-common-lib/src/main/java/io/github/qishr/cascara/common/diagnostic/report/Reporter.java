@@ -95,7 +95,12 @@ public interface Reporter {
     // Reporting Methods
     //
 
-    /// Reports an [Exception]
+    /// Reports an [Exception] as a warning
+    ///
+    /// @param exception The exception to report.
+    void warn(Exception exception);
+
+    /// Reports an [Exception] as an error
     ///
     /// @param exception The exception to report.
     void error(Exception exception);

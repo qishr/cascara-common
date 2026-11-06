@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
-import integration.test.fixtures.payload.ReporterTestInput;
+import integration.test.fixtures.payload.StringTaskInput;
 import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.task.GlobalReporterTestTask;
 
@@ -25,7 +25,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
     @Test
     void test_IsolatedExecutor_1() throws Exception {
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
+        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
 
         exec.setOptions(new JvmOptions()
@@ -46,7 +46,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
     @Test
     void test_IsolatedExecutor_2() throws Exception {
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
+        StringTaskInput input = new StringTaskInput("hello-isolated-world");
 
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
 
@@ -67,7 +67,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
     @Test
     void test_isolatedExecution_classpathMode() throws Exception {
-        ReporterTestInput input = new ReporterTestInput("classpath-mode-test");
+        StringTaskInput input = new StringTaskInput("classpath-mode-test");
 
         JvmOptions options = new JvmOptions()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
@@ -89,7 +89,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
     @Test
     void test_isolatedExecution_jpmsModuleMode() throws Exception {
-        ReporterTestInput input = new ReporterTestInput("jpms-module-mode-test");
+        StringTaskInput input = new StringTaskInput("jpms-module-mode-test");
 
         JvmOptions options = new JvmOptions()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName()) // Forces --module-path launch

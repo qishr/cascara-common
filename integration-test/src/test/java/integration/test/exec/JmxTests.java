@@ -27,13 +27,13 @@ import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.logging.log4j.Log4jLogger;
-import integration.test.fixtures.payload.ReporterTestInput;
+import integration.test.fixtures.payload.StringTaskInput;
 import integration.test.fixtures.task.JmxTestTask;
 import org.junit.jupiter.api.parallel.Isolated;
 
 @Isolated
-public class JmxTest extends JmxTestBase {
-    private static final Reporter REPORTER = Reporter.forClass(JmxTest.class);
+public class JmxTests extends JmxTestBase {
+    private static final Reporter REPORTER = Reporter.forClass(JmxTests.class);
 
     @BeforeEach
     protected void setUp() throws IOException {
@@ -51,7 +51,7 @@ public class JmxTest extends JmxTestBase {
         REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
         syncVfs();
 
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
+        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString(input);
 

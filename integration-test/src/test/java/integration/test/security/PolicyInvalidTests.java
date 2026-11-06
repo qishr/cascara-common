@@ -1,4 +1,4 @@
-package integration.test.jar;
+package integration.test.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -9,6 +9,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import integration.test.jar.JarSignatureInvalidTests;
+import integration.test.jar.JarSignatureValidTests;
+import integration.test.jar.JarTestBase;
 import io.github.qishr.cascara.common.security.SignatureStatus;
 import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.TrustStore;

@@ -399,6 +399,13 @@ public class SPLBranch implements SPL {
         if (type == null || !ServiceProvider.class.isAssignableFrom(type)) {
             return;
         }
+
+        // TODO: verify
+        boolean verify = isVerifyEnabled();
+        if (verify) {
+            verifySignature(type);
+        }
+
         registerClassInternal(type, false);
         SPLUtils.recomputeAllVisibleProviders(rootLayer);
     }
@@ -612,6 +619,24 @@ public class SPLBranch implements SPL {
         }
     }
 
+    protected static void verifySignature(Class<?> cls) {
+        SignaturePolicy policy = SPLRoot.getSignaturePolicy();
+
+        if (policy == null) {
+            return;
+        }
+
+        SignatureStatus status = policy.evaluate(cls);
+        if (status != SignatureStatus.VALID) {
+            throw new SignatureException(
+                status,
+                ServiceMessage.VERIFICATION_FAILED,
+                status,
+                cls
+            );
+        }
+    }
+
     protected static void verifySignature(JarFile jar) {
         List<ZipEntry> entries = jar.getEntries();
         for (ZipEntry entry : entries) {
@@ -697,10 +722,18 @@ public class SPLBranch implements SPL {
     protected static boolean isVerifyEnabled() {
         // return false;
         // TODO: Use propsFile for this too
-        String verify = System.getProperty(CASCARA_SEC_VERIFY);
+        String verify = System.getProperty(CASCARA_SPL_VERIFY);
         // return !"false".equalsIgnoreCase(verify);
         return "true".equalsIgnoreCase(verify);
     }
+
+    // protected static boolean isVerifyClassEnabled() {
+    //     // return false;
+    //     // TODO: Use propsFile for this too
+    //     String verify = System.getProperty(CASCARA_SPL_VERIFY);
+    //     // return !"false".equalsIgnoreCase(verify);
+    //     return "true".equalsIgnoreCase(verify);
+    // }
 
     private boolean isRegistered(String providerFqcn) {
         return rootLayer.bootProviders.contains(providerFqcn) || providersByFqcn.containsKey(providerFqcn);

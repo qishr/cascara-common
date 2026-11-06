@@ -69,22 +69,6 @@ public enum LangMessage implements DiagnosticMessage {
     AST_FACTORY_FAIL_SEQUENCE("LANG-322", "AST factory failed to create sequence"),
     AST_FACTORY_FAIL_KEY("LANG-323", "AST factory failed to create key"),
 
-    // JRE Exceptions
-    CLASS_NOT_SERIALIZABLE("LANG-402", "Class {0} is not serializable"),
-    NO_SUCH_METHOD("LANG-404", "No such method: {0}"),
-    NO_SUCH_CONSTRUCTOR("LANG-405", "No such constructor: {0}"),
-    FIELD_NOT_ACCESSIBLE("LANG-406", "Field {0} is not accessible"),
-    INVOCATION_TARGET_EXCEPTION("LANG-407", "Method {0} threw an invocation target exception"),
-    ILLEGAL_ARGUMENT_EXCEPTION("LANG-408", "Field {0} threw an illegal argument exception"),
-    INSTANTIATION_EXCEPTION("LANG-409", "Field {0} threw an instantiation exception"),
-    EXCEPTION_IN_INITIALIZER("LANG-410", "Exception in initializer for {0}"),
-    ABSTRACT_METHOD_ERROR("LANG-411", "Abstract method error: {0}"),
-    NO_CLASS_DEF_FOUND_ERROR("LANG-412", "No class definition found: {0}"),
-    SERVICE_CONFIG_ERROR("LANG-413", "Service configuration error: {0}"),
-    SECURITY_EXCEPTION("LANG-414", "Security exception: {0}"),
-    ILLEGAL_ACCESS_EXCEPTION("LANG-415", "Illegal access exception: {0}"),
-    CLASS_CAST_EXCEPTION("LANG-416", "Class cast exception: {0}"),
-
     UNKNOWN_GENERIC_TYPE("LANG-501", "Could not resolve generic type argument for {0}");
 
     private final String code;

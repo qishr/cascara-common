@@ -37,27 +37,30 @@ package integration.test.spl;
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
+import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
-import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 
 public class SplTestBase extends VfsTestBase {
-    protected static TestCertificateAuthority rootCA;
-
-    @BeforeAll
-    static void init() throws Exception {
-        rootCA = TestCertificateAuthority.create("Root CA");
-    }
-
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
+        resetSplPolicy();
     }
 
     @AfterEach
     protected void tearDown() throws IOException {
         super.tearDown();
+        resetSplPolicy();
+    }
+
+    public static void resetSplPolicy() {
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+            .requireSigned(false)
+            .build();
+        SPL.setSignaturePolicy(policy);
+        System.setProperty(SPL.CASCARA_SPL_VERIFY, "false");
     }
 }

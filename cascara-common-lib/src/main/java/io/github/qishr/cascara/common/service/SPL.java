@@ -49,9 +49,11 @@ import io.github.qishr.cascara.common.trackable.TrackableArray;
 
 public interface SPL extends TreeNode<SPL> {
     public static final String CASCARA_SPL_DISCOVER = "cascara.spl.discover";
-    public static final String CASCARA_SEC_VERIFY = "cascara.spl.verify";
-    public static final String CASCARA_SPL_POLICY_REQUIRE_SIGNED = "cascara.spl.policy.require.signed";
-    public static final String CASCARA_SPL_POLICY_CHECK_EXPIRY = "cascara.spl.policy.check.expiry";
+    public static final String CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE = "cascara.spl.boot-errors-to-console";
+    public static final String CASCARA_SPL_VERIFY = "cascara.spl.verify";
+    public static final String CASCARA_SPL_POLICY_REQUIRE_SIGNED = "cascara.spl.policy.require-signed";
+    public static final String CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASS = "cascara.spl.policy.require-signed-class";
+    public static final String CASCARA_SPL_POLICY_CHECK_EXPIRY = "cascara.spl.policy.check-expiry";
 
     // Property names used in service capabilities
     public static final String SP_SERVICE_NAME = "serviceName";

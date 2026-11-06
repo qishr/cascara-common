@@ -49,7 +49,7 @@ public class ExecTestBase extends VfsTestBase {
         return modulePath;
     }
 
-    protected void debug(Response<ReporterTestOutput> response) {
+    protected void debug(Response<?> response) {
         if (TEST_DEBUG_ENABLED) {
             Reporter reporter = new LocalReporter().setLevel(Level.DEBUG);
             ReportWriter writer = reporter.getWriter(Level.DEBUG);

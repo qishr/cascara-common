@@ -50,6 +50,7 @@ import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.filewatcher.FileWatcher;
 import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.security.SignatureException;
 import io.github.qishr.cascara.common.security.SignaturePolicy;
 import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.ServiceException;
@@ -224,6 +225,16 @@ public class SPLRoot extends SPLBranch {
                     if (verify) {
                         verifySignature(jar);
                     }
+                } catch (SignatureException e) {
+                    if (isLoggingBootErrorsToConsole()) {
+                        System.err.println(e.getMessage());
+                    }
+                    // REPORTER.error(e);
+
+                    REPORTER.warn(e);
+                    // TODO:
+                    // System.err.println(" ***************" + REPORTER.getLevel());
+                    continue;
                 } catch (Exception e) {
                     System.err.println(e.getMessage());
                     continue;
@@ -240,6 +251,12 @@ public class SPLRoot extends SPLBranch {
         for (SPLBranch descendant : layer.namedChildren.values()) {
             collectLayers(descendant, collected);
         }
+    }
+
+    private boolean isLoggingBootErrorsToConsole() {
+        // TODO: Use propsFile for this too
+        String b = System.getProperty(CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE);
+        return "true".equalsIgnoreCase(b);
     }
 
     private boolean isAutoDiscoverEnabled() {
@@ -297,7 +314,8 @@ public class SPLRoot extends SPLBranch {
     }
 
     private void displayEnvironmentInformation() {
-        if (GlobalReporter.globalInstance().getLevel().includes(Level.DEBUG)) {
+        // TODO: JVM info
+        if (REPORTER.getLevel().includes(Level.DEBUG)) {
             REPORTER.debug("Environment Information:");
             REPORTER.debug("  Cascara version: " + Cascara.instance().getVersion());
             REPORTER.debug("  Module cascara.common version: " + Cascara.instance().getCommonVersion());

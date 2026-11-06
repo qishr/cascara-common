@@ -37,7 +37,6 @@ package io.github.qishr.cascara.common.util;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -57,6 +56,7 @@ import io.github.qishr.cascara.common.annotation.DataField;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableInstantiationException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 
@@ -81,11 +81,14 @@ public class ReflectionUtils {
 
     @SuppressWarnings("null")
     @NonNull
-    public static <C> C createInstance(Class<C> targetClass) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, SecurityException {
+    public static <C> C createInstance(Class<C> targetClass) throws InstantiationException {
         try {
             return targetClass.getConstructor().newInstance();
-        } catch (NoSuchMethodException e) {
+        } catch (Throwable t) {}
+        try {
             return createInstanceUnsafe(targetClass);
+        } catch (Throwable t) {
+            throw new LocalizableInstantiationException(t, targetClass);
         }
     }
 

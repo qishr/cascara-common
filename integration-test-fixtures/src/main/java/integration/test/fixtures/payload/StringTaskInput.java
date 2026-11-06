@@ -1,16 +1,16 @@
 package integration.test.fixtures.payload;
 
-public class ReporterTestInput {
+public class StringTaskInput {
     private String testMessage;
 
     // TODO: Remove this
-    public ReporterTestInput() {}
+    public StringTaskInput() {}
 
-    public ReporterTestInput(String msg) {
+    public StringTaskInput(String msg) {
         this.testMessage = msg;
     }
 
-    public String testMessage() {
+    public String getString() {
         return testMessage;
     }
 }

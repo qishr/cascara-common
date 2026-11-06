@@ -102,6 +102,9 @@ public class NoOpReporter implements Reporter {
     //
 
     @Override
+    public void warn(Exception exception) {}
+
+    @Override
     public void error(Exception e) {}
 
     //

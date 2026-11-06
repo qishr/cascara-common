@@ -349,8 +349,8 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
             try {
                 ipcClient = IpcClient.tryConnect(serializer);
             } catch (Exception e) {
-                // TODO: proper exception handling
-                System.out.println("GR-IPC ERROR: " + e.getMessage());
+                // TODO: Remove this
+                System.err.println("*** CONN FAIL ***");
                 // There was no IpcServer to connect to, which is okay
                 ipcUnavailable = true;
             }
@@ -361,7 +361,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
             queue.clear();
         } else {
             try {
-                // TODO: Send queued diagnostics
+                // Send queued diagnostics
                 if (!queue.isEmpty()) {
                     // System.out.println("GR-IPC: Sending queued diagnostics");
                     for (Diagnostic d : queue) {
@@ -379,7 +379,11 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 }
 
             } catch (IOException e) {
-                e.printStackTrace();
+                // TODO: Possible option to silence this?
+                System.err.println("sendDiagnostic failed (" +
+                    e.getMessage() + "): " +
+                    diagnostic.getFormattedMessage()
+                );
             }
         }
     }

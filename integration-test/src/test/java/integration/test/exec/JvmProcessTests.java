@@ -23,7 +23,7 @@ import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
-import integration.test.fixtures.payload.ReporterTestInput;
+import integration.test.fixtures.payload.StringTaskInput;
 import integration.test.fixtures.task.GlobalReporterTestTask;
 
 public class JvmProcessTests extends ExecTestBase {
@@ -37,7 +37,7 @@ public class JvmProcessTests extends ExecTestBase {
 
     @Test
     void test_JvmProcess_withoutIPC() throws Exception {
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
+        StringTaskInput input = new StringTaskInput("hello-isolated-world");
 
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString(input);
@@ -62,7 +62,7 @@ public class JvmProcessTests extends ExecTestBase {
 
     @Test
     void test_JvmProcess_withIPC() throws IOException {
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
+        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString(input);
 
@@ -98,7 +98,7 @@ public class JvmProcessTests extends ExecTestBase {
 
     @Test
     void test_IPC_forwardsDiagnostics() throws IOException {
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
+        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString(input);
 

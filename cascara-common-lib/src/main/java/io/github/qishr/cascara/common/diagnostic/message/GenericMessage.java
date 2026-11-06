@@ -42,7 +42,7 @@ public enum GenericMessage implements DiagnosticMessage {
     WARN("WARN-101", "{0}"),
 
     // Errors
-    ERROR("ERROR-101", "{0}."),
+    ERROR("ERROR-101", "{0}"),
     UNIMPLEMENTED_METHOD("ERROR-102", "Unimplemented method: {0}.{1}"),
     UNEXPECTED_NULL_PARAMETER("ERROR-103","Unexpected null paramter \"{1}\" in {0}"),
     UNEXPECTED_NULL_RETURN("ERROR-104", "Unexpected null return value from {0}.{1}"),
@@ -50,14 +50,30 @@ public enum GenericMessage implements DiagnosticMessage {
     MANIFEST_READ("ERROR-106", "Failed to read manifest for {0}"),
     RESOURCE_INACCESSIBLE("ERROR-107", "Resource '{0}' cannot be loaded. Module " +
         "'{1}' does not open package '{2}' to module '{3}'. " +
-        "To fix this, add 'opens {4} to {5};' to the module-info.java of '{6}'."),
+        "To fix this, add 'opens {4} to {5};' to the module-info.java of '{6}'"),
 
-    // Exceptions
-    EXCEPTION("ERROR-202", "Exception: {0}"),
-    RUNTIME_EXCEPTION("ERROR-203", "Runtime exception: {0}"),
-    NPE("ERROR-204", "Null pointer exception: {0}"),
-    INCONSISTENT_STATE("ERROR-206","Inconsistent state"),
-    UNSUPPORTED_OPERATION("ERROR-207","Unsupported operation: {0}.{1}"),
+    // JRE Exceptions
+    EXCEPTION("ERROR-401", "Exception: {0}"),
+    RUNTIME_EXCEPTION("ERROR-402", "Runtime exception: {0}"),
+    NPE("ERROR-403", "Null pointer exception: {0}"),
+    NO_CLASS_DEF_FOUND_ERROR("LANG-404", "No class definition found: {0}"),
+    CLASS_CAST_EXCEPTION("LANG-405", "Class cast exception: {0}"),
+    CLASS_NOT_SERIALIZABLE("LANG-406", "Class {0} is not serializable"),
+    NO_SUCH_METHOD("LANG-407", "No such method: {0}"),
+    NO_SUCH_CONSTRUCTOR("LANG-408", "No such constructor: {0}"),
+    FIELD_NOT_ACCESSIBLE("LANG-409", "Field {0} is not accessible"),
+    INVOCATION_TARGET_EXCEPTION("LANG-410", "Method {0} threw an invocation target exception"),
+    ILLEGAL_ARGUMENT_EXCEPTION("LANG-411", "Field {0} threw an illegal argument exception"),
+    INSTANTIATION_EXCEPTION("LANG-412", "Field {0} threw an instantiation exception"),
+    EXCEPTION_IN_INITIALIZER("LANG-413", "Exception in initializer for {0}"),
+    ABSTRACT_METHOD_ERROR("LANG-414", "Abstract method error: {0}"),
+    SERVICE_CONFIG_ERROR("LANG-415", "Service configuration error: {0}"),
+    SECURITY_EXCEPTION("LANG-416", "Security exception: {0}"),
+    ILLEGAL_ACCESS_EXCEPTION("LANG-417", "Illegal access exception: {0}"),
+    INCONSISTENT_STATE("ERROR-418","Inconsistent state"),
+    UNSUPPORTED_OPERATION("ERROR-419","Unsupported operation: {0}.{1}"),
+    UNSATISFIED_LINK_ERROR("ERROR-420","Unsatisfied link error: {0"),
+    INTERNAL_ERROR("ERROR-421","Internal error: {0}"),
 
     // IO Errors
     IO_ERROR("ERROR-301", "IO error: {0}"),

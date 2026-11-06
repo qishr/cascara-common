@@ -285,7 +285,7 @@ public abstract class AbstractSerializer<
                 try {
                     map = (Map<?, ?>) field.get(jvmInstance);
                 } catch (IllegalAccessException e) {
-                    throw new SerializerException(e, LangMessage.FIELD_NOT_ACCESSIBLE, fieldName);
+                    throw new SerializerException(e, GenericMessage.FIELD_NOT_ACCESSIBLE, fieldName);
                 }
                 if (map != null) {
                     for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -301,7 +301,7 @@ public abstract class AbstractSerializer<
 			try {
 				value = field.get(jvmInstance);
 			} catch (IllegalAccessException e) {
-                throw new SerializerException(e, LangMessage.FIELD_NOT_ACCESSIBLE, field.getName());
+                throw new SerializerException(e, GenericMessage.FIELD_NOT_ACCESSIBLE, field.getName());
 			}
             if (value != null) {
                 K keyNode = astFactory.createKey(fieldName);
@@ -732,7 +732,7 @@ public abstract class AbstractSerializer<
             try {
                 if (key != null) result.put(key, val);
             } catch(ClassCastException e) {
-                throw new SerializerException(node, e, LangMessage.CLASS_CAST_EXCEPTION, ReflectionUtils.getTypeName(targetType));
+                throw new SerializerException(node, e, GenericMessage.CLASS_CAST_EXCEPTION, ReflectionUtils.getTypeName(targetType));
             }
         }
 
@@ -829,21 +829,16 @@ public abstract class AbstractSerializer<
         return null;
     }
 
-    @NonNull
+    @Nullable
     private Object deserializeScalarWithDescriptor(ScalarAstNode<?> scalar, ScalarDescriptor<?> descriptor) {
         Object val = scalar.getPrimitive();
         String stringValue = val != null ? val.toString() : "";
-        Object result = null;
         try {
             // toJvmType never returns null but may throw a RuntimeException
-            result = descriptor.toJvmType(stringValue);
+            return descriptor.toJvmType(stringValue);
         } catch (Exception e) {
             throw new SerializerException(scalar, e, LangMessage.FAILED_TO_MAP_TYPE_REASON, descriptor.getJvmType().getName(), e.getMessage());
         }
-        if (result == null) {
-            throw new SerializerException(scalar, LangMessage.FAILED_TO_MAP_TYPE, descriptor.getJvmType().getName());
-        }
-        return result;
     }
 
     //
@@ -927,9 +922,9 @@ public abstract class AbstractSerializer<
                         try {
                             method.invoke(instance, key, value);
                         } catch (IllegalAccessException e) {
-                            throw new SerializerException(e, LangMessage.FIELD_NOT_ACCESSIBLE, method.getName());
+                            throw new SerializerException(e, GenericMessage.FIELD_NOT_ACCESSIBLE, method.getName());
                         } catch (InvocationTargetException e) {
-                            throw new SerializerException(e, LangMessage.INVOCATION_TARGET_EXCEPTION, method.getName());
+                            throw new SerializerException(e, GenericMessage.INVOCATION_TARGET_EXCEPTION, method.getName());
                         }
                     }
                 }

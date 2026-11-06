@@ -48,48 +48,63 @@ public interface DiagnosticMessage {
 
     static DiagnosticMessage forException(Throwable t) {
         if (t instanceof InstantiationException) {
-            return LangMessage.INSTANTIATION_EXCEPTION;
+            return GenericMessage.INSTANTIATION_EXCEPTION;
         }
         // InaccessibleObjectException - if Java language access checks cannot be suppressed.
         else if (t instanceof InaccessibleObjectException) {
-            return LangMessage.FIELD_NOT_ACCESSIBLE;
+            return GenericMessage.FIELD_NOT_ACCESSIBLE;
         }
         // IllegalAccessException - if this Method object is enforcing Java language access control and the underlying method is inaccessible.
         else if (t instanceof IllegalAccessException) {
-            return LangMessage.FIELD_NOT_ACCESSIBLE;
+            return GenericMessage.FIELD_NOT_ACCESSIBLE;
         }
         // IllegalArgumentException - if the method is an instance method and the specified object argument is not an instance of the class or interface declaring the underlying method (or of a subclass or implementor thereof); if the number of actual and formal parameters differ; if an unwrapping conversion for primitive arguments fails; or if, after possible unwrapping, a parameter value cannot be converted to the corresponding formal parameter type by a method invocation conversion.
         else if (t instanceof IllegalArgumentException) {
-            return LangMessage.ILLEGAL_ARGUMENT_EXCEPTION;
+            return GenericMessage.ILLEGAL_ARGUMENT_EXCEPTION;
         }
         // InvocationTargetException - if the underlying method throws an exception.
         else if (t instanceof InvocationTargetException) {
-            return LangMessage.INVOCATION_TARGET_EXCEPTION;
+            return GenericMessage.INVOCATION_TARGET_EXCEPTION;
         }
         else if (t instanceof NoSuchMethodException) {
-            return LangMessage.NO_SUCH_METHOD;
+            return GenericMessage.NO_SUCH_METHOD;
         }
         // ExceptionInInitializerError - if the initialization provoked by this method fails.
         else if (t instanceof ExceptionInInitializerError) {
-            return LangMessage.EXCEPTION_IN_INITIALIZER;
+            return GenericMessage.EXCEPTION_IN_INITIALIZER;
         }
         // AbstractMethodError - when an application tries to call an abstract method.
         else if (t instanceof AbstractMethodError) {
-            return LangMessage.ABSTRACT_METHOD_ERROR;
+            return GenericMessage.ABSTRACT_METHOD_ERROR;
         }
         // NoClassDefFoundError - when trying to load in the definition of a class and no definition of the class could be found.
         else if (t instanceof NoClassDefFoundError) {
-            return LangMessage.NO_CLASS_DEF_FOUND_ERROR;
+            return GenericMessage.NO_CLASS_DEF_FOUND_ERROR;
+        }
+        else if (t instanceof ClassNotFoundException) {
+            return GenericMessage.NO_CLASS_DEF_FOUND_ERROR;
         }
         // ServiceConfigurationError - when something goes wrong while locating, loading, or instantiating a service provider.
         else if (t instanceof ServiceConfigurationError) {
-            return LangMessage.SERVICE_CONFIG_ERROR;
+            return GenericMessage.SERVICE_CONFIG_ERROR;
         }
         else if (t instanceof SecurityException) {
-            return LangMessage.SECURITY_EXCEPTION;
+            return GenericMessage.SECURITY_EXCEPTION;
         }
         else if (t instanceof IllegalAccessException) {
-            return LangMessage.ILLEGAL_ACCESS_EXCEPTION;
+            return GenericMessage.ILLEGAL_ACCESS_EXCEPTION;
+        }
+        else if (t instanceof ExceptionInInitializerError) {
+            return GenericMessage.EXCEPTION_IN_INITIALIZER;
+        }
+        else if (t instanceof UnsatisfiedLinkError) {
+            return GenericMessage.UNSATISFIED_LINK_ERROR;
+        }
+        else if (t instanceof InternalError) {
+            return GenericMessage.INTERNAL_ERROR;
+        }
+        else if (t instanceof Error) {
+            return GenericMessage.ERROR;
         }
         // NullPointerException - if the specified object is null and the method is an instance method.
         else if (t instanceof NullPointerException) {

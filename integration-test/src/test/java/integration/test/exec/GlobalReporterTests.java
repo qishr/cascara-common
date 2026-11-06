@@ -14,7 +14,7 @@ import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
-import integration.test.fixtures.payload.ReporterTestInput;
+import integration.test.fixtures.payload.StringTaskInput;
 import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.task.GlobalReporterTestTask;
 
@@ -29,7 +29,7 @@ public class GlobalReporterTests extends ExecTestBase {
 
     @Test
     void test_debugLevel() throws Exception {
-        ReporterTestInput input = new ReporterTestInput("debug-message");
+        StringTaskInput input = new StringTaskInput("debug-message");
 
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 

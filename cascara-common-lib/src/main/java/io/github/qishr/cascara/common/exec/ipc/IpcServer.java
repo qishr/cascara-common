@@ -55,8 +55,12 @@ import java.util.concurrent.Phaser;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.ReportWriter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.exec.ExecutionException;
 import io.github.qishr.cascara.common.exec.ExecutionMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
@@ -66,6 +70,8 @@ import io.github.qishr.cascara.common.util.Cascara;
 
 public class IpcServer implements AutoCloseable {
     public static final String SERIALIZATION_FORMAT = "application/json";
+
+    private static final Reporter REPORTER = Reporter.forClass(IpcServer.class);
 
     @NonNull
     private final Path socketPath;
@@ -211,8 +217,22 @@ public class IpcServer implements AutoCloseable {
                     try {
                         payload = serializer.fromString(payloadJson, targetClass);
                     } catch (SerializerException e) {
+                        // REPORTER.debug("Failed to deserialize: ");
+                        // ReportWriter writer = REPORTER.getWriter(Level.DEBUG);
+                        // writer.write(2, payloadJson);
+
                         // System.err.println(StringUtils.debugString(payloadJson));
-                        throw new ExecutionException(e, ExecutionMessage.DESERIALIZATION_FAILED, e.getMessage());
+
+                        // throw new ExecutionException(e, ExecutionMessage.DESERIALIZATION_FAILED, e.getMessage());
+
+                        REPORTER.error(e, GenericMessage.ERROR, "Failed to deserialize payload: " + e.getMessage());
+                        ReportWriter writer = REPORTER.getWriter(Level.ERROR);
+                        writer.write(2, payloadJson);
+
+                        // This will close the connection and the client will
+                        // output future diagnostics to System.err.
+                        // TODO: Should this be optional?
+                        return;
                     }
 
                     if (diagnosticForwarding && payload instanceof Diagnostic diagnostic) {
@@ -226,7 +246,7 @@ public class IpcServer implements AutoCloseable {
                         .computeIfAbsent(className, k -> new CopyOnWriteArrayList<>())
                         .add(payload);
                 } catch (ClassNotFoundException e) {
-                    throw new ExecutionException(e, LangMessage.NO_CLASS_DEF_FOUND_ERROR, className);
+                    throw new ExecutionException(e, GenericMessage.NO_CLASS_DEF_FOUND_ERROR, className);
                 } finally {}
             }
         } catch (IOException e) {

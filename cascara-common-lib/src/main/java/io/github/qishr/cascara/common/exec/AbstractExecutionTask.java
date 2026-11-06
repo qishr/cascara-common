@@ -48,11 +48,13 @@ import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public abstract class AbstractExecutionTask<I, O> {
 
     protected abstract O run(I input) throws Exception;
 
+    @SuppressWarnings("unchecked")
     public static void main(String[] args) {
         String command = System.getProperty("sun.java.command");
 
@@ -64,20 +66,23 @@ public abstract class AbstractExecutionTask<I, O> {
             ? mainToken.substring(mainToken.indexOf('/') + 1)
             : mainToken;
 
+        Class<AbstractExecutionTask<Object, Object>> targetClass;
+        AbstractExecutionTask<Object, Object> task;
         try {
             // Find the concrete subclass that was passed to the 'java' command
-            Class<?> targetClass = Class.forName(targetClassName);
-
+            // TODO: ReflectionUtils.getClass()
+            targetClass = (Class<AbstractExecutionTask<Object, Object>>) Class.forName(targetClassName);
             // Instantiate the subclass
-            @SuppressWarnings("unchecked")
-            AbstractExecutionTask<Object, Object> task =
-                (AbstractExecutionTask<Object, Object>) targetClass.getDeclaredConstructor().newInstance();
+            // @SuppressWarnings("unchecked")
+            // task = (AbstractExecutionTask<Object, Object>) targetClass.getDeclaredConstructor().newInstance();
+            task = ReflectionUtils.createInstance(targetClass);
+        } catch (InstantiationException | IllegalArgumentException | SecurityException | ClassNotFoundException e) {
+            throw new ExecutionException(e, DiagnosticMessage.forException(e), targetClassName);
+        }
+
 
             // Execute the lifecycle (read stdin -> run task -> write to IPC/stdout)
             task.executeLifecycle(targetClass);
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
-            throw new ExecutionException(e, DiagnosticMessage.forException(e), targetClassName);
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -109,7 +114,12 @@ public abstract class AbstractExecutionTask<I, O> {
 
     @SuppressWarnings("unchecked")
     public void run(Class<?> targetClass, Class<?> inputClass) {
+
+        // TODO: Make this configurable via -D
+        // same for spl boot errors to system.err
+
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
         GlobalReporter.globalInstance().setStackTraceEnabled(true);
 
         StringBuilder sb = new StringBuilder();

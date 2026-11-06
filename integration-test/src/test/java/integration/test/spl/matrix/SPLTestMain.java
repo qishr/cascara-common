@@ -32,10 +32,18 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package integration.test.spl;
+package integration.test.spl.matrix;
 
-import io.github.qishr.cascara.common.service.ServiceProvider;
+import io.github.qishr.cascara.common.service.SPL;
 
-public interface SPLTestInterface extends ServiceProvider {
-
+public class SPLTestMain {
+    public static void main(String[] args) {
+        try {
+            SPL.load(SPLTestInterface.class);
+        } catch (Throwable t) {
+            System.err.println("SPL_INIT_FAILED: " + t.getMessage());
+            t.printStackTrace(System.err);
+            System.exit(1);
+        }
+    }
 }

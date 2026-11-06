@@ -11,7 +11,7 @@ import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 
-public class SignedJarLoadTest extends SplTestBase {
+public class SignedJarLoadTests extends SplTestBase {
     @Test
     void testLoadSignedJar() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(getClass())

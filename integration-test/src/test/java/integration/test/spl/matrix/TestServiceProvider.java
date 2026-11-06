@@ -32,18 +32,23 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package integration.test.spl;
+package integration.test.spl.matrix;
 
-import io.github.qishr.cascara.common.service.SPL;
+import io.github.qishr.cascara.common.annotation.SingletonInitializer;
 
-public class SPLTestMain {
-    public static void main(String[] args) {
-        try {
-            SPL.load(SPLTestInterface.class);
-        } catch (Throwable t) {
-            System.err.println("SPL_INIT_FAILED: " + t.getMessage());
-            t.printStackTrace(System.err);
-            System.exit(1);
-        }
+public class TestServiceProvider implements SPLTestInterface {
+
+    private boolean initialized = false;
+
+    // Non-public constructor for neo-singleton reflection testing
+    TestServiceProvider() {}
+
+    @SingletonInitializer
+    private void init() {
+        this.initialized = true;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
     }
 }

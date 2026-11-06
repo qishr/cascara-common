@@ -1,4 +1,4 @@
-package integration.test.jar;
+package integration.test.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -9,6 +9,7 @@ import java.util.jar.JarEntry;
 
 import org.junit.jupiter.api.Test;
 
+import integration.test.jar.JarTestBase;
 import io.github.qishr.cascara.common.security.SignatureStatus;
 import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;

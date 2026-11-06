@@ -268,35 +268,14 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     /// {@inheritDoc}
     @Override
+    public void warn(Exception e) {
+        report(Level.WARN, e);
+    }
+
+    /// {@inheritDoc}
+    @Override
     public void error(Exception e) {
-        if (e instanceof LocalizableException localizable) {
-            if (e instanceof LocatableException locatable) {
-                report(DiagnosticBuilder.build(
-                    locatable.getUri(),
-                    locatable.getLine(),
-                    locatable.getColumn(),
-                    Diagnostic.UNKNOWN_COORD,
-                    Diagnostic.UNKNOWN_COORD,
-                    source, Level.ERROR,
-                    getStackTrace(),
-                    localizable.getCause(),
-                    localizable.getDiagnosticMessage(), localizable.getDetails()));
-            } else {
-                report(DiagnosticBuilder.build(
-                    source, Level.ERROR,
-                    getStackTrace(),
-                    localizable.getCause(),
-                    localizable.getDiagnosticMessage(), localizable.getDetails())
-                );
-            }
-        } else {
-            report(DiagnosticBuilder.build(
-                source, Level.ERROR,
-                getStackTrace(),
-                e.getCause(),
-                GenericMessage.EXCEPTION, e.getMessage())
-            );
-        }
+        report(Level.ERROR, e);
     }
 
     //
@@ -502,6 +481,37 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
     // Internal logging and reporting methods
     //
+
+    private void report(Level level, Exception e) {
+        if (e instanceof LocalizableException localizable) {
+            if (e instanceof LocatableException locatable) {
+                report(DiagnosticBuilder.build(
+                    locatable.getUri(),
+                    locatable.getLine(),
+                    locatable.getColumn(),
+                    Diagnostic.UNKNOWN_COORD,
+                    Diagnostic.UNKNOWN_COORD,
+                    source, level,
+                    getStackTrace(),
+                    localizable.getCause(),
+                    localizable.getDiagnosticMessage(), localizable.getDetails()));
+            } else {
+                report(DiagnosticBuilder.build(
+                    source, level,
+                    getStackTrace(),
+                    localizable.getCause(),
+                    localizable.getDiagnosticMessage(), localizable.getDetails())
+                );
+            }
+        } else {
+            report(DiagnosticBuilder.build(
+                source, level,
+                getStackTrace(),
+                e.getCause(),
+                GenericMessage.EXCEPTION, e.getMessage())
+            );
+        }
+    }
 
     /// Central reporting method. All other rporting methods call this.
     protected void report(Diagnostic diagnostic) {

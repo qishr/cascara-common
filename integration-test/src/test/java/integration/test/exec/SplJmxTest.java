@@ -35,7 +35,7 @@ import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.logging.log4j.Log4jLogger;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import integration.test.fixtures.beans.SPLStatusMBean;
-import integration.test.fixtures.payload.ReporterTestInput;
+import integration.test.fixtures.payload.StringTaskInput;
 import integration.test.fixtures.task.JmxTestTask;
 
 import org.junit.jupiter.api.parallel.Isolated;
@@ -74,7 +74,7 @@ public class SplJmxTest extends JmxTestBase {
     @Test
     void test_1() throws Exception {
         REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
+        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString(input);
 
@@ -186,7 +186,7 @@ public class SplJmxTest extends JmxTestBase {
 
 
         REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
+        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString(input);
 
