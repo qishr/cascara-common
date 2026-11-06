@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
-import integration.test.fixtures.payload.StringTaskInput;
 import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.task.GlobalReporterTestTask;
 
@@ -25,7 +24,6 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
     @Test
     void test_IsolatedExecutor_1() throws Exception {
-        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
 
         exec.setOptions(new JvmOptions()
@@ -35,7 +33,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 
-        Response<ReporterTestOutput> result = exec.run(input);
+        Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
 
         debug(result);
 
@@ -46,12 +44,10 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
     @Test
     void test_IsolatedExecutor_2() throws Exception {
-        StringTaskInput input = new StringTaskInput("hello-isolated-world");
-
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
 
         Response<ReporterTestOutput> result = exec.run(
-            input,
+            "hello-isolated-world",
             new JvmOptions()
                 .setModuleName(GlobalReporterTestTask.class.getModule().getName())
                 .setModulePath(getModulePath())
@@ -67,8 +63,6 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
     @Test
     void test_isolatedExecution_classpathMode() throws Exception {
-        StringTaskInput input = new StringTaskInput("classpath-mode-test");
-
         JvmOptions options = new JvmOptions()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModuleName(null) // Forces pure -cp launch
@@ -78,7 +72,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
         Response<ReporterTestOutput> result = IsolatedExecutor.run(
             GlobalReporterTestTask.class,
-            input,
+            "classpath-mode-test",
             ReporterTestOutput.class,
             options);
 
@@ -89,8 +83,6 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
     @Test
     void test_isolatedExecution_jpmsModuleMode() throws Exception {
-        StringTaskInput input = new StringTaskInput("jpms-module-mode-test");
-
         JvmOptions options = new JvmOptions()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName()) // Forces --module-path launch
             .setModulePath(getModulePath())
@@ -99,7 +91,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
         Response<ReporterTestOutput> result = IsolatedExecutor.run(
             GlobalReporterTestTask.class,
-            input,
+            "jpms-module-mode-test",
             ReporterTestOutput.class,
             options);
 

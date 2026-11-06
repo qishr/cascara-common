@@ -165,7 +165,6 @@ public class SPLRoot extends SPLBranch {
     //
 
     private void autoDiscover() {
-        REPORTER.debug("Discovering providers");
         discoverClasses();
 
         try {
@@ -187,6 +186,7 @@ public class SPLRoot extends SPLBranch {
     }
 
     private void discoverClasses() {
+        REPORTER.debug("Discovering provider candidates");
         Set<String> excludePackages = new HashSet<>();
         excludePackages.add("net.bytebuddy");
         excludePackages.add("org.mockito");
@@ -216,6 +216,8 @@ public class SPLRoot extends SPLBranch {
         REPORTER.debug("Discovered %d classes in %d ms", classCount, (int)timeElapsed);
 
         boolean verify = isVerifyEnabled();
+
+        REPORTER.debug("Discovering providers");
 
         for (DiscoveredModule dm : discovered) {
             Path jarPath = dm.getJarPath();

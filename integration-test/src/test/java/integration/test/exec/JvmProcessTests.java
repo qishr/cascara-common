@@ -23,7 +23,6 @@ import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
-import integration.test.fixtures.payload.StringTaskInput;
 import integration.test.fixtures.task.GlobalReporterTestTask;
 
 public class JvmProcessTests extends ExecTestBase {
@@ -37,10 +36,8 @@ public class JvmProcessTests extends ExecTestBase {
 
     @Test
     void test_JvmProcess_withoutIPC() throws Exception {
-        StringTaskInput input = new StringTaskInput("hello-isolated-world");
-
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
-        String json = serializer.toString(input);
+        String json = serializer.toString("hello-isolated-world");
 
         JvmOptions options = new JvmOptions()
             .setTimeout(Duration.ofHours(24))
@@ -62,9 +59,8 @@ public class JvmProcessTests extends ExecTestBase {
 
     @Test
     void test_JvmProcess_withIPC() throws IOException {
-        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
-        String json = serializer.toString(input);
+        String json = serializer.toString("hello-isolated-world");
 
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
@@ -104,9 +100,8 @@ public class JvmProcessTests extends ExecTestBase {
 
     @Test
     void test_IPC_forwardsDiagnostics() throws IOException {
-        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
-        String json = serializer.toString(input);
+        String json = serializer.toString("hello-isolated-world");
 
         // IpcServer ipcServer = IpcServer.start(true, false);
         IpcServer ipcServer = new IpcServer()

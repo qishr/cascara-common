@@ -18,11 +18,11 @@ import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import integration.test.exec.ExecTestBase;
-import integration.test.fixtures.payload.StringTaskInput;
 import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.payload.SplRegisterClassTestOutput;
 import integration.test.fixtures.task.SplPolicyTestTask;
 import integration.test.fixtures.task.SplRegisterClassTestTask;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
@@ -65,12 +65,10 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .sign(s -> s.withIdentity(expiredIdentity))
             .packageJar(jarPath);
 
-        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
-        // Enable forwarding of DEBUG reports from isolated JVM
+        // Enable forwarding of reports from isolated JVM
         exec.setDiagnosticForwardingEnabled(true);
-        GlobalReporter.globalInstance().getFormatOptions().setIncluedPid(true);
 
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
@@ -87,7 +85,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 
-        Response<ReporterTestOutput> result = exec.run(input);
+        Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
 
         debug(result);
 
@@ -110,12 +108,10 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .sign(s -> s.withIdentity(expiredIdentity))
             .packageJar(jarPath);
 
-        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
-        // Enable forwarding of TRACE reports from isolated JVM
+        // Enable forwarding of reports from isolated JVM
         exec.setDiagnosticForwardingEnabled(true);
-        GlobalReporter.globalInstance().getFormatOptions().setIncluedPid(true);
 
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
@@ -132,11 +128,20 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 
-        Response<ReporterTestOutput> result = exec.run(input);
+        Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
 
         debug(result);
 
+        // for (Diagnostic d : result.getDiagnostics()) {
+        //     String s = d.getFormattedMessage();
+        //     if (s.contains("CERTIFICATE_EXPIRED")) {
+        //         System.out.println("******** " + s);
+        //     }
+        // }
+
         assertFalse(result.getSystemErr().contains("CERTIFICATE_EXPIRED"));
+
+        // TODO: This is still aproblem...
         assertNotReported.warnContains("CERTIFICATE_EXPIRED");
     }
 
@@ -162,12 +167,10 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             }
         }
 
-        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
-        // Enable forwarding of TRACE reports from isolated JVM
+        // Enable forwarding of reports from isolated JVM
         exec.setDiagnosticForwardingEnabled(true);
-        GlobalReporter.globalInstance().getFormatOptions().setIncluedPid(true);
 
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
@@ -185,7 +188,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setDebug(PROCESS_DEBUG_ENABLED)
             .setEnv("CASC_HOME", getPhysicalHomePath()));
 
-        Response<ReporterTestOutput> result = exec.run(input);
+        Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
 
         debug(result);
 
@@ -198,6 +201,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     /// CASCARA_SPL_POLICY_REQUIRE_CLASS, that should alsso fail.
     @Test
     void test_reject_registerClass_unsignedJar(@TempDir Path tempDir) throws Exception {
+        GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
+
         Path jarPath = tempDir.resolve("provider-a.jar");
 
         SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
@@ -210,12 +215,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
         IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterClassTestTask.class, SplRegisterClassTestOutput.class);
 
-        // exec.setIpcDebugEnabled(true);
-        GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
-
-        // Enable forwarding of DEBUG reports from isolated JVM
+        // Enable forwarding of reports from isolated JVM
         exec.setDiagnosticForwardingEnabled(true);
-        GlobalReporter.globalInstance().getFormatOptions().setIncluedPid(true);
 
         exec.setOptions(new JvmOptions()
             .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
@@ -230,8 +231,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 
-        StringTaskInput input = new StringTaskInput("com.example.providera.ProviderA");
-        Response<SplRegisterClassTestOutput> result = exec.run(input);
+        Response<SplRegisterClassTestOutput> result = exec.run("com.example.providera.ProviderA");
 
         debug(result);
 

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.ReportWriter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
@@ -25,6 +26,7 @@ public class ExecTestBase extends VfsTestBase {
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
+        GlobalReporter.globalInstance().getFormatOptions().setIncluedPid(true);
     }
 
     @AfterEach

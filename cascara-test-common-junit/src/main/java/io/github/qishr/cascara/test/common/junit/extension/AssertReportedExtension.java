@@ -50,7 +50,7 @@ public class AssertReportedExtension extends AbstractDiagnosticExtension {
             .filter(e -> e.getLevel().equals(level))
             .filter(e -> e.getFormattedMessage().equals(message))
             .findAny()
-            .orElseThrow(() -> new AssertionFailedError("Diagnostic report message '" + message + "' with level '" + level +
+            .orElseThrow(() -> new AssertionFailedError("Diagnostic message '" + message + "' with level '" + level +
                                                         "' was expected, but not reported."));
     }
 
@@ -59,7 +59,7 @@ public class AssertReportedExtension extends AbstractDiagnosticExtension {
             .filter(e -> e.getLevel().equals(level))
             .filter(e -> e.getFormattedMessage().contains(substring))
             .findAny()
-            .orElseThrow(() -> new AssertionFailedError("Diagnostic report message containing '" + substring + "' with level '" + level +
+            .orElseThrow(() -> new AssertionFailedError("Diagnostic message containing '" + substring + "' with level '" + level +
                                                         "' was expected, but not reported."));
     }
 }

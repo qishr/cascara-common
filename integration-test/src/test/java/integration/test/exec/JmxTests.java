@@ -27,7 +27,6 @@ import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.logging.log4j.Log4jLogger;
-import integration.test.fixtures.payload.StringTaskInput;
 import integration.test.fixtures.task.JmxTestTask;
 import org.junit.jupiter.api.parallel.Isolated;
 
@@ -51,9 +50,8 @@ public class JmxTests extends JmxTestBase {
         REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
         syncVfs();
 
-        StringTaskInput input = new StringTaskInput("hello-isolated-world");
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
-        String json = serializer.toString(input);
+        String json = serializer.toString("hello-isolated-world");
 
         boolean ipcDebug = true;
 

@@ -15,7 +15,6 @@ import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
-import integration.test.fixtures.payload.StringTaskInput;
 import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.task.GlobalReporterTestTask;
 
@@ -33,8 +32,6 @@ public class GlobalReporterTests extends ExecTestBase {
 
     @Test
     void test_debugLevel() throws Exception {
-        StringTaskInput input = new StringTaskInput("debug-message");
-
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
         String classKey = "CASC_REPORT_LEVEL_" + GlobalReporterTestTask.class.getName().replace('.', '_').toUpperCase();
@@ -49,7 +46,7 @@ public class GlobalReporterTests extends ExecTestBase {
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
         exec.setDiagnosticForwardingEnabled(true);
 
-        Response<ReporterTestOutput> result = exec.run(input, options);
+        Response<ReporterTestOutput> result = exec.run("debug-message", options);
 
         GlobalReporter.globalInstance().setSystemOutputEnabled(true);
         debug(result);
