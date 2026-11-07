@@ -52,7 +52,7 @@ public class LocalizableMessageDescriptor extends AbstractScalarDescriptor<Local
         if (text == null || text.isBlank()) {
             return null;
         }
-        int dot = text.lastIndexOf(".");
+        int dot = text.lastIndexOf("#");
         if (dot == -1) {
             return null;
         }
@@ -78,7 +78,7 @@ public class LocalizableMessageDescriptor extends AbstractScalarDescriptor<Local
     @NonNull
     @Override
     public Object toPrimitive(LocalizableMessage jvmInstance) {
-        return jvmInstance.getClass().getName() + "." + jvmInstance.name();
+        return jvmInstance.getClass().getName() + "#" + jvmInstance.name();
     }
 
     @Override

@@ -52,7 +52,7 @@ public class DiagnosticMessageDescriptor extends AbstractScalarDescriptor<Diagno
         if (text == null || text.isBlank()) {
             return null;
         }
-        int dot = text.lastIndexOf(".");
+        int dot = text.lastIndexOf("#");
         if (dot == -1) {
             return null;
         }
@@ -78,7 +78,7 @@ public class DiagnosticMessageDescriptor extends AbstractScalarDescriptor<Diagno
     @NonNull
     @Override
     public Object toPrimitive(DiagnosticMessage jvmInstance) {
-        return jvmInstance.getClass().getName() + "." + jvmInstance.name();
+        return jvmInstance.getClass().getName() + "#" + jvmInstance.name();
     }
 
     @Override
