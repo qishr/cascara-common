@@ -614,7 +614,7 @@ public abstract class AbstractSerializer<
             AstNode valueNode = mapNode.get(keyName);
 
             if (valueNode != null) {
-                // We pass field.getType() so it knows this is a List, a String, etc.
+                // We pass field.getGenericType() so it knows this is a List, a String, etc.
                 Object convertedValue = deserialize(valueNode, field.getGenericType(), field.getName(), field.getAnnotations());
                 if (convertedValue != null) {
                     try {

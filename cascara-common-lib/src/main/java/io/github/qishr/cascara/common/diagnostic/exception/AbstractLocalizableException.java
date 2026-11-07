@@ -67,7 +67,7 @@ public class AbstractLocalizableException extends Exception implements Localizab
 
     /// Returns a diagnostic error code for the error message.
     @Override
-	public DiagnosticMessage getDiagnosticMessage() {
+	public DiagnosticMessage getLocalizableMessage() {
 		return diagnosticMessage;
 	}
 

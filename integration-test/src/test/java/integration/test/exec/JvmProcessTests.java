@@ -130,6 +130,6 @@ public class JvmProcessTests extends ExecTestBase {
 
         // Verify that SPL's "Discovering providers" debug message appears
         // in the parent JVM's global diagnostics.
-        assertReported.debug("Discovering providers");
+        assertReported.debug("Discovering provider candidates");
     }
 }

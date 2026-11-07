@@ -88,7 +88,7 @@ public class ReflectionUtils {
         try {
             return createInstanceUnsafe(targetClass);
         } catch (Throwable t) {
-            throw new LocalizableInstantiationException(t, targetClass);
+            throw new LocalizableInstantiationException(t);
         }
     }
 
@@ -105,7 +105,7 @@ public class ReflectionUtils {
             }
             return targetClass.getConstructor(paramTypes).newInstance(paramValues);
         } catch (Throwable t) {
-            throw new LocalizableInstantiationException(t, targetClass);
+            throw new LocalizableInstantiationException(t);
         }
     }
 

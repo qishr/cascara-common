@@ -57,7 +57,7 @@ public class LocalizableIOException extends IOException implements LocalizableEx
 
     /// Returns a diagnostic error code for the error message.
     @Override
-	public DiagnosticMessage getDiagnosticMessage() {
+	public DiagnosticMessage getLocalizableMessage() {
 		return diagnosticMessage;
 	}
 

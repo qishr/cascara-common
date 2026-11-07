@@ -10,6 +10,7 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
@@ -84,9 +85,12 @@ public class DiagnosticSerializerTests extends SerializerTestBase {
 
         String json = serializer.toString(original);
 
+        GlobalReporter.globalInstance().setLevel(getClass().getName(), Level.DEBUG);
+
         REPORTER.debug(json);
 
         Diagnostic diagnostic = serializer.fromString(json, Diagnostic.class);
+
         assertNotNull(diagnostic);
         assertEquals(Level.WARN, diagnostic.getLevel());
         assertEquals("testWarning", diagnostic.getFormattedMessage());

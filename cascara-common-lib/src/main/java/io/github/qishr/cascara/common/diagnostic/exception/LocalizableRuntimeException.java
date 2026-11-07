@@ -59,7 +59,7 @@ public class LocalizableRuntimeException extends RuntimeException implements Loc
         this.details = details != null ? details : new Object[0];
     }
 
-	public DiagnosticMessage getDiagnosticMessage() {
+	public DiagnosticMessage getLocalizableMessage() {
 		return diagnosticMessage;
 	}
 

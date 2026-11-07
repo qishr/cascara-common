@@ -101,7 +101,7 @@ module cascara.common {
     opens io.github.qishr.cascara.common.util;           // For tests and SchmeaGenerator
 
     provides io.github.qishr.cascara.common.service.ServiceProvider
-        with io.github.qishr.cascara.common.type.cascara.DiagnosticMessageDescriptor,
+        with io.github.qishr.cascara.common.type.cascara.LocalizableMessageDescriptor,
              io.github.qishr.cascara.common.type.lang.ByteArrayDescriptor,
              io.github.qishr.cascara.common.type.lang.ByteReferenceArrayDescriptor,
              io.github.qishr.cascara.common.type.lang.CharacterArrayDescriptor,

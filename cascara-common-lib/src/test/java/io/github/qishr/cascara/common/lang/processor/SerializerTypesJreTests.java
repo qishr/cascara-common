@@ -352,5 +352,6 @@ public class SerializerTypesJreTests extends SerializerTestBase {
         assertNotNull(r);
         assertEquals(types.p_currency, r.p_currency);
         assertEquals(types.p_properties, r.p_properties);
+        // TODO: The rest of the checks
     }
 }

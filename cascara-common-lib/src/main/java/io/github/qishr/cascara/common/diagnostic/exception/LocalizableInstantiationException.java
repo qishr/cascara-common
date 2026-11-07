@@ -1,17 +1,15 @@
 package io.github.qishr.cascara.common.diagnostic.exception;
 
 import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
 
 public class LocalizableInstantiationException extends InstantiationException implements LocalizableException {
     private final Throwable cause;
-    private final Class<?> targetClass;
     private final DetailedMessage detailedMessage;
 
-    public LocalizableInstantiationException(Throwable cause, Class<?> targetClass) {
+    public LocalizableInstantiationException(Throwable cause) {
         super(LocalizableException.formatMessage(DetailedMessage.forException(cause)));
         this.cause = cause;
-        this.targetClass = targetClass;
         this.detailedMessage = DetailedMessage.forException(cause);
     }
 
@@ -20,14 +18,9 @@ public class LocalizableInstantiationException extends InstantiationException im
         return cause;
     }
 
-    // TODO: Change this to return LocalizableMessage or DetailedMessage
     @Override
-    public DiagnosticMessage getDiagnosticMessage() {
-		// return diagnosticMessage;
-        if (detailedMessage.getMessage() instanceof DiagnosticMessage dm) {
-            return dm;
-        }
-        return null;
+    public LocalizableMessage getLocalizableMessage() {
+        return detailedMessage;
 	}
 
     @Override

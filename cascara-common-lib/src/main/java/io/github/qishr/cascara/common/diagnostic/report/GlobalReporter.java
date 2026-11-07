@@ -57,7 +57,7 @@ import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.service.SPL;
-import io.github.qishr.cascara.common.type.cascara.DiagnosticMessageDescriptor;
+import io.github.qishr.cascara.common.type.cascara.LocalizableMessageDescriptor;
 import io.github.qishr.cascara.common.type.lang.StackTraceElementSerializer;
 import io.github.qishr.cascara.common.type.time.InstantDescriptor;
 import io.github.qishr.cascara.common.type.time.ZonedDateTimeDescriptor;
@@ -146,7 +146,7 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 // descriptors and type serializers it needs for Diagnostic serialization.
                 serializer.registerTypeDescriptor(new InstantDescriptor());
                 serializer.registerTypeDescriptor(new ZonedDateTimeDescriptor());
-                serializer.registerTypeDescriptor(new DiagnosticMessageDescriptor());
+                serializer.registerTypeDescriptor(new LocalizableMessageDescriptor());
                 serializer.registerTypeDescriptor(new StackTraceElementSerializer());
 
                 if (globalInstance().serializer == null) {

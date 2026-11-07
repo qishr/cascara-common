@@ -173,7 +173,7 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
                 Throwable recreatedException = (Throwable) ReflectionUtils.createInstance(exceptionClass, params);
                 return recreatedException;
             } catch (Throwable t) {
-                throw new LocalizableInstantiationException(t, null);
+                throw new LocalizableInstantiationException(t);
             }
         }
     }

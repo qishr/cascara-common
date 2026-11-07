@@ -39,12 +39,13 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
+import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public interface LocalizableException {
 
-    /// Returns a diagnostic message for the error.
-	DiagnosticMessage getDiagnosticMessage();
+    /// Returns a localizable message for the error.
+	LocalizableMessage getLocalizableMessage();
 
     /// Returns the details, if any, to be used in formatting the error message.
 	Object[] getDetails();

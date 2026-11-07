@@ -504,13 +504,13 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
                     source, level,
                     getStackTrace(),
                     localizable.getCause(),
-                    localizable.getDiagnosticMessage(), localizable.getDetails()));
+                    localizable.getLocalizableMessage(), localizable.getDetails()));
             } else {
                 report(DiagnosticBuilder.build(
                     source, level,
                     getStackTrace(),
                     localizable.getCause(),
-                    localizable.getDiagnosticMessage(), localizable.getDetails())
+                    localizable.getLocalizableMessage(), localizable.getDetails())
                 );
             }
         } else {

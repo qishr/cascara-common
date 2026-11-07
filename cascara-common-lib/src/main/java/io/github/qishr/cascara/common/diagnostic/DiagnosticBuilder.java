@@ -4,7 +4,6 @@ import java.net.URI;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 @Experimental
@@ -22,7 +21,7 @@ public class DiagnosticBuilder {
     }
 
     /// With diagnostic message, and cause
-    public static Diagnostic build(String source, Level level, StackTraceElement[] stackTrace, Throwable cause, DiagnosticMessage message, Object... details) {
+    public static Diagnostic build(String source, Level level, StackTraceElement[] stackTrace, Throwable cause, LocalizableMessage message, Object... details) {
         return new Diagnostic(
             null,
             Diagnostic.UNKNOWN_COORD,
@@ -34,12 +33,12 @@ public class DiagnosticBuilder {
     }
 
     /// With diagnostic message, location, and cause
-    public static Diagnostic build(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, StackTraceElement[] stackTrace, Throwable cause, DiagnosticMessage message, Object... details) {
+    public static Diagnostic build(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, StackTraceElement[] stackTrace, Throwable cause, LocalizableMessage message, Object... details) {
         return new Diagnostic(uri, line, column, startOffset, endOffset, source, level, stackTrace, cause, message, null, details);
     }
 
     /// With diagnostic message, token, and cause
-    public static Diagnostic build(Token token, String source, Level level, StackTraceElement[] stackTrace, Throwable cause, DiagnosticMessage message, Object... details) {
+    public static Diagnostic build(Token token, String source, Level level, StackTraceElement[] stackTrace, Throwable cause, LocalizableMessage message, Object... details) {
         if (token == null) {
             throw new IllegalArgumentException("Token must not be null");
         }

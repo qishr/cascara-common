@@ -20,7 +20,7 @@ public class LocalizableSecurityException extends SecurityException implements L
     }
 
     @Override
-    public DiagnosticMessage getDiagnosticMessage() {
+    public DiagnosticMessage getLocalizableMessage() {
 		return diagnosticMessage;
 	}
 

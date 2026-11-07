@@ -194,10 +194,14 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         assertTrue(result.getSystemErr().contains("EXPIRED"));
     }
 
+
+    // TODO: For this test to work, cascara.lang.json needs to be signed
+
     /// Unsigned jar on module path loaded by jvm at boot time
     /// will be rejected by SPL, then try to register it via
     /// SPL.registerClass() in SplRegisterClassTestTask. with
     /// CASCARA_SPL_POLICY_REQUIRE_CLASS, that should alsso fail.
+    @Disabled
     @Test
     void test_reject_registerClass_unsignedJar(@TempDir Path tempDir) throws Throwable {
         GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
@@ -239,5 +243,43 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // JVM rejects unsigned JARs on the module path, SPL will throw
         // an exception and the child JVM will terminate.
         assertTrue(result.getSystemErr().contains("NOT_SIGNED"));
+    }
+
+    @Test
+    void test_cascaraLangJson_notSigned(@TempDir Path tempDir) throws Throwable {
+        GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
+
+        Path jarPath = tempDir.resolve("provider-a.jar");
+
+        SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
+            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .packageJar(jarPath);
+
+        // Add the JAR to the module path
+        String modulePath = getModulePath() + File.pathSeparator + jarPath;
+
+        IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterClassTestTask.class, SplRegisterClassTestOutput.class);
+
+        // Enable forwarding of reports from isolated JVM
+        exec.setDiagnosticForwarding(true);
+
+        exec.setOptions(new JvmOptions()
+            .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
+            .setModulePath(modulePath)
+            .setEnv(CASCARA_HOME, getPhysicalHomePath())
+            .setSystemProperty(SPL.CASCARA_SPL_VERIFY, "true")
+            .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
+            .setSystemProperty(SPL.CASCARA_SPL_POLICY_REQUIRE_SIGNED, "true")
+            .setSystemProperty(SPL.CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASS, "true")
+            .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
+            .setSystemProperty("casc.report.level." + SplRegisterClassTestTask.class.getName(), "DEBUG")
+            .setTimeout(Duration.ofSeconds(20))
+            .setDebug(PROCESS_DEBUG_ENABLED));
+
+        Response<SplRegisterClassTestOutput> result = exec.run("com.example.providera.ProviderA");
+
+        debug(result);
+        assertTrue(result.getSystemErr().contains("Serializer not available"));
     }
 }

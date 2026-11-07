@@ -39,7 +39,6 @@ import java.net.URI;
 import java.text.MessageFormat;
 import java.time.Instant;
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 /// Represents a discrete event, log entry, or syntax/semantic problem identified
@@ -62,7 +61,7 @@ public class Diagnostic {
     private final StackTraceElement[] stackTrace;
     private final Throwable cause;
 
-    private final DiagnosticMessage message;
+    private final LocalizableMessage message;
     private final Object[] details;
 
     private final String formattedMessage;
@@ -86,7 +85,7 @@ public class Diagnostic {
     /// @param code An optional stable error or classification code, primarily useful for localization and documentation lookups.
     /// @param message The descriptive message explaining this diagnostic event.
     /// @param details Arguments referenced by the format specifiers in the format string.
-    public Diagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, StackTraceElement[] stackTrace, Throwable cause, DiagnosticMessage message, String format, Object... details) {
+    public Diagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, StackTraceElement[] stackTrace, Throwable cause, LocalizableMessage message, String format, Object... details) {
         // TODO: Level shoul come after cause
         this.uri = uri;
         this.line = line;
@@ -152,7 +151,7 @@ public class Diagnostic {
     /// @param code An optional stable error or classification code, primarily useful for localization and documentation lookups.
     /// @param message The descriptive message explaining this diagnostic event.
     /// @param details Arguments referenced by the format specifiers in the format string.
-    public Diagnostic(URI uri, Token token, String source, Level level, StackTraceElement[] stackTrace, Throwable cause, DiagnosticMessage message, String format, Object... details) {
+    public Diagnostic(URI uri, Token token, String source, Level level, StackTraceElement[] stackTrace, Throwable cause, LocalizableMessage message, String format, Object... details) {
         this(
             uri,
             token.getStartLine(),
@@ -194,7 +193,7 @@ public class Diagnostic {
     public StackTraceElement[] getStackTrace() { return stackTrace; }
 
     /// Returns the stable classification code, suitable for localization and system filtering.
-    public DiagnosticMessage getMessage() { return message; }
+    public LocalizableMessage getMessage() { return message; }
 
     /// Returns the formatted descriptive text message of this diagnostic.
     public String getFormattedMessage() { return formattedMessage; }
