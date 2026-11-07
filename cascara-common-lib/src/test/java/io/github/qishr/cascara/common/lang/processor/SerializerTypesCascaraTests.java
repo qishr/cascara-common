@@ -20,10 +20,11 @@ public class SerializerTypesCascaraTests extends SerializerTestBase {
 
     @Test
     void test_serialization_GenericMessage() {
+        Serializer<?> serializer = newSerializer();
         GenericMessage original = GenericMessage.UNIMPLEMENTED_METHOD;
         AstNode ast = serializer.toAst(original);
         assertInstanceOf(ScalarAstNode.class, ast);
-        String expected = GenericMessage.class.getName() + "." + "UNIMPLEMENTED_METHOD";
+        String expected = GenericMessage.class.getName() + "#" + "UNIMPLEMENTED_METHOD";
         assertEquals(expected, ((ScalarAstNode<?>)ast).asString());
     }
 
@@ -31,6 +32,7 @@ public class SerializerTypesCascaraTests extends SerializerTestBase {
     // serialization, but DiagnosticMessage uses a TypeDescriptor during deserialization.
     @Test
     void test_DiagnosticMessage() {
+        Serializer<?> serializer = newSerializer();
         DiagnosticMessage original = LangMessage.AMBIGUOUS_POLYMORPHIC;
         AstNode ast = serializer.toAst(original);
         DiagnosticMessage deserialized = serializer.fromAst(ast, DiagnosticMessage.class);
@@ -49,6 +51,7 @@ public class SerializerTypesCascaraTests extends SerializerTestBase {
     // The mere existence of a TypeSerializer<Object> is likely to break everything downstream.
     @Test
     void test_GenericMessage() {
+        Serializer<?> serializer = newSerializer();
         GenericMessage original = GenericMessage.UNIMPLEMENTED_METHOD;
         AstNode ast = serializer.toAst(original);
         GenericMessage deserialized = serializer.fromAst(ast, GenericMessage.class);
@@ -61,7 +64,7 @@ public class SerializerTypesCascaraTests extends SerializerTestBase {
     // for a matching supertype DiagnosticMessage.
     @Test
     void test_Diagnostic_withStackTrace() {
-
+        Serializer<?> serializer = newSerializer();
         StackTraceElement[] stackTrace = new StackTraceElement[]{
             new StackTraceElement("className1", "methodName1", "fileName1", 1)
         };

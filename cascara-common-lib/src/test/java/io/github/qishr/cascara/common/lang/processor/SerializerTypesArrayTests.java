@@ -21,6 +21,7 @@ public class SerializerTypesArrayTests extends SerializerTestBase {
 
     @Test
     void test_primitiveClassMembers() {
+        Serializer<?> serializer = newSerializer();
         JavaPrimitiveTest types = new JavaPrimitiveTest();
         types.p_long = new long[]{42L};
         types.p_int = new int[]{53};
@@ -54,6 +55,7 @@ public class SerializerTypesArrayTests extends SerializerTestBase {
 
     @Test
     void test_referenceClassMembers() {
+        Serializer<?> serializer = newSerializer();
         JavaReferenceTest types = new JavaReferenceTest();
         types.p_long = new Long[]{42L};
         types.p_integer = new Integer[]{53};

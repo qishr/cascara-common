@@ -57,6 +57,7 @@ public class SerializerEnumTests extends  SerializerTestBase {
 
     @Test
     void test_enum() {
+        Serializer<?> serializer = newSerializer();
         EnumTest original = new EnumTest();
         original.p_enum = BerryEnum.COFFEE;
 
@@ -73,6 +74,7 @@ public class SerializerEnumTests extends  SerializerTestBase {
 
     @Test
     void test_enumGeneric() {
+        Serializer<?> serializer = newSerializer();
         GenericEnumTest original = new GenericEnumTest();
         original.p_enum = BerryEnum.GRAPE;
 
@@ -85,6 +87,7 @@ public class SerializerEnumTests extends  SerializerTestBase {
 
     @Test
     void test_enumInterfaceType() {
+        Serializer<?> serializer = newSerializer();
         InterfaceTypeTest original = new InterfaceTypeTest();
         original.p_set = Set.of(BerryEnum.COFFEE);
 
@@ -97,6 +100,7 @@ public class SerializerEnumTests extends  SerializerTestBase {
 
     @Test
     void test_enumType() {
+        Serializer<?> serializer = newSerializer();
         EnumTypeTest original = new EnumTypeTest();
         original.p_enumSet = EnumSet.of(BerryEnum.TOMATO, BerryEnum.WATERMELON);
         original.p_enumMap = new EnumMap<>(BerryEnum.class);
@@ -114,6 +118,7 @@ public class SerializerEnumTests extends  SerializerTestBase {
 
     @Test
     void test_specificToWildcard() {
+        Serializer<?> serializer = newSerializer();
         EnumTypeTest original = new EnumTypeTest();
         original.p_enumSet = EnumSet.of(BerryEnum.COFFEE, BerryEnum.PUMPKIN);
         original.p_enumMap = new EnumMap<>(BerryEnum.class);
@@ -127,6 +132,7 @@ public class SerializerEnumTests extends  SerializerTestBase {
 
     @Test
     void test_wildcardToWildcard() {
+        Serializer<?> serializer = newSerializer();
         WildcardTypeTest original = new WildcardTypeTest();
         original.p_enumSet = EnumSet.of(BerryEnum.BANANA, BerryEnum.CUCUMBER);
         EnumMap<BerryEnum,String> spicedLatte = new EnumMap<>(BerryEnum.class);

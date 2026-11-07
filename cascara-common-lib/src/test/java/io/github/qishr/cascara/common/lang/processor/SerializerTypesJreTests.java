@@ -65,6 +65,7 @@ import io.github.qishr.cascara.common.type.lang.ThrowableSerializer.SerializedTh
 public class SerializerTypesJreTests extends SerializerTestBase {
     @Test
     void test_serializeStackTraceElement() {
+        Serializer<?> serializer = newSerializer();
         StackTraceElement original = new StackTraceElement("className1", "methodName1", "fileName1", 1);
 
         AstNode ast = serializer.toAst(original);
@@ -76,6 +77,7 @@ public class SerializerTypesJreTests extends SerializerTestBase {
 
     @Test
     void test_throwable() {
+        Serializer<?> serializer = newSerializer();
         Throwable t = new IllegalStateException("test-message");
         AstNode root = serializer.toAst(t);
         assertInstanceOf(MapAstNode.class, root);
@@ -104,6 +106,7 @@ public class SerializerTypesJreTests extends SerializerTestBase {
 
     @Test
     void test_lang_typeDescriptors() {
+        Serializer<?> serializer = newSerializer();
         JavaLangTypeDescriptorTest types = new JavaLangTypeDescriptorTest();
         types.p_character = 'a';
         types.p_characterSubset = Character.UnicodeBlock.BASIC_LATIN; // Subset implementation
@@ -151,6 +154,7 @@ public class SerializerTypesJreTests extends SerializerTestBase {
     @SuppressWarnings("deprecation")
     @Test
     void test_net_typeDescriptors() throws Exception {
+        Serializer<?> serializer = newSerializer();
         JavaNetTypeDescriptorTest types = new JavaNetTypeDescriptorTest();
         types.p_uri = URI.create("http://example.com");
         types.p_url = new URL("http://example.com");
@@ -184,6 +188,7 @@ public class SerializerTypesJreTests extends SerializerTestBase {
 
     @Test
     void test_nio_typeDescriptors() {
+        Serializer<?> serializer = newSerializer();
         JavaNioTypeDescriptorTest types = new JavaNioTypeDescriptorTest();
         types.p_path = Path.of("/tmp");
 
@@ -220,6 +225,7 @@ public class SerializerTypesJreTests extends SerializerTestBase {
 
     @Test
     void test_time_typeDescriptors() {
+        Serializer<?> serializer = newSerializer();
         JavaTimeTypeDescriptorTest types = new JavaTimeTypeDescriptorTest();
         types.p_instant = Instant.now();
         types.p_localDateTime = LocalDateTime.now();
@@ -292,6 +298,13 @@ public class SerializerTypesJreTests extends SerializerTestBase {
 
     @Test
     void test_util_typeDescriptors() {
+
+
+        // TODO: Remove this
+        // GlobalReporter.globalInstance().setLevel(SPL.class.getName(), Level.TRACE);
+
+
+        Serializer<?> serializer = newSerializer();
         JavaUtilTypeDescriptorTest types = new JavaUtilTypeDescriptorTest();
         types.p_abstractQueue = new PriorityQueue<>();
         types.p_abstractQueue.add("item");

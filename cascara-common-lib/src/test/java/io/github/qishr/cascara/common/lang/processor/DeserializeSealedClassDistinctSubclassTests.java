@@ -67,6 +67,7 @@ public class DeserializeSealedClassDistinctSubclassTests extends SerializerTestB
 
     @Test
     void test_subclassDeserialization() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map0 = new GenericAstMap()
             .put("v", new GenericAstMap()
                 .put("field0",

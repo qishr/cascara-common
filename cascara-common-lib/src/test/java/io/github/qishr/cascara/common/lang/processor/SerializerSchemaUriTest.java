@@ -17,6 +17,7 @@ public class SerializerSchemaUriTest extends SerializerTestBase {
 
     @Test
     void test_staticSchemaFieldIsSerialized() {
+        Serializer<?> serializer = newSerializer();
         SchemaFieldTestClass sft = new SchemaFieldTestClass();
         AstNode rootNode = serializer.toAst(sft);
         assertInstanceOf(MapAstNode.class, rootNode);

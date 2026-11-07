@@ -41,12 +41,18 @@ import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 
 public abstract class SerializerTestBase {
     protected GlobalReporter reporter;
-    protected Serializer<?> serializer;
+    // protected Serializer<?> serializer;
 
     @BeforeEach
     protected void setUp() {
         reporter = GlobalReporter.forClass(getClass());
-        serializer = new SerializerImpl();
+        // serializer = new SerializerImpl();
+        // serializer.setReporter(new LocalReporter());
+    }
+
+    protected Serializer<?> newSerializer() {
+        Serializer<?> serializer = new SerializerImpl();
         serializer.setReporter(new LocalReporter());
+        return serializer;
     }
 }

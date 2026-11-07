@@ -67,6 +67,7 @@ public class DeserializeAbstractClassDistinctSubclassTests extends SerializerTes
 
     @Test
     void test_subclassDeserializationOfField() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map0 = new GenericAstMap()
             .put("v", new GenericAstMap()
                 .put("field0",
@@ -99,6 +100,7 @@ public class DeserializeAbstractClassDistinctSubclassTests extends SerializerTes
 
     @Test
     void test_subclassDeserializationOfClass() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map0 = new GenericAstMap()
             .put("field0",
                 new GenericAstScalar("foo")

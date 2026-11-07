@@ -16,6 +16,7 @@ import io.github.qishr.cascara.common.type.TypeReference;
 public class SerializerTypesSetTest extends SerializerTestBase {
     @Test
     void test_serializeSet() {
+        Serializer<?> serializer = newSerializer();
         Set<String> o = new HashSet<>();
         o.add("hello");
 

@@ -60,6 +60,7 @@ public class SerializerTests extends SerializerTestBase {
 
     @Test
     void test_simpleTypeReference() {
+        Serializer<?> serializer = newSerializer();
 
         GenericAstScalar s1 = new GenericAstScalar("one");
         GenericAstScalar s2 = new GenericAstScalar("two");
@@ -80,6 +81,7 @@ public class SerializerTests extends SerializerTestBase {
 
     @Test
     void test_fromAst_nestedGenerics() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map = new GenericAstMap()
             .put("contributes", new GenericAstMap()
                 .put("themes", new GenericAstSequence()
@@ -112,6 +114,7 @@ public class SerializerTests extends SerializerTestBase {
 
     @Test
     void test_fromAst_nestedGenerics2() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map = new GenericAstMap()
             .put("contributes", new GenericAstMap()
                 .put("themes", new GenericAstSequence()
@@ -140,6 +143,7 @@ public class SerializerTests extends SerializerTestBase {
 
     @Test
     void test_toAst_nestedGenerics2() {
+        Serializer<?> serializer = newSerializer();
         ThemeContribution tc = new ThemeContribution();
         tc.name = "TestName";
         List<Contribution> contribs = new ArrayList<>();
@@ -174,6 +178,7 @@ public class SerializerTests extends SerializerTestBase {
     /// - MapAstNodes become Maps
     @Test
     void test_deserializeMapToObject() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map = new GenericAstMap()
             .put("obj", new GenericAstMap()
                 .put("name", "TestName")

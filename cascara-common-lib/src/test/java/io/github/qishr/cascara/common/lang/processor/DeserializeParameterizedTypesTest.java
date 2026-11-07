@@ -36,7 +36,7 @@ public class DeserializeParameterizedTypesTest extends SerializerTestBase {
 
     @Test
     void test_parameterizedSubclassDeserialization() {
-
+        Serializer<?> serializer = newSerializer();
         GenericAstMap ast0 = new GenericAstMap()
             .put("type", "specialized1")
             .put("content", "secret")
@@ -62,7 +62,7 @@ public class DeserializeParameterizedTypesTest extends SerializerTestBase {
 
     @Test
     void test_parameterizedSubclassOfArrayListDeserialization() {
-
+        Serializer<?> serializer = newSerializer();
         GenericAstSequence ast = new GenericAstSequence()
             .add(new GenericAstScalar("item"));
 

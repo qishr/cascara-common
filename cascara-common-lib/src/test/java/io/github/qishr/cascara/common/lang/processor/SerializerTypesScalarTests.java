@@ -25,6 +25,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
 
     @Test
     void test_lang_primitiveClassMembers() {
+        Serializer<?> serializer = newSerializer();
         JavaPrimitiveTest types = new JavaPrimitiveTest();
         types.p_long = 42L;
         types.p_int = 53;
@@ -64,6 +65,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
 
     @Test
     void test_lang_referenceClassMembers() {
+        Serializer<?> serializer = newSerializer();
         JavaReferenceTest types = new JavaReferenceTest();
         types.p_long = 42L;
         types.p_integer = 53;
@@ -103,6 +105,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
 
     @Test
     void test_lang_primitiveArray_TypeDescriptors() {
+        Serializer<?> serializer = newSerializer();
         JavaPrimitiveArrayTypeDescriptorTest types = new JavaPrimitiveArrayTypeDescriptorTest();
         types.p_byte = new byte[]{0x3};
         types.p_char = new char[]{'c'};
@@ -132,6 +135,7 @@ public class SerializerTypesScalarTests extends SerializerTestBase {
 
     @Test
     void test_lang_referenceArray_typeDescriptors() {
+        Serializer<?> serializer = newSerializer();
         JavaReferenceArrayTypeDescriptorTest types = new JavaReferenceArrayTypeDescriptorTest();
         types.p_byte = new Byte[]{0x3};
         types.p_character = new Character[]{'c'};

@@ -70,6 +70,7 @@ public class DeserializeSealedClassAnnotationTests extends SerializerTestBase {
 
     @Test
     void test_subclassDeserialization() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map0 = new GenericAstMap()
             .put("type",
                 new GenericAstScalar("c0")

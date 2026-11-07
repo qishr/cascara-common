@@ -18,6 +18,7 @@ import io.github.qishr.cascara.common.type.TypeReference;
 public class SerializerTypesMapTests extends SerializerTestBase {
     @Test
     void test_mapOfStringTo_Integer() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map = new GenericAstMap()
             .put("k", new GenericAstScalar(42));
 
@@ -27,6 +28,7 @@ public class SerializerTypesMapTests extends SerializerTestBase {
 
     @Test
     void test_mapOfStringTo_ListOfInteger() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map = new GenericAstMap()
             .put("k", new GenericAstSequence()
                 .add(
@@ -41,6 +43,7 @@ public class SerializerTypesMapTests extends SerializerTestBase {
 
     @Test
     void test_mapOfStringTo_ListOfMap() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map = new GenericAstMap()
             .put("k", new GenericAstSequence()
                 .add(new GenericAstMap()
@@ -63,6 +66,7 @@ public class SerializerTypesMapTests extends SerializerTestBase {
 
     @Test
     void test_mapOfStringTo_ListOfObject() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map = new GenericAstMap()
             .put("k", new GenericAstSequence()
                 .add(new GenericAstMap()

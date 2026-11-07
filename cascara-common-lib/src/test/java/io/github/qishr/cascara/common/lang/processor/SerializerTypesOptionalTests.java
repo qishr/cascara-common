@@ -19,6 +19,7 @@ import io.github.qishr.cascara.common.type.TypeReference;
 public class SerializerTypesOptionalTests extends SerializerTestBase {
     @Test
     void test_optionalInt() {
+        Serializer<?> serializer = newSerializer();
         OptionalInt o = OptionalInt.of(42);
 
         AstNode root = serializer.toAst(o);
@@ -30,6 +31,7 @@ public class SerializerTypesOptionalTests extends SerializerTestBase {
 
     @Test
     void test_optionalLong() {
+        Serializer<?> serializer = newSerializer();
         OptionalLong o = OptionalLong.of(53);
 
         AstNode root = serializer.toAst(o);
@@ -41,6 +43,7 @@ public class SerializerTypesOptionalTests extends SerializerTestBase {
 
     @Test
     void test_optionalDouble() {
+        Serializer<?> serializer = newSerializer();
         OptionalDouble o = OptionalDouble.of(12.011);
 
         AstNode root = serializer.toAst(o);
@@ -52,6 +55,7 @@ public class SerializerTypesOptionalTests extends SerializerTestBase {
 
     @Test
     void test_optionalString() {
+        Serializer<?> serializer = newSerializer();
         Optional<String> o = Optional.of("hello");
 
         AstNode root = serializer.toAst(o);
@@ -63,6 +67,7 @@ public class SerializerTypesOptionalTests extends SerializerTestBase {
 
     @Test
     void test_optionalList() {
+        Serializer<?> serializer = newSerializer();
         Optional<List<String>> o = Optional.of(List.of("hello"));
 
         AstNode root = serializer.toAst(o);

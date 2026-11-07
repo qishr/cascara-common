@@ -28,6 +28,7 @@ public class SerializerTypesCollectionTests extends SerializerTestBase {
 
     @Test
     void test_list() {
+        Serializer<?> serializer = newSerializer();
         List<Integer> r = serializer.fromAst(intSequence, new TypeReference<List<Integer>>(){});
         assertNotNull(r);
         assertEquals(3, r.size());
@@ -38,6 +39,7 @@ public class SerializerTypesCollectionTests extends SerializerTestBase {
 
     @Test
     void test_SequencedCollection() {
+        Serializer<?> serializer = newSerializer();
         SequencedCollection<Integer> r = serializer.fromAst(intSequence, new TypeReference<SequencedCollection<Integer>>(){});
         assertNotNull(r);
         assertEquals(3, r.size());

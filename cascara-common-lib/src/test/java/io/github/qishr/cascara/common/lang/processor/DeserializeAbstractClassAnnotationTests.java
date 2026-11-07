@@ -71,6 +71,7 @@ public class DeserializeAbstractClassAnnotationTests extends SerializerTestBase 
 
     @Test
     void test_subclassDeserializationOfClassWithAnnotation() {
+        Serializer<?> serializer = newSerializer();
         GenericAstMap map0 = new GenericAstMap()
             .put("type",
                 new GenericAstScalar("c0")
