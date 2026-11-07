@@ -1095,7 +1095,16 @@ public abstract class AbstractSerializer<
         }
 
         // 3. PRIORITIZE EXACT MATCH: Use service provider layer for the exact class first
-        TypeDescriptor<?> descriptor = providerFactory.createTypeDescriptor(jvmType);
+
+        // TODO: This was using `createTypeDescriptor` which matched using isAssignableFrom
+        // I've added `createExactTypeDescriptor`, but `findDescriptorInHierarchy` really
+        // belongs in there too. AbstractSerializer should not be concerned with how
+        // type descriptors are found.
+        //
+        // TypeDescriptor<?> descriptor = providerFactory.createTypeDescriptor(jvmType);
+
+        TypeDescriptor<?> descriptor = providerFactory.createExactTypeDescriptor(jvmType);
+
         if (descriptor != null) {
             typeDescriptors.put(jvmType, descriptor);
             return descriptor;

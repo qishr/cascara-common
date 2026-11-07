@@ -74,7 +74,16 @@ public class ServiceProviderFactory extends AbstractServiceProviderFactory {
         return createServiceProvider(
             TypeDescriptor.class,
             CapabilityQueries.allOf(
-                CapabilityQueries.supportsJvmType(jvmType)
+                CapabilityQueries.supportsJvmTypeOrSupertype(jvmType)
+            )
+        );
+    }
+
+    public TypeDescriptor<?> createExactTypeDescriptor(Class<?> jvmType) throws ServiceException {
+        return createServiceProvider(
+            TypeDescriptor.class,
+            CapabilityQueries.allOf(
+                CapabilityQueries.supportsExactJvmType(jvmType)
             )
         );
     }

@@ -56,7 +56,7 @@ public class TypeDescriptorFactory extends AbstractServiceProviderFactory {
         return createServiceProvider(
             TypeDescriptor.class,
             CapabilityQueries.allOf(
-                CapabilityQueries.supportsJvmType(jvmType)
+                CapabilityQueries.supportsJvmTypeOrSupertype(jvmType)
             )
         );
     }
@@ -65,7 +65,7 @@ public class TypeDescriptorFactory extends AbstractServiceProviderFactory {
         return createServiceProvider(
             ScalarDescriptor.class,
             CapabilityQueries.allOf(
-                CapabilityQueries.supportsJvmType(jvmType)
+                CapabilityQueries.supportsJvmTypeOrSupertype(jvmType)
             )
         );
     }

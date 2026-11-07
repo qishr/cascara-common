@@ -74,7 +74,7 @@ public class CapabilityQueries {
     }
 
     /// Matches if a property is a boolean flag set to true
-    public static Predicate<ServiceMetadata> supportsJvmType(Class<?> jvmType) {
+    public static Predicate<ServiceMetadata> supportsJvmTypeOrSupertype(Class<?> jvmType) {
         if (jvmType == null) {
             throw new UnexpectedNullParameterException("jvmType");
         }
@@ -90,6 +90,32 @@ public class CapabilityQueries {
                 return false;
             }
             return (capabilityType == null || capabilityType.isAssignableFrom(jvmType));
+        };
+    }
+
+    /// Matches if a property is a boolean flag set to true
+    public static Predicate<ServiceMetadata> supportsExactJvmType(Class<?> jvmType) {
+        if (jvmType == null) {
+            throw new UnexpectedNullParameterException("jvmType");
+        }
+        return meta -> {
+            Properties props = meta.getProperties();
+            String capTypeString = props.getString(SPL.SP_JVM_TYPE);
+
+            if (capTypeString != null && capTypeString.equals(jvmType.getName())) {
+                return true;
+            } else {
+                return false;
+            }
+            // Class<?> capabilityType;
+            // try {
+            //     // TODO: For performance, have Properties be able to return the Class<?> instead of a string
+            //     //    Since we changed Properties predicate to ServiceMetadata, it probably has this
+            //     capabilityType = capTypeString == null ? null : Class.forName(capTypeString);
+            // } catch (ClassNotFoundException e) {
+            //     return false;
+            // }
+            // return (capabilityType == null || capabilityType.isAssignableFrom(jvmType));
         };
     }
 
