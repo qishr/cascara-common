@@ -27,6 +27,7 @@ import io.github.qishr.cascara.common.diagnostic.log.TimeSequencedAggregatorLogg
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
+import io.github.qishr.cascara.common.exec.ipc.IpcException;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
@@ -71,7 +72,7 @@ public class SplJmxTest extends JmxTestBase {
     //
 
     @Test
-    void test_1() throws Exception {
+    void test_1() throws Throwable {
         REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString("hello-isolated-world");
@@ -125,7 +126,7 @@ public class SplJmxTest extends JmxTestBase {
                 debug(response);
                 try {
                     ipcServer.close();
-                } catch (IOException e) {
+                } catch (IpcException e) {
                     e.printStackTrace();
                 }
                 finished.set(true);
@@ -231,7 +232,7 @@ public class SplJmxTest extends JmxTestBase {
                 debug(response);
                 try {
                     ipcServer.close();
-                } catch (IOException e) {
+                } catch (IpcException e) {
                     e.printStackTrace();
                 }
                 finished.set(true);

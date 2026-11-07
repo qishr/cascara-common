@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableInstantiationException;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
@@ -49,6 +50,8 @@ import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.type.AbstractTypeDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.type.TypeSerializer;
+import io.github.qishr.cascara.common.util.Pair;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 /// Handles serialization and deserialization of [Throwable] instances across AST nodes,
 /// preserving class names, cause chains, suppressed exceptions, and stack traces.
@@ -160,6 +163,18 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
             String s = originalClassName != null ? originalClassName : getClass().getName();
             String message = getLocalizedMessage();
             return (message != null) ? (s + ": " + message) : s;
+        }
+
+        public Throwable recreateOriginal() throws InstantiationException {
+            try {
+                Class<?> exceptionClass = Class.forName(originalClassName);
+                List<Pair<Class<?>,Object>> params = new ArrayList<>();
+                params.add(Pair.of(String.class, getMessage()));
+                Throwable recreatedException = (Throwable) ReflectionUtils.createInstance(exceptionClass, params);
+                return recreatedException;
+            } catch (Throwable t) {
+                throw new LocalizableInstantiationException(t, null);
+            }
         }
     }
 }

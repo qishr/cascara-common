@@ -34,7 +34,6 @@
 
 package io.github.qishr.cascara.common.exec;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,8 +41,10 @@ import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
+import io.github.qishr.cascara.common.exec.ipc.IpcException;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
+import io.github.qishr.cascara.common.type.lang.ThrowableSerializer.SerializedThrowable;
 
 @Beta
 public class IsolatedExecutor {
@@ -53,8 +54,9 @@ public class IsolatedExecutor {
     private final Class<?> responseClass;
     private final Class<? extends AbstractExecutionTask<?,?>> task;
     private final Serializer<?> serializer;
-    private boolean ipcDebugEnabled;
-    private boolean diagnosticForwardingEnabled;
+    private boolean ipcDebug;
+    private boolean exceptionForwarding;
+    private boolean diagnosticForwarding;
     private boolean filterDiagnosticsByLevel;
 
     private IsolatedExecutor(Class<? extends AbstractExecutionTask<?,?>> task, Class<?> response) {
@@ -68,7 +70,7 @@ public class IsolatedExecutor {
         return new IsolatedExecutor(task, response);
     }
 
-    public static <T> Response<T> run(Class<? extends AbstractExecutionTask<?,?>> task, Object input, Class<?> response, JvmOptions options) {
+    public static <T> Response<T> run(Class<? extends AbstractExecutionTask<?,?>> task, Object input, Class<?> response, JvmOptions options) throws Throwable {
         IsolatedExecutor exec = IsolatedExecutor.forTask(task, response);
         return exec.run(input, options);
     }
@@ -83,31 +85,37 @@ public class IsolatedExecutor {
     }
 
     /// Enable debug output of IPC communications.
-    public IsolatedExecutor setIpcDebugEnabled(boolean enabled) {
-        this.ipcDebugEnabled = enabled;
+    public IsolatedExecutor setIpcDebug(boolean enabled) {
+        ipcDebug = enabled;
         return  this;
     }
 
     /// Forward diagnostics from the child JVM process to this
     /// process's GlobalReporter.
-    public IsolatedExecutor setDiagnosticForwardingEnabled(boolean enabled) {
-        this.diagnosticForwardingEnabled = enabled;
+    public IsolatedExecutor setDiagnosticForwarding(boolean enabled) {
+        diagnosticForwarding = enabled;
         return  this;
+    }
+
+    /// Forward thrown exception to the parent JVM
+    public IsolatedExecutor setExceptionForwarding(boolean enabled) {
+        exceptionForwarding = enabled;
+        return this;
     }
 
     /// Filter forwarded diagnostic reporting by the level specified in
     /// this process's GlobalReporter.
     public IsolatedExecutor setFilterDiagnosticsByLevel(boolean enabled) {
-        this.filterDiagnosticsByLevel = enabled;
+        filterDiagnosticsByLevel = enabled;
         return  this;
     }
 
-    public <T> Response<T> run(Object input) throws IOException, InterruptedException {
+    public <T> Response<T> run(Object input) throws Throwable { //throws IOException, InterruptedException {
         return run(input, null);
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Response<T> run(Object input, JvmOptions options) {
+    public <T> Response<T> run(Object input, JvmOptions options) throws Throwable {
         if (options == null) {
             options = this.options;
         }
@@ -120,11 +128,11 @@ public class IsolatedExecutor {
 
         IpcServer ipcServer;
         try {
-            // ipcServer = IpcServer.start(diagnosticForwardingEnabled, ipcDebugEnabled);
             ipcServer = new IpcServer()
-                .setDiagnosticForwarding(diagnosticForwardingEnabled)
+                .setExceptionForwarding(exceptionForwarding)
+                .setDiagnosticForwarding(diagnosticForwarding)
                 .setFilterDiagnosticsByLevel(filterDiagnosticsByLevel)
-                .setIpcDebug(ipcDebugEnabled)
+                .setIpcDebug(ipcDebug)
                 .start();
 
             options.setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
@@ -139,8 +147,18 @@ public class IsolatedExecutor {
             taskResponse = outputs.isEmpty() ? null : outputs.getFirst();
 
             diagnostics = ipcServer.getMessages(Diagnostic.class);
-        } catch (IOException e) {
+        } catch (IpcException e) {
             throw new ExecutionException(e, ExecutionMessage.DIAGNOSTIC_SERVER_FAILED, task.getName());
+        }
+
+        if (exceptionForwarding) {
+            Throwable clientException = ipcServer.getClientException();
+            if (clientException instanceof SerializedThrowable st) {
+                throw st.recreateOriginal();
+            }
+            if (clientException != null) {
+                throw clientException;
+            }
         }
 
         return new Response<T>(jvmResponse, task, taskResponse, diagnostics, !jvmResponse.timedOut && jvmResponse.exitCode == 0);

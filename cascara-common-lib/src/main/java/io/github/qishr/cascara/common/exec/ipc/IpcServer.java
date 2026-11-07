@@ -52,6 +52,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
@@ -77,39 +78,51 @@ public class IpcServer implements AutoCloseable {
     private final ConcurrentHashMap<String, List<Object>> payloadsByType = new ConcurrentHashMap<>();
     private final Phaser activeConnections = new Phaser(1); // 1 registered for the server itself
     private CompletableFuture<Void> listenerFuture;
+    private boolean exceptionForwarding;
     private boolean diagnosticForwarding;
     private boolean filterDiagnosticsByLevel;
-    private boolean ipcDebugEnabled;
+    private boolean ipcDebug;
+    private AtomicReference<Throwable> clientException = new AtomicReference<>();
 
-    public IpcServer() throws IOException {
+    public IpcServer() {
     }
 
-    public IpcServer setDiagnosticForwarding(boolean b) {
-        this.diagnosticForwarding = b;
+    public IpcServer setDiagnosticForwarding(boolean enabled) {
+        this.diagnosticForwarding = enabled;
         return this;
     }
 
-    public IpcServer setFilterDiagnosticsByLevel(boolean b) {
-        this.filterDiagnosticsByLevel = b;
+    public IpcServer setFilterDiagnosticsByLevel(boolean enabled) {
+        this.filterDiagnosticsByLevel = enabled;
         return this;
     }
 
-    public IpcServer setIpcDebug(boolean b) {
-        this.ipcDebugEnabled = b;
+    public IpcServer setExceptionForwarding(boolean enabled) {
+        exceptionForwarding = enabled;
         return this;
     }
 
-    public IpcServer start() throws IOException {
-        socketPath = Files.createTempFile("cascara-ipc-", ".sock");
-        Files.deleteIfExists(socketPath);
-        UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
-        this.serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
-        this.serverChannel.bind(address);
+    public IpcServer setIpcDebug(boolean enabled) {
+        this.ipcDebug = enabled;
+        return this;
+    }
 
-        // serializer = IpcConfig.createSerializer();
-
+    public IpcServer start() throws IpcException {
+        try {
+            socketPath = Files.createTempFile("cascara-ipc-", ".sock");
+            Files.deleteIfExists(socketPath);
+            UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
+            this.serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
+            this.serverChannel.bind(address);
+        } catch (IOException e) {
+            throw new IpcException(e, e.getMessage());
+        }
         listenAsync();
         return this;
+    }
+
+    public Throwable getClientException() {
+        return clientException.get();
     }
 
     public Path getSocketPath() {
@@ -133,7 +146,7 @@ public class IpcServer implements AutoCloseable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws IpcException {
         try {
             if (serverChannel != null && serverChannel.isOpen()) {
                 serverChannel.close();
@@ -141,11 +154,15 @@ public class IpcServer implements AutoCloseable {
             if (listenerFuture != null) {
                 listenerFuture.join();
             }
+        } catch (IOException e) {
+            throw new IpcException(e, e.getMessage());
         } finally {
             try {
                 if (socketPath != null) {
                     Files.deleteIfExists(socketPath);
                 }
+            } catch (IOException e) {
+                throw new IpcException(e, e.getMessage());
             } finally {
                 // Guarantees the server deregisters even if socket cleanup throws
                 activeConnections.arriveAndAwaitAdvance();
@@ -157,10 +174,22 @@ public class IpcServer implements AutoCloseable {
         if (listenerFuture != null && !listenerFuture.isDone()) {
             return;
         }
-        this.listenerFuture = CompletableFuture.runAsync(this::listenLoop);
+        // AtomicReference<Throwable> childThreadException = new AtomicReference<>();
+        this.listenerFuture = CompletableFuture.runAsync(() -> listenLoop());
+        // {
+        //     try {
+        //         listenLoop();
+        //     } catch (Throwable e) {
+        //         childThreadException.set(e);
+        //     }
+        // });
+        // if (childThreadException.get() != null) {
+        //     throw childThreadException.get();
+        // }
     }
 
     private void listenLoop() {
+        AtomicReference<Throwable> childThreadException = new AtomicReference<>();
         while (serverChannel.isOpen()) {
             try {
                 SocketChannel clientChannel = serverChannel.accept();
@@ -168,6 +197,14 @@ public class IpcServer implements AutoCloseable {
                 Thread.ofVirtual().start(() -> {
                     try {
                         handleClientConnection(clientChannel);
+                    } catch (Throwable t) {
+                        childThreadException.compareAndSet(null, t);
+
+                        // Make the while loop advance
+                        try {
+                            serverChannel.close();
+                        } catch (IOException ignored) {}
+
                     } finally {
                         activeConnections.arriveAndDeregister();
                     }
@@ -178,9 +215,14 @@ public class IpcServer implements AutoCloseable {
                 if (!serverChannel.isOpen()) break;
             }
         }
+        Throwable thrown = childThreadException.get();
+        if (thrown != null) {
+            clientException.set(thrown);
+            return;
+        }
     }
 
-    private void handleClientConnection(SocketChannel clientChannel) {
+    private void handleClientConnection(SocketChannel clientChannel) throws Throwable {
         try (clientChannel;
              BufferedReader reader = new BufferedReader(
                  Channels.newReader(clientChannel, StandardCharsets.UTF_8))) {
@@ -194,7 +236,7 @@ public class IpcServer implements AutoCloseable {
             IpcConfig config = new IpcConfig();
             config.setVersion(Cascara.instance().getVersion());
             config.setIpcServerPid(ProcessHandle.current().pid());
-            config.setIpcDebug(ipcDebugEnabled);
+            config.setIpcDebug(ipcDebug);
             config.setIpcSerializer(serializer.getClass().getName());
             String header = config.toString() + IpcConfig.HEADER_SEPARATOR + "\n";
             ByteBuffer buffer = ByteBuffer.wrap(header.getBytes(StandardCharsets.UTF_8));
@@ -206,7 +248,7 @@ public class IpcServer implements AutoCloseable {
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) continue;
 
-                if (ipcDebugEnabled) {
+                if (ipcDebug) {
                     System.out.println("SERVER: " + line);
                 }
 
@@ -235,9 +277,14 @@ public class IpcServer implements AutoCloseable {
                         return;
                     }
 
+                    // Forward exceptions from the child JVM process
+                    if (exceptionForwarding && payload instanceof Throwable throwable) {
+                        // This will be re-thrown in the parent thread
+                        throw throwable;
+                    }
+
                     // Forward diagnostics from the child JVM process
                     if (diagnosticForwarding && payload instanceof Diagnostic diagnostic) {
-                        // TODO: Make the following two ways of doing this configurable.
 
                         if (filterDiagnosticsByLevel) {
                             // This reports forwarded diagnostics that are included in the source's level:
@@ -257,7 +304,7 @@ public class IpcServer implements AutoCloseable {
                         .add(payload);
                 } catch (ClassNotFoundException e) {
                     // TODO all the other related exceptions
-                    throw new ExecutionException(e, GenericMessage.NO_CLASS_DEF_FOUND_ERROR, className);
+                    throw new ExecutionException(e, GenericMessage.CLASS_NOT_FOUND, className);
                 } finally {}
             }
         } catch (IOException e) {

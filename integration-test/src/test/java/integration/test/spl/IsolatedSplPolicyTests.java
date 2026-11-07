@@ -22,7 +22,6 @@ import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.payload.SplRegisterClassTestOutput;
 import integration.test.fixtures.task.SplPolicyTestTask;
 import integration.test.fixtures.task.SplRegisterClassTestTask;
-import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
@@ -52,7 +51,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     public Path tempDir;
 
     @Test
-    void test_reject_expiredCert(@TempDir Path tempDir) throws Exception {
+    void test_reject_expiredCert(@TempDir Path tempDir) throws Throwable {
         // 1. Issue an expired identity
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
@@ -68,7 +67,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
         // Enable forwarding of reports from isolated JVM
-        exec.setDiagnosticForwardingEnabled(true);
+        exec.setDiagnosticForwarding(true);
 
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
@@ -95,7 +94,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
     // The above, but with cascara.sec.verify = false
     @Test
-    void test_accept_expiredCert(@TempDir Path tempDir) throws Exception {
+    void test_accept_expiredCert(@TempDir Path tempDir) throws Throwable {
         // 1. Issue an expired identity
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
@@ -111,7 +110,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
         // Enable forwarding of reports from isolated JVM
-        exec.setDiagnosticForwardingEnabled(true);
+        exec.setDiagnosticForwarding(true);
 
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
@@ -148,7 +147,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     // TODO: Fix this
     @Disabled
     @Test
-    void test_reject_withVFS__expiredCert(@TempDir Path tempDir) throws Exception {
+    void test_reject_withVFS__expiredCert(@TempDir Path tempDir) throws Throwable {
         // 1. Issue an expired identity
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
@@ -170,7 +169,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
         // Enable forwarding of reports from isolated JVM
-        exec.setDiagnosticForwardingEnabled(true);
+        exec.setDiagnosticForwarding(true);
 
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
@@ -200,7 +199,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     /// SPL.registerClass() in SplRegisterClassTestTask. with
     /// CASCARA_SPL_POLICY_REQUIRE_CLASS, that should alsso fail.
     @Test
-    void test_reject_registerClass_unsignedJar(@TempDir Path tempDir) throws Exception {
+    void test_reject_registerClass_unsignedJar(@TempDir Path tempDir) throws Throwable {
         GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
 
         Path jarPath = tempDir.resolve("provider-a.jar");
@@ -216,7 +215,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterClassTestTask.class, SplRegisterClassTestOutput.class);
 
         // Enable forwarding of reports from isolated JVM
-        exec.setDiagnosticForwardingEnabled(true);
+        exec.setDiagnosticForwarding(true);
 
         exec.setOptions(new JvmOptions()
             .setModuleName(SplRegisterClassTestTask.class.getModule().getName())

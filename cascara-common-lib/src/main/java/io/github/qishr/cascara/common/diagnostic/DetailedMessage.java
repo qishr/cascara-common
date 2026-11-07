@@ -70,10 +70,10 @@ public class DetailedMessage implements LocalizableMessage {
 
         // NoClassDefFoundError - when trying to load in the definition of a class and no definition of the class could be found.
         else if (t instanceof NoClassDefFoundError e) {
-            return new DetailedMessage(GenericMessage.NO_CLASS_DEF_FOUND_ERROR, e.getMessage());
+            return new DetailedMessage(GenericMessage.CLASS_NOT_FOUND, e.getMessage());
         }
         else if (t instanceof ClassNotFoundException e) {
-            return new DetailedMessage(GenericMessage.NO_CLASS_DEF_FOUND_ERROR, e.getMessage());
+            return new DetailedMessage(GenericMessage.CLASS_NOT_FOUND, e.getMessage());
         }
 
 

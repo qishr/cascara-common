@@ -92,6 +92,23 @@ public class ReflectionUtils {
         }
     }
 
+    @SuppressWarnings("null")
+    @NonNull
+    public static <C> C createInstance(Class<C> targetClass, List<Pair<Class<?>, Object>> params) throws InstantiationException {
+        try {
+            Class<?>[] paramTypes = new Class[params.size()];
+            Object[] paramValues = new Object[params.size()];
+            for (int i = 0; i < params.size(); i++) {
+                Pair<Class<?>, Object> param = params.get(i);
+                paramTypes[i] = param.getL();
+                paramValues[i] = param.getR();
+            }
+            return targetClass.getConstructor(paramTypes).newInstance(paramValues);
+        } catch (Throwable t) {
+            throw new LocalizableInstantiationException(t, targetClass);
+        }
+    }
+
     public static boolean isAbstract(Type jvmType) {
         return (jvmType instanceof Class<?> cls) && Modifier.isAbstract(cls.getModifiers());
     }

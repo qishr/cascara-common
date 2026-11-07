@@ -54,7 +54,7 @@ import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public abstract class AbstractExecutionTask<I, O> {
-    protected abstract O run(I input) throws Exception;
+    protected abstract O run(I input) throws Throwable;
 
     @SuppressWarnings("unchecked")
     public static void main(String[] args) {
@@ -140,8 +140,19 @@ public abstract class AbstractExecutionTask<I, O> {
 
         I object = null;
         if (!json.isBlank()) {
-            object = (I) serializer.fromString(json, inputClass);
+            Object deserialized = serializer.fromString(json, inputClass);
+            // if (deserialized instanceof SerializedThrowable st) {
+            //     try {
+            //         deserialized = st.recreateOriginal();
+            //     } catch (InstantiationException e) {
+            //         // TODO Auto-generated catch block
+            //         e.printStackTrace();
+            //     }
+            // }
+            object = (I) deserialized;
         }
+
+        Throwable thrownByTask = null;
 
         O response = null;
         if (object == null) {
@@ -151,17 +162,21 @@ public abstract class AbstractExecutionTask<I, O> {
         } else {
             try {
                 response = run(object);
-            } catch (Exception e) {
-                // TODO: ExecutionException
-                error(e, e.getMessage());
+            } catch (Throwable e) {
+                thrownByTask = e;
+                // error(e, e.getMessage());
             }
         }
 
         // Emit task output payload via IpcClient if IPC is enabled, otherwise fallback to stdout
-        if (response != null) {
+        if (response != null || thrownByTask != null) {
             try (IpcClient ipcClient = IpcClient.tryConnect(serializer)) {
                 if (ipcClient != null) {
-                    ipcClient.send(response);
+                    if (thrownByTask != null) {
+                        ipcClient.send(thrownByTask);
+                    } else {
+                        ipcClient.send(response);
+                    }
                 }else {
                     System.out.println(serializer.toString(response));
                 }

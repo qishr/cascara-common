@@ -42,10 +42,6 @@ import java.util.ServiceConfigurationError;
 import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
 
 public interface DiagnosticMessage extends LocalizableMessage {
-    // String name();
-    // String getCode();
-    // String getFormat();
-
     static DiagnosticMessage forException(Throwable t) {
         if (t instanceof InstantiationException) {
             return GenericMessage.INSTANTIATION_EXCEPTION;
@@ -81,10 +77,10 @@ public interface DiagnosticMessage extends LocalizableMessage {
 
         // NoClassDefFoundError - when trying to load in the definition of a class and no definition of the class could be found.
         else if (t instanceof NoClassDefFoundError) {
-            return GenericMessage.NO_CLASS_DEF_FOUND_ERROR;
+            return GenericMessage.CLASS_NOT_FOUND;
         }
         else if (t instanceof ClassNotFoundException) {
-            return GenericMessage.NO_CLASS_DEF_FOUND_ERROR;
+            return GenericMessage.CLASS_NOT_FOUND;
         }
 
 

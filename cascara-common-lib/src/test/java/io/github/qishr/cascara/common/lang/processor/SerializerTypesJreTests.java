@@ -59,6 +59,7 @@ import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.ast.MapEntryAstNode;
 import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
+import io.github.qishr.cascara.common.type.lang.ThrowableSerializer.SerializedThrowable;
 
 /// Testing of Serialier with JRE types
 public class SerializerTypesJreTests extends SerializerTestBase {
@@ -71,6 +72,17 @@ public class SerializerTypesJreTests extends SerializerTestBase {
 
         assertNotNull(ste);
         assertEquals("className1", ste.getClassName());
+    }
+
+    @Test
+    void test_throwable() {
+        Throwable t = new IllegalStateException("test-message");
+        AstNode root = serializer.toAst(t);
+        assertInstanceOf(MapAstNode.class, root);
+        Throwable r = serializer.fromAst(root, Throwable.class);
+        assertNotNull(r);
+        SerializedThrowable st = assertInstanceOf(SerializedThrowable.class, r);
+        assertEquals(IllegalStateException.class.getName(), st.getOriginalClassName());
     }
 
     public static class JavaLangTypeDescriptorTest {

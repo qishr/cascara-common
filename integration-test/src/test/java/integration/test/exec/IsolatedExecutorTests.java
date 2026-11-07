@@ -1,6 +1,7 @@
 package integration.test.exec;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import integration.test.fixtures.payload.ReporterTestOutput;
+import integration.test.fixtures.task.ThrowableTestTask;
 import integration.test.fixtures.task.GlobalReporterTestTask;
 
 public class IsolatedExecutorTests extends ExecTestBase {
@@ -23,7 +25,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
     }
 
     @Test
-    void test_IsolatedExecutor_1() throws Exception {
+    void test_IsolatedExecutor_1() throws Throwable {
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
 
         exec.setOptions(new JvmOptions()
@@ -43,7 +45,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
     }
 
     @Test
-    void test_IsolatedExecutor_2() throws Exception {
+    void test_IsolatedExecutor_2() throws Throwable {
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
 
         Response<ReporterTestOutput> result = exec.run(
@@ -62,7 +64,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
     }
 
     @Test
-    void test_isolatedExecution_classpathMode() throws Exception {
+    void test_isolatedExecution_classpathMode() throws Throwable {
         JvmOptions options = new JvmOptions()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModuleName(null) // Forces pure -cp launch
@@ -82,7 +84,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
     }
 
     @Test
-    void test_isolatedExecution_jpmsModuleMode() throws Exception {
+    void test_isolatedExecution_jpmsModuleMode() throws Throwable {
         JvmOptions options = new JvmOptions()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName()) // Forces --module-path launch
             .setModulePath(getModulePath())
@@ -100,5 +102,24 @@ public class IsolatedExecutorTests extends ExecTestBase {
         ReporterTestOutput output = result.orElseThrow();
         assertEquals(42, output.n());
         assertTrue(output.s().contains("jpms-module-mode-test"));
+    }
+
+    @Test
+    void test_forwardsExceptions() throws Throwable {
+        IsolatedExecutor exec = IsolatedExecutor.forTask(ThrowableTestTask.class, String.class);
+        exec.setExceptionForwarding(true);
+
+        exec.setOptions(new JvmOptions()
+            .setModuleName(ThrowableTestTask.class.getModule().getName())
+            .setModulePath(getModulePath())
+            .setTimeout(Duration.ofSeconds(20)));
+
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
+            Response<String> response = exec.run(
+                IllegalStateException.class.getName()
+            );
+            debug(response);
+        });
+        assertEquals("test-exception", thrown.getMessage());
     }
 }

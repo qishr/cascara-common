@@ -6,7 +6,7 @@ import io.github.qishr.cascara.common.exec.AbstractExecutionTask;
 import io.github.qishr.cascara.common.service.SPL;
 
 public class SplRegisterClassTestTask extends AbstractExecutionTask<String, SplRegisterClassTestOutput> {
-    GlobalReporter reporter = GlobalReporter.forClass(GlobalReporterTestTask.class);
+    GlobalReporter reporter = GlobalReporter.forClass(SplRegisterClassTestTask.class);
 
     @Override
     public SplRegisterClassTestOutput run(String input) throws Exception {

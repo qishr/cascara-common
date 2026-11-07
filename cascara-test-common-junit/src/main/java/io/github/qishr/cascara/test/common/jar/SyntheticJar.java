@@ -14,11 +14,10 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import io.github.qishr.cascara.common.exec.Locatable;
 import io.github.qishr.cascara.test.common.security.TestJarSigner;
 import io.github.qishr.cascara.test.common.security.TestJarSigner.SignedJarBundle;
 
-public class SyntheticJar implements Locatable {
+public class SyntheticJar {
     Path path;
     String subprojectName;
     Class<?> hostClass;
@@ -50,7 +49,6 @@ public class SyntheticJar implements Locatable {
         return signedBundle;
     }
 
-    @Override
     public Path getPath() {
         return path;
     }

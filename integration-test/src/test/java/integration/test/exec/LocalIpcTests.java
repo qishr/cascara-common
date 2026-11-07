@@ -21,7 +21,7 @@ public class LocalIpcTests extends ExecTestBase {
     }
 
     @Test
-    void test_IPC_doesntForwardToSamePID() throws IOException {
+    void test_IPC_doesntForwardToSamePID() throws Throwable {
 
         // IpcServer ipcServer = IpcServer.start(true, false);
         IpcServer ipcServer = new IpcServer()

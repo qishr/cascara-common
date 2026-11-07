@@ -58,7 +58,7 @@ public class JvmProcessTests extends ExecTestBase {
     }
 
     @Test
-    void test_JvmProcess_withIPC() throws IOException {
+    void test_JvmProcess_withIPC() throws Throwable {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString("hello-isolated-world");
 
@@ -99,7 +99,7 @@ public class JvmProcessTests extends ExecTestBase {
     }
 
     @Test
-    void test_IPC_forwardsDiagnostics() throws IOException {
+    void test_IPC_forwardsDiagnostics() throws Throwable {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString("hello-isolated-world");
 

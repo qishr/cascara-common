@@ -23,6 +23,7 @@ import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
+import io.github.qishr.cascara.common.exec.ipc.IpcException;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
@@ -42,7 +43,7 @@ public class JmxTests extends JmxTestBase {
 
     @Disabled
     @Test
-    void test_JMX() throws Exception {
+    void test_JMX() throws Throwable {
         Configurator.setLevel("integration.test", org.apache.logging.log4j.Level.DEBUG);
         GlobalReporter.globalInstance().addLogger(new Log4jLogger());
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
@@ -86,7 +87,7 @@ public class JmxTests extends JmxTestBase {
                 debug(response);
                 try {
                     ipcServer.close();
-                } catch (IOException e) {
+                } catch (IpcException e) {
                     e.printStackTrace();
                 }
             });

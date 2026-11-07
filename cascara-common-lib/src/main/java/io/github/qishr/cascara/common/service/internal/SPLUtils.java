@@ -116,7 +116,6 @@ public class SPLUtils {
 
     /// Instantiates a service provider
     /// @param providerClass The class of the provider to instantiate.
-    // @SuppressWarnings({ "unchecked", "null" })
     @NonNull
     public static <T> T instantiate(Class<T> providerClass) {
         if (!ServiceProvider.class.isAssignableFrom(providerClass)) {

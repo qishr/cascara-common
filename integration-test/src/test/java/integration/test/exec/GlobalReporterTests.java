@@ -31,7 +31,7 @@ public class GlobalReporterTests extends ExecTestBase {
     }
 
     @Test
-    void test_debugLevel() throws Exception {
+    void test_debugLevel() throws Throwable {
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
         String classKey = "CASC_REPORT_LEVEL_" + GlobalReporterTestTask.class.getName().replace('.', '_').toUpperCase();
@@ -44,7 +44,7 @@ public class GlobalReporterTests extends ExecTestBase {
             .setDebug(PROCESS_DEBUG_ENABLED);
 
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
-        exec.setDiagnosticForwardingEnabled(true);
+        exec.setDiagnosticForwarding(true);
 
         Response<ReporterTestOutput> result = exec.run("debug-message", options);
 
