@@ -38,6 +38,7 @@ package io.github.qishr.cascara.common.diagnostic.exception;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
+import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public interface LocalizableException {
@@ -65,6 +66,10 @@ public interface LocalizableException {
     void printStackTrace(PrintWriter s);
 
     StackTraceElement[] getStackTrace();
+
+    static String formatMessage(DetailedMessage message) {
+        return AbstractLocalizableException.getLocalizer().format(message, message.getDetails());
+    }
 
     static String formatMessage(DiagnosticMessage message, Object... details) {
         return AbstractLocalizableException.getLocalizer().format(message, details);

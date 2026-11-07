@@ -50,17 +50,14 @@ import io.github.qishr.cascara.common.util.ReflectionUtils;
 public class SPLUtils {
 
     /// Returns an instance of a specific service provider.
+    @SuppressWarnings({ "null" })
     @NonNull
     public static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, serviceType);
         }
         Class<? extends ServiceProvider> clazz = metadata.getType();
-        T result = serviceType.cast(getInstance(clazz, metadata));
-        if (result == null) {
-            throw new ServiceException(ServiceMessage.FAILED_TO_INSTANTIATE_CLASS, serviceType);
-        }
-        return result;
+        return serviceType.cast(getInstance(clazz, metadata));
     }
 
     /// Returns an instance of a service provider.
@@ -127,22 +124,14 @@ public class SPLUtils {
         }
         try {
             return (T) ReflectionUtils.createInstance(providerClass);
-            // Constructor<?> constructor = providerClass.getDeclaredConstructor();
-            // if (constructor == null) {
-            //     throw new ServiceException(ServiceMessage.NOARGS_CONSTRUCTOR_REQUIRED, providerClass.getName());
-            // } else {
-
-            //     // Make the constructor accessible. This allows instantiation
-            //     // of classes with a private noo-arg constructor, like neo-singletons.
-            //     if (!constructor.canAccess(null)) {
-            //         constructor.trySetAccessible();
-            //     }
-            //     ServiceProvider instance = (ServiceProvider) constructor.newInstance();
-            //     return (T)instance;
-            // }
         } catch (InstantiationException e) {
             // e.printStackTrace();
-            throw new ServiceException(e, ServiceMessage.FAILED_TO_INSTANTIATE_CLASS, providerClass.getName(), e.getMessage());
+            throw new ServiceException(
+                e, ServiceMessage.FAILED_TO_INSTANTIATE_CLASS,
+                // providerClass.getName(),
+                e.getMessage()
+                // e.getCause().getClass().getSimpleName()
+            );
         }
     }
 

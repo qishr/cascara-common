@@ -44,10 +44,11 @@ public enum ExecutionMessage implements DiagnosticMessage {
     INTERRUPT("EXEC-105", "Task {0} was interrupted"),
     DIAGNOSTIC_SERVER_FAILED("EXEC-106", "Failed to initialize DiagnosticIpcServer for task {0}"),
     DIAGNOSTIC_DESERIALIZATION_FAILED("EXEC-107", "Failed to deserialize diagnostics for task {0}"),
-    DESERIALIZATION_FAILED("EXEC-108", "Failed to deserialize {0}"),
-    IPC_RECV_FAILED("EXEC-109", "IPC receive failed: {0}"),
-    NO_SOCKET_FILE("EXEC-110", "Socket file does not exist: {0}"),
-    CONNECT_FAILED("EXEC-111", "IPC connection failed: {0}");
+    NO_DESERIALIZER("EXEC-108", "No serializer available"),
+    DESERIALIZATION_FAILED("EXEC-109", "Failed to deserialize {0}"),
+    IPC_RECV_FAILED("EXEC-110", "IPC receive failed: {0}"),
+    NO_SOCKET_FILE("EXEC-111", "Socket file does not exist: {0}"),
+    CONNECT_FAILED("EXEC-112", "IPC connection failed: {0}");
 
     private final String code;
     private final String format;

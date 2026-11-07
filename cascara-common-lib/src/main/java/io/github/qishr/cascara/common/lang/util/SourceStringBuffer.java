@@ -41,6 +41,7 @@ import java.io.Reader;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.service.SPL;
 
 @Experimental
 public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSequence {
@@ -57,6 +58,8 @@ public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSeq
     // private byte[] raw;
     private char previous;
 
+    // TODO: Check thread name, exception on concurrent access
+
     public SourceStringBuffer() {
     }
 
@@ -64,7 +67,7 @@ public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSeq
     public Properties getServiceProperties() {
         if (properties == null) {
             properties = new Properties();
-            properties.set("contentType", contentType);
+            properties.set(SPL.SP_CONTENT_TYPE, contentType);
         }
         return properties;
     }
@@ -92,7 +95,16 @@ public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSeq
 
     @Override
     public String slice(int startOffset, int endOffset) {
-        return source.substring(startOffset, endOffset);
+        try {
+            return source.substring(startOffset, endOffset);
+        } catch (Exception e) {
+            // TODO
+            System.err.println("Offset = " + offset);
+            System.err.println("Source length = " + source.length());
+            System.err.println("Source = " + source);
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @Override

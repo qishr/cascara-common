@@ -28,29 +28,29 @@ public class IpcConfig {
     private long ipcServerPid;
     private boolean ipcDebug;
     private String ipcSerializer;
-
+    private static Class<?> serializerClass;
 
     @Nullable
     public static Serializer<?> createSerializer() {
-        Serializer<?> serializer = null;
-        try {
-            serializer = new ProcessorFactory().createSerializer(SERIALIZATION_FORMAT);
-        } catch (ServiceException e) {
-        }
-        if (serializer == null) {
+        if (serializerClass == null) {
             try {
-                Class<?> serializerClass = Class.forName(IpcConfig.SERIALIZER_CLASS);
-                SPL layer = SPL.getRoot();
-                layer.registerClass(serializerClass);
-                serializer = new ProcessorFactory(layer).createSerializer(SERIALIZATION_FORMAT);
-
-            } catch (ClassNotFoundException e) {
-                // TODO Auto-generated catch block
-                // e.printStackTrace();
-                // throw new LocalizableRuntimeException(e, GenericMessage.ERROR, e.getMessage());
-            }
+                return new ProcessorFactory().createSerializer(SERIALIZATION_FORMAT);
+            } catch (ServiceException e) {}
         }
-        return serializer;
+
+        // If SPL auto-discovery is disabled, this will stil work if the
+        // JSON module is on the module path and it doesn't violate
+        // the SPL Signature Policy.
+        try {
+            SPL layer = SPL.getRoot();
+            if (serializerClass == null) {
+                serializerClass = Class.forName(IpcConfig.SERIALIZER_CLASS);
+                layer.registerClass(serializerClass);
+            }
+            return new ProcessorFactory(layer).createSerializer(SERIALIZATION_FORMAT);
+        } catch (ClassNotFoundException e) {}
+
+        return null;
     }
 
     public void set(String header) {

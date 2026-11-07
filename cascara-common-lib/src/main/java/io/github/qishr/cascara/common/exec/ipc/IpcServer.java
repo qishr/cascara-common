@@ -72,7 +72,7 @@ public class IpcServer implements AutoCloseable {
     private static final Reporter REPORTER = Reporter.forClass(IpcServer.class);
 
     private Path socketPath;
-    private Serializer<?> serializer;
+    // private Serializer<?> serializer;
     private ServerSocketChannel serverChannel;
     private final ConcurrentHashMap<String, List<Object>> payloadsByType = new ConcurrentHashMap<>();
     private final Phaser activeConnections = new Phaser(1); // 1 registered for the server itself
@@ -105,7 +105,9 @@ public class IpcServer implements AutoCloseable {
         UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
         this.serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
         this.serverChannel.bind(address);
-        this.serializer = IpcConfig.createSerializer();
+
+        // serializer = IpcConfig.createSerializer();
+
         listenAsync();
         return this;
     }
@@ -183,6 +185,11 @@ public class IpcServer implements AutoCloseable {
              BufferedReader reader = new BufferedReader(
                  Channels.newReader(clientChannel, StandardCharsets.UTF_8))) {
 
+            Serializer<?>  serializer = IpcConfig.createSerializer();
+            if (serializer == null) {
+                throw new ExecutionException(ExecutionMessage.NO_DESERIALIZER);
+            }
+
             // Send server PID etc in the IPC handshake header
             IpcConfig config = new IpcConfig();
             config.setVersion(Cascara.instance().getVersion());
@@ -220,6 +227,8 @@ public class IpcServer implements AutoCloseable {
                         ReportWriter writer = REPORTER.getWriter(Level.ERROR);
                         writer.write(2, payloadJson);
 
+                        e.printStackTrace();
+
                         // This will close the connection and the client will
                         // output future diagnostics to System.err.
                         // Should this be optional?
@@ -247,6 +256,7 @@ public class IpcServer implements AutoCloseable {
                         .computeIfAbsent(className, k -> new CopyOnWriteArrayList<>())
                         .add(payload);
                 } catch (ClassNotFoundException e) {
+                    // TODO all the other related exceptions
                     throw new ExecutionException(e, GenericMessage.NO_CLASS_DEF_FOUND_ERROR, className);
                 } finally {}
             }

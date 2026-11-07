@@ -1,18 +1,18 @@
 package io.github.qishr.cascara.common.diagnostic.exception;
 
+import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public class LocalizableInstantiationException extends InstantiationException implements LocalizableException {
-
-    private final DiagnosticMessage diagnosticMessage;
-    private final Object[] details;
     private final Throwable cause;
+    private final Class<?> targetClass;
+    private final DetailedMessage detailedMessage;
 
-    public LocalizableInstantiationException(Throwable cause, Class<?> cls) {
-        super(LocalizableException.formatMessage(DiagnosticMessage.forException(cause), new Object[]{cls}));
+    public LocalizableInstantiationException(Throwable cause, Class<?> targetClass) {
+        super(LocalizableException.formatMessage(DetailedMessage.forException(cause)));
         this.cause = cause;
-        this.diagnosticMessage = DiagnosticMessage.forException(cause);
-        this.details = new Object[]{cls};
+        this.targetClass = targetClass;
+        this.detailedMessage = DetailedMessage.forException(cause);
     }
 
     @Override
@@ -20,18 +20,23 @@ public class LocalizableInstantiationException extends InstantiationException im
         return cause;
     }
 
+    // TODO: Change this to return LocalizableMessage or DetailedMessage
     @Override
     public DiagnosticMessage getDiagnosticMessage() {
-		return diagnosticMessage;
+		// return diagnosticMessage;
+        if (detailedMessage.getMessage() instanceof DiagnosticMessage dm) {
+            return dm;
+        }
+        return null;
 	}
 
     @Override
 	public Object[] getDetails() {
-		return details;
+		return detailedMessage.getDetails();
 	}
 
     @Override
     public String getLocalizedMessage() {
-        return LocalizableException.formatMessage(diagnosticMessage, details);
+        return LocalizableException.formatMessage(detailedMessage);
     }
 }

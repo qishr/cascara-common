@@ -39,10 +39,12 @@ import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ServiceConfigurationError;
 
-public interface DiagnosticMessage {
-    String name();
-    String getCode();
-    String getFormat();
+import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
+
+public interface DiagnosticMessage extends LocalizableMessage {
+    // String name();
+    // String getCode();
+    // String getFormat();
 
     static DiagnosticMessage forException(Throwable t) {
         if (t instanceof InstantiationException) {
@@ -75,6 +77,8 @@ public interface DiagnosticMessage {
         else if (t instanceof AbstractMethodError) {
             return GenericMessage.ABSTRACT_METHOD_ERROR;
         }
+
+
         // NoClassDefFoundError - when trying to load in the definition of a class and no definition of the class could be found.
         else if (t instanceof NoClassDefFoundError) {
             return GenericMessage.NO_CLASS_DEF_FOUND_ERROR;
@@ -82,6 +86,8 @@ public interface DiagnosticMessage {
         else if (t instanceof ClassNotFoundException) {
             return GenericMessage.NO_CLASS_DEF_FOUND_ERROR;
         }
+
+
         // ServiceConfigurationError - when something goes wrong while locating, loading, or instantiating a service provider.
         else if (t instanceof ServiceConfigurationError) {
             return GenericMessage.SERVICE_CONFIG_ERROR;
@@ -91,9 +97,6 @@ public interface DiagnosticMessage {
         }
         else if (t instanceof IllegalAccessException) {
             return GenericMessage.ILLEGAL_ACCESS_EXCEPTION;
-        }
-        else if (t instanceof ExceptionInInitializerError) {
-            return GenericMessage.EXCEPTION_IN_INITIALIZER;
         }
         else if (t instanceof UnsatisfiedLinkError) {
             return GenericMessage.UNSATISFIED_LINK_ERROR;

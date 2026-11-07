@@ -45,7 +45,7 @@ public enum ServiceMessage implements DiagnosticMessage {
     FAILED_TO_REGISTER_MODULE("SPL-201", "Failed to register {0} module: {1}"),
 
     NOARGS_CONSTRUCTOR_REQUIRED("SPL-301", "Class {0} has no no-args constructor"),
-    FAILED_TO_INSTANTIATE_CLASS("SPL-302", "Failed to instantiate class {0}: {1}"),
+    FAILED_TO_INSTANTIATE_CLASS("SPL-302", "Failed to instantiate class: {0}"),
     CLASS_NOT_FOUND("SPL-304", "Class {0} was not found"),
     FAILED_TO_READ_JAR("SPL-305", "Failed to read Jar \"{0}\": {1}"),
     NON_MODULAR_JAR("SPL-306", "Jar \"{0}\" does not contain a module"),
