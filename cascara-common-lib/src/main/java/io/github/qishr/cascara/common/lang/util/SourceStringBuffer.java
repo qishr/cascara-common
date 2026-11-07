@@ -55,10 +55,7 @@ public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSeq
     private int windowStartOffset = 0;
     private int windowStartLine = 1;
     private int windowStartColumn = 1;
-    // private byte[] raw;
     private char previous;
-
-    // TODO: Check thread name, exception on concurrent access
 
     public SourceStringBuffer() {
     }
@@ -95,16 +92,7 @@ public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSeq
 
     @Override
     public String slice(int startOffset, int endOffset) {
-        try {
-            return source.substring(startOffset, endOffset);
-        } catch (Exception e) {
-            // TODO
-            System.err.println("Offset = " + offset);
-            System.err.println("Source length = " + source.length());
-            System.err.println("Source = " + source);
-            e.printStackTrace();
-            throw e;
-        }
+        return source.substring(startOffset, endOffset);
     }
 
     @Override
@@ -128,17 +116,7 @@ public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSeq
             return '\0';
         }
         previous = peek();
-        char c;
-        try {
-            c = source.charAt(offset++);
-        } catch (Exception e) {
-            // TODO
-            System.err.println("Offset = " + offset);
-            System.err.println("Source length = " + source.length());
-            System.err.println("Source = " + source);
-            e.printStackTrace();
-            throw e;
-        }
+        char c = source.charAt(offset++);
         if (c == '\n') {
             line++;
             column = 1;
@@ -157,17 +135,7 @@ public class SourceStringBuffer implements SourceBuffer, LexemeProvider, CharSeq
     @Override
     public char peek() {
         if (isAtEnd()) return '\0';
-        // return source.charAt(offset);
-        try {
-            return source.charAt(offset);
-        } catch (Exception e) {
-            // TODO
-            System.err.println("Offset = " + offset);
-            System.err.println("Source length = " + source.length());
-            System.err.println("Source = " + source);
-            e.printStackTrace();
-            throw e;
-        }
+        return source.charAt(offset);
     }
 
     @Override
