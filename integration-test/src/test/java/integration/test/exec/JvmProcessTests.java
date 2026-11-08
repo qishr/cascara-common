@@ -59,47 +59,6 @@ public class JvmProcessTests extends ExecTestBase {
     }
 
     @Test
-    void test_JvmProcess_withIPC_old() throws Throwable {
-        Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
-        String json = serializer.toString("hello-isolated-world");
-
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
-
-        // IpcServer ipcServer = IpcServer.start(true, false);
-        IpcServer ipcServer = new IpcServer()
-            .setDiagnosticForwarding(true)
-            .setIpcDebug(false)
-            .start();
-
-        Class<?> taskClass = GlobalReporterTestTask.class;
-
-        String classKey = "CASCARA_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
-
-        JvmOptions options = new JvmOptions()
-            .setTimeout(Duration.ofHours(24))
-            .setModuleName(taskClass.getModule().getName())
-            .setModulePath(getModulePath())
-            .setDebug(PROCESS_DEBUG_ENABLED)
-            .setEnv(classKey, "DEBUG")
-            .setSystemProperty("cascara.report.level." + taskClass.getName(), "DEBUG")
-            .setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
-
-        // Run sub-JVM process...
-        JvmProcess.Response response = JvmProcess.forClass(taskClass).setOptions(options).run(json);
-        ipcServer.close();
-
-        GlobalReporter.globalInstance().setSystemOutputEnabled(true);
-        debug(response);
-
-        // Fetch diagnostics
-        List<Diagnostic> diagnostics = ipcServer.getMessages(Diagnostic.class);
-
-        assertFalse(diagnostics.isEmpty());
-        Diagnostic diagnostic = diagnostics.getFirst();
-        assertEquals("hello-isolated-world", diagnostic.getFormattedMessage());
-    }
-
-    @Test
     void test_JvmProcess_withIPC() throws Throwable {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString("hello-isolated-world");
