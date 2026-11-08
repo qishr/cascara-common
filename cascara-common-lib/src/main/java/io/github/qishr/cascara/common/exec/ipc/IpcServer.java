@@ -84,8 +84,7 @@ public class IpcServer implements AutoCloseable {
     private boolean ipcDebug;
     private AtomicReference<Throwable> clientException = new AtomicReference<>();
 
-    public IpcServer() {
-    }
+    public IpcServer() {}
 
     public IpcServer setDiagnosticForwarding(boolean enabled) {
         this.diagnosticForwarding = enabled;
@@ -107,6 +106,12 @@ public class IpcServer implements AutoCloseable {
         return this;
     }
 
+    /// Start listening for client connections.
+    ///
+    /// @throws IpcSxception for either of:
+    ///         - Failed to create temporary file for socket
+    ///         - Failed to open socket channel
+    ///         - Failed to bind address
     public IpcServer start() throws IpcException {
         try {
             socketPath = Files.createTempFile("cascara-ipc-", ".sock");
@@ -145,6 +150,11 @@ public class IpcServer implements AutoCloseable {
         return result;
     }
 
+    /// Close server socket.
+    ///
+    /// @throws IpcException for either of:
+    ///         - Error when closing socket
+    ///         - Failed to delete temporary socket file
     @Override
     public void close() throws IpcException {
         try {
@@ -237,7 +247,7 @@ public class IpcServer implements AutoCloseable {
             config.setVersion(Cascara.instance().getVersion());
             config.setIpcServerPid(ProcessHandle.current().pid());
             config.setIpcDebug(ipcDebug);
-            config.setIpcSerializer(serializer.getClass().getName());
+            config.setPropIpcSerializer(serializer.getClass().getName());
             String header = config.toString() + IpcConfig.HEADER_SEPARATOR + "\n";
             ByteBuffer buffer = ByteBuffer.wrap(header.getBytes(StandardCharsets.UTF_8));
             while (buffer.hasRemaining()) {

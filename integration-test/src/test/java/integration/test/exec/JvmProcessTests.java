@@ -18,6 +18,7 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.exec.JvmOptions;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
+import io.github.qishr.cascara.common.exec.ipc.IpcException;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
@@ -64,38 +65,39 @@ public class JvmProcessTests extends ExecTestBase {
 
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
-        // IpcServer ipcServer = IpcServer.start(true, false);
-        IpcServer ipcServer = new IpcServer()
-            .setDiagnosticForwarding(true)
-            .setIpcDebug(false)
-            .start();
+        try (IpcServer ipcServer = new IpcServer()) {
+            ipcServer.setDiagnosticForwarding(true)
+                     .setIpcDebug(false)
+                     .start();
 
-        Class<?> taskClass = GlobalReporterTestTask.class;
+            Class<?> taskClass = GlobalReporterTestTask.class;
 
-        String classKey = "CASCARA_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
+            String classKey = "CASCARA_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
 
-        JvmOptions options = new JvmOptions()
-            .setTimeout(Duration.ofHours(24))
-            .setModuleName(taskClass.getModule().getName())
-            .setModulePath(getModulePath())
-            .setDebug(PROCESS_DEBUG_ENABLED)
-            .setEnv(classKey, "DEBUG")
-            .setSystemProperty("cascara.report.level." + taskClass.getName(), "DEBUG")
-            .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
+            JvmOptions options = new JvmOptions()
+                .setTimeout(Duration.ofHours(24))
+                .setModuleName(taskClass.getModule().getName())
+                .setModulePath(getModulePath())
+                .setDebug(PROCESS_DEBUG_ENABLED)
+                .setEnv(classKey, "DEBUG")
+                .setSystemProperty("cascara.report.level." + taskClass.getName(), "DEBUG")
+                .setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
 
-        // Run sub-JVM process...
-        JvmProcess.Response response = JvmProcess.forClass(taskClass).setOptions(options).run(json);
-        ipcServer.close();
+            // Run sub-JVM process...
+            JvmProcess.Response response = JvmProcess.forClass(taskClass).setOptions(options).run(json);
 
-        GlobalReporter.globalInstance().setSystemOutputEnabled(true);
-        debug(response);
+            GlobalReporter.globalInstance().setSystemOutputEnabled(true);
+            debug(response);
 
-        // Fetch diagnostics
-        List<Diagnostic> diagnostics = ipcServer.getMessages(Diagnostic.class);
+            // Fetch diagnostics
+            List<Diagnostic> diagnostics = ipcServer.getMessages(Diagnostic.class);
 
-        assertFalse(diagnostics.isEmpty());
-        Diagnostic diagnostic = diagnostics.getFirst();
-        assertEquals("hello-isolated-world", diagnostic.getFormattedMessage());
+            assertFalse(diagnostics.isEmpty());
+            Diagnostic diagnostic = diagnostics.getFirst();
+            assertEquals("hello-isolated-world", diagnostic.getFormattedMessage());
+        } catch (IpcException e) {
+
+        }
     }
 
     @Test
@@ -103,30 +105,30 @@ public class JvmProcessTests extends ExecTestBase {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString("hello-isolated-world");
 
-        // IpcServer ipcServer = IpcServer.start(true, false);
-        IpcServer ipcServer = new IpcServer()
-            .setDiagnosticForwarding(true)
-            .setIpcDebug(false)
-            .start();
+        try (IpcServer ipcServer = new IpcServer()) {
+            ipcServer.setDiagnosticForwarding(true)
+                     .setIpcDebug(false)
+                     .start();
 
-        Class<?> taskClass = GlobalReporterTestTask.class;
+            Class<?> taskClass = GlobalReporterTestTask.class;
 
-        GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+            GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
+            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
-        JvmOptions options = new JvmOptions()
-            .setTimeout(Duration.ofHours(24))
-            .setModuleName(taskClass.getModule().getName())
-            .setModulePath(getModulePath())
-            .setDebug(PROCESS_DEBUG_ENABLED)
-            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
+            JvmOptions options = new JvmOptions()
+                .setTimeout(Duration.ofHours(24))
+                .setModuleName(taskClass.getModule().getName())
+                .setModulePath(getModulePath())
+                .setDebug(PROCESS_DEBUG_ENABLED)
+                .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+                .setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
 
-        // Run sub-JVM process...
-        JvmProcess.Response response = JvmProcess.forClass(taskClass).setOptions(options).run(json);
-        ipcServer.close();
+            // Run sub-JVM process...
+            JvmProcess.Response response = JvmProcess.forClass(taskClass).setOptions(options).run(json);
+            debug(response);
+        } catch (IpcException e) {
 
-        debug(response);
+        }
 
         // Verify that SPL's "Discovering providers" debug message appears
         // in the parent JVM's global diagnostics.

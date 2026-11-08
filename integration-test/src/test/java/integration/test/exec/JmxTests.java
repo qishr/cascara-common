@@ -41,6 +41,7 @@ public class JmxTests extends JmxTestBase {
 
     }
 
+    @SuppressWarnings("resource")
     @Disabled
     @Test
     void test_JMX() throws Throwable {
@@ -73,8 +74,8 @@ public class JmxTests extends JmxTestBase {
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
             .setSystemProperty("cascara.report.level." + taskClass.getName(), "DEBUG")
-            .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
-            // .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
+            .setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString())
+            // .setSystemProperty(IpcClient.PROP_DEBUG, String.valueOf(ipcDebug))
             .setEnv("CASCARA_HOME", getPhysicalHomePath());
 
         // Run sub-JVM process...

@@ -16,11 +16,11 @@ public class IpcConfig {
 
     public static final String VERSION = "cascara.version";
 
-    public static final String IPC_SERVER_PID = "cascara.ipc.server.pid";
+    public static final String PROP_IPC_SERVER_PID = "cascara.ipc.server.pid";
 
-    public static final String DEBUG_PROP = "cascara.ipc.debug";
+    public static final String PROP_DEBUG = "cascara.ipc.debug";
 
-    public static final String IPC_SERIALIZER = "cascara.ipc.serializer";
+    public static final String PROP_IPC_SERIALIZER = "cascara.ipc.serializer";
 
     private static final String NL = "\n";
 
@@ -68,13 +68,13 @@ public class IpcConfig {
             case VERSION:
                 version = new SemVer(value);
                 break;
-            case IPC_SERVER_PID:
+            case PROP_IPC_SERVER_PID:
                 ipcServerPid = Long.parseLong(value);
                 break;
-            case DEBUG_PROP:
+            case PROP_DEBUG:
                 ipcDebug = !("false".equalsIgnoreCase(value));
                 break;
-            case IPC_SERIALIZER:
+            case PROP_IPC_SERIALIZER:
                 ipcSerializer = value;
                 break;
         }
@@ -82,10 +82,10 @@ public class IpcConfig {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(VERSION)       .append(":").append(version)      .append(NL);
-        sb.append(IPC_SERVER_PID).append(":").append(ipcServerPid) .append(NL);
-        sb.append(DEBUG_PROP)    .append(":").append(ipcDebug)     .append(NL);
-        sb.append(IPC_SERIALIZER).append(":").append(ipcSerializer).append(NL);
+        sb.append(VERSION)              .append(":").append(version)      .append(NL);
+        sb.append(PROP_IPC_SERVER_PID)  .append(":").append(ipcServerPid) .append(NL);
+        sb.append(PROP_DEBUG)           .append(":").append(ipcDebug)     .append(NL);
+        sb.append(PROP_IPC_SERIALIZER)  .append(":").append(ipcSerializer).append(NL);
         return sb.toString();
     }
 
@@ -117,7 +117,7 @@ public class IpcConfig {
         return ipcSerializer;
     }
 
-    public void setIpcSerializer(String v) {
+    public void setPropIpcSerializer(String v) {
         ipcSerializer = v;
     }
 }

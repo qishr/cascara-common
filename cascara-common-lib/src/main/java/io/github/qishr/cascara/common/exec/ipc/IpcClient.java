@@ -49,7 +49,7 @@ import io.github.qishr.cascara.common.exec.ExecutionMessage;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 public final class IpcClient implements AutoCloseable {
-    public static final String SOCKET_PROP = "cascara.ipc.socket";
+    public static final String PROP_IPC_SOCKET = "cascara.ipc.socket";
 
     private IpcConfig config;
     private final SocketChannel channel;
@@ -64,7 +64,7 @@ public final class IpcClient implements AutoCloseable {
     }
 
     public static IpcClient tryConnect(Serializer<?> serializer) {
-        String socketPathStr = System.getProperty(SOCKET_PROP);
+        String socketPathStr = System.getProperty(PROP_IPC_SOCKET);
         if (socketPathStr == null || socketPathStr.isBlank()) {
             return null;
         }

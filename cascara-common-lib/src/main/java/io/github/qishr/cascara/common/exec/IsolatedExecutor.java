@@ -126,33 +126,33 @@ public class IsolatedExecutor {
         T taskResponse;
         JvmProcess.Response jvmResponse;
 
-        IpcServer ipcServer;
-        try {
-            ipcServer = new IpcServer()
+        Throwable clientException = null;
+        try (IpcServer ipcServer = new IpcServer()) {
+            ipcServer
                 .setExceptionForwarding(exceptionForwarding)
                 .setDiagnosticForwarding(diagnosticForwarding)
                 .setFilterDiagnosticsByLevel(filterDiagnosticsByLevel)
-                .setIpcDebug(ipcDebug)
-                .start();
+                .setIpcDebug(ipcDebug);
 
-            options.setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
+            ipcServer.start();
+
+            options.setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
             jvmProcess.setOptions(options);
 
             jvmResponse = jvmProcess.run(json);
 
-            ipcServer.close();
+            clientException = ipcServer.getClientException();
+            diagnostics = ipcServer.getMessages(Diagnostic.class);
 
             Class<T> targetClass = (Class<T>) responseClass;
             List<T> outputs = ipcServer.getMessages(targetClass);
             taskResponse = outputs.isEmpty() ? null : outputs.getFirst();
 
-            diagnostics = ipcServer.getMessages(Diagnostic.class);
         } catch (IpcException e) {
             throw new ExecutionException(e, ExecutionMessage.DIAGNOSTIC_SERVER_FAILED, task.getName());
         }
 
         if (exceptionForwarding) {
-            Throwable clientException = ipcServer.getClientException();
             if (clientException instanceof SerializedThrowable st) {
                 throw st.recreateOriginal();
             }

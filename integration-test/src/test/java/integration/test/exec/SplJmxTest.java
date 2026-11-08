@@ -93,6 +93,7 @@ public class SplJmxTest extends JmxTestBase {
         syncVfs();
 
         // IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+        @SuppressWarnings("resource")
         IpcServer ipcServer = new IpcServer()
             .setDiagnosticForwarding(true)
             .setIpcDebug(ipcDebug)
@@ -106,11 +107,11 @@ public class SplJmxTest extends JmxTestBase {
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
 
-            // .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
+            // .setSystemProperty(IpcClient.PROP_DEBUG, String.valueOf(ipcDebug))
 
             .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
             .setSystemProperty("cascara.report.level." + taskClass.getName(), "DEBUG")
-            .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
+            .setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString())
             .setEnv("CASCARA_HOME", getPhysicalHomePath());
 
         AtomicBoolean finished = new AtomicBoolean(false);
@@ -203,6 +204,7 @@ public class SplJmxTest extends JmxTestBase {
         syncVfs();
 
         // IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+        @SuppressWarnings("resource")
         IpcServer ipcServer = new IpcServer()
             .setDiagnosticForwarding(true)
             .setIpcDebug(ipcDebug)
@@ -215,8 +217,8 @@ public class SplJmxTest extends JmxTestBase {
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
-            // .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
-            .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
+            // .setSystemProperty(IpcClient.PROP_DEBUG, String.valueOf(ipcDebug))
+            .setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString())
             .setEnv("CASCARA_HOME", getPhysicalHomePath());
 
         AtomicBoolean finished = new AtomicBoolean(false);
