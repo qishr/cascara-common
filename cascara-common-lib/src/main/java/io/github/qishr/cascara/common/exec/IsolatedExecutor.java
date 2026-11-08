@@ -141,6 +141,8 @@ public class IsolatedExecutor {
 
             jvmResponse = jvmProcess.run(json);
 
+            ipcServer.close();
+
             clientException = ipcServer.getClientException();
             diagnostics = ipcServer.getMessages(Diagnostic.class);
 
