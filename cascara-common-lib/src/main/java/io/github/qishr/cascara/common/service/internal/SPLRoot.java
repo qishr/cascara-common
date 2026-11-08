@@ -169,11 +169,8 @@ public class SPLRoot extends SPLBranch {
 
         try {
             contentTypeStore = SPL.load(ContentTypeResolver.class);
-            // TODO: use addAll
             if (contentTypeStore != null) {
-                for (ContentType contentType : contentTypes) {
-                    contentTypeStore.add(contentType);
-                }
+                contentTypeStore.addAll(contentTypes);
             }
         } catch (ServiceException e) {
             // Ignore

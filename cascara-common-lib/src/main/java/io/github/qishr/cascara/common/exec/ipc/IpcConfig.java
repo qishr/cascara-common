@@ -32,23 +32,39 @@ public class IpcConfig {
 
     @Nullable
     public static Serializer<?> createSerializer() {
+        Serializer<?> s;
+        System.err.println("0");
         if (serializerClass == null) {
             try {
-                return new ProcessorFactory().createSerializer(SERIALIZATION_FORMAT);
-            } catch (ServiceException e) {}
+                s = new ProcessorFactory().createSerializer(SERIALIZATION_FORMAT);
+                if (s != null) {
+                    return s;
+                }
+            } catch (ServiceException e) {
+                e.printStackTrace(); // TODO: Remove this
+            }
         }
+        System.err.println("2");
 
         // If SPL auto-discovery is disabled, this will stil work if the
         // JSON module is on the module path and it doesn't violate
         // the SPL Signature Policy.
         try {
+            System.err.println("3");
             SPL layer = SPL.getRoot();
             if (serializerClass == null) {
+                System.err.println("4");
                 serializerClass = Class.forName(IpcConfig.SERIALIZER_CLASS);
                 layer.registerClass(serializerClass);
             }
-            return new ProcessorFactory(layer).createSerializer(SERIALIZATION_FORMAT);
-        } catch (ClassNotFoundException e) {}
+            System.err.println("5");
+            s = new ProcessorFactory(layer).createSerializer(SERIALIZATION_FORMAT);
+            System.err.println("6:" + s);
+
+            return s;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace(); // TODO: Remove this
+        }
 
         return null;
     }
