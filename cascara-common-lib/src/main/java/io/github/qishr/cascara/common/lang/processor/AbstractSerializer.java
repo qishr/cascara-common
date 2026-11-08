@@ -1160,9 +1160,33 @@ public abstract class AbstractSerializer<
     // Setup
     //
 
+    boolean allowConcurrentUse;
+    long initialThreadId = -1;
+    String initialThreadName;
+
+
+    /// Called before each serialize or deserialize operation
     protected void setupSerializer() {
         depth = 0;
         previousWarnings = new HashSet<>();
+
+
+        // TODO: Concurrency check
+        long threadId = Thread.currentThread().threadId();
+
+        if (initialThreadId == -1) {
+            initialThreadId = threadId;
+            initialThreadName = Thread.currentThread().getName();
+        } else {
+            if (!allowConcurrentUse && threadId != initialThreadId) {
+                throw new SerializerException(
+                    LangMessage.CONCURRENT_USE,
+                    initialThreadId +" ("+initialThreadName + ")",
+                    threadId +" ("+ Thread.currentThread().getName() +")"
+                );
+            }
+        }
+
     }
 
     @NonNull

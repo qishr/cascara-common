@@ -68,6 +68,7 @@ public enum LangMessage implements DiagnosticMessage {
     AST_FACTORY_FAIL_MAP("LANG-321", "AST factory failed to create map"),
     AST_FACTORY_FAIL_SEQUENCE("LANG-322", "AST factory failed to create sequence"),
     AST_FACTORY_FAIL_KEY("LANG-323", "AST factory failed to create key"),
+    CONCURRENT_USE("LANG-324", "Serializer created on {0} and used on {1}"),
 
     UNKNOWN_GENERIC_TYPE("LANG-501", "Could not resolve generic type argument for {0}");
 
