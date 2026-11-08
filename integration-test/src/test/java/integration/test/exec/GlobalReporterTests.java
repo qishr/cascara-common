@@ -34,7 +34,7 @@ public class GlobalReporterTests extends ExecTestBase {
     void test_debugLevel() throws Throwable {
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
-        String classKey = "CASC_REPORT_LEVEL_" + GlobalReporterTestTask.class.getName().replace('.', '_').toUpperCase();
+        String classKey = "CASCARA_REPORT_LEVEL_" + GlobalReporterTestTask.class.getName().replace('.', '_').toUpperCase();
 
         JvmOptions options = new JvmOptions()
             .setEnv(classKey, "DEBUG")

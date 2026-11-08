@@ -31,7 +31,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
         exec.setOptions(new JvmOptions()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
-            .setEnv("CASC_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
+            .setEnv("CASCARA_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 
@@ -53,7 +53,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
             new JvmOptions()
                 .setModuleName(GlobalReporterTestTask.class.getModule().getName())
                 .setModulePath(getModulePath())
-                .setEnv("CASC_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
+                .setEnv("CASCARA_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
                 .setTimeout(Duration.ofSeconds(20))
                 .setDebug(PROCESS_DEBUG_ENABLED)
         );

@@ -65,8 +65,8 @@ import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public class GlobalReporter extends AbstractReporter<GlobalReporter> {
-    private static final String PROP_CASC_REPORT_LEVEL = "casc.report.level.";
-    private static final String ENV_CASC_REPORT_LEVEL = "CASC_REPORT_LEVEL_";
+    private static final String PROP_CASCARA_REPORT_LEVEL = "cascara.report.level.";
+    private static final String ENV_CASCARA_REPORT_LEVEL = "CASCARA_REPORT_LEVEL_";
 
     public static final String SERIALIZATION_FORMAT = "application/json";
 
@@ -95,29 +95,29 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         lineLogger.setFormatOptions(formatOptions);
 
         // TODO:
-        // CASC_REPORT_CONFIG=/path/
+        // CASCARA_REPORT_CONFIG=/path/
 
 
         // This will only ever be used by apps like Studio.
         // Tests will always use a new JvmProcess and set reporting options with -D
-        // CASC_REPORT_ALLOW_API_OVERRIDE=true
-        String allowApiOverride = System.getenv("CASC_REPORT_ALLOW_API_OVERRIDE");
+        // CASCARA_REPORT_ALLOW_API_OVERRIDE=true
+        String allowApiOverride = System.getenv("CASCARA_REPORT_ALLOW_API_OVERRIDE");
         this.allowApiOverride = (allowApiOverride != null && allowApiOverride.equalsIgnoreCase("true"));
 
         // System properties...
-        // -Dcasc.report.config=
-        // -Dcasc.report.level.fqcn=
+        // -Dcascara.report.config=
+        // -Dcascara.report.level.fqcn=
         Properties systemProperties = Properties.fromSystemProperties();
         setLevels(systemProperties);
 
         // System environment...
-        // CASC_REPORT_LEVEL_*
-        // CASC_REPORT_LEVEL_COM_FOO=DEBUG
+        // CASCARA_REPORT_LEVEL_*
+        // CASCARA_REPORT_LEVEL_COM_FOO=DEBUG
         Map<String,String> env = System.getenv();
         for (Entry<String, String> entry : env.entrySet()) {
             String name = String.valueOf(entry.getKey());
-            if (name.startsWith(ENV_CASC_REPORT_LEVEL)) {
-                String uppercaseClassName = name.substring(ENV_CASC_REPORT_LEVEL.length());
+            if (name.startsWith(ENV_CASCARA_REPORT_LEVEL)) {
+                String uppercaseClassName = name.substring(ENV_CASCARA_REPORT_LEVEL.length());
                 Level level = Level.valueOf(entry.getValue());
                 if (level != null) {
                     // System.out.println("GR-INIT: " + uppercaseClassName + " " + level);
@@ -217,8 +217,8 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     public GlobalReporter setLevels(Properties properties) {
         for (Property<?> property : properties) {
             String propertyName = property.getName();
-            if (propertyName.startsWith(PROP_CASC_REPORT_LEVEL)) {
-                String fqcn = propertyName.substring(PROP_CASC_REPORT_LEVEL.length());
+            if (propertyName.startsWith(PROP_CASCARA_REPORT_LEVEL)) {
+                String fqcn = propertyName.substring(PROP_CASCARA_REPORT_LEVEL.length());
                 Level level = Level.valueOf(property.asString());
                 if (level != null) {
                     setLevelInternal(fqcn, level);

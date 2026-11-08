@@ -102,7 +102,7 @@ public class GlobalReporterTests {
 
         Properties properties = new Properties()
             .add(new StringProperty(
-                "casc.report.level." + GlobalReporterTests.class.getName(),
+                "cascara.report.level." + GlobalReporterTests.class.getName(),
                 "DEBUG"));
 
         GlobalReporter.globalInstance().setLevels(properties);
@@ -126,7 +126,7 @@ public class GlobalReporterTests {
         List<String> lines = new ArrayList<>();
         GlobalReporter.globalInstance().setLineConsumer(lines::add);
 
-        String key = "casc.report.level." + GlobalReporterTests.class.getName();
+        String key = "cascara.report.level." + GlobalReporterTests.class.getName();
         System.setProperty(key, "DEBUG");
 
         try {
@@ -146,7 +146,7 @@ public class GlobalReporterTests {
     void test_environmentVariableConfiguration() {
         List<String> lines = new ArrayList<>();
 
-        String key = "CASC_REPORT_LEVEL_" + GlobalReporterTests.class.getName().replace('.', '_').toUpperCase();
+        String key = "CASCARA_REPORT_LEVEL_" + GlobalReporterTests.class.getName().replace('.', '_').toUpperCase();
         setEnv(key, "DEBUG");
 
         GlobalReporter.globalInstance().setLineConsumer(lines::add);

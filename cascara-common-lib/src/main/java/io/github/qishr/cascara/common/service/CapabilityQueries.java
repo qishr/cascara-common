@@ -107,15 +107,6 @@ public class CapabilityQueries {
             } else {
                 return false;
             }
-            // Class<?> capabilityType;
-            // try {
-            //     // TODO: For performance, have Properties be able to return the Class<?> instead of a string
-            //     //    Since we changed Properties predicate to ServiceMetadata, it probably has this
-            //     capabilityType = capTypeString == null ? null : Class.forName(capTypeString);
-            // } catch (ClassNotFoundException e) {
-            //     return false;
-            // }
-            // return (capabilityType == null || capabilityType.isAssignableFrom(jvmType));
         };
     }
 

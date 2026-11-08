@@ -79,8 +79,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setSystemProperty(SPL.CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
             .setSystemProperty(SPL.CASCARA_SPL_VERIFY, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
-            .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("casc.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 
@@ -122,8 +122,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setSystemProperty(SPL.CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
             .setSystemProperty(SPL.CASCARA_SPL_VERIFY, "false")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
-            .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("casc.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 
@@ -181,11 +181,11 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setSystemProperty(SPL.CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
             .setSystemProperty(SPL.CASCARA_SPL_VERIFY, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
-            .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("casc.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED)
-            .setEnv("CASC_HOME", getPhysicalHomePath()));
+            .setEnv("CASCARA_HOME", getPhysicalHomePath()));
 
         Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
 
@@ -229,8 +229,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_REQUIRE_SIGNED, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASS, "true")
-            .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("casc.report.level." + SplRegisterClassTestTask.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "DEBUG")
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 
@@ -272,8 +272,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_REQUIRE_SIGNED, "true")
             .setSystemProperty(SPL.CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASS, "true")
-            .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("casc.report.level." + SplRegisterClassTestTask.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "DEBUG")
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 

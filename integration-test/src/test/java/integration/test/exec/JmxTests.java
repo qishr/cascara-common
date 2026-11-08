@@ -48,7 +48,7 @@ public class JmxTests extends JmxTestBase {
         GlobalReporter.globalInstance().addLogger(new Log4jLogger());
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
-        REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
+        REPORTER.debug("CASCARA_HOME=" + getPhysicalHomePath());
         syncVfs();
 
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
@@ -72,10 +72,10 @@ public class JmxTests extends JmxTestBase {
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
-            .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + taskClass.getName(), "DEBUG")
             .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
             // .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
-            .setEnv("CASC_HOME", getPhysicalHomePath());
+            .setEnv("CASCARA_HOME", getPhysicalHomePath());
 
         // Run sub-JVM process...
         JvmProcess.forClass(taskClass)

@@ -72,7 +72,7 @@ public class JvmProcessTests extends ExecTestBase {
 
         Class<?> taskClass = GlobalReporterTestTask.class;
 
-        String classKey = "CASC_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
+        String classKey = "CASCARA_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
 
         JvmOptions options = new JvmOptions()
             .setTimeout(Duration.ofHours(24))
@@ -80,7 +80,7 @@ public class JvmProcessTests extends ExecTestBase {
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
             .setEnv(classKey, "DEBUG")
-            .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + taskClass.getName(), "DEBUG")
             .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
 
         // Run sub-JVM process...
@@ -119,7 +119,7 @@ public class JvmProcessTests extends ExecTestBase {
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
-            .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
             .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString());
 
         // Run sub-JVM process...

@@ -112,6 +112,9 @@ public abstract class AbstractSerializer<
     private Context context;
     protected int depth = 0;
     private Set<String> previousWarnings = new HashSet<>();
+    private boolean allowConcurrentUse;
+    private long initialThreadId = -1;
+    private String initialThreadName;
 
     private final DeserializationTargetResolver targetResolver = new DeserializationTargetResolver();
     private final Map<Class<?>,TypeDescriptor<?>> typeDescriptors = new HashMap<>();
@@ -1160,20 +1163,12 @@ public abstract class AbstractSerializer<
     // Setup
     //
 
-    boolean allowConcurrentUse;
-    long initialThreadId = -1;
-    String initialThreadName;
-
-
     /// Called before each serialize or deserialize operation
     protected void setupSerializer() {
         depth = 0;
         previousWarnings = new HashSet<>();
 
-
-        // TODO: Concurrency check
         long threadId = Thread.currentThread().threadId();
-
         if (initialThreadId == -1) {
             initialThreadId = threadId;
             initialThreadName = Thread.currentThread().getName();
@@ -1186,7 +1181,6 @@ public abstract class AbstractSerializer<
                 );
             }
         }
-
     }
 
     @NonNull

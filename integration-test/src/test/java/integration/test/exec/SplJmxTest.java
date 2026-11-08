@@ -73,7 +73,7 @@ public class SplJmxTest extends JmxTestBase {
 
     @Test
     void test_1() throws Throwable {
-        REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
+        REPORTER.debug("CASCARA_HOME=" + getPhysicalHomePath());
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString("hello-isolated-world");
 
@@ -108,10 +108,10 @@ public class SplJmxTest extends JmxTestBase {
 
             // .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
 
-            .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + taskClass.getName(), "DEBUG")
             .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
-            .setEnv("CASC_HOME", getPhysicalHomePath());
+            .setEnv("CASCARA_HOME", getPhysicalHomePath());
 
         AtomicBoolean finished = new AtomicBoolean(false);
 
@@ -189,7 +189,7 @@ public class SplJmxTest extends JmxTestBase {
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
 
-        REPORTER.debug("CASC_HOME=" + getPhysicalHomePath());
+        REPORTER.debug("CASCARA_HOME=" + getPhysicalHomePath());
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString("hello-isolated-world");
 
@@ -217,7 +217,7 @@ public class SplJmxTest extends JmxTestBase {
             .setDebug(PROCESS_DEBUG_ENABLED)
             // .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
             .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
-            .setEnv("CASC_HOME", getPhysicalHomePath());
+            .setEnv("CASCARA_HOME", getPhysicalHomePath());
 
         AtomicBoolean finished = new AtomicBoolean(false);
 
