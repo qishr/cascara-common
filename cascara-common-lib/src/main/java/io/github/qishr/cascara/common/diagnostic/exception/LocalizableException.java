@@ -40,7 +40,6 @@ import java.io.PrintWriter;
 
 import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
 import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 
 public interface LocalizableException {
 
@@ -72,7 +71,7 @@ public interface LocalizableException {
         return AbstractLocalizableException.getLocalizer().format(message, message.getDetails());
     }
 
-    static String formatMessage(DiagnosticMessage message, Object... details) {
+    static String formatMessage(LocalizableMessage message, Object... details) {
         return AbstractLocalizableException.getLocalizer().format(message, details);
     }
 

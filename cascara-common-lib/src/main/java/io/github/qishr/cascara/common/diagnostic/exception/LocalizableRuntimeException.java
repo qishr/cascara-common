@@ -35,31 +35,31 @@
 
 package io.github.qishr.cascara.common.diagnostic.exception;
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
 
 public class LocalizableRuntimeException extends RuntimeException implements LocalizableException {
     // private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
 
-    private final DiagnosticMessage diagnosticMessage;
+    private final LocalizableMessage diagnosticMessage;
     private final Object[] details;
 
     // public static void setLocalizer(DiagnosticLocalizer customLocalizer) {
     //     localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
     // }
 
-    public LocalizableRuntimeException(DiagnosticMessage message, Object... details) {
+    public LocalizableRuntimeException(LocalizableMessage message, Object... details) {
         super(AbstractLocalizableException.getLocalizer().format(message, details));
         this.diagnosticMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
-    public LocalizableRuntimeException(Throwable cause, DiagnosticMessage message, Object... details) {
+    public LocalizableRuntimeException(Throwable cause, LocalizableMessage message, Object... details) {
         super(AbstractLocalizableException.getLocalizer().format(message, details), cause);
         this.diagnosticMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
-	public DiagnosticMessage getLocalizableMessage() {
+	public LocalizableMessage getLocalizableMessage() {
 		return diagnosticMessage;
 	}
 

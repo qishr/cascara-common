@@ -42,7 +42,6 @@ public abstract class TestBase {
 
     @BeforeEach
     protected void setUp() throws IOException {
-        GlobalReporter.globalInstance().setLevel(Level.INFO);
         GlobalReporter.globalInstance().setSystemOutputEnabled(true);
         GlobalReporter.globalInstance().setLineConsumer(null);
         GlobalReporter.globalInstance()
@@ -55,6 +54,8 @@ public abstract class TestBase {
 
     @AfterEach
     protected void tearDown() throws IOException {
+        // Do this here in case a test wants to set SPL level itself
+        GlobalReporter.globalInstance().setLevel(Level.INFO);
     }
 
     protected Path getTempDir() {

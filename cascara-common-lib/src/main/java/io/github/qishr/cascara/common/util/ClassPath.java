@@ -87,9 +87,7 @@ public class ClassPath extends AbstractClassFinder {
             if (pathString.isBlank()) continue;
 
             // Parse path using virtual file system if provided, otherwise default OS file system
-            Path path = (virtualReferencePath != null)
-                    ? virtualReferencePath.getFileSystem().getPath(pathString)
-                    : Path.of(pathString);
+            Path path = getPath(pathString);
 
             if (!Files.exists(path)) {
                 continue;
@@ -123,15 +121,16 @@ public class ClassPath extends AbstractClassFinder {
                 Set<String> discovered = new HashSet<>();
                 for (Path classFile : classFiles.toList()) {
                     if (classFile.toString().endsWith(DOT_CLASS)) {
-                        String relativePath = directory.toUri().relativize(classFile.toUri()).getPath();
-                        String className = relativePath.replace(File.separatorChar, '.').replace(DOT_CLASS, "");
-                        if (!className.equals("module-info")) {
-                            // TODO: Scan class file. Without doing that we miss nested classes.
-                            discovered.add(className);
-                        }
+                        // String relativePath = directory.toUri().relativize(classFile.toUri()).getPath();
+                        // String className = relativePath.replace(File.separatorChar, '.').replace(DOT_CLASS, "");
+                        // if (!className.equals("module-info")) {
+                        //     // TODO: Scan class file. Without doing that we miss nested classes.
+                        //     discovered.add(className);
+                        // }
+                        moduleName = scanClassFile(directory, classFile, classLoader, moduleName, discovered);
                     }
                 }
-                register(discovered, null, null);
+                register(discovered, moduleName, null);
             }
         } catch (IOException e) {
             error(e);

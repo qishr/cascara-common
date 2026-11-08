@@ -36,13 +36,13 @@
 package io.github.qishr.cascara.common.diagnostic.exception;
 
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
 
 public class AbstractLocalizableException extends Exception implements LocalizableException {
 
     private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
 
-    private final DiagnosticMessage diagnosticMessage;
+    private final LocalizableMessage diagnosticMessage;
     private final Object[] details;
 
     public static DiagnosticLocalizer getLocalizer() {
@@ -53,13 +53,13 @@ public class AbstractLocalizableException extends Exception implements Localizab
         localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
     }
 
-    public AbstractLocalizableException(DiagnosticMessage message, Object... details) {
+    public AbstractLocalizableException(LocalizableMessage message, Object... details) {
         super(format(message, details));
         this.diagnosticMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
-    public AbstractLocalizableException(Throwable cause, DiagnosticMessage message, Object... details) {
+    public AbstractLocalizableException(Throwable cause, LocalizableMessage message, Object... details) {
         super(format(message, details));
         this.diagnosticMessage = message;
         this.details = details != null ? details : new Object[0];
@@ -67,7 +67,7 @@ public class AbstractLocalizableException extends Exception implements Localizab
 
     /// Returns a diagnostic error code for the error message.
     @Override
-	public DiagnosticMessage getLocalizableMessage() {
+	public LocalizableMessage getLocalizableMessage() {
 		return diagnosticMessage;
 	}
 
@@ -98,7 +98,7 @@ public class AbstractLocalizableException extends Exception implements Localizab
     }
 
     /// Formats a [DiagnosticMessage] without localizing it.
-    private static String format(DiagnosticMessage message, Object... details) {
+    private static String format(LocalizableMessage message, Object... details) {
         return DiagnosticLocalizer.DEFAULT.format(message, details);
     }
 }

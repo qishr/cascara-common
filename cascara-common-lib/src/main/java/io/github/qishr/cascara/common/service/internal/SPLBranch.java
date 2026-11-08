@@ -339,17 +339,17 @@ public class SPLBranch implements SPL {
                 try {
                     method.setAccessible(true);
                     method.invoke(instance);
-                } catch (Exception e) {
-                    DiagnosticMessage message = DiagnosticMessage.forException(e);
+                } catch (Throwable t) {
+                    DiagnosticMessage message = DiagnosticMessage.forException(t);
                     if (message == null) {
                         throw new ServiceException(
-                            e,
+                            t,
                             GenericMessage.ERROR,
-                            e.getMessage() + ": " + clazz.getSimpleName() + "." + method.getName()
+                            t.getMessage() + ": " + clazz.getSimpleName() + "." + method.getName()
                         );
                     } else {
                         throw new ServiceException(
-                            e,
+                            t,
                             message,
                             clazz.getSimpleName() + "." + method.getName()
                         );

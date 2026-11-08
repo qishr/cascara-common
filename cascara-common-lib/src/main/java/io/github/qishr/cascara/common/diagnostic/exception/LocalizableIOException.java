@@ -38,18 +38,18 @@ package io.github.qishr.cascara.common.diagnostic.exception;
 import java.io.IOException;
 
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
 
 public class LocalizableIOException extends IOException implements LocalizableException {
 
-    private final DiagnosticMessage diagnosticMessage;
+    private final LocalizableMessage diagnosticMessage;
     private final Object[] details;
 
-    public LocalizableIOException(DiagnosticMessage message, Object... details) {
+    public LocalizableIOException(LocalizableMessage message, Object... details) {
         this(null, message, details);
     }
 
-    public LocalizableIOException(Throwable cause, DiagnosticMessage message, Object... details) {
+    public LocalizableIOException(Throwable cause, LocalizableMessage message, Object... details) {
         super(cause);
         this.diagnosticMessage = message;
         this.details = details;
@@ -57,7 +57,7 @@ public class LocalizableIOException extends IOException implements LocalizableEx
 
     /// Returns a diagnostic error code for the error message.
     @Override
-	public DiagnosticMessage getLocalizableMessage() {
+	public LocalizableMessage getLocalizableMessage() {
 		return diagnosticMessage;
 	}
 

@@ -84,7 +84,19 @@ public class ReflectionUtils {
     public static <C> C createInstance(Class<C> targetClass) throws InstantiationException {
         try {
             return targetClass.getConstructor().newInstance();
-        } catch (Throwable t) {}
+        } catch (Throwable t) {
+
+
+            // TODO: Remove this
+            if (t.getClass().getName().contains("io.github")) {
+                System.err.println(t.getClass().getName() + ": " + t.getMessage());
+                // if (t instanceof Exception e) {
+                //     e.printStackTrace();
+                // }
+            }
+
+
+        }
         try {
             return createInstanceUnsafe(targetClass);
         } catch (Throwable t) {

@@ -212,13 +212,14 @@ public class SPLRoot extends SPLBranch {
         for (DiscoveredModule dm : discovered) {
             classCount += dm.getClasses().size();
         }
-
         REPORTER.debug("Discovered %d classes in %d ms", classCount, (int)timeElapsed);
 
-        boolean verify = isVerifyEnabled();
+        if (classCount == 0) {
+            return;
+        }
 
         REPORTER.debug("Registering providers");
-
+        boolean verify = isVerifyEnabled();
         for (DiscoveredModule dm : discovered) {
             Path jarPath = dm.getJarPath();
             if (jarPath != null) {
@@ -327,8 +328,9 @@ public class SPLRoot extends SPLBranch {
                 System.getProperty("os.arch")
             );
 
-            REPORTER.debug("  Cascara version: " + Cascara.instance().getVersion());
-            REPORTER.debug("  Module cascara.common version: " + Cascara.instance().getCommonVersion());
+            REPORTER.debug("  Cascara Version: " + Cascara.instance().getVersion());
+            REPORTER.debug("  Module cascara.common Version: " + Cascara.instance().getCommonVersion());
+            REPORTER.debug("  SPL Auto Discovery: " + isAutoDiscoverEnabled());
             REPORTER.debug("  SPL Signature Verification: " + isVerifyEnabled());
 
             REPORTER.debug("  JPMS Enabled: " + JreUtils.isJpmsEnabled());

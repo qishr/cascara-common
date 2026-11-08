@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
@@ -57,8 +58,6 @@ import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 @Experimental
 public class ModulePath extends AbstractClassFinder {
     private static final String PATHS = System.getProperty("jdk.module.path");
-
-    private Set<String> moduleNames = new HashSet<>();
 
     public ModulePath(Reporter reporter) {
         this(reporter, null, null, null);
@@ -107,7 +106,11 @@ public class ModulePath extends AbstractClassFinder {
     }
 
     public Set<String> getModuleNames() {
-        return moduleNames;
+        // return moduleNames;
+        return discoveredModules.keySet()
+            .stream()
+            .filter(s -> !s.equals("UNNAMED"))
+            .collect(Collectors.toSet());
     }
 
     public ModuleDescriptor getDescriptor(String moduleName) {
@@ -132,7 +135,8 @@ public class ModulePath extends AbstractClassFinder {
     }
 
     public boolean containsModule(String moduleName) {
-        return moduleNames.contains(moduleName);
+        return discoveredModules.keySet().contains(moduleName);
+        // return moduleNames.contains(moduleName);
     }
 
     //
@@ -211,9 +215,7 @@ public class ModulePath extends AbstractClassFinder {
     }
 
     private void loadModulePath(Set<String> modulePaths) {
-        moduleNames = new HashSet<>();
         classToModule = new HashMap<>();
-        // moduleToClasses = new HashMap<>();
 
         if (modulePaths == null || modulePaths.isEmpty()) {
             reporter.warn(GenericMessage.WARN, "No module path");
@@ -244,17 +246,6 @@ public class ModulePath extends AbstractClassFinder {
                 moduleName = scanJar(path, moduleName);
             }
         }
-    }
-
-    /// Parse path using virtual file system if provided, otherwise default OS file system
-    private Path getPath(String pathString) {
-        if (virtualReferencePath != null) {
-            Path virtualPath = virtualReferencePath.getFileSystem().getPath(pathString);
-            if (Files.exists(virtualPath)) {
-                return virtualPath;
-            }
-        }
-        return Path.of(pathString);
     }
 
     public static class DiscoveredModule {

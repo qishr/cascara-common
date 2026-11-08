@@ -5,7 +5,7 @@
 ### Without Tests or Javadoc
 
 ```
-./gradlew clean build -x javadoc -x test -x testClasspath -x testJarClasspath
+./gradlew clean build -x javadoc -x testClasspath -x testJarClasspath -x test
 ```
 
 ## Testing

@@ -1,26 +1,26 @@
 package io.github.qishr.cascara.common.diagnostic.exception;
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
 
 public class LocalizableSecurityException extends SecurityException implements LocalizableException {
 
-    private final DiagnosticMessage diagnosticMessage;
+    private final LocalizableMessage diagnosticMessage;
     private final Object[] details;
 
-    public LocalizableSecurityException(DiagnosticMessage message, Object... details) {
+    public LocalizableSecurityException(LocalizableMessage message, Object... details) {
         super(LocalizableException.formatMessage(message, details));
         this.diagnosticMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
-    public LocalizableSecurityException(Throwable cause, DiagnosticMessage message, Object... details) {
+    public LocalizableSecurityException(Throwable cause, LocalizableMessage message, Object... details) {
         super(LocalizableException.formatMessage(message, details), cause);
         this.diagnosticMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
     @Override
-    public DiagnosticMessage getLocalizableMessage() {
+    public LocalizableMessage getLocalizableMessage() {
 		return diagnosticMessage;
 	}
 

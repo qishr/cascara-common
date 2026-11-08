@@ -114,6 +114,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
             .setModulePath(getModulePath())
             .setTimeout(Duration.ofSeconds(20)));
 
+        // TODO: Send class rather than string
         IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
             Response<String> response = exec.run(
                 IllegalStateException.class.getName()

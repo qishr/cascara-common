@@ -234,6 +234,17 @@ public abstract class AbstractClassFinder {
         descriptors.put(moduleName, descriptor);
     }
 
+    /// Parse path using virtual file system if provided, otherwise default OS file system
+    protected Path getPath(String pathString) {
+        if (virtualReferencePath != null) {
+            Path virtualPath = virtualReferencePath.getFileSystem().getPath(pathString);
+            if (Files.exists(virtualPath)) {
+                return virtualPath;
+            }
+        }
+        return Path.of(pathString);
+    }
+
     protected boolean isExcluded(String classOrPkgName) {
         String name = classOrPkgName + ".";
         if (excluded != null) {
