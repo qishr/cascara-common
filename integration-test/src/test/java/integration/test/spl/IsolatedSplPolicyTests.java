@@ -72,7 +72,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
 
-        exec.setConfig(new JvmConfig()
+        exec.setJvmConfig(new JvmConfig()
             .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setEnv(CASCARA_HOME, getPhysicalHomePath())
@@ -115,7 +115,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
 
-        exec.setConfig(new JvmConfig()
+        exec.setJvmConfig(new JvmConfig()
             .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setEnv(CASCARA_HOME, getPhysicalHomePath())
@@ -174,7 +174,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
 
-        exec.setConfig(new JvmConfig()
+        exec.setJvmConfig(new JvmConfig()
             .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setEnv(CASCARA_HOME, getPhysicalHomePath())
@@ -221,7 +221,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // Enable forwarding of reports from isolated JVM
         exec.setDiagnosticForwarding(true);
 
-        exec.setConfig(new JvmConfig()
+        exec.setJvmConfig(new JvmConfig()
             .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setEnv(CASCARA_HOME, getPhysicalHomePath())
@@ -264,7 +264,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // Enable forwarding of reports from isolated JVM
         exec.setDiagnosticForwarding(true);
 
-        exec.setConfig(new JvmConfig()
+        exec.setJvmConfig(new JvmConfig()
             .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setEnv(CASCARA_HOME, getPhysicalHomePath())

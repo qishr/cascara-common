@@ -50,7 +50,7 @@ import io.github.qishr.cascara.common.type.lang.ThrowableSerializer.SerializedTh
 public class IsolatedExecutor {
 
     private final JvmProcess jvmProcess;
-    private JvmConfig config;
+    private JvmConfig jvmConfig;
     private final Class<?> responseClass;
     private final Class<? extends AbstractExecutionTask<?,?>> task;
     private final Serializer<?> serializer;
@@ -70,17 +70,17 @@ public class IsolatedExecutor {
         return new IsolatedExecutor(task, response);
     }
 
-    public static <T> Response<T> run(Class<? extends AbstractExecutionTask<?,?>> task, Object input, Class<?> response, JvmConfig options) throws Throwable {
+    public static <T> Response<T> run(Class<? extends AbstractExecutionTask<?,?>> task, Object input, Class<?> response, JvmConfig jvmConfig) throws Throwable {
         IsolatedExecutor exec = IsolatedExecutor.forTask(task, response);
-        return exec.run(input, options);
+        return exec.run(input, jvmConfig);
     }
 
     public Serializer<?> getSerializer() {
         return serializer;
     }
 
-    public IsolatedExecutor setConfig(JvmConfig config) {
-        this.config = config;
+    public IsolatedExecutor setJvmConfig(JvmConfig jvmConfig) {
+        this.jvmConfig = jvmConfig;
         return  this;
     }
 
@@ -115,9 +115,9 @@ public class IsolatedExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Response<T> run(Object input, JvmConfig options) throws Throwable {
-        if (options == null) {
-            options = this.config;
+    public <T> Response<T> run(Object input, JvmConfig jvmConfig) throws Throwable {
+        if (jvmConfig == null) {
+            jvmConfig = this.jvmConfig;
         }
 
         String json = serializer.toString(input);
@@ -136,8 +136,8 @@ public class IsolatedExecutor {
 
             ipcServer.start();
 
-            options.setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
-            jvmProcess.setConfig(options);
+            jvmConfig.setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
+            jvmProcess.setConfig(jvmConfig);
 
             jvmResponse = jvmProcess.run(json);
 

@@ -28,7 +28,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
     void test_IsolatedExecutor_1() throws Throwable {
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
 
-        exec.setConfig(new JvmConfig()
+        exec.setJvmConfig(new JvmConfig()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
             .setEnv("CASCARA_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
@@ -109,7 +109,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
         IsolatedExecutor exec = IsolatedExecutor.forTask(ThrowableTestTask.class, String.class);
         exec.setExceptionForwarding(true);
 
-        exec.setConfig(new JvmConfig()
+        exec.setJvmConfig(new JvmConfig()
             .setModuleName(ThrowableTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
             .setTimeout(Duration.ofSeconds(20)));
