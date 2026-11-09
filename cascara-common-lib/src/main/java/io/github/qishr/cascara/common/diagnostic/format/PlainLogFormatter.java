@@ -49,11 +49,11 @@ public class PlainLogFormatter implements LogFormatter {
     protected static final ZoneId UTC = ZoneId.of("UTC");
     protected static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
 
-    protected FormatOptions options;
+    protected FormatConfig config;
     protected long processId;
 
-    public PlainLogFormatter(FormatOptions options) {
-        this.options = options;
+    public PlainLogFormatter(FormatConfig config) {
+        this.config = config;
         processId = ProcessHandle.current().pid();
     }
 
@@ -61,11 +61,11 @@ public class PlainLogFormatter implements LogFormatter {
         return this;
     }
 
-    public LogFormatter setOptions(FormatOptions options) {
-        // If a logger is a service, it doesn't have its format options
+    public LogFormatter setConfig(FormatConfig config) {
+        // If a logger is a service, it doesn't have its format config
         // until after it's created. It needs to be able to set the
-        // formatter's options later.
-        this.options = options;
+        // formatter's config later.
+        this.config = config;
         return this;
     }
 
@@ -75,14 +75,14 @@ public class PlainLogFormatter implements LogFormatter {
         for (int i = 0; i < lines.length; i++) {
             formatLine(sb, diagnostic, lines[i], i);
         }
-        if (options.includeStackTrace() && diagnostic.getStackTrace() != null && diagnostic.getStackTrace().length > 0) {
+        if (config.includeStackTrace() && diagnostic.getStackTrace() != null && diagnostic.getStackTrace().length > 0) {
             sb.append(formatStackTrace(diagnostic.getLevel(), diagnostic.getStackTrace(), diagnostic.getCause()));
         }
         return sb.toString();
     }
 
     protected String formatSource(Diagnostic diagnostic) {
-        if (options.useSimpleClassName()) {
+        if (config.useSimpleClassName()) {
             String s = diagnostic.getSource();
             int dot = s.lastIndexOf('.');
             return s.substring(dot + 1);
@@ -108,7 +108,7 @@ public class PlainLogFormatter implements LogFormatter {
         Level level = diagnostic.getLevel();
         String timeStamp = ZonedDateTime.ofInstant(diagnostic.getTimestamp(), UTC).format(TIME_FORMAT);
 
-        if (options.prefixEveryLine() || msgLineNumber == 0) {
+        if (config.prefixEveryLine() || msgLineNumber == 0) {
             sb.append("[");
             sb.append(level.getLogPrefix());
             sb.append("] ");
@@ -118,25 +118,25 @@ public class PlainLogFormatter implements LogFormatter {
 
         if (msgLineNumber == 0) {
 
-            if (options.incluedTime()) {
+            if (config.incluedTime()) {
                 sb.append("[");
                 sb.append(timeStamp);
                 sb.append("] ");
             }
 
-            if (options.incluedPid()) {
+            if (config.incluedPid()) {
                 sb.append("[");
                 sb.append(diagnostic.getProcessId());
                 sb.append("] ");
             }
 
-            if (options.incluedSource()) {
+            if (config.incluedSource()) {
                 sb.append("[");
                 sb.append(formatSource(diagnostic));
                 sb.append("] ");
             }
 
-            if (options.includeProblemCodes() && diagnostic.getLevel().isProblem()) {
+            if (config.includeProblemCodes() && diagnostic.getLevel().isProblem()) {
                 String msgCode = diagnostic.getMessage().getCode();
                 sb.append("[");
                 sb.append(msgCode);
@@ -184,7 +184,7 @@ public class PlainLogFormatter implements LogFormatter {
                 frame.getFileName(),
                 frame.getLineNumber()
             );
-            if (options.prefixEveryLine()) {
+            if (config.prefixEveryLine()) {
                 sb.append("[");
                 sb.append(level.getLogPrefix());
                 sb.append("] ");

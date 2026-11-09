@@ -34,14 +34,14 @@
 
 package io.github.qishr.cascara.common.lang.util;
 
-public class SourceBufferOptions extends LanguageOptions<SourceBufferOptions> {
+public class SourceBufferConfig extends LanguageConfig<SourceBufferConfig> {
     private boolean supportsSimd;
     private boolean strictAsciiMode;
     private boolean trackPosition;
 
     public boolean supportsSimd() { return supportsSimd; }
 
-    public SourceBufferOptions setSupportsSimd(boolean b) {
+    public SourceBufferConfig setSupportsSimd(boolean b) {
         supportsSimd = b;
         return this;
     }
@@ -50,7 +50,7 @@ public class SourceBufferOptions extends LanguageOptions<SourceBufferOptions> {
         return strictAsciiMode;
     }
 
-    public SourceBufferOptions setStrictAsciiMode(boolean b) {
+    public SourceBufferConfig setStrictAsciiMode(boolean b) {
         strictAsciiMode = b;
         return this;
     }
@@ -59,7 +59,7 @@ public class SourceBufferOptions extends LanguageOptions<SourceBufferOptions> {
         return trackPosition;
     }
 
-    public SourceBufferOptions setTrackPosition(boolean b) {
+    public SourceBufferConfig setTrackPosition(boolean b) {
         trackPosition = b;
         return this;
     }

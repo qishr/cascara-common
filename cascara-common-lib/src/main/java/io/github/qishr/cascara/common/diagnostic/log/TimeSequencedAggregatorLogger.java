@@ -38,7 +38,7 @@ import java.util.Comparator;
 import java.util.concurrent.*;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
+import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 
 public class TimeSequencedAggregatorLogger implements Logger {
 
@@ -87,8 +87,7 @@ public class TimeSequencedAggregatorLogger implements Logger {
     //
     //
 
-    public TimeSequencedAggregatorLogger setFormatOptions(FormatOptions options) {
-        // formatter.setOptions(options);
+    public TimeSequencedAggregatorLogger setFormatConfig(FormatConfig config) {
         return this;
     }
 

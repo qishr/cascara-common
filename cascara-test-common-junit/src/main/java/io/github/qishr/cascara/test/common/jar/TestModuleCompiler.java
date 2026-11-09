@@ -58,14 +58,6 @@ public class TestModuleCompiler {
                 options.add(argAddModules);
             }
 
-
-            // System.out.println("CompilationTask Options:");
-            // for (String s : options) {
-            //     System.out.println("  " + s);
-            // }
-
-
-
             JavaCompiler.CompilationTask task = compiler.getTask(
                 null, fileManager, diagnostics, options, null, compilationUnits
             );

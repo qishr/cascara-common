@@ -32,10 +32,9 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.lang.util;
 
 /// Base class for all language-specific configuration.
 /// T is the specific implementation type for fluent chaining.
-public abstract class LanguageOptions<T extends LanguageOptions<T>> {
+public abstract class LanguageConfig<T extends LanguageConfig<T>> {
 }

@@ -3,7 +3,7 @@ package io.github.qishr.cascara.common.diagnostic.format;
 import io.github.qishr.cascara.common.annotation.Experimental;
 
 @Experimental
-public class FormatOptions {
+public class FormatConfig {
     private boolean prefixEveryLine = true;
     private boolean includeStackTrace = false;
     private boolean includeProblemCodes = false;
@@ -14,13 +14,13 @@ public class FormatOptions {
 
     private boolean useSimpleClassName = false;
 
-    public FormatOptions() {}
+    public FormatConfig() {}
 
     public boolean prefixEveryLine() {
         return prefixEveryLine;
     }
 
-    public FormatOptions setPrefixEveryLine(boolean b) {
+    public FormatConfig setPrefixEveryLine(boolean b) {
         prefixEveryLine = b;
         return this;
     }
@@ -29,7 +29,7 @@ public class FormatOptions {
         return includeStackTrace;
     }
 
-    public FormatOptions setIncludeStackTrace(boolean b) {
+    public FormatConfig setIncludeStackTrace(boolean b) {
         includeStackTrace = b;
         return this;
     }
@@ -38,7 +38,7 @@ public class FormatOptions {
         return includeProblemCodes;
     }
 
-    public FormatOptions setIncludeProblemCodes(boolean b) {
+    public FormatConfig setIncludeProblemCodes(boolean b) {
         includeProblemCodes = b;
         return this;
     }
@@ -47,7 +47,7 @@ public class FormatOptions {
         return incluedTime;
     }
 
-    public FormatOptions setIncludeTime(boolean b) {
+    public FormatConfig setIncludeTime(boolean b) {
         incluedTime = b;
         return this;
     }
@@ -56,7 +56,7 @@ public class FormatOptions {
         return incluedPid;
     }
 
-    public FormatOptions setIncluedPid(boolean b) {
+    public FormatConfig setIncluedPid(boolean b) {
         incluedPid = b;
         return this;
     }
@@ -65,7 +65,7 @@ public class FormatOptions {
         return incluedThread;
     }
 
-    public FormatOptions setIncluedThread(boolean b) {
+    public FormatConfig setIncluedThread(boolean b) {
         incluedThread = b;
         return this;
     }
@@ -74,7 +74,7 @@ public class FormatOptions {
         return incluedSource;
     }
 
-    public FormatOptions setIncluedSource(boolean b) {
+    public FormatConfig setIncluedSource(boolean b) {
         incluedSource = b;
         return this;
     }
@@ -83,7 +83,7 @@ public class FormatOptions {
         return useSimpleClassName;
     }
 
-    public FormatOptions setUseSimpleClassName(boolean b) {
+    public FormatConfig setUseSimpleClassName(boolean b) {
         useSimpleClassName = b;
         return this;
     }

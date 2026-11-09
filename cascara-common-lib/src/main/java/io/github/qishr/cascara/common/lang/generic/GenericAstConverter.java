@@ -48,7 +48,7 @@ import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.processor.AstConverter;
 import io.github.qishr.cascara.common.util.ContentType;
-import io.github.qishr.cascara.common.lang.util.LanguageOptions;
+import io.github.qishr.cascara.common.lang.util.LanguageConfig;
 
 @Experimental
 public class GenericAstConverter implements AstConverter<GenericAstNode> {
@@ -128,7 +128,7 @@ public class GenericAstConverter implements AstConverter<GenericAstNode> {
     }
 
     @Override
-    public GenericAstConverter setOptions(LanguageOptions<?> options) {
+    public GenericAstConverter setConfig(LanguageConfig<?> config) {
         return this;
     }
 

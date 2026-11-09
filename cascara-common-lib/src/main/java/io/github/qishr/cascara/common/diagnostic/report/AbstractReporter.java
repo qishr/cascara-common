@@ -50,7 +50,7 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableException;
 import io.github.qishr.cascara.common.diagnostic.exception.LocatableException;
 import io.github.qishr.cascara.common.diagnostic.format.ColoredLogFormatter;
-import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
+import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
@@ -69,7 +69,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected Serializer<?> serializer;
 
-    protected FormatOptions formatOptions = defaultFormatOptions();
+    protected FormatConfig formatConfig = defaultFormatConfig();
     protected ReportWriter[] writers = new ReportWriter[7];
     protected List<Logger> loggers = new ArrayList<>();
     protected ConsoleLogger consoleLogger;
@@ -84,7 +84,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected Level level = Level.INFO;
 
-    // ConsoleLogger options
+    // ConsoleLogger config
     protected boolean systemOutputEnabled = true;
     protected boolean flushEnabled = false;
     protected boolean systemErrorEnabled = false;
@@ -102,9 +102,9 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected abstract T self();
 
-    /// To be overridden by reporters neding specific default options
-    protected FormatOptions defaultFormatOptions() {
-        return new FormatOptions();
+    /// To be overridden by reporters neding specific default config
+    protected FormatConfig defaultFormatConfig() {
+        return new FormatConfig();
     }
 
     public T addLogger(Logger logger) {
@@ -189,24 +189,24 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
 
     public T setStackTraceEnabled(boolean b) {
-        formatOptions.setIncludeStackTrace(b);
+        formatConfig.setIncludeStackTrace(b);
         // TODO: Make this controllable via system properties, at least for GlobalReporter
         return self();
     }
 
     @Experimental
     public T setPrefixEveryLine(boolean b) {
-        formatOptions.setPrefixEveryLine(b);
+        formatConfig.setPrefixEveryLine(b);
         return self();
     }
 
     public T setShowProblemCodes(boolean b) {
-        formatOptions.setIncludeProblemCodes(b);
+        formatConfig.setIncludeProblemCodes(b);
         return self();
     }
 
     //
-    // ConsoleLogger options
+    // ConsoleLogger config
     //
 
     // TODO: Make these controllable via system properties, at least for GlobalReporter
@@ -243,9 +243,9 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     public T setAnsiColoringEnabled(boolean b) {
         if (consoleLogger != null) {
             if (b) {
-                consoleLogger.setFormatter(new ColoredLogFormatter(formatOptions));
+                consoleLogger.setFormatter(new ColoredLogFormatter(formatConfig));
             } else {
-                consoleLogger.setFormatter(new PlainLogFormatter(formatOptions));
+                consoleLogger.setFormatter(new PlainLogFormatter(formatConfig));
             }
         }
         return self();

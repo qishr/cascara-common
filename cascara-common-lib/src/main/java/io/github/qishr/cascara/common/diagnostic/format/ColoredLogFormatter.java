@@ -56,8 +56,8 @@ public class ColoredLogFormatter extends PlainLogFormatter {
 
     protected boolean ansiColoringEnabled = true;
 
-    public ColoredLogFormatter(FormatOptions options) {
-        super(options);
+    public ColoredLogFormatter(FormatConfig config) {
+        super(config);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class ColoredLogFormatter extends PlainLogFormatter {
         Level level = diagnostic.getLevel();
         String timeStamp = ZonedDateTime.ofInstant(diagnostic.getTimestamp(), UTC).format(TIME_FORMAT);
 
-        if (options.prefixEveryLine() || msgLineNumber == 0) {
+        if (config.prefixEveryLine() || msgLineNumber == 0) {
             sb.append("[");
             String ansiCode = levelColors[level.ordinal()];
             if (ansiCode != null) {
@@ -95,13 +95,13 @@ public class ColoredLogFormatter extends PlainLogFormatter {
 
         if (msgLineNumber == 0) {
 
-            if (options.incluedTime()) {
+            if (config.incluedTime()) {
                 sb.append("[");
                 sb.append(timeStamp);
                 sb.append("] ");
             }
 
-            if (options.incluedPid()) {
+            if (config.incluedPid()) {
                 sb.append("[");
                 if (diagnostic.getProcessId() != processId) {
                     sb.append(TermUtils.ANSI_CYAN);
@@ -114,13 +114,13 @@ public class ColoredLogFormatter extends PlainLogFormatter {
                 sb.append("] ");
             }
 
-            if (options.incluedSource()) {
+            if (config.incluedSource()) {
                 sb.append("[");
                 sb.append(formatSource(diagnostic));
                 sb.append("] ");
             }
 
-            if (options.includeProblemCodes() && diagnostic.getLevel().isProblem()) {
+            if (config.includeProblemCodes() && diagnostic.getLevel().isProblem()) {
                 String msgCode = diagnostic.getMessage().getCode();
                 sb.append("[");
                 sb.append(TermUtils.ANSI_WHITE);
@@ -179,7 +179,7 @@ public class ColoredLogFormatter extends PlainLogFormatter {
                 frame.getFileName(),
                 frame.getLineNumber()
             );
-            if (options.prefixEveryLine()) {
+            if (config.prefixEveryLine()) {
                 sb.append("[");
                 String ansiCode = levelColors[level.ordinal()];
                 if (ansiCode != null) {

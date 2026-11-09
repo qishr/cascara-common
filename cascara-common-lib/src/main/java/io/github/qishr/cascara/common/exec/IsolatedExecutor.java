@@ -50,7 +50,7 @@ import io.github.qishr.cascara.common.type.lang.ThrowableSerializer.SerializedTh
 public class IsolatedExecutor {
 
     private final JvmProcess jvmProcess;
-    private JvmOptions options;
+    private JvmConfig config;
     private final Class<?> responseClass;
     private final Class<? extends AbstractExecutionTask<?,?>> task;
     private final Serializer<?> serializer;
@@ -70,7 +70,7 @@ public class IsolatedExecutor {
         return new IsolatedExecutor(task, response);
     }
 
-    public static <T> Response<T> run(Class<? extends AbstractExecutionTask<?,?>> task, Object input, Class<?> response, JvmOptions options) throws Throwable {
+    public static <T> Response<T> run(Class<? extends AbstractExecutionTask<?,?>> task, Object input, Class<?> response, JvmConfig options) throws Throwable {
         IsolatedExecutor exec = IsolatedExecutor.forTask(task, response);
         return exec.run(input, options);
     }
@@ -79,8 +79,8 @@ public class IsolatedExecutor {
         return serializer;
     }
 
-    public IsolatedExecutor setOptions(JvmOptions options) {
-        this.options = options;
+    public IsolatedExecutor setConfig(JvmConfig config) {
+        this.config = config;
         return  this;
     }
 
@@ -110,14 +110,14 @@ public class IsolatedExecutor {
         return  this;
     }
 
-    public <T> Response<T> run(Object input) throws Throwable { //throws IOException, InterruptedException {
+    public <T> Response<T> run(Object input) throws Throwable {
         return run(input, null);
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Response<T> run(Object input, JvmOptions options) throws Throwable {
+    public <T> Response<T> run(Object input, JvmConfig options) throws Throwable {
         if (options == null) {
-            options = this.options;
+            options = this.config;
         }
 
         String json = serializer.toString(input);
@@ -137,7 +137,7 @@ public class IsolatedExecutor {
             ipcServer.start();
 
             options.setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
-            jvmProcess.setOptions(options);
+            jvmProcess.setConfig(options);
 
             jvmResponse = jvmProcess.run(json);
 
@@ -168,7 +168,7 @@ public class IsolatedExecutor {
 
     public static class Response<T> {
         private final List<String> command;
-        private final JvmOptions jvmOptions;
+        private final JvmConfig jvmConfig;
         private final String out;
         private final String err;
         private final Class<? extends AbstractExecutionTask<?,?>> task;
@@ -178,7 +178,7 @@ public class IsolatedExecutor {
 
         Response(JvmProcess.Response jvmResponse, Class<? extends AbstractExecutionTask<?,?>> task, T payload, List<Diagnostic> diagnostics, boolean success) {
             this.command = jvmResponse.command;
-            this.jvmOptions = jvmResponse.jvmOptions;
+            this.jvmConfig = jvmResponse.jvmConfig;
             this.out = jvmResponse.out;
             this.err = jvmResponse.err;
             this.task = task;
@@ -210,8 +210,8 @@ public class IsolatedExecutor {
             return command;
         }
 
-        public JvmOptions getJvmOptions() {
-            return jvmOptions;
+        public JvmConfig getJvmConfig() {
+            return jvmConfig;
         }
 
         public String getSystemOut() {

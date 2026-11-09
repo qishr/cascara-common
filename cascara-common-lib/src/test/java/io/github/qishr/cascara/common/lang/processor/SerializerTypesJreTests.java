@@ -298,12 +298,6 @@ public class SerializerTypesJreTests extends SerializerTestBase {
 
     @Test
     void test_util_typeDescriptors() {
-
-
-        // TODO: Remove this
-        // GlobalReporter.globalInstance().setLevel(SPL.class.getName(), Level.TRACE);
-
-
         Serializer<?> serializer = newSerializer();
         JavaUtilTypeDescriptorTest types = new JavaUtilTypeDescriptorTest();
         types.p_abstractQueue = new PriorityQueue<>();

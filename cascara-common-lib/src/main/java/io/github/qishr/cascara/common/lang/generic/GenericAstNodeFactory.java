@@ -37,7 +37,7 @@ package io.github.qishr.cascara.common.lang.generic;
 
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.AstNodeFactory;
-import io.github.qishr.cascara.common.lang.util.LanguageOptions;
+import io.github.qishr.cascara.common.lang.util.LanguageConfig;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 public class GenericAstNodeFactory implements AstNodeFactory<AstNode,GenericAstScalar,GenericAstSequence,GenericAstMap,GenericAstMapEntry,AstNode> {
@@ -53,7 +53,7 @@ public class GenericAstNodeFactory implements AstNodeFactory<AstNode,GenericAstS
     }
 
 	@Override
-	public GenericAstScalar createScalarNode(Object jvmValue, QuoteStyle quoteStyle, LanguageOptions<?> options) {
+	public GenericAstScalar createScalarNode(Object jvmValue, QuoteStyle quoteStyle, LanguageConfig<?> config) {
         return new GenericAstScalar(jvmValue, quoteStyle);
 	}
 

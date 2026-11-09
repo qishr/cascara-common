@@ -48,7 +48,7 @@ import io.github.qishr.cascara.common.lang.generic.GenericAstMapEntry;
 import io.github.qishr.cascara.common.lang.generic.GenericAstNodeFactory;
 import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
 import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
-import io.github.qishr.cascara.common.lang.util.LanguageOptions;
+import io.github.qishr.cascara.common.lang.util.LanguageConfig;
 import io.github.qishr.cascara.common.type.TypeReference;
 import io.github.qishr.cascara.common.util.ContentType;
 
@@ -91,7 +91,7 @@ public class SerializerImpl extends AbstractSerializer<SerializerImpl,AstNode,Ge
     /// {@inheritDoc}
     @Override
     @NonNull
-    public SerializerImpl setOptions(LanguageOptions<?> options) {
+    public SerializerImpl setConfig(LanguageConfig<?> config) {
         return this;
     }
 

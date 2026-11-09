@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
-import io.github.qishr.cascara.common.exec.JvmOptions;
+import io.github.qishr.cascara.common.exec.JvmConfig;
 import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.task.ThrowableTestTask;
 import integration.test.fixtures.task.GlobalReporterTestTask;
@@ -28,7 +28,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
     void test_IsolatedExecutor_1() throws Throwable {
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
 
-        exec.setOptions(new JvmOptions()
+        exec.setConfig(new JvmConfig()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
             .setEnv("CASCARA_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
@@ -50,7 +50,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
         Response<ReporterTestOutput> result = exec.run(
             "hello-isolated-world",
-            new JvmOptions()
+            new JvmConfig()
                 .setModuleName(GlobalReporterTestTask.class.getModule().getName())
                 .setModulePath(getModulePath())
                 .setEnv("CASCARA_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
@@ -65,7 +65,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
     @Test
     void test_isolatedExecution_classpathMode() throws Throwable {
-        JvmOptions options = new JvmOptions()
+        JvmConfig config = new JvmConfig()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModuleName(null) // Forces pure -cp launch
             .setClassPath(getModulePath())
@@ -76,7 +76,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
             GlobalReporterTestTask.class,
             "classpath-mode-test",
             ReporterTestOutput.class,
-            options);
+            config);
 
         ReporterTestOutput output = result.orElseThrow();
         assertEquals(42, output.n());
@@ -85,7 +85,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
     @Test
     void test_isolatedExecution_jpmsModuleMode() throws Throwable {
-        JvmOptions options = new JvmOptions()
+        JvmConfig config = new JvmConfig()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName()) // Forces --module-path launch
             .setModulePath(getModulePath())
             .setTimeout(Duration.ofSeconds(20))
@@ -95,7 +95,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
             GlobalReporterTestTask.class,
             "jpms-module-mode-test",
             ReporterTestOutput.class,
-            options);
+            config);
 
         debug(result);
 
@@ -109,7 +109,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
         IsolatedExecutor exec = IsolatedExecutor.forTask(ThrowableTestTask.class, String.class);
         exec.setExceptionForwarding(true);
 
-        exec.setOptions(new JvmOptions()
+        exec.setConfig(new JvmConfig()
             .setModuleName(ThrowableTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
             .setTimeout(Duration.ofSeconds(20)));

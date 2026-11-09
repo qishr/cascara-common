@@ -35,7 +35,7 @@
 package io.github.qishr.cascara.common.diagnostic.log;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
+import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 
 /// Contract for outputting formatted log events and system diagnostics.
 ///
@@ -53,5 +53,5 @@ public interface Logger {
     /// @since cascara.common-1.0.0
     Logger flush();
 
-    Logger setFormatOptions(FormatOptions options);
+    Logger setFormatConfig(FormatConfig config);
 }

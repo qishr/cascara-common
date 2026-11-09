@@ -24,7 +24,7 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.diagnostic.log.TimeSequencedAggregatorLogger;
-import io.github.qishr.cascara.common.exec.JvmOptions;
+import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcException;
@@ -101,7 +101,7 @@ public class SplJmxTest extends JmxTestBase {
 
         int jmxPort = findFreePort();
 
-        JvmOptions options = newJmxTestOptions(jmxPort)
+        JvmConfig config = newJmxTestConfig(jmxPort)
             .setTimeout(Duration.ofHours(24))
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
@@ -119,7 +119,7 @@ public class SplJmxTest extends JmxTestBase {
         // Run sub-JVM process...
         REPORTER.debug("Starting new JVM in background");
         JvmProcess.forClass(taskClass)
-            .setOptions(options)
+            .setConfig(config)
             .runAsync(json)
             .thenAccept(response -> {
                 // Callback executed upon child process completion
@@ -212,7 +212,7 @@ public class SplJmxTest extends JmxTestBase {
 
         int jmxPort = findFreePort();
 
-        JvmOptions options = newJmxTestOptions(jmxPort)
+        JvmConfig config = newJmxTestConfig(jmxPort)
             .setTimeout(Duration.ofHours(24))
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
@@ -226,7 +226,7 @@ public class SplJmxTest extends JmxTestBase {
         // Run sub-JVM process...
         REPORTER.debug("Starting new JVM in background");
         JvmProcess.forClass(taskClass)
-            .setOptions(options)
+            .setConfig(config)
             .runAsync(json)
             .thenAccept(response -> {
                 // Callback executed upon child process completion

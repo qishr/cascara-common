@@ -15,7 +15,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.exec.JvmOptions;
+import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcException;
@@ -40,14 +40,14 @@ public class JvmProcessTests extends ExecTestBase {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString("hello-isolated-world");
 
-        JvmOptions options = new JvmOptions()
+        JvmConfig config = new JvmConfig()
             .setTimeout(Duration.ofHours(24))
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED);
 
         JvmProcess tp = JvmProcess.forClass(GlobalReporterTestTask.class)
-            .setOptions(options);
+            .setConfig(config);
 
         JvmProcess.Response result = tp.run(json);
 
@@ -74,7 +74,7 @@ public class JvmProcessTests extends ExecTestBase {
 
             String classKey = "CASCARA_REPORT_LEVEL_" + taskClass.getName().replace('.', '_').toUpperCase();
 
-            JvmOptions options = new JvmOptions()
+            JvmConfig config = new JvmConfig()
                 .setTimeout(Duration.ofHours(24))
                 .setModuleName(taskClass.getModule().getName())
                 .setModulePath(getModulePath())
@@ -84,7 +84,7 @@ public class JvmProcessTests extends ExecTestBase {
                 .setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
 
             // Run sub-JVM process...
-            JvmProcess.Response response = JvmProcess.forClass(taskClass).setOptions(options).run(json);
+            JvmProcess.Response response = JvmProcess.forClass(taskClass).setConfig(config).run(json);
 
             ipcServer.close();
 
@@ -117,7 +117,7 @@ public class JvmProcessTests extends ExecTestBase {
             GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
             GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
-            JvmOptions options = new JvmOptions()
+            JvmConfig config = new JvmConfig()
                 .setTimeout(Duration.ofHours(24))
                 .setModuleName(taskClass.getModule().getName())
                 .setModulePath(getModulePath())
@@ -126,7 +126,7 @@ public class JvmProcessTests extends ExecTestBase {
                 .setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
 
             // Run sub-JVM process...
-            JvmProcess.Response response = JvmProcess.forClass(taskClass).setOptions(options).run(json);
+            JvmProcess.Response response = JvmProcess.forClass(taskClass).setConfig(config).run(json);
             debug(response);
         } catch (IpcException e) {
 

@@ -27,7 +27,7 @@ import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
-import io.github.qishr.cascara.common.exec.JvmOptions;
+import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
@@ -72,7 +72,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
 
-        exec.setOptions(new JvmOptions()
+        exec.setConfig(new JvmConfig()
             .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setEnv(CASCARA_HOME, getPhysicalHomePath())
@@ -115,7 +115,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
 
-        exec.setOptions(new JvmOptions()
+        exec.setConfig(new JvmConfig()
             .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setEnv(CASCARA_HOME, getPhysicalHomePath())
@@ -174,7 +174,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // Add the JAR to the module path
         String modulePath = getModulePath() + File.pathSeparator + jarPath;
 
-        exec.setOptions(new JvmOptions()
+        exec.setConfig(new JvmConfig()
             .setModuleName(SplPolicyTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setEnv(CASCARA_HOME, getPhysicalHomePath())
@@ -221,7 +221,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // Enable forwarding of reports from isolated JVM
         exec.setDiagnosticForwarding(true);
 
-        exec.setOptions(new JvmOptions()
+        exec.setConfig(new JvmConfig()
             .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setEnv(CASCARA_HOME, getPhysicalHomePath())
@@ -264,7 +264,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // Enable forwarding of reports from isolated JVM
         exec.setDiagnosticForwarding(true);
 
-        exec.setOptions(new JvmOptions()
+        exec.setConfig(new JvmConfig()
             .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
             .setModulePath(modulePath)
             .setEnv(CASCARA_HOME, getPhysicalHomePath())

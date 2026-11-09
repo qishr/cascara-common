@@ -42,7 +42,7 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.format.ColoredLogFormatter;
-import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
+import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.format.LogFormatter;
 import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
 import io.github.qishr.cascara.common.util.JreUtils;
@@ -50,19 +50,19 @@ import io.github.qishr.cascara.common.util.JreUtils;
 @Experimental
 public class ConsoleLogger implements Logger {
     private LogFormatter formatter;
-    private FormatOptions formatOptions;
+    private FormatConfig formatConfig;
 
     private boolean flushEnabled = false;
     private boolean systemErrorEnabled = false;
     private boolean ansiColoringEnabled = true;
 
     public ConsoleLogger() {
-        formatOptions = new FormatOptions();
+        formatConfig = new FormatConfig();
         init();
     }
 
-    public ConsoleLogger(FormatOptions formatOptions) {
-        this.formatOptions = formatOptions;
+    public ConsoleLogger(FormatConfig formatConfig) {
+        this.formatConfig = formatConfig;
         init();
     }
 
@@ -87,7 +87,7 @@ public class ConsoleLogger implements Logger {
     }
 
     //
-    // Options
+    // Config
     //
 
     public ConsoleLogger setFormatter(LogFormatter formatter) {
@@ -95,11 +95,11 @@ public class ConsoleLogger implements Logger {
         return this;
     }
 
-    public ConsoleLogger setFormatOptions(FormatOptions options) {
-        // This is required as loggers that are services can't have options
+    public ConsoleLogger setFormatConfig(FormatConfig config) {
+        // This is required as loggers that are services can't have config
         // passed into their constructor.
-        formatOptions = options;
-        formatter.setOptions(options);
+        formatConfig = config;
+        formatter.setConfig(config);
         return this;
     }
 
@@ -125,11 +125,10 @@ public class ConsoleLogger implements Logger {
 
     private void configureFormatter() {
         if (ansiColoringEnabled) {
-            formatter = new ColoredLogFormatter(formatOptions);
+            formatter = new ColoredLogFormatter(formatConfig);
         } else {
-            formatter = new PlainLogFormatter(formatOptions);
+            formatter = new PlainLogFormatter(formatConfig);
         }
-        // formatter.setOptions(formatOptions);
     }
 
     /// Reports a Diagnostic to the console and the line consumer if they are enabled.

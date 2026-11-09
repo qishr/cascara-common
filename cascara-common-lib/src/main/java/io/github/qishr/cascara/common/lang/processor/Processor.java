@@ -36,7 +36,7 @@
 package io.github.qishr.cascara.common.lang.processor;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.lang.util.LanguageOptions;
+import io.github.qishr.cascara.common.lang.util.LanguageConfig;
 import io.github.qishr.cascara.common.service.ContentTypeProvider;
 import io.github.qishr.cascara.common.service.ServiceProvider;
 
@@ -46,5 +46,5 @@ public interface Processor extends ServiceProvider, ContentTypeProvider {
     Processor setReporter(Reporter reporter);
 
     /// Sets the language-specific options (e.g., indentation, Unicode support).
-    Processor setOptions(LanguageOptions<?> options);
+    Processor setConfig(LanguageConfig<?> config);
 }

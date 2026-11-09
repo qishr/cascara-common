@@ -37,7 +37,7 @@ package io.github.qishr.cascara.common.service;
 import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.lang.util.SourceBuffer;
-import io.github.qishr.cascara.common.lang.util.SourceBufferOptions;
+import io.github.qishr.cascara.common.lang.util.SourceBufferConfig;
 import io.github.qishr.cascara.common.type.TypeDescriptor;
 import io.github.qishr.cascara.common.util.ContentTypeResolver;
 
@@ -63,10 +63,10 @@ public class ServiceProviderFactory extends AbstractServiceProviderFactory {
         super(layer);
     }
 
-    public SourceBuffer createSourceBuffer(SourceBufferOptions options) throws ServiceException {
+    public SourceBuffer createSourceBuffer(SourceBufferConfig config) throws ServiceException {
         return createServiceProvider(
             SourceBuffer.class,
-            CapabilityQueries.hasExactValue("supportsSimd", options.supportsSimd())
+            CapabilityQueries.hasExactValue("supportsSimd", config.supportsSimd())
         );
     }
 

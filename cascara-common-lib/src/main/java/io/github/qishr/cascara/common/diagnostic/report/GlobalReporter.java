@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
+import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
@@ -89,10 +89,10 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
         globalInstance = this;
 
         consoleLogger = new ConsoleLogger();
-        consoleLogger.setFormatOptions(formatOptions);
+        consoleLogger.setFormatConfig(formatConfig);
 
         lineLogger = new LineLogger();
-        lineLogger.setFormatOptions(formatOptions);
+        lineLogger.setFormatConfig(formatConfig);
 
         // TODO:
         // CASCARA_REPORT_CONFIG=/path/
@@ -165,8 +165,8 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     @Experimental
-    public FormatOptions getFormatOptions() {
-        return formatOptions;
+    public FormatConfig getFormatConfig() {
+        return formatConfig;
     }
 
     /// Gets a `GlobalReporter` instance for the specifie class.

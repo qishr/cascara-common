@@ -4,9 +4,6 @@ plugins {
     id 'eclipse'
 }
 
-// tasks.withType(JavaCompile).configureEach {
-//     options.release = 21
-// }
 java { modularity.inferModulePath = true }
 
 repositories {

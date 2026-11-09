@@ -43,7 +43,7 @@ import java.util.Map;
 import io.github.qishr.cascara.common.annotation.Beta;
 
 @Beta
-public class JvmOptions {
+public class JvmConfig {
     private String moduleName;
     private Map<String, String> systemProperties = new HashMap<>();
     private Map<String, String> environmentVariables = new HashMap<>();
@@ -62,7 +62,7 @@ public class JvmOptions {
         return systemProperties;
     }
 
-    public JvmOptions setSystemProperty(String key, String value) {
+    public JvmConfig setSystemProperty(String key, String value) {
         this.systemProperties.put(key, value);
         return this;
     }
@@ -71,7 +71,7 @@ public class JvmOptions {
         return environmentVariables;
     }
 
-    public JvmOptions setEnv(String key, String value) {
+    public JvmConfig setEnv(String key, String value) {
         this.environmentVariables.put(key, value);
         return this;
     }
@@ -80,7 +80,7 @@ public class JvmOptions {
         return addModules;
     }
 
-    public JvmOptions addModule(String moduleName) {
+    public JvmConfig addModule(String moduleName) {
         this.addModules.add(moduleName);
         return this;
     }
@@ -91,7 +91,7 @@ public class JvmOptions {
 
     /// Configures JPMS --add-opens syntax: module/package=targetModule
     /// e.g., "java.base/java.lang=cascara.common"
-    public JvmOptions addOpens(String target) {
+    public JvmConfig addOpens(String target) {
         this.addOpens.add(target);
         return this;
     }
@@ -101,7 +101,7 @@ public class JvmOptions {
     }
 
     /// Configures JPMS --add-reads syntax: sourceModule=targetModule
-    public JvmOptions addReads(String target) {
+    public JvmConfig addReads(String target) {
         this.addReads.add(target);
         return this;
     }
@@ -110,7 +110,7 @@ public class JvmOptions {
         return customModulePath;
     }
 
-    public JvmOptions setModulePath(String modulePath) {
+    public JvmConfig setModulePath(String modulePath) {
         this.customModulePath = modulePath;
         return this;
     }
@@ -119,7 +119,7 @@ public class JvmOptions {
         return customClassPath;
     }
 
-    public JvmOptions setClassPath(String classPath) {
+    public JvmConfig setClassPath(String classPath) {
         this.customClassPath = classPath;
         return this;
     }
@@ -128,7 +128,7 @@ public class JvmOptions {
         return inheritParentModulePath;
     }
 
-    public JvmOptions setInheritParentModulePath(boolean inherit) {
+    public JvmConfig setInheritParentModulePath(boolean inherit) {
         inheritParentModulePath = inherit;
         return this;
     }
@@ -137,7 +137,7 @@ public class JvmOptions {
         return inheritParentClassPath;
     }
 
-    public JvmOptions setInheritParentClassPath(boolean inherit) {
+    public JvmConfig setInheritParentClassPath(boolean inherit) {
         inheritParentClassPath = inherit;
         return this;
     }
@@ -146,12 +146,12 @@ public class JvmOptions {
         return args;
     }
 
-    public JvmOptions setArg(String arg) {
+    public JvmConfig setArg(String arg) {
         this.args.add(arg);
         return this;
     }
 
-    public JvmOptions setArgs(String... args) {
+    public JvmConfig setArgs(String... args) {
         this.args.addAll(List.of(args));
         return this;
     }
@@ -160,7 +160,7 @@ public class JvmOptions {
         return timeout;
     }
 
-    public JvmOptions setTimeout(Duration timeout) {
+    public JvmConfig setTimeout(Duration timeout) {
         this.timeout = timeout;
         return this;
     }
@@ -169,7 +169,7 @@ public class JvmOptions {
         return debug;
     }
 
-    public JvmOptions setDebug(boolean enabled) {
+    public JvmConfig setDebug(boolean enabled) {
         this.debug = enabled;
         return this;
     }
@@ -178,7 +178,7 @@ public class JvmOptions {
         return moduleName;
     }
 
-    public JvmOptions setModuleName(String name) {
+    public JvmConfig setModuleName(String name) {
         this.moduleName = name;
         return this;
     }

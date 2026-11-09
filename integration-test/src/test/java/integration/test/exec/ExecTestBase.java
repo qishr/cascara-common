@@ -26,7 +26,7 @@ public class ExecTestBase extends VfsTestBase {
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
-        GlobalReporter.globalInstance().getFormatOptions().setIncluedPid(true);
+        GlobalReporter.globalInstance().getFormatConfig().setIncluedPid(true);
     }
 
     @AfterEach

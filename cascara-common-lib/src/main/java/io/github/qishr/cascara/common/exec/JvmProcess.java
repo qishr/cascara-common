@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 public final class JvmProcess {
 
     private final Class<?> mainClass;
-    private JvmOptions jvmOptions = new JvmOptions();
+    private JvmConfig jvmConfig = new JvmConfig();
 
     private JvmProcess(Class<?> mainClass) {
         this.mainClass = mainClass;
@@ -56,8 +56,8 @@ public final class JvmProcess {
         return new JvmProcess(mainClass);
     }
 
-    public JvmProcess setOptions(JvmOptions options) {
-        this.jvmOptions = options;
+    public JvmProcess setConfig(JvmConfig config) {
+        this.jvmConfig = config;
         return  this;
     }
 
@@ -97,11 +97,11 @@ public final class JvmProcess {
         List<String> command = buildCommand();
         ProcessBuilder pb = new ProcessBuilder(command);
 
-        if (!jvmOptions.getEnv().isEmpty()) {
-            pb.environment().putAll(jvmOptions.getEnv());
+        if (!jvmConfig.getEnv().isEmpty()) {
+            pb.environment().putAll(jvmConfig.getEnv());
         }
 
-        if (jvmOptions.debug()) {
+        if (jvmConfig.debug()) {
             System.out.println("JvmProcess Command:");
             for (String s : command) {
                 System.out.println("  " + s);
@@ -147,7 +147,7 @@ public final class JvmProcess {
             }
         }
 
-        long timeoutMs = jvmOptions.getTimeout().toMillis();
+        long timeoutMs = jvmConfig.getTimeout().toMillis();
         CompletableFuture<Process> processCompletion = process.onExit();
 
         if (timeoutMs > 0) {
@@ -166,7 +166,7 @@ public final class JvmProcess {
 
                 return new Response(
                     command,
-                    jvmOptions,
+                    jvmConfig,
                     exitCode,
                     timedOut,
                     stdoutFuture.join(),
@@ -182,7 +182,7 @@ public final class JvmProcess {
         String javaBin = ProcessHandle.current().info().command().orElse("java");
         command.add(javaBin);
 
-        jvmOptions.getSystemProperties().forEach((k, v) -> {
+        jvmConfig.getSystemProperties().forEach((k, v) -> {
             if (v == null || v.isBlank()) {
                 command.add("-D" + k);
             } else {
@@ -190,35 +190,35 @@ public final class JvmProcess {
             }
         });
 
-        String modulePath = jvmOptions.getModulePath();
+        String modulePath = jvmConfig.getModulePath();
         if (modulePath != null && !modulePath.isBlank()) {
             command.add("--module-path");
             command.add(modulePath);
         }
 
-        String classPath = jvmOptions.getClassPath() != null
-            ? jvmOptions.getClassPath()
-            : (jvmOptions.inheritParentClassPath() ? System.getProperty("java.class.path") : null);
+        String classPath = jvmConfig.getClassPath() != null
+            ? jvmConfig.getClassPath()
+            : (jvmConfig.inheritParentClassPath() ? System.getProperty("java.class.path") : null);
 
         if (classPath != null && !classPath.isBlank()) {
             command.add("-cp");
             command.add(classPath);
         }
 
-        for (String mod : jvmOptions.getModules()) {
+        for (String mod : jvmConfig.getModules()) {
             command.add("--add-modules");
             command.add(mod);
         }
-        for (String openTarget : jvmOptions.getOpens()) {
+        for (String openTarget : jvmConfig.getOpens()) {
             command.add("--add-opens");
             command.add(openTarget);
         }
-        for (String readTarget : jvmOptions.getReads()) {
+        for (String readTarget : jvmConfig.getReads()) {
             command.add("--add-reads");
             command.add(readTarget);
         }
 
-        String moduleName = jvmOptions.getModuleName();
+        String moduleName = jvmConfig.getModuleName();
         if (moduleName != null && !moduleName.isBlank()) {
             command.add("--module");
             command.add(moduleName + "/" + mainClass.getName());
@@ -226,7 +226,7 @@ public final class JvmProcess {
             command.add(mainClass.getName());
         }
 
-        command.addAll(jvmOptions.getArgs());
+        command.addAll(jvmConfig.getArgs());
         return command;
     }
 
@@ -240,16 +240,16 @@ public final class JvmProcess {
 
     public static class Response {
         public final List<String> command;
-        public final JvmOptions jvmOptions;
+        public final JvmConfig jvmConfig;
         public final int exitCode;
         public final boolean timedOut;
         public final String out;
         public final String err;
         public final Duration duration;
 
-        Response( List<String> command, JvmOptions jvmOptions, int exitCode, boolean timedOut, String out, String err, Duration duration) {
+        Response( List<String> command, JvmConfig jvmjvmConfig, int exitCode, boolean timedOut, String out, String err, Duration duration) {
             this.command = command;
-            this.jvmOptions = jvmOptions;
+            this.jvmConfig = jvmjvmConfig;
             this.exitCode = exitCode;
             this.timedOut = timedOut;
             this.out = out;

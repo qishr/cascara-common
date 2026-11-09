@@ -3,11 +3,6 @@ plugins {
     id "io.github.qishr.cascara.conventions" version "0.1.0"
 }
 
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 21
-}
-
 tasks.named('javadocJar') {
     enabled = false
 }
@@ -21,18 +16,14 @@ repositories {
 	mavenCentral()
 }
 
-
 dependencies {
     implementation(platform("io.github.qishr:cascara-meta-bom:$cascara_version"))
     implementation(project(':cascara-common-lib'))
-    // implementation('io.github.qishr:cascara-common')
 }
-
 
 tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:-missing', '-quiet')
 }
-
 
 test {
     useJUnitPlatform()

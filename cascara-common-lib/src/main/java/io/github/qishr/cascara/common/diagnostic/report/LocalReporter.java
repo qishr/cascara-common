@@ -34,23 +34,23 @@
 
 package io.github.qishr.cascara.common.diagnostic.report;
 
-import io.github.qishr.cascara.common.diagnostic.format.FormatOptions;
+import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 
 public class LocalReporter extends AbstractReporter<LocalReporter> {
 
     public LocalReporter() {
-        consoleLogger = new ConsoleLogger(formatOptions);
-        lineLogger = new LineLogger(formatOptions);
+        consoleLogger = new ConsoleLogger(formatConfig);
+        lineLogger = new LineLogger(formatConfig);
     }
 
     @Override
     protected LocalReporter self() { return this; }
 
     @Override
-    protected FormatOptions defaultFormatOptions() {
-        return new FormatOptions()
+    protected FormatConfig defaultFormatConfig() {
+        return new FormatConfig()
             .setPrefixEveryLine(false)
             .setIncludeTime(false)
             .setIncluedPid(false)

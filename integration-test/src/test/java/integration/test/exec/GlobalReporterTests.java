@@ -13,7 +13,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
-import io.github.qishr.cascara.common.exec.JvmOptions;
+import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
 import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.task.GlobalReporterTestTask;
@@ -36,7 +36,7 @@ public class GlobalReporterTests extends ExecTestBase {
 
         String classKey = "CASCARA_REPORT_LEVEL_" + GlobalReporterTestTask.class.getName().replace('.', '_').toUpperCase();
 
-        JvmOptions options = new JvmOptions()
+        JvmConfig config = new JvmConfig()
             .setEnv(classKey, "DEBUG")
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
@@ -46,7 +46,7 @@ public class GlobalReporterTests extends ExecTestBase {
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
         exec.setDiagnosticForwarding(true);
 
-        Response<ReporterTestOutput> result = exec.run("debug-message", options);
+        Response<ReporterTestOutput> result = exec.run("debug-message", config);
 
         GlobalReporter.globalInstance().setSystemOutputEnabled(true);
         debug(result);

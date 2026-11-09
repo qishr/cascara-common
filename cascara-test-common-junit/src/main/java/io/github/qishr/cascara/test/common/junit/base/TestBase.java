@@ -45,7 +45,7 @@ public abstract class TestBase {
         GlobalReporter.globalInstance().setSystemOutputEnabled(true);
         GlobalReporter.globalInstance().setLineConsumer(null);
         GlobalReporter.globalInstance()
-            .getFormatOptions()
+            .getFormatConfig()
                 .setIncludeTime(false)
                 .setIncluedPid(false)
                 .setIncluedThread(false)

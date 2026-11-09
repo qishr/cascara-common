@@ -76,7 +76,7 @@ import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.internal.DeserializationTargetResolver;
-import io.github.qishr.cascara.common.lang.util.LanguageOptions;
+import io.github.qishr.cascara.common.lang.util.LanguageConfig;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceProviderFactory;
@@ -101,10 +101,10 @@ public abstract class AbstractSerializer<
     private Properties properties;
     private final String contentType;
 
-    // Options
+    // Config
     protected Reporter reporter = new NoOpReporter();
     protected int depthLimit = 500;
-    private LanguageOptions<?> options;
+    private LanguageConfig<?> config;
     private boolean providerFactoryEnabled = true;
     private boolean heuristicMatchEnabled = true;
 
@@ -123,15 +123,15 @@ public abstract class AbstractSerializer<
     private final AstNodeFactory<N,S,L,M,E,K> astFactory;
     private final AstConverter<?> astConverter;
 
-    protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, LanguageOptions<?> options) {
-        this(contentType, astFactory, null, options);
+    protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, LanguageConfig<?> config) {
+        this(contentType, astFactory, null, config);
     }
 
-    protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, AstConverter<?> astConverter, LanguageOptions<?> options) {
+    protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, AstConverter<?> astConverter, LanguageConfig<?> config) {
         this.contentType = contentType;
         this.astFactory = astFactory;
         this.astConverter = astConverter;
-        this.options = options;
+        this.config = config;
     }
 
     @NonNull
@@ -1052,7 +1052,7 @@ public abstract class AbstractSerializer<
         N scalarNode = (N) astFactory.createScalarNode(
             jvmInstance,
             QuoteStyle.UNDETERMINED, // Only the ScalarAstNode implementation knows what it should be.
-            options
+            config
         );
         if (scalarNode == null) {
             throw new SerializerException(LangMessage.AST_FACTORY_FAIL_SCALAR);
@@ -1184,8 +1184,8 @@ public abstract class AbstractSerializer<
     }
 
     @NonNull
-    public T setOptions(LanguageOptions<?> options) {
-        this.options = options;
+    public T setConfig(LanguageConfig<?> config) {
+        this.config = config;
         return self();
     }
 
