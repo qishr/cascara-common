@@ -1,5 +1,6 @@
 package integration.test.security;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -9,16 +10,23 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.security.SignatureStatus;
+import io.github.qishr.cascara.common.security.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.TrustStore;
 import io.github.qishr.cascara.common.security.cert.CertPathValidationResult;
 import io.github.qishr.cascara.common.security.cert.CertPathVerifier;
+import io.github.qishr.cascara.common.util.JarFile;
+import io.github.qishr.cascara.test.common.jar.SyntheticJar;
+import io.github.qishr.cascara.test.common.junit.base.TestBase;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
-class CertPathValidationTests {
+@Isolated
+class CertPathValidationTests extends TestBase {
     private static final Reporter REPORTER = Reporter.forClass(CertPathValidationTests.class);
 
     private static TestCertificateAuthority rootCA;
@@ -26,7 +34,7 @@ class CertPathValidationTests {
     private static TestCertificateAuthority untrustedCA;
 
     @BeforeAll
-    static void setUp() throws Exception {
+    static void init() throws Exception {
         rootCA = TestCertificateAuthority.create("Root CA");
         // Intermediate signed by Root:
         intermediateCA = rootCA.createSubordinateCA("Intermediate CA");
@@ -76,5 +84,77 @@ class CertPathValidationTests {
 
         CertPathValidationResult result = CertPathVerifier.validatePath(chain, trustStore);
         assertFalse(result.isValid());
+    }
+
+    @Test
+    void test_emptyTrustStore_rejectsAllSignatures() throws Exception {
+        SyntheticJar jar = SyntheticJar.forUseIn(CertPathValidationTests.class)
+            .setPath(getTempDir().resolve("expired-intermediate.jar"))
+            .sign()
+            .packageJar();
+
+        // Configured TrustStore is explicitly empty
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+                .requireSigned(true)
+                .setTrustStore(TrustStore.empty())
+                .build();
+
+        try (JarFile jarFile = JarFile.open(jar.getPath())) {
+            SignatureStatus status = policy.evaluate(jarFile);
+            assertEquals(SignatureStatus.UNTRUSTED_SIGNER, status);
+        }
+    }
+
+    @Test
+    void test_pathLenConstraint_exceeded_rejected() throws Exception {
+        // 1. Issue an unauthorized subordinate CA (violates CA basic constraints / pathLen)
+        TestCertificateAuthority unauthorizedSubCa = rootCA.issueUnauthorizedSubCA("CN=Cascara Sub CA 1");
+
+        // 2. Issue a signing identity from the unauthorized CA
+        TestSigningIdentity identity = unauthorizedSubCa.issueIdentity("unauthorized-signer");
+
+        // 3. Sign SyntheticJar with this identity
+        SyntheticJar jar = SyntheticJar.forUseIn(CertPathValidationTests.class)
+                .setPath(getTempDir().resolve("pathlen-violation.jar"))
+                .sign(s -> s.withIdentity(identity))
+                .packageJar();
+
+        TrustStore trustStore = new TrustStore(Set.of(rootCA.certificate()));
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+                .requireSigned(true)
+                .setTrustStore(trustStore)
+                .build();
+
+        try (JarFile jarFile = JarFile.open(jar.getPath())) {
+            SignatureStatus status = policy.evaluate(jarFile);
+
+            // Subordinate CA constraint violation must fail trust evaluation
+            assertEquals(SignatureStatus.UNTRUSTED_SIGNER, status);
+        }
+    }
+
+
+    @Test
+    void test_expiredIntermediateCA_rejected() throws Exception {
+        // 1. Issue an expired signing identity directly from the authority
+        TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-signer");
+
+        // 2. Sign SyntheticJar with the expired identity
+        SyntheticJar jar = SyntheticJar.forUseIn(CertPathValidationTests.class)
+                .setPath(getTempDir().resolve("expired-intermediate.jar"))
+                .sign(s -> s.withIdentity(expiredIdentity))
+                .packageJar();
+
+        TrustStore trustStore = new TrustStore(Set.of(rootCA.certificate()));
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+                .requireSigned(true)
+                .setTrustStore(trustStore)
+                .build();
+
+        try (JarFile jarFile = JarFile.open(jar.getPath())) {
+            SignatureStatus status = policy.evaluate(jarFile);
+
+            assertEquals(SignatureStatus.CERTIFICATE_EXPIRED, status);
+        }
     }
 }

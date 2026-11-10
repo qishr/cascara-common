@@ -137,32 +137,32 @@ public class SplClassRegistrationSecurityTests extends SplTestBase {
 
     @Test
     void test_registerClass_dynamicClassWithoutSignedJar_rejectedWhenRequireSigned() {
-    SplSignaturePolicy policy = SplSignaturePolicy.builder()
-            .requireSignedClasses(true)
-            .build();
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+                .requireSignedClasses(true)
+                .build();
 
-    SPL.setSignaturePolicy(policy);
-    SPL layer = spl.create("testLayer");
+        SPL.setSignaturePolicy(policy);
+        SPL layer = spl.create("testLayer");
 
-    // Create a dynamic proxy instance with a working handler so SPL's property checks pass
-    ServiceProvider proxyInstance = (ServiceProvider) Proxy.newProxyInstance(
-            SplClassRegistrationSecurityTests.class.getClassLoader(),
-            new Class<?>[]{ ServiceProvider.class },
-            (proxy, method, args) -> {
-                if ("getServiceProperties".equals(method.getName())) {
-                    return Map.of(); // Return empty properties map cleanly
+        // Create a dynamic proxy instance with a working handler so SPL's property checks pass
+        ServiceProvider proxyInstance = (ServiceProvider) Proxy.newProxyInstance(
+                SplClassRegistrationSecurityTests.class.getClassLoader(),
+                new Class<?>[]{ ServiceProvider.class },
+                (proxy, method, args) -> {
+                    if ("getServiceProperties".equals(method.getName())) {
+                        return Map.of(); // Return empty properties map cleanly
+                    }
+                    return null;
                 }
-                return null;
-            }
-    );
+        );
 
-    // Register the class of the dynamic proxy
-    Class<?> dynamicClass = proxyInstance.getClass();
+        // Register the class of the dynamic proxy
+        Class<?> dynamicClass = proxyInstance.getClass();
 
-    SignatureException ex = assertThrows(SignatureException.class, () -> {
-        layer.registerClass(dynamicClass);
-    });
+        SignatureException ex = assertThrows(SignatureException.class, () -> {
+            layer.registerClass(dynamicClass);
+        });
 
-    assertEquals(SignatureStatus.NOT_SIGNED, ex.getSignatureStatus());
-}
+        assertEquals(SignatureStatus.NOT_SIGNED, ex.getSignatureStatus());
+    }
 }

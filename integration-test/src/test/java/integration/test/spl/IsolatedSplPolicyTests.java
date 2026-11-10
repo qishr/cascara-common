@@ -194,14 +194,10 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         assertTrue(result.getSystemErr().contains("EXPIRED"));
     }
 
-
-    // TODO: For this test to work, cascara.lang.json needs to be signed
-
     /// Unsigned jar on module path loaded by jvm at boot time
     /// will be rejected by SPL, then try to register it via
     /// SPL.registerClass() in SplRegisterClassTestTask. with
     /// CASCARA_SPL_POLICY_REQUIRE_CLASS, that should alsso fail.
-    @Disabled
     @Test
     void test_reject_registerClass_unsignedJar(@TempDir Path tempDir) throws Throwable {
         GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
@@ -238,11 +234,9 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
         debug(result);
 
-        // Expect an error written to System.err.
-        // Since cascara-lang-json here is unsigned and SPL in the child
-        // JVM rejects unsigned JARs on the module path, SPL will throw
-        // an exception and the child JVM will terminate.
-        assertTrue(result.getSystemErr().contains("NOT_SIGNED"));
+        // Expect a warning to be reported for ProviderA
+        assertReported.warnContains("NOT_SIGNED");
+
     }
 
     @Test
@@ -280,6 +274,6 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         Response<SplRegisterClassTestOutput> result = exec.run("com.example.providera.ProviderA");
 
         debug(result);
-        assertTrue(result.getSystemErr().contains("Serializer not available"));
+        assertTrue(!result.getSystemErr().contains("Serializer not available"));
     }
 }

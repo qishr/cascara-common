@@ -103,13 +103,6 @@ public final class TestJarSigner {
         return this;
     }
 
-    // public TestJarSigner corruptSignatureBytes(boolean corrupt) {
-    //     this.corruptSignatureBytes = corrupt;
-    //     return this;
-    // }
-
-
-
     public TestJarSigner() {
         // Generate In-Memory RSA KeyPair & Self-Signed X.509 Certificate
         try {
