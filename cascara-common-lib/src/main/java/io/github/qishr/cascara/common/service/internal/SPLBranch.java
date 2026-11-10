@@ -811,7 +811,15 @@ public class SPLBranch implements SPL {
             properties.set(SPL.SP_JAR_PATH, jarPath.toString());
         }
         properties.set(SPL.SP_PROVIDER_NAME, provider.getClass().getSimpleName());
-        Properties declaredCapabilities = provider.getServiceProperties();
+        Properties declaredCapabilities = null;
+        try {
+            declaredCapabilities = provider.getServiceProperties();
+        } catch (Throwable t) {
+
+            // TODO: Remove this
+            System.err.println(t.getMessage());
+
+        }
         if (declaredCapabilities != null) {
             properties.addAll(declaredCapabilities);
         }

@@ -1,11 +1,14 @@
 package io.github.qishr.cascara.common.security;
 
 import java.io.IOException;
+import java.lang.reflect.Proxy;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.CodeSource;
+import java.security.PermissionCollection;
+import java.security.Principal;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
 
@@ -40,6 +43,8 @@ public final class SplSignaturePolicy implements SignaturePolicy {
     @SchemaProperty(title = "", description = "")
     private final boolean requireSigned;
 
+    private final boolean requireSignedClasses;
+
     @SchemaProperty(title = "", description = "")
     private final boolean checkExpiry;
 
@@ -49,13 +54,17 @@ public final class SplSignaturePolicy implements SignaturePolicy {
     @DataIgnore
     private final TrustStore trustStore;
 
+    private final boolean trustSystemModules;
+
     @DataIgnore
     private final X509CRL crl;
 
     private SplSignaturePolicy(Builder builder) {
         this.requireSigned = builder.requireSigned;
+        this.requireSignedClasses = builder.requireSignedClasses;
         this.checkExpiry = builder.checkExpiry;
         this.trustStore = builder.trustStore != null ? builder.trustStore : TrustStore.fromSystemProperties();
+        this.trustSystemModules = builder.trustSystemModules;
         this.allowedDigestAlgorithms = builder.allowedDigestAlgorithms;
         this.crl = builder.crl;
     }
@@ -175,6 +184,20 @@ public final class SplSignaturePolicy implements SignaturePolicy {
 
     @Override
     public SignatureStatus evaluate(Class<?> type) {
+        if (!requireSignedClasses) {
+            return SignatureStatus.VALID;
+        }
+
+        // Dynamic runtime proxies have no signed bytecode on disk
+        if (Proxy.isProxyClass(type)) {
+            return SignatureStatus.NOT_SIGNED;
+        }
+
+        // 1. System/Framework Exemption
+        if (trustSystemModules && isSystemOrFrameworkClass(type)) {
+            return SignatureStatus.VALID;
+        }
+
         ProtectionDomain pd = type.getProtectionDomain();
         CodeSource cs = (pd != null) ? pd.getCodeSource() : null;
 
@@ -219,7 +242,8 @@ public final class SplSignaturePolicy implements SignaturePolicy {
             Path jarPath = Path.of(locationUrl.toURI());
             if (!Files.isRegularFile(jarPath)) {
                 // Exploded directory on classpath, not a JAR
-                if (requireSigned) {
+                if (requireSignedClasses) {
+                    // TODO: requireSigned || ?
                     return SignatureStatus.NOT_SIGNED;
                 } else {
                     return SignatureStatus.VALID;
@@ -234,7 +258,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                 }
             }
         } catch (URISyntaxException | IOException e) {
-            if (requireSigned) {
+            if (requireSignedClasses) {
                 return SignatureStatus.NOT_SIGNED;
             } else {
                 return SignatureStatus.VALID;
@@ -269,6 +293,50 @@ public final class SplSignaturePolicy implements SignaturePolicy {
         return false;
     }
 
+    private boolean isSystemOrFrameworkClass(Class<?> type) {
+        if (type == null) {
+            return false;
+        }
+
+
+
+        // // TODO: Remove these:
+        // ProtectionDomain pd = type.getProtectionDomain();
+        // CodeSource cs = (pd != null) ? pd.getCodeSource() : null;
+        // PermissionCollection pc = (pd != null) ? pd.getPermissions() : null;
+        // Principal[] pr = (pd != null) ? pd.getPrincipals() : null;
+
+
+
+        // 1. JDK Bootstrap / Core Classes (null ClassLoader)
+        ClassLoader cl = type.getClassLoader();
+        if (cl == null) {
+            return true;
+        }
+
+        // 2. JDK Standard & Platform Modules (JPMS Check)
+        Module module = type.getModule();
+        if (module != null && module.isNamed()) {
+            String moduleName = module.getName();
+            if (moduleName.startsWith("java.") ||
+                moduleName.startsWith("jdk.") ||
+                moduleName.startsWith("sun.")) {
+                return true;
+            }
+        }
+
+        // 3. Cascara Trusted Core Framework Packages
+        String pkgName = type.getPackageName();
+        return isCascaraCorePackage(pkgName);
+    }
+
+    private boolean isCascaraCorePackage(String pkgName) {
+        // Exempt foundational Cascara packages from extension signature checks
+        return pkgName.startsWith("io.github.qishr.cascara.common") ||
+               pkgName.startsWith("io.github.qishr.cascara.lang.json") ||
+               pkgName.startsWith("io.github.qishr.cascara.schema");
+    }
+
     //
     // Builder
     //
@@ -279,8 +347,10 @@ public final class SplSignaturePolicy implements SignaturePolicy {
 
     public static class Builder {
         private boolean requireSigned = false;
+        private boolean requireSignedClasses = false;
         private boolean checkExpiry = true;
         private TrustStore trustStore;
+        private boolean trustSystemModules = true;
         private X509CRL crl;
         private Set<String> allowedDigestAlgorithms = Set.of("SHA-256", "SHA-384", "SHA-512");
 
@@ -289,13 +359,23 @@ public final class SplSignaturePolicy implements SignaturePolicy {
             return this;
         }
 
+        public Builder requireSignedClasses(boolean requireSignedClasses) {
+            this.requireSignedClasses = requireSignedClasses;
+            return this;
+        }
+
         public Builder checkExpiry(boolean checkExpiry) {
             this.checkExpiry = checkExpiry;
             return this;
         }
 
-        public Builder trustStore(TrustStore trustStore) {
+        public Builder setTrustStore(TrustStore trustStore) {
             this.trustStore = trustStore;
+            return this;
+        }
+
+        public Builder trustSystemModules(boolean trustSystemModules) {
+            this.trustSystemModules = trustSystemModules;
             return this;
         }
 

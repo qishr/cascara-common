@@ -41,7 +41,7 @@ public class PolicyInvalidTests extends JarTestBase {
         // 3. Configure SignaturePolicy requiring trust anchors from Cascara CA
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
             .requireSigned(true)
-            .trustStore(cascaraCA.trustStore())
+            .setTrustStore(cascaraCA.trustStore())
             .build();
 
         // 4. Opening the JAR under Cascara policy rejects the foreign signer
@@ -68,7 +68,7 @@ public class PolicyInvalidTests extends JarTestBase {
         // Evaluate against our genuine TrustStore containing only Cascara Root CA
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
-                .trustStore(new TrustStore(Set.of(rootCA.certificate())))
+                .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();
 
         try (JarFile jar = JarFile.open(jarPath)) {
@@ -92,7 +92,7 @@ public class PolicyInvalidTests extends JarTestBase {
         // Empty TrustStore should fail to trust even a valid Cascara identity
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
-                .trustStore(new TrustStore(Collections.emptySet()))
+                .setTrustStore(new TrustStore(Collections.emptySet()))
                 .build();
 
         try (JarFile jar = JarFile.open(jarPath)) {
@@ -113,7 +113,7 @@ public class PolicyInvalidTests extends JarTestBase {
 
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
-                .trustStore(new TrustStore(Set.of(rootCA.certificate())))
+                .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();
 
         try (JarFile jar = JarFile.open(jarPath)) {
@@ -137,7 +137,7 @@ public class PolicyInvalidTests extends JarTestBase {
         // 3. Configure policy requiring valid signatures trusted by rootCA
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
-                .trustStore(new TrustStore(Set.of(rootCA.certificate())))
+                .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();
 
         // 4. Policy evaluation must reject with CERTIFICATE_EXPIRED
@@ -162,7 +162,7 @@ public class PolicyInvalidTests extends JarTestBase {
         // 3. Configure policy requiring valid signatures trusted by rootCA
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
-                .trustStore(new TrustStore(Set.of(rootCA.certificate())))
+                .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();
 
         // 4. Policy evaluation must reject with NOT_YET_VALID

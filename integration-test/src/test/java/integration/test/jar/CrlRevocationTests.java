@@ -61,7 +61,7 @@ class CrlRevocationTests {
 
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
             .requireSigned(true)
-            .trustStore(new TrustStore(Set.of(ca.certificate())))
+            .setTrustStore(new TrustStore(Set.of(ca.certificate())))
             .addCrl(crl) // or enable CRL checking via PKIXParameters
             .build();
 

@@ -39,7 +39,7 @@ public class SplPolicyTests extends SplTestBase {
         // 3. Configure policy requiring valid signatures trusted by rootCA
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
-                .trustStore(new TrustStore(Set.of(rootCA.certificate())))
+                .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();
 
         System.setProperty(SPL.CASCARA_SPL_VERIFY, "true");
@@ -71,7 +71,7 @@ public class SplPolicyTests extends SplTestBase {
         // 3. Configure policy requiring valid signatures trusted by rootCA
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
-                .trustStore(new TrustStore(Set.of(rootCA.certificate())))
+                .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();
 
         System.setProperty(SPL.CASCARA_SPL_VERIFY, "false");

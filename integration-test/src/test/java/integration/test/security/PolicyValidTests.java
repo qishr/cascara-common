@@ -34,7 +34,7 @@ public class PolicyValidTests extends JarTestBase {
         // 3. Verify JAR under a SignaturePolicy backed by the CA's TrustStore
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
             .requireSigned(true)
-            .trustStore(ca.trustStore())
+            .setTrustStore(ca.trustStore())
             .build();
 
         try (JarFile jar = JarFile.open(testJar.getPath())) {
@@ -60,7 +60,7 @@ public class PolicyValidTests extends JarTestBase {
         // 2. Build SignaturePolicy backed by CA's TrustStore
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
             .requireSigned(true)
-            .trustStore(ca.trustStore())
+            .setTrustStore(ca.trustStore())
             .build();
 
         // 3. Open JarFile and verify entry + policy using standard JRE APIs

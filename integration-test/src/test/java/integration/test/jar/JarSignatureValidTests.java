@@ -149,7 +149,7 @@ public class JarSignatureValidTests extends JarTestBase {
         // 3. Verify under SignaturePolicy requiring ecCA trust anchor
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
-                .trustStore(new TrustStore(Set.of(ecCA.certificate())))
+                .setTrustStore(new TrustStore(Set.of(ecCA.certificate())))
                 .build();
 
         try (JarFile jar = JarFile.open(ecSignedJar.getPath())) {

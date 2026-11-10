@@ -374,7 +374,7 @@ public class JarSignatureInvalidTests extends JarTestBase {
         // 4. Configure policy requiring valid signatures anchored at rootCA
         SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
-                .trustStore(new TrustStore(Set.of(rootCA.certificate())))
+                .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();
 
         // 5. Evaluate policy
