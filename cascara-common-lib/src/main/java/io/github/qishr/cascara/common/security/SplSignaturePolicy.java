@@ -7,8 +7,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.CodeSource;
-import java.security.PermissionCollection;
-import java.security.Principal;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
 

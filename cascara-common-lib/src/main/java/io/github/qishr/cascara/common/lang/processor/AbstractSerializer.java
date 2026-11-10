@@ -758,6 +758,7 @@ public abstract class AbstractSerializer<
 
         // 2. Numeric Narrowing (If AST already inferred a Number but target is different)
         if (jvmInstance instanceof Number num) {
+            // TODO: Do booleans go through here?
             if (targetType == int.class || targetType == Integer.class) return num.intValue();
             if (targetType == long.class || targetType == Long.class) return num.longValue();
             if (targetType == double.class || targetType == Double.class) return num.doubleValue();

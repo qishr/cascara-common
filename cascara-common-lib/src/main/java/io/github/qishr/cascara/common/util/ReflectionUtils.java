@@ -325,16 +325,19 @@ public class ReflectionUtils {
         return enumType;
     }
 
+    @SuppressWarnings("null")
+    @NonNull
     public static String getEffectiveName(Field field) {
-        String keyName = field.isAnnotationPresent(DataField.class)
+        String fieldName = field.isAnnotationPresent(DataField.class)
             ? field.getAnnotation(DataField.class).key()
             : field.getName();
-        if (keyName == null || keyName.isEmpty()) {
-            keyName = field.getName();
+        if (fieldName == null || fieldName.isEmpty()) {
+            return field.getName();
         }
-        return keyName;
+        return fieldName;
     }
 
+    @NonNull
     public static List<Field> getAllFields(Class<?> clazz) {
         return getAllFields(clazz, null);
     }
@@ -356,6 +359,7 @@ public class ReflectionUtils {
         return fields;
     }
 
+    @NonNull
     public static List<Method> getAllMethods(Class<?> jvmType) {
         List<Method> methods = new ArrayList<>();
         Class<?> current = jvmType;
@@ -368,10 +372,12 @@ public class ReflectionUtils {
         return methods;
     }
 
+    @NonNull
     public static Set<Class<?>> getReferencedClasses(Class<?> clazz) {
         return getReferencedClasses(clazz, (Function<Class<?>,Boolean>)null);
     }
 
+    @NonNull
     public static Set<Class<?>> getReferencedClasses(Class<?> clazz, Set<String> excludeFunction) {
         if (excludeFunction == null) {
             return getReferencedClasses(clazz, (Function<Class<?>,Boolean>)null);
@@ -380,6 +386,7 @@ public class ReflectionUtils {
         }
     }
 
+    @NonNull
     public static Set<Class<?>> getReferencedClasses(Class<?> clazz, Function<Class<?>,Boolean> excludeFunction) {
         Set<Class<?>> visited = new HashSet<>();
         Set<Class<?>> collected = new HashSet<>();
@@ -387,6 +394,8 @@ public class ReflectionUtils {
         return collected;
     }
 
+    @SuppressWarnings("null")
+    @NonNull
     public static String getTypeName(Type jvmType) {
         Class<?> jvmClass = getRawClass(jvmType);
         return jvmClass.getName();
