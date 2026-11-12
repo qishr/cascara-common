@@ -1,6 +1,8 @@
-package io.github.qishr.cascara.common.security;
+package io.github.qishr.cascara.common.security.diagnostic;
 
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 
 public class UnsupportedAlgorithmException extends SignatureException {
     private static final DiagnosticMessage message = SecurityMessage.UNSUPPORTED_ALGORITHM;

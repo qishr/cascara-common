@@ -16,10 +16,10 @@ import org.junit.jupiter.api.io.TempDir;
 
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.security.SignatureException;
-import io.github.qishr.cascara.common.security.SignatureStatus;
-import io.github.qishr.cascara.common.security.SplSignaturePolicy;
-import io.github.qishr.cascara.common.security.TrustStore;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
+import io.github.qishr.cascara.common.security.cert.TrustStore;
+import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ZipFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;

@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.security;
+package io.github.qishr.cascara.common.security.policy;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;

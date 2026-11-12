@@ -16,10 +16,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 
-import io.github.qishr.cascara.common.security.SignatureException;
-import io.github.qishr.cascara.common.security.SignatureStatus;
-import io.github.qishr.cascara.common.security.SplSignaturePolicy;
-import io.github.qishr.cascara.common.security.TrustStore;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
+import io.github.qishr.cascara.common.security.cert.TrustStore;
+import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.service.ServiceProvider;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;

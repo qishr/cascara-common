@@ -12,10 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import integration.test.jar.JarSignatureInvalidTests;
-import io.github.qishr.cascara.common.security.SignatureException;
-import io.github.qishr.cascara.common.security.SignatureStatus;
-import io.github.qishr.cascara.common.security.SplSignaturePolicy;
-import io.github.qishr.cascara.common.security.TrustStore;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
+import io.github.qishr.cascara.common.security.cert.TrustStore;
+import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.util.Cascara;

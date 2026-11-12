@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.security;
+package io.github.qishr.cascara.common.security.diagnostic;
 
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;

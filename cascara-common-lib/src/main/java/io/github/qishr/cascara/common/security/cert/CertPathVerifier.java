@@ -1,7 +1,5 @@
 package io.github.qishr.cascara.common.security.cert;
 
-import io.github.qishr.cascara.common.security.TrustStore;
-
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.*;

@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.util;
+package io.github.qishr.cascara.common.security.verifier;
 
 import java.security.CodeSigner;
 import java.security.cert.CertPath;

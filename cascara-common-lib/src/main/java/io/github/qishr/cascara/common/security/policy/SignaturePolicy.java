@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.security;
+package io.github.qishr.cascara.common.security.policy;
 
 import io.github.qishr.cascara.common.util.JarFile;
 

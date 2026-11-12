@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.security;
+package io.github.qishr.cascara.common.security.verifier;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -39,7 +39,11 @@ import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectId
 import io.github.qishr.cascara.common.security.cms.CertificateSet;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
-import io.github.qishr.cascara.common.util.JarVerifier;
+import io.github.qishr.cascara.common.security.diagnostic.SecurityMessage;
+import io.github.qishr.cascara.common.security.diagnostic.UnsupportedAlgorithmException;
+import io.github.qishr.cascara.common.security.diagnostic.UnsupportedDigestException;
+import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.util.Pair;
 
 public class CascaraJarVerifier implements JarVerifier {

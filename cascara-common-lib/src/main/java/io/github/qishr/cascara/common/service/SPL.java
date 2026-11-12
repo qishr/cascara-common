@@ -42,7 +42,7 @@ import java.util.function.Predicate;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.data.TreeNode;
-import io.github.qishr.cascara.common.security.SignaturePolicy;
+import io.github.qishr.cascara.common.security.policy.SignaturePolicy;
 import io.github.qishr.cascara.common.service.internal.SPLRoot;
 import io.github.qishr.cascara.common.service.internal.SPLUtils;
 import io.github.qishr.cascara.common.trackable.TrackableArray;
