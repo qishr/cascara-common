@@ -22,10 +22,10 @@ public class JmxTestTask extends AbstractExecutionTask<JmxTestInput, JmxTestOutp
     public JmxTestOutput run(JmxTestInput input) throws Exception {
         System.out.println("Hello, outside world!");
 
-        Files.walk(Cascara.getHomePath().getParent())
+        Files.walk(Cascara.instance().getHomePath().getParent())
             .forEach(f -> System.out.println(f));
 
-        reporter.debug("Cascara home: " + Cascara.getHomePath());
+        reporter.debug("Cascara home: " + Cascara.instance().getHomePath());
 
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 

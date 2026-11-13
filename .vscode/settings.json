@@ -1,30 +1,40 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true",
-    "java.configuration.updateBuildConfiguration": "automatic",
 
     "java.test.config":  {
         "vmArgs": [
+            "--add-reads", "cascara.common=org.junit.jupiter.api",
             "--add-opens", "java.base/java.lang=cascara.common",
+            "--add-opens", "java.base/java.lang=cascara.test.common.junit",
             "--add-opens", "java.base/java.lang=integration.test",
         ],
         "modulePaths": [
-            // cascara-cpmmon requires sources and javadoc, so we can't use its libs folder
-            // as it contains sources and libs with the same module names.
-            "${workspaceFolder}/cascara-common/build/modulepath",
-
-            // For everything else we use libs rather than modulepath to avoid
-            // a duplicate cascara-common module.
-            "${workspaceFolder}/integration-test/build/libs",
-            "${workspaceFolder}/integration-test-fixtures/build/libs",
+            "${workspaceFolder}/integration-test/build/modulepath",
         ],
         "classPaths": [
-            "${workspaceFolder}/cascara-common/build/classes/java/main",
-            "${workspaceFolder}/cascara-common/build/resources/main",
-            "${workspaceFolder}/cascara-common/build/classes/java/test",
-            "${workspaceFolder}/cascara-common/build/resources/test",
+            "${workspaceFolder}/cascara-common-lib/build/classes/java/main",
+            "${workspaceFolder}/cascara-common-lib/build/resources/main",
+            "${workspaceFolder}/cascara-common-lib/build/classes/java/test",
+            "${workspaceFolder}/cascara-common-lib/build/resources/test",
+            "${workspaceFolder}/cascara-test-common-junit/build/classes/java/test",
+            "${workspaceFolder}/cascara-test-common-junit/build/resources/test",
             "${workspaceFolder}/integration-test/build/classes/java/test",
             "${workspaceFolder}/integration-test/build/resources/test",
         ],
-    }
+    },
+
+    "java.compile.nullAnalysis.nullable": [
+        "io.github.qishr.cascara.common.annotation.Nullable",
+    ],
+    "java.compile.nullAnalysis.nonnull": [
+        "io.github.qishr.cascara.common.annotation.NonNull",
+    ],
+    // TODO: NonNullByDefault
+
+
+    "java.import.gradle.wrapper.enabled": true,
+    "java.configuration.updateBuildConfiguration": "automatic",
+
+    "java.gradle.buildServer.enabled": "off",
+    "java.debug.settings.onBuildFailureProceed": true
 }

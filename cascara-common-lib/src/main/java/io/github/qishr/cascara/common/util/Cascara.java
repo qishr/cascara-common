@@ -1,0 +1,328 @@
+// # License & Terms
+//
+// This file is part of **Cascara**.
+//
+// **Cascara** is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+//
+// ---
+//
+// ## Special Runtime Exception
+//
+// As a special exception, the copyright holders of this library give you
+// permission to link this library with independent modules to produce an
+// executable, regardless of the license terms of these independent modules,
+// and to copy and distribute the resulting executable under terms of your
+// choice, provided that you also meet, for each linked independent module,
+// the terms and conditions of the license of that module.
+//
+// An independent module is a module which is not derived from or based on
+// this library. If you modify this library, you may extend this exception
+// to your version of the library, but you are not obligated to do so. If
+// you do not wish to do so, delete this exception statement from your
+// version.
+
+package io.github.qishr.cascara.common.util;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.semver.SemVer;
+import io.github.qishr.cascara.common.semver.SemVerException;
+
+public class Cascara {
+    private static final String CASCARA_HOME = "CASCARA_HOME";
+    private static final String CASC_HOME = "CASC_HOME";
+
+    private static final ThreadLocal<Cascara> INSTANCE = ThreadLocal.withInitial(Cascara::new);
+    private static final String ACTIVE_VERSION = "active-version";
+    private static final String CASCARA_PROPERTIES = "cascara.properties";
+    private static final String CONTENT_TYPES = "content-types.yaml";
+    private static final String SCHEMAS = "schemas";
+    private static final String SPL_PROPRTTIES = "spl.properties";
+    private static final String MODULEPATH = "modulepath";
+
+    private String homeEnvVar;
+    private Path homePath;
+    private FileSystem vfs;
+
+    private Cascara() {
+        setHomePathInternal(resolvePath(getHome()));
+    }
+
+    public static Cascara instance() {
+        return INSTANCE.get();
+    }
+
+    public static void reset() {
+        INSTANCE.remove();
+    }
+
+    //
+    //
+    //
+
+    public String getHomeEnvVar() {
+        return homeEnvVar;
+    }
+
+    @SuppressWarnings("null")
+    @NonNull
+    public Path getHomePath() {
+        return homePath;
+    }
+
+    @Experimental
+    public void setHomePath(Path path) {
+        homeEnvVar = null;
+        setHomePathInternal(path);
+    }
+
+    /// The path of the content types registry file.
+    public Path getContentTypesPath() {
+        return getSharedPath().resolve(CONTENT_TYPES);
+    }
+
+    /// The path of the schema store irectory.
+    public Path getSchemasPath() {
+        return getSharedPath().resolve(SCHEMAS);
+    }
+
+    public Path getSharedPath() {
+        return getHomePath().resolve("shared");
+    }
+
+    /// The path of the properties file containing definitions of default or preferred service providers
+    /// If this file is empty, or if a service is not listed in it, when a provider is requested the
+    /// first  matching provider will be returned by SPL.
+    @SuppressWarnings("null")
+    @NonNull
+    public Path getSplPropertiesPath() {
+        return getActiveVersionPath().resolve(SPL_PROPRTTIES);
+    }
+
+    @SuppressWarnings("null")
+    @NonNull
+    public Path getModulePath() {
+        return getActiveVersionPath().resolve(MODULEPATH);
+    }
+
+    public List<String> getInstalledVersions() {
+        List<String> versions = new ArrayList<>();
+        Path homePath = getHomePath();
+
+        if (Files.isDirectory(homePath)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(homePath)) {
+                for (Path entry : stream) {
+                    if (isVersionDirectory(entry)) {
+                        versions.add(entry.getFileName().toString());
+                    }
+                }
+            } catch (IOException e) {
+                // Return empty list or log depending on error handling policy
+            }
+        }
+
+        return versions;
+    }
+
+    public SemVer getVersion() {
+        try {
+            JarManifest manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
+            return new SemVer(manifest.getString("Cascara-Version", "0.0.0"));
+        } catch (IOException e) {
+            return new SemVer("0.0.0");
+        }
+    }
+
+    public SemVer getCommonVersion() {
+        try {
+            JarManifest manifest = JarManifest.parse(JreUtils.getResourceAsString(Cascara.class, "/META-INF/MANIFEST.MF"));
+            return new SemVer(manifest.getString("Implementation-Version", "0.0.0"));
+        } catch (IOException e) {
+            return new SemVer("0.0.0");
+        }
+    }
+
+    @SuppressWarnings("null")
+    @NonNull
+    public Path getActiveVersionPath() {
+        String version = getActiveVersionString();
+        if (version == null) {
+            return getHomePath();
+        }
+        return getHomePath().resolve(version);
+    }
+
+    // TODO: Cache this and only re-calculate if properties file is modified
+    @Nullable
+    public String getActiveVersionString() {
+        List<String> installedVersions = getInstalledVersions();
+        Path path = getSharedPath().resolve(CASCARA_PROPERTIES);
+        if (Files.isRegularFile(path)) {
+            try {
+                Properties properties = Properties.load(path);
+                String version = properties.get(ACTIVE_VERSION);
+                if (version != null && !version.isBlank()) {
+                    if (installedVersions.contains(version)) {
+                        return version;
+                    }
+                }
+            } catch (IOException e) {}
+        }
+        String highestVersionString = null;
+        SemVer highest = new SemVer("0.0.0");
+        for (String versionString : installedVersions) {
+            SemVer version = toSemVer(versionString);
+            if (version.isGreaterThan(highest)) {
+                highest = version;
+                highestVersionString = versionString;
+            }
+        }
+        return highestVersionString;
+    }
+
+    public boolean isFileTimeSupported() {
+        return !getHomePath().toUri().getScheme().equals("jar");
+    }
+
+    //
+    // Private path-related methods
+    //
+
+    private void closeVfs() {
+        if (vfs != null && vfs.isOpen()) {
+            try {
+                vfs.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void setHomePathInternal(Path path) {
+        closeVfs();
+
+        Pair<Path,String> zipPaths = splitZipPath(path);
+
+        if (zipPaths == null) {
+            homePath = path;
+        } else {
+            Path zipFile = zipPaths.getL();
+            String entryPath = zipPaths.getR();
+
+            URI uri = URI.create("jar:" + zipFile.toUri());
+            try {
+                vfs = FileSystems.newFileSystem(uri, Map.of("create", "false"));
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            homePath = vfs.getPath(entryPath);
+        }
+    }
+
+    private static Pair<Path,String> splitZipPath(Path path) {
+        String pathString = path.toString();
+        int bang = pathString.indexOf("!");
+        if (bang == -1) {
+            return null;
+        }
+        String zipFile = pathString.substring(0, bang);
+        String entryPath = pathString.substring(bang + 1);
+
+        if (zipFile.startsWith("jar:")) {
+            zipFile = zipFile.substring(4);
+        }
+
+        return Pair.of(Path.of(zipFile), entryPath);
+    }
+
+    private static Path resolvePath(String pathString) {
+        return Path.of(pathString);
+    }
+
+    @Nullable
+    private String getHome() {
+        String home = getHomeFromEnvVar(CASCARA_HOME);
+        if (home == null) {
+            home = getHomeFromEnvVar(CASC_HOME);
+        }
+        if (home == null) {
+            String userHome = System.getProperty("user.home");
+            home = userHome + File.separator + ".cascara";
+        }
+        return home;
+    }
+
+    @Nullable
+    private String getHomeFromEnvVar(String envVar) {
+        String home = System.getenv(envVar);
+        if (home != null) {
+            homeEnvVar = envVar;
+        }
+        return home;
+    }
+
+    //
+    // Private version-relate methods
+    //
+
+    private static boolean isVersionDirectory(Path file) {
+        if (!Files.isDirectory(file)) {
+            return false;
+        }
+        String name = file.getFileName().toString();
+        try {
+            toSemVer(name);
+            return true;
+        } catch (SemVerException e) {
+            return false;
+        }
+    }
+
+    private static SemVer toSemVer(String version) {
+        if (version == null || version.isBlank()) {
+            throw new UnexpectedNullParameterException("version");
+        }
+        int dots = 0;
+        for (int i = 0; i < version.length(); i++) {
+            if (version.charAt(i) == '.') {
+                dots++;
+            }
+        }
+        if (dots == 2) {
+            return new SemVer(version);
+        }
+        if (dots == 1) {
+            return new SemVer(version + ".0");
+        }
+        return new SemVer(version + ".0.0");
+    }
+}

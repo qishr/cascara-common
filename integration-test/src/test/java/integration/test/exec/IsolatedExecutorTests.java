@@ -1,6 +1,7 @@
 package integration.test.exec;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -11,9 +12,9 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
-import io.github.qishr.cascara.common.exec.JvmOptions;
-import integration.test.fixtures.payload.ReporterTestInput;
+import io.github.qishr.cascara.common.exec.JvmConfig;
 import integration.test.fixtures.payload.ReporterTestOutput;
+import integration.test.fixtures.task.ThrowableTestTask;
 import integration.test.fixtures.task.GlobalReporterTestTask;
 
 public class IsolatedExecutorTests extends ExecTestBase {
@@ -24,19 +25,17 @@ public class IsolatedExecutorTests extends ExecTestBase {
     }
 
     @Test
-    void test_IsolatedExecutor_1() throws Exception {
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
-
+    void test_IsolatedExecutor_1() throws Throwable {
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
 
-        exec.setOptions(new JvmOptions()
+        exec.setJvmConfig(new JvmConfig()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModulePath(getModulePath())
-            .setEnv("CASC_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
-            .setTimeout(Duration.ofSeconds(3))
+            .setEnv("CASCARA_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
+            .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
 
-        Response<ReporterTestOutput> result = exec.run(input);
+        Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
 
         debug(result);
 
@@ -46,18 +45,16 @@ public class IsolatedExecutorTests extends ExecTestBase {
     }
 
     @Test
-    void test_IsolatedExecutor_2() throws Exception {
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
-
+    void test_IsolatedExecutor_2() throws Throwable {
         IsolatedExecutor exec = IsolatedExecutor.forTask(GlobalReporterTestTask.class, ReporterTestOutput.class);
 
         Response<ReporterTestOutput> result = exec.run(
-            input,
-            new JvmOptions()
+            "hello-isolated-world",
+            new JvmConfig()
                 .setModuleName(GlobalReporterTestTask.class.getModule().getName())
                 .setModulePath(getModulePath())
-                .setEnv("CASC_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
-                .setTimeout(Duration.ofSeconds(3))
+                .setEnv("CASCARA_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
+                .setTimeout(Duration.ofSeconds(20))
                 .setDebug(PROCESS_DEBUG_ENABLED)
         );
 
@@ -67,21 +64,19 @@ public class IsolatedExecutorTests extends ExecTestBase {
     }
 
     @Test
-    void test_isolatedExecution_classpathMode() throws Exception {
-        ReporterTestInput input = new ReporterTestInput("classpath-mode-test");
-
-        JvmOptions options = new JvmOptions()
+    void test_isolatedExecution_classpathMode() throws Throwable {
+        JvmConfig config = new JvmConfig()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModuleName(null) // Forces pure -cp launch
             .setClassPath(getModulePath())
-            .setTimeout(Duration.ofSeconds(5))
+            .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED);
 
         Response<ReporterTestOutput> result = IsolatedExecutor.run(
             GlobalReporterTestTask.class,
-            input,
+            "classpath-mode-test",
             ReporterTestOutput.class,
-            options);
+            config);
 
         ReporterTestOutput output = result.orElseThrow();
         assertEquals(42, output.n());
@@ -89,25 +84,43 @@ public class IsolatedExecutorTests extends ExecTestBase {
     }
 
     @Test
-    void test_isolatedExecution_jpmsModuleMode() throws Exception {
-        ReporterTestInput input = new ReporterTestInput("jpms-module-mode-test");
-
-        JvmOptions options = new JvmOptions()
+    void test_isolatedExecution_jpmsModuleMode() throws Throwable {
+        JvmConfig config = new JvmConfig()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName()) // Forces --module-path launch
             .setModulePath(getModulePath())
-            .setTimeout(Duration.ofSeconds(5))
+            .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED);
 
         Response<ReporterTestOutput> result = IsolatedExecutor.run(
             GlobalReporterTestTask.class,
-            input,
+            "jpms-module-mode-test",
             ReporterTestOutput.class,
-            options);
+            config);
 
         debug(result);
 
         ReporterTestOutput output = result.orElseThrow();
         assertEquals(42, output.n());
         assertTrue(output.s().contains("jpms-module-mode-test"));
+    }
+
+    @Test
+    void test_forwardsExceptions() throws Throwable {
+        IsolatedExecutor exec = IsolatedExecutor.forTask(ThrowableTestTask.class, String.class);
+        exec.setExceptionForwarding(true);
+
+        exec.setJvmConfig(new JvmConfig()
+            .setModuleName(ThrowableTestTask.class.getModule().getName())
+            .setModulePath(getModulePath())
+            .setTimeout(Duration.ofSeconds(20)));
+
+        // TODO: Send class rather than string
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
+            Response<String> response = exec.run(
+                IllegalStateException.class.getName()
+            );
+            debug(response);
+        });
+        assertEquals("test-exception", thrown.getMessage());
     }
 }

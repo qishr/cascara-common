@@ -7,24 +7,26 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.ReportWriter;
-import io.github.qishr.cascara.common.exec.ArtifactResolver;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.util.Pair;
-import io.github.qishr.cascara.test.common.junit.util.VfsTestBase;
-import integration.test.fixtures.payload.ReporterTestOutput;
+import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
+import io.github.qishr.cascara.test.common.util.ArtifactResolver;
 
 public class ExecTestBase extends VfsTestBase {
     protected static final boolean TEST_DEBUG_ENABLED = true;
     protected static final boolean PROCESS_DEBUG_ENABLED = false;
 
+    protected static final String CASCARA_HOME = "CASCARA_HOME";
+
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
-        if (TEST_DEBUG_ENABLED) {
-            reporter.setLevel(Level.DEBUG);
-        }
+        GlobalReporter.globalInstance().getFormatConfig().setIncluedPid(true);
     }
 
     @AfterEach
@@ -35,18 +37,15 @@ public class ExecTestBase extends VfsTestBase {
     protected String getModulePath() {
         Pair<String,String> mp = ArtifactResolver.buildModulePath(
             List.of("cascara-common", "integration-test-fixtures", "cascara-lang-json"),
-            "integration-test"
+            ExecTestBase.class
         );
         String modulePath = mp.getL();
         return modulePath;
     }
 
-    protected void debug(String msg) {
-        reporter.debug(msg);
-    }
-
-    protected void debug(Response<ReporterTestOutput> response) {
+    protected void debug(Response<?> response) {
         if (TEST_DEBUG_ENABLED) {
+            Reporter reporter = new LocalReporter().setLevel(Level.DEBUG);
             ReportWriter writer = reporter.getWriter(Level.DEBUG);
             if (!response.getSystemOut().isBlank()) {
                 reporter.debug("System.out was:\n");
@@ -61,6 +60,7 @@ public class ExecTestBase extends VfsTestBase {
 
     protected void debug(JvmProcess.Response response) {
         if (TEST_DEBUG_ENABLED) {
+            Reporter reporter = new LocalReporter().setLevel(Level.DEBUG);
             ReportWriter writer = reporter.getWriter(Level.DEBUG);
             if (!response.out.isBlank()) {
                 reporter.debug("JvmProcess.Response.out was:\n");

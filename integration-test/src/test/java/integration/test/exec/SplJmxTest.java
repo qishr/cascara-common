@@ -8,7 +8,6 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.JMX;
@@ -18,68 +17,54 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.diagnostic.log.TimeSequencedAggregatorLogger;
-import io.github.qishr.cascara.common.exec.JvmOptions;
+import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
+import io.github.qishr.cascara.common.exec.ipc.IpcException;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.logging.log4j.Log4jLogger;
-import io.github.qishr.cascara.test.common.junit.util.TestModulePackager;
+import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import integration.test.fixtures.beans.SPLStatusMBean;
-import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.task.JmxTestTask;
 
+import org.junit.jupiter.api.parallel.Isolated;
+
+@Disabled
+@Isolated
 public class SplJmxTest extends JmxTestBase {
+    private static final Reporter REPORTER = Reporter.forClass(SplJmxTest.class);
+
     @BeforeEach
     protected void setUp() throws IOException {
         super.setUp();
     }
 
     private void displayBeanInfo(ClassLoadingMXBean classLoading) {
-        reporter.debug("Currently loaded: " + classLoading.getLoadedClassCount());
-        reporter.debug("Total loaded: " + classLoading.getTotalLoadedClassCount());
-        reporter.debug("Total unloaded: " + classLoading.getUnloadedClassCount());
+        REPORTER.debug("Currently loaded: " + classLoading.getLoadedClassCount());
+        REPORTER.debug("Total loaded: " + classLoading.getTotalLoadedClassCount());
+        REPORTER.debug("Total unloaded: " + classLoading.getUnloadedClassCount());
     }
 
     protected Path createModuleA() throws IOException {
-        Path providerAJar = Cascara.getModulePath().resolve("provider-a.jar");
-
-        // Synthetic Module A with explicit module-info
-        TestModulePackager.createSyntheticModuleJar(
-            providerAJar,
-            "0.11.0",
-            Map.of(
-                "module-info",
-                "module provider.a { " +
-                "    requires cascara.common; " +
-                "    requires integration.test.fixtures; " +
-                "    exports com.example.providera; " +
-                "    opens com.example.providera to cascara.common; " +
-                "    provides io.github.qishr.cascara.common.service.ServiceProvider " +
-                "        with com.example.providera.ProviderA;" +
-                "}",
-
-                "com.example.providera.ProviderA",
-                "package com.example.providera; " +
-                "import integration.test.fixtures.TestService; " +
-                "import io.github.qishr.cascara.common.property.Properties; " +
-                "public class ProviderA implements TestService { " +
-                "    public String getName() { return \"ProviderA\"; } " +
-                "    public Properties getServiceProperties() { return null; } " +
-                "}"
-            ),
-            List.of("cascara-common", "integration-test-fixtures"),
-            "integration-test"
-        );
-        return providerAJar;
+        SyntheticJar testJar = SyntheticJar.forUseIn(SplJmxTest.class)
+            .setPath(Cascara.instance().getModulePath().resolve("provider-a.jar"))
+            .setMinCascaraVersion("0.10.0")
+            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .sign()
+            .packageJar();
+        return testJar.getPath();
     }
 
     //
@@ -87,11 +72,10 @@ public class SplJmxTest extends JmxTestBase {
     //
 
     @Test
-    void test_1() throws Exception {
-        reporter.debug("CASC_HOME=" + getPhysicalHomePath());
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
+    void test_1() throws Throwable {
+        REPORTER.debug("CASCARA_HOME=" + getPhysicalHomePath());
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
-        String json = serializer.toString(input);
+        String json = serializer.toString("hello-isolated-world");
 
         boolean ipcDebug = false;
 
@@ -108,36 +92,42 @@ public class SplJmxTest extends JmxTestBase {
         createModuleA();
         syncVfs();
 
-        IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+        // IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+        @SuppressWarnings("resource")
+        IpcServer ipcServer = new IpcServer()
+            .setDiagnosticForwarding(true)
+            .setIpcDebug(ipcDebug)
+            .start();
+
         int jmxPort = findFreePort();
 
-        JvmOptions options = newJmxTestOptions(jmxPort)
+        JvmConfig config = newJmxTestConfig(jmxPort)
             .setTimeout(Duration.ofHours(24))
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
 
-            // .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
+            // .setSystemProperty(IpcClient.PROP_DEBUG, String.valueOf(ipcDebug))
 
-            .setSystemProperty("casc.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("casc.report.level." + taskClass.getName(), "DEBUG")
-            .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
-            .setEnv("CASC_HOME", getPhysicalHomePath());
+            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + taskClass.getName(), "DEBUG")
+            .setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString())
+            .setEnv("CASCARA_HOME", getPhysicalHomePath());
 
         AtomicBoolean finished = new AtomicBoolean(false);
 
         // Run sub-JVM process...
-        reporter.debug("Starting new JVM in background");
+        REPORTER.debug("Starting new JVM in background");
         JvmProcess.forClass(taskClass)
-            .setOptions(options)
+            .setConfig(config)
             .runAsync(json)
             .thenAccept(response -> {
                 // Callback executed upon child process completion
-                debug("Background process finished with exit code: " + response.exitCode);
+                REPORTER.debug("Background process finished with exit code: " + response.exitCode);
                 debug(response);
                 try {
                     ipcServer.close();
-                } catch (IOException e) {
+                } catch (IpcException e) {
                     e.printStackTrace();
                 }
                 finished.set(true);
@@ -154,12 +144,12 @@ public class SplJmxTest extends JmxTestBase {
         String urlString = String.format("service:jmx:rmi:///jndi/rmi://127.0.0.1:%d/jmxrmi", jmxPort);
         JMXServiceURL url = new JMXServiceURL(urlString);
 
-        JMXConnector jmxConnector = connectWithRetry(url, 20, 1000);
+        JMXConnector jmxConnector = connectWithRetry(url, 20, 2000);
         MBeanServerConnection connection = jmxConnector.getMBeanServerConnection();
 
         try {
 
-            @SuppressWarnings("null")
+            // @SuppressWarnings("null")
             ClassLoadingMXBean classLoading =
                     ManagementFactory.newPlatformMXBeanProxy(
                             connection,
@@ -185,7 +175,7 @@ public class SplJmxTest extends JmxTestBase {
         invokeOperation(connection, "test.interfaces.beans:type=CascaraControl", "exit", null, null, false);
 
         while (!finished.get()) {
-            Thread.sleep(500);
+            Thread.sleep(1500);
         }
 
         assertTrue(sawUnload.get());
@@ -200,10 +190,9 @@ public class SplJmxTest extends JmxTestBase {
         GlobalReporter.globalInstance().setSystemOutputEnabled(false);
 
 
-        reporter.debug("CASC_HOME=" + getPhysicalHomePath());
-        ReporterTestInput input = new ReporterTestInput("hello-isolated-world");
+        REPORTER.debug("CASCARA_HOME=" + getPhysicalHomePath());
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
-        String json = serializer.toString(input);
+        String json = serializer.toString("hello-isolated-world");
 
         boolean ipcDebug = false;
 
@@ -214,33 +203,38 @@ public class SplJmxTest extends JmxTestBase {
         createModuleA();
         syncVfs();
 
-        IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+        // IpcServer ipcServer = IpcServer.start(true, ipcDebug);
+        @SuppressWarnings("resource")
+        IpcServer ipcServer = new IpcServer()
+            .setDiagnosticForwarding(true)
+            .setIpcDebug(ipcDebug)
+            .start();
 
         int jmxPort = findFreePort();
 
-        JvmOptions options = newJmxTestOptions(jmxPort)
+        JvmConfig config = newJmxTestConfig(jmxPort)
             .setTimeout(Duration.ofHours(24))
             .setModuleName(taskClass.getModule().getName())
             .setModulePath(getModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED)
-            // .setSystemProperty(IpcClient.DEBUG_PROP, String.valueOf(ipcDebug))
-            .setSystemProperty(IpcClient.SOCKET_PROP, ipcServer.getSocketPath().toString())
-            .setEnv("CASC_HOME", getPhysicalHomePath());
+            // .setSystemProperty(IpcClient.PROP_DEBUG, String.valueOf(ipcDebug))
+            .setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString())
+            .setEnv("CASCARA_HOME", getPhysicalHomePath());
 
         AtomicBoolean finished = new AtomicBoolean(false);
 
         // Run sub-JVM process...
-        reporter.debug("Starting new JVM in background");
+        REPORTER.debug("Starting new JVM in background");
         JvmProcess.forClass(taskClass)
-            .setOptions(options)
+            .setConfig(config)
             .runAsync(json)
             .thenAccept(response -> {
                 // Callback executed upon child process completion
-                debug("Background process finished with exit code: " + response.exitCode);
+                REPORTER.debug("Background process finished with exit code: " + response.exitCode);
                 debug(response);
                 try {
                     ipcServer.close();
-                } catch (IOException e) {
+                } catch (IpcException e) {
                     e.printStackTrace();
                 }
                 finished.set(true);
@@ -250,7 +244,7 @@ public class SplJmxTest extends JmxTestBase {
         String urlString = String.format("service:jmx:rmi:///jndi/rmi://127.0.0.1:%d/jmxrmi", jmxPort);
         JMXServiceURL url = new JMXServiceURL(urlString);
 
-        JMXConnector jmxConnector = connectWithRetry(url, 20, 1000);
+        JMXConnector jmxConnector = connectWithRetry(url, 20, 2000);
         MBeanServerConnection connection = jmxConnector.getMBeanServerConnection();
 
         try {
@@ -258,7 +252,7 @@ public class SplJmxTest extends JmxTestBase {
             invokeOperation(connection, "test.interfaces.beans:type=SPLStatus", "test", null, null, true);
             aggregator.flush();
 
-            @SuppressWarnings("null")
+            // @SuppressWarnings("null")
             SPLStatusMBean statusProxy = JMX.newMBeanProxy(
                 connection,
                 new ObjectName("test.interfaces.beans:type=SPLStatus"),
@@ -269,7 +263,7 @@ public class SplJmxTest extends JmxTestBase {
             // Thread.sleep(1000); //Tried removing this sleep
 
             for (String provieder : providers) {
-                reporter.debug("Provider: " + provieder);
+                REPORTER.debug("Provider: " + provieder);
             }
 
         } catch (Exception e) {

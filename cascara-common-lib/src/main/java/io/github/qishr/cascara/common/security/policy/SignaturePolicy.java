@@ -1,0 +1,8 @@
+package io.github.qishr.cascara.common.security.policy;
+
+import io.github.qishr.cascara.common.util.JarFile;
+
+public interface SignaturePolicy {
+    SignatureStatus evaluate(JarFile jar);
+    SignatureStatus evaluate(Class<?> type);
+}

@@ -1,0 +1,90 @@
+/*
+ *    Copyright 2016 Jeroen van Erp <jeroen@hierynomus.com>
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+package io.github.qishr.cascara.common.security.asn1.types;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+import io.github.qishr.cascara.common.security.asn1.ASN1OutputStream;
+import io.github.qishr.cascara.common.security.asn1.ASN1ParseException;
+import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DEREncoder;
+
+public abstract class ASN1Object<T> {
+
+    protected ASN1Tag<? extends ASN1Object<?>> tag;
+
+    protected ASN1Object(ASN1Tag<? extends ASN1Object<?>> tag) {
+        this.tag = tag;
+    }
+
+    public abstract T getValue();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        ASN1Object<? extends ASN1Object<?>> that = (ASN1Object) o;
+
+        if (tag != that.tag) return false;
+        return getValue() != null ? getValue().equals(that.getValue()) : that.getValue() == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = tag.getTag();
+//        result = 31 * result + valueHash();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + valueString() + "]";
+    }
+
+    protected String valueString() { return this.getValue() != null ? this.getValue().toString() : null; }
+
+    public ASN1Tag<? extends ASN1Object<?>> getTag() {
+        return tag;
+    }
+
+    public byte[] getEncoded() {
+
+        try (
+            ByteArrayOutputStream baos =
+                new ByteArrayOutputStream();
+            ASN1OutputStream aos =
+                new ASN1OutputStream(
+                    new DEREncoder(),
+                    baos
+                )
+        ) {
+            aos.writeObject(this);
+            aos.flush();
+
+            return baos.toByteArray();
+        }
+        catch (IOException e) {
+            throw new ASN1ParseException(
+                e,
+                "Unable to encode ASN.1 object"
+            );
+        }
+    }
+
+}

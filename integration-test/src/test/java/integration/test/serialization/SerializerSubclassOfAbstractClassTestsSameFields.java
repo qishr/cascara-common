@@ -37,6 +37,7 @@ package integration.test.serialization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
@@ -86,6 +87,7 @@ public class SerializerSubclassOfAbstractClassTestsSameFields extends Serializer
         assertInstanceOf(TestClass0.class, c0);
 
         TestClass0 tc0 = (TestClass0) c0;
+        assertNotNull(tc0);
         assertEquals("foo", tc0.field0);
 
         BaseTestClass c1 = serializer.fromString(json1, BaseTestClass.class);
@@ -94,6 +96,7 @@ public class SerializerSubclassOfAbstractClassTestsSameFields extends Serializer
         assertInstanceOf(TestClass1.class, c1);
 
         TestClass1 tc1 = (TestClass1) c1;
+        assertNotNull(tc1);
         assertEquals("bar", tc1.field0);
     }
 }

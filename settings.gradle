@@ -11,7 +11,11 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
+// rootProject.name = 'cascara-parent'
+rootProject.name = 'cascara-root'
 
-include 'cascara-common'
-include 'integration-test'
-include 'integration-test-fixtures'
+include 'cascara-common-lib'
+include 'cascara-test-common-junit'
+
+ include 'integration-test'
+ include 'integration-test-fixtures'

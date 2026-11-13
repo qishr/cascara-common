@@ -10,12 +10,17 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public class DiagnosticSerializerTests extends SerializerTestBase {
+    private static final Reporter REPORTER = Reporter.forClass(DiagnosticSerializerTests.class);
 
-@Test
+    @Test
     void test_serializeThrowable() {
+        // TODO: Allow limit on how far stack trace in serialized exception goes
+
         // Construct a Throwable with a nested cause to test recursive AST serialization
         Exception cause = new IllegalArgumentException("Invalid argument value");
         RuntimeException original = new RuntimeException("Outer execution failed", cause);
@@ -56,6 +61,7 @@ public class DiagnosticSerializerTests extends SerializerTestBase {
         REPORTER.debug(json);
 
         StackTraceElement ste = serializer.fromString(json, StackTraceElement.class);
+        assertNotNull(ste);
         assertEquals("className1", ste.getClassName());
     }
 
@@ -79,10 +85,13 @@ public class DiagnosticSerializerTests extends SerializerTestBase {
 
         String json = serializer.toString(original);
 
+        GlobalReporter.globalInstance().setLevel(getClass().getName(), Level.DEBUG);
+
         REPORTER.debug(json);
 
         Diagnostic diagnostic = serializer.fromString(json, Diagnostic.class);
 
+        assertNotNull(diagnostic);
         assertEquals(Level.WARN, diagnostic.getLevel());
         assertEquals("testWarning", diagnostic.getFormattedMessage());
         assertEquals("WARN-101", diagnostic.getMessage().getCode());

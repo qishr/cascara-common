@@ -1,0 +1,8 @@
+module singleton.demo {
+    requires cascara.common;
+    requires integration.test.fixtures;
+    exports com.example.singleton;
+    opens com.example.singleton to cascara.common;
+    provides io.github.qishr.cascara.common.service.ServiceProvider
+        with com.example.singleton.DemoSingletonImpl;
+}

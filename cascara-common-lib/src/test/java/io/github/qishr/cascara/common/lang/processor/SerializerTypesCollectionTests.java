@@ -1,0 +1,52 @@
+package io.github.qishr.cascara.common.lang.processor;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.util.List;
+import java.util.SequencedCollection;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
+import io.github.qishr.cascara.common.type.TypeReference;
+
+/// Testing of Serialier with JRE Collection types that map to JSON Schema arrays
+public class SerializerTypesCollectionTests extends SerializerTestBase {
+    GenericAstSequence intSequence;
+
+    @BeforeEach
+    protected void setUp() {
+        super.setUp();
+        intSequence = new GenericAstSequence()
+            .add(new GenericAstScalar(42))
+            .add(new GenericAstScalar(53))
+            .add(new GenericAstScalar(86));
+    }
+
+    @Test
+    void test_list() {
+        Serializer<?> serializer = newSerializer();
+        List<Integer> r = serializer.fromAst(intSequence, new TypeReference<List<Integer>>(){});
+        assertNotNull(r);
+        assertEquals(3, r.size());
+        assertEquals(42, r.get(0));
+        assertEquals(53, r.get(1));
+        assertEquals(86, r.get(2));
+    }
+
+    @Test
+    void test_SequencedCollection() {
+        Serializer<?> serializer = newSerializer();
+        SequencedCollection<Integer> r = serializer.fromAst(intSequence, new TypeReference<SequencedCollection<Integer>>(){});
+        assertNotNull(r);
+        assertEquals(3, r.size());
+        Integer[] array = r.toArray(new Integer[]{});
+        assertEquals(42, array[0]);
+        assertEquals(53, array[1]);
+        assertEquals(86, array[2]);
+    }
+
+}

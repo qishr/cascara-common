@@ -11,7 +11,7 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import io.github.qishr.cascara.common.exec.JvmOptions;
+import io.github.qishr.cascara.common.exec.JvmConfig;
 
 public class JmxTestBase extends ExecTestBase {
 
@@ -22,15 +22,15 @@ public class JmxTestBase extends ExecTestBase {
         }
     }
 
-    protected JvmOptions newJmxTestOptions(int jmxPort) {
-        JvmOptions options = new JvmOptions()
+    protected JvmConfig newJmxTestConfig(int jmxPort) {
+        JvmConfig config = new JvmConfig()
             .setSystemProperty("com.sun.management.jmxremote","")
             .setSystemProperty("com.sun.management.jmxremote.port", String.valueOf(jmxPort))
             .setSystemProperty("com.sun.management.jmxremote.rmi.port", String.valueOf(jmxPort))
             .setSystemProperty("com.sun.management.jmxremote.local.only", "false")
             .setSystemProperty("com.sun.management.jmxremote.authenticate", "false")
             .setSystemProperty("com.sun.management.jmxremote.ssl", "false");
-        return options;
+        return config;
     }
 
     /// Connects to the remote JMX endpoint with retry polling and explicit socket environment settings.
@@ -52,6 +52,9 @@ public class JmxTestBase extends ExecTestBase {
                 // e.printStackTrace();
                 lastException = e;
                 Thread.sleep(delayMs);
+
+                // TODO: Use reporter
+                System.out.println("Retrying JMX connection");
             }
         }
         throw new IllegalStateException("Failed to connect to JMX server after " + maxRetries + " attempts", lastException);

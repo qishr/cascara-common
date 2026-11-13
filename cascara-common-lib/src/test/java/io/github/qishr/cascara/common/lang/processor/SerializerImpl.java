@@ -1,0 +1,173 @@
+// # License & Terms
+//
+// This file is part of **Cascara**.
+//
+// **Cascara** is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+//
+// ---
+//
+// ## Special Runtime Exception
+//
+// As a special exception, the copyright holders of this library give you
+// permission to link this library with independent modules to produce an
+// executable, regardless of the license terms of these independent modules,
+// and to copy and distribute the resulting executable under terms of your
+// choice, provided that you also meet, for each linked independent module,
+// the terms and conditions of the license of that module.
+//
+// An independent module is a module which is not derived from or based on
+// this library. If you modify this library, you may extend this exception
+// to your version of the library, but you are not obligated to do so. If
+// you do not wish to do so, delete this exception statement from your
+// version.
+
+
+package io.github.qishr.cascara.common.lang.processor;
+
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.Writer;
+
+import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.lang.ast.AstNode;
+import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMap;
+import io.github.qishr.cascara.common.lang.generic.GenericAstMapEntry;
+import io.github.qishr.cascara.common.lang.generic.GenericAstNodeFactory;
+import io.github.qishr.cascara.common.lang.generic.GenericAstScalar;
+import io.github.qishr.cascara.common.lang.generic.GenericAstSequence;
+import io.github.qishr.cascara.common.lang.util.LanguageConfig;
+import io.github.qishr.cascara.common.type.TypeReference;
+import io.github.qishr.cascara.common.util.ContentType;
+
+// public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,ScalarAstNode<PlainNode>,SequenceAstNode<PlainNode>,MapAstNode<PlainNode,PlainNode,MapEntryAstNode<PlainNode,PlainNode>,MapEntryAstNode<PlainNode,PlainNode>,PlainNode> {
+public class SerializerImpl extends AbstractSerializer<SerializerImpl,AstNode,GenericAstScalar,GenericAstSequence,GenericAstMap,GenericAstMapEntry,AstNode> {
+
+    public SerializerImpl() {
+        super("", new GenericAstNodeFactory(), null);
+    }
+
+    @Override
+    @NonNull
+    protected SerializerImpl self() {
+        return this;
+    }
+
+    @Override
+    @NonNull
+    public SerializerImpl setProviderFactoryEnabled(boolean b) {
+        return this;
+    }
+
+    @Override
+    protected AstNode serializeKey(Object key) {
+        return serialize(key);
+    }
+
+    @Override
+    public ContentType getContentType() {
+        return null;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public SerializerImpl setReporter(Reporter reporter) {
+        this.reporter = reporter;
+        return this;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    @NonNull
+    public SerializerImpl setConfig(LanguageConfig<?> config) {
+        return this;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    @NonNull
+    public SerializerImpl setParser(AstParser<AstNode,?,?> parser) {
+        return this;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public String toString(Object jvmInstance) {
+        return null;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public AstNode toAst(Object jvmInstance) {
+        return serialize(jvmInstance);
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public <C> C fromString(String text, Class<C> jvmType) {
+        return null;
+    }
+
+    public <C> C fromString(String text, TypeReference<C> typeRef) {
+        return null;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public <C> C fromStream(InputStream is, Class<C> jvmType) {
+        return null;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public <C> C fromStream(InputStream is, TypeReference<C> typeRef) {
+        return null;
+    }
+
+    /// {@inheritDoc}
+    @SuppressWarnings("unchecked")
+	@Override
+    public <C> C fromAst(AstNode astNode, Class<C> jvmType) {
+        return (C) deserialize(astNode, jvmType);
+    }
+
+    public <C> C fromAst(AstNode astNode, TypeReference<C> typeRef) {
+        return (C) deserialize(astNode, typeRef);
+    }
+
+    @Override
+    public <C> C fromReader(Reader reader, Class<C> jvmType) throws SerializerException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'fromReader'");
+    }
+
+    @Override
+    public <C> C fromReader(Reader reader, TypeReference<C> typeRef) throws SerializerException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'fromReader'");
+    }
+
+    @Override
+    public void toWriter(Object jvmInstance, Writer writer) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'toWriter'");
+    }
+
+    @Override
+    public AstParser<AstNode, ?, ?> getParser() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getParser'");
+    }
+}

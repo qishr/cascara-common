@@ -47,7 +47,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.type.ScalarDescriptor;
 import io.github.qishr.cascara.common.lang.util.SourceBuffer;
@@ -56,14 +56,16 @@ import io.github.qishr.cascara.common.service.ServiceProviderFactory;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.trackable.tracker.ArrayChangeTracker;
 import io.github.qishr.cascara.common.util.Cascara;
+import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import integration.test.fixtures.DemoSingleton;
 import integration.test.fixtures.TestService;
 
 class ModuleRegistrationTests extends SplTestBase {
+    private static final Reporter REPORTER = Reporter.forClass(ModuleRegistrationTests.class);
 
     @Test
     void loadsPreferredProviderFromVirtualHome() throws IOException {
-        Path propsFile = Cascara.getSplPropertiesPath();
+        Path propsFile = Cascara.instance().getSplPropertiesPath();
         Files.writeString(propsFile,
             "io.github.qishr.cascara.common.io.ResourceProvider=" +
             "io.github.qishr.cascara.common.io.provider.FileResourceProvider\n"
@@ -98,10 +100,18 @@ class ModuleRegistrationTests extends SplTestBase {
             changes.add(change);
         });
 
-        reporter.info(GenericMessage.INFO, "Test registering JAR");
-        Path providerAJar = createModuleA();
+        REPORTER.debug("Test registering JAR");
 
-        layer.registerJar(providerAJar);
+        SyntheticJar testJar = SyntheticJar.forUseIn(ModuleRegistrationTests.class)
+            .setPath(Cascara.instance().getModulePath().resolve("provider-a.jar"))
+            .setMinCascaraVersion("0.10.0")
+            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .sign()
+            .packageJar();
+
+        layer.registerJar(testJar.getPath());
+
 
         // Verify the provider is registered
         List<ServiceMetadata> providers = spl.findAllProviders(TestService.class);
@@ -138,8 +148,16 @@ class ModuleRegistrationTests extends SplTestBase {
         SPL layer = spl.create("singletonLayer");
 
         // Create synthetic module containing DemoSingleton
-        Path singletonJar = createSingletonModule();
-        layer.registerJar(singletonJar);
+        SyntheticJar testJar = SyntheticJar.forUseIn(ModuleRegistrationTests.class)
+            .setPath(Cascara.instance().getModulePath().resolve("singleton.jar"))
+            .setMinCascaraVersion("0.10.0")
+            .addSources("code/singleton/module-info.txt", "code/singleton/DemoSingletonImpl.txt")
+            .addDependencies("cascara-common", "integration-test-fixtures")
+            .sign()
+            .packageJar();
+
+        layer.registerJar(testJar.getPath());
+
 
         // Verify singleton is present
         List<ServiceMetadata> providers = spl.findAllProviders(DemoSingleton.class);
@@ -167,7 +185,7 @@ class ModuleRegistrationTests extends SplTestBase {
 
         // Reload the module
         layer = spl.create("singletonLayer");
-        layer.registerJar(singletonJar);
+        layer.registerJar(testJar.getPath());
 
         // New instance should be created
         DemoSingleton secondInstance = SPL.load(DemoSingleton.class);

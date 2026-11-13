@@ -1,0 +1,546 @@
+// # License & Terms
+//
+// This file is part of **Cascara**.
+//
+// **Cascara** is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+//
+// ---
+//
+// ## Special Runtime Exception
+//
+// As a special exception, the copyright holders of this library give you
+// permission to link this library with independent modules to produce an
+// executable, regardless of the license terms of these independent modules,
+// and to copy and distribute the resulting executable under terms of your
+// choice, provided that you also meet, for each linked independent module,
+// the terms and conditions of the license of that module.
+//
+// An independent module is a module which is not derived from or based on
+// this library. If you modify this library, you may extend this exception
+// to your version of the library, but you are not obligated to do so. If
+// you do not wish to do so, delete this exception statement from your
+// version.
+
+package io.github.qishr.cascara.common.util;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+
+import sun.misc.Unsafe;
+import io.github.qishr.cascara.common.annotation.DataField;
+import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableInstantiationException;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
+
+public class ReflectionUtils {
+    private static final Unsafe UNSAFE;
+
+    static {
+        try {
+            Field field = Unsafe.class.getDeclaredField("theUnsafe");
+            field.setAccessible(true);
+            UNSAFE = (Unsafe) field.get(null);
+        } catch (Exception e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
+    @SuppressWarnings({ "unchecked", "null" })
+    @NonNull
+    public static <T> T createInstanceUnsafe(Class<T> clazz) throws InstantiationException {
+        return (T) UNSAFE.allocateInstance(clazz);
+    }
+
+    @SuppressWarnings("null")
+    @NonNull
+    public static <C> C createInstance(Class<C> targetClass) throws InstantiationException {
+        try {
+            return targetClass.getConstructor().newInstance();
+        } catch (Throwable t) {
+        }
+        try {
+            return createInstanceUnsafe(targetClass);
+        } catch (Throwable t) {
+            throw new LocalizableInstantiationException(t);
+        }
+    }
+
+    @SuppressWarnings("null")
+    @NonNull
+    public static <C> C createInstance(Class<C> targetClass, List<Pair<Class<?>, Object>> params) throws InstantiationException {
+        try {
+            Class<?>[] paramTypes = new Class[params.size()];
+            Object[] paramValues = new Object[params.size()];
+            for (int i = 0; i < params.size(); i++) {
+                Pair<Class<?>, Object> param = params.get(i);
+                paramTypes[i] = param.getL();
+                paramValues[i] = param.getR();
+            }
+            return targetClass.getConstructor(paramTypes).newInstance(paramValues);
+        } catch (Throwable t) {
+            throw new LocalizableInstantiationException(t);
+        }
+    }
+
+    public static boolean isAbstract(Type jvmType) {
+        return (jvmType instanceof Class<?> cls) && Modifier.isAbstract(cls.getModifiers());
+    }
+
+    public static boolean isInterface(Type jvmType) {
+        return (jvmType instanceof Class<?> cls) && Modifier.isInterface(cls.getModifiers());
+    }
+
+    public static boolean isWildcard(Type jvmType) {
+        return jvmType instanceof WildcardType;
+    }
+
+    public static boolean isConcreteType(Type jvmType) {
+        return  !isWildcard(jvmType) &&
+                !isInterface(jvmType) &&
+                !isAbstract(jvmType);
+    }
+
+    public static boolean isInstance(Object thisInstance, Type thatType) {
+        if (thisInstance == null || thatType == null) {
+            return false;
+        }
+
+        // Case 1: Simple class
+        if (thatType instanceof Class<?> cls) {
+            return cls.isInstance(thisInstance);
+        }
+
+        // Case 2: Parameterized type → check raw type
+        if (thatType instanceof ParameterizedType pt) {
+            Type raw = pt.getRawType();
+            if (raw instanceof Class<?> rawClass) {
+                return rawClass.isInstance(thisInstance);
+            }
+            return false;
+        }
+
+        // Case 3: Type variable → check upper bound
+        if (thatType instanceof TypeVariable<?> tv) {
+            for (Type bound : tv.getBounds()) {
+                if (isInstance(thisInstance, bound)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Case 4: Wildcard → check upper bounds
+        if (thatType instanceof WildcardType wt) {
+            for (Type bound : wt.getUpperBounds()) {
+                if (isInstance(thisInstance, bound)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Case 5: Generic array → check component type
+        if (thatType instanceof GenericArrayType ga) {
+            Type comp = ga.getGenericComponentType();
+            if (thisInstance.getClass().isArray()) {
+                Class<?> compClass = thisInstance.getClass().getComponentType();
+                return canAssign(compClass, getRawClass(comp));
+            }
+            return false;
+        }
+
+        return false;
+    }
+
+    public static boolean canAssign(Type fromThis, Class<?> toThat) {
+        if (fromThis == null || toThat == null) {
+            return false;
+        }
+
+        // Case 1: Simple class
+        if (fromThis instanceof Class<?> cls) {
+            return toThat.isAssignableFrom(cls);
+        }
+
+        // Case 2: Parameterized type → check raw type
+        if (fromThis instanceof ParameterizedType pt) {
+            Type raw = pt.getRawType();
+            if (raw instanceof Class<?> rawClass) {
+                return toThat.isAssignableFrom(rawClass);
+            }
+            return false;
+        }
+
+        // Case 3: Type variable → check upper bounds
+        if (fromThis instanceof TypeVariable<?> tv) {
+            for (Type bound : tv.getBounds()) {
+                if (canAssign(bound, toThat)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Case 4: Wildcard → check upper bounds
+        if (fromThis instanceof WildcardType wt) {
+            for (Type bound : wt.getUpperBounds()) {
+                if (canAssign(bound, toThat)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Case 5: Generic array → check component type
+        if (fromThis instanceof GenericArrayType ga) {
+            Type comp = ga.getGenericComponentType();
+            Class<?> rawComp = getRawClass(comp);
+            Class<?> arrayClass = java.lang.reflect.Array.newInstance(rawComp, 0).getClass();
+            return toThat.isAssignableFrom(arrayClass);
+        }
+
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    @NonNull
+    public static <C> C getRawClass(Type jvmType) {
+        if (jvmType instanceof Class<?> cls) {
+            return (C)cls;
+        }
+        if (jvmType instanceof ParameterizedType pt) {
+            Type raw = pt.getRawType();
+            if (raw instanceof Class<?> rawClass) {
+                return (C)rawClass;
+            }
+        }
+        if (jvmType instanceof TypeVariable<?> tv) {
+            Type[] bounds = tv.getBounds();
+            if (bounds.length > 0) {
+                return getRawClass(bounds[0]);
+            }
+        }
+        if (jvmType instanceof WildcardType wt) {
+            Type[] bounds = wt.getUpperBounds();
+            if (bounds.length > 0) {
+                return getRawClass(bounds[0]);
+            }
+        }
+        if (jvmType instanceof GenericArrayType ga) {
+            Class<?> comp = getRawClass(ga.getGenericComponentType());
+            return (C) java.lang.reflect.Array.newInstance(comp, 0).getClass();
+        }
+
+        throw new SerializerException(GenericMessage.ERROR, "Failed to classify type: " + jvmType);
+    }
+
+    @NonNull
+    public static Type getKeyTypeOfMapType(Type mapType) {
+        if (canAssign(mapType, Map.class)) {
+            return getTypeArgumentTypeOfGenericType(mapType, 0);
+        }
+        return Object.class;
+    }
+
+    @NonNull
+    public static Type getValueTypeOfMapType(Type mapType) {
+        if (canAssign(mapType, Map.class)) {
+            return getTypeArgumentTypeOfGenericType(mapType, 1);
+        }
+        return Object.class;
+    }
+
+    @NonNull
+    public static Type getElementTypeOfCollectionType(Type collectionType) {
+        if (canAssign(collectionType, Collection.class)) {
+            return getTypeArgumentTypeOfGenericType(collectionType, 0);
+        }
+        return Object.class;
+    }
+
+    @SuppressWarnings("null")
+    @NonNull
+    public static Type getTypeArgumentTypeOfGenericType(Type jvmType, int paramIndex) {
+        if (jvmType instanceof ParameterizedType parameterizedType) {
+            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+            if (actualTypeArguments.length > paramIndex) {
+                return actualTypeArguments[paramIndex];
+            }
+        }
+        return Object.class;
+    }
+
+    @Nullable
+    public static Class<?> getArrayComponentType(Type targetType) {
+        Class<?> rawClass = getRawClass(targetType);
+        if (rawClass.isArray()) {
+            return rawClass.componentType();
+        }
+        return null;
+    }
+
+    /// Unboxes a single-type parameter wrapper (such as Enum<T>) to expose
+    /// the underlying type argument, or passes the type through as-is if unparameterized.
+    public static Type getEnumType(Type jvmType) {
+        Type enumType;
+        if (jvmType instanceof ParameterizedType paramaterizedType) {
+        // "unbox" the enum type
+        Type[] paramTypes = paramaterizedType.getActualTypeArguments();
+        if (paramTypes != null && paramTypes.length == 1) {
+            enumType = paramTypes[0];
+            } else {
+                throw new IllegalStateException("not an enum");
+            }
+        } else {
+            enumType = jvmType;
+        }
+        return enumType;
+    }
+
+    @SuppressWarnings("null")
+    @NonNull
+    public static String getEffectiveName(Field field) {
+        String fieldName = field.isAnnotationPresent(DataField.class)
+            ? field.getAnnotation(DataField.class).key()
+            : field.getName();
+        if (fieldName == null || fieldName.isEmpty()) {
+            return field.getName();
+        }
+        return fieldName;
+    }
+
+    @NonNull
+    public static List<Field> getAllFields(Class<?> clazz) {
+        return getAllFields(clazz, null);
+    }
+
+    @NonNull
+    public static List<Field> getAllFields(Class<?> clazz, Function<Field,Boolean> excludeFunction) {
+        List<Field> fields = new ArrayList<>();
+        Class<?> currentClass = clazz;
+        while (currentClass != null && currentClass != Object.class) {
+            // Add all fields declared in the current class (but not its superclasses)
+            for (Field field : currentClass.getDeclaredFields()) {
+                if (excludeFunction == null || !excludeFunction.apply(field)) {
+                    fields.add(field);
+                }
+            }
+            // Move up to the superclass for the next iteration
+            currentClass = currentClass.getSuperclass();
+        }
+        return fields;
+    }
+
+    @NonNull
+    public static List<Method> getAllMethods(Class<?> jvmType) {
+        List<Method> methods = new ArrayList<>();
+        Class<?> current = jvmType;
+        while (current != null && current != Object.class) {
+            for (Method m : current.getDeclaredMethods()) {
+                methods.add(m);
+            }
+            current = current.getSuperclass();
+        }
+        return methods;
+    }
+
+    @NonNull
+    public static Set<Class<?>> getReferencedClasses(Class<?> clazz) {
+        return getReferencedClasses(clazz, (Function<Class<?>,Boolean>)null);
+    }
+
+    @NonNull
+    public static Set<Class<?>> getReferencedClasses(Class<?> clazz, Set<String> excludeFunction) {
+        if (excludeFunction == null) {
+            return getReferencedClasses(clazz, (Function<Class<?>,Boolean>)null);
+        } else {
+            return getReferencedClasses(clazz, c -> excludeFunction.contains(c.getName()));
+        }
+    }
+
+    @NonNull
+    public static Set<Class<?>> getReferencedClasses(Class<?> clazz, Function<Class<?>,Boolean> excludeFunction) {
+        Set<Class<?>> visited = new HashSet<>();
+        Set<Class<?>> collected = new HashSet<>();
+        collectReferencedClasses(clazz, excludeFunction, visited, collected);
+        return collected;
+    }
+
+    @SuppressWarnings("null")
+    @NonNull
+    public static String getTypeName(Type jvmType) {
+        Class<?> jvmClass = getRawClass(jvmType);
+        return jvmClass.getName();
+    }
+
+    @Nullable
+    public static Pair<Class<?>,String> getCaller() {
+        return getCaller(false);
+    }
+
+    @Nullable
+    public static Pair<Class<?>,String> getCaller(boolean ignoreQueryingClass) {
+        return getCaller(ignoreQueryingClass, false);
+    }
+
+    @Nullable
+    public static Pair<Class<?>,String> getCaller(boolean ignoreQueryingClass, boolean ignoreQueryingModule) {
+        String thisClass = ReflectionUtils.class.getName();
+        String queryingClass = null;
+        String queryingModule = null;
+        StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
+
+        // System.out.println("\n---- getCaller ----");
+        // Thread.dumpStack();
+
+        for (StackTraceElement frame : callStack) {
+            String moduleName = frame.getModuleName();
+            String className = frame.getClassName();
+            String methodName = frame.getMethodName();
+            if (!className.equals("java.lang.Thread") && !className.equals(thisClass)) {
+                if (queryingClass == null) {
+                    queryingClass = className;
+                    queryingModule = moduleName;
+                } else if (!ignoreQueryingClass || !className.equals(queryingClass)) {
+                    if (moduleName == null || !ignoreQueryingModule || !moduleName.equals(queryingModule)) {
+                        try {
+                            Class<?> callingClass = Class.forName(className);
+                            return new Pair<>(callingClass, methodName);
+                        } catch (ClassNotFoundException e) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    //
+    //
+    //
+
+    @Experimental
+    @Nullable
+    public static String getTestName() {
+        Method testMethod = getTestMethod();
+        if (testMethod == null) {
+            return null;
+        }
+        return testMethod.getName();
+    }
+
+    @Experimental
+    @Nullable
+    public static Method getTestMethod() {
+        StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
+        for (StackTraceElement frame : callStack) {
+            String className = frame.getClassName();
+            String methodName = frame.getMethodName();
+            Class<?> clazz;
+            try {
+                clazz = Class.forName(className);
+                List<Method> methods = getMethodsByName(clazz, methodName);
+                for (Method method : methods) {
+                    if (hasTestAnnotation(method)) {
+                        return method;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                break;
+            }
+        }
+        return null;
+    }
+
+    public static List<Method> getMethodsByName(Class<?> clazz, String name) {
+        List<Method> methods = new ArrayList<>();
+        for (Method method : clazz.getMethods()){
+            if(method.getName().equals(name)){
+                // System.out.println("Possible match : " + method);
+                methods.add(method);
+            }
+        }
+        for (Method method : clazz.getDeclaredMethods()){
+            if(method.getName().equals(name)){
+                // System.out.println("Possible match : " + method);
+                methods.add(method);
+            }
+        }
+        return methods;
+    }
+
+    //
+    // Private Methods
+    //
+
+    private static boolean isExcluded(Type paramType, Function<Class<?>,Boolean> excludeFunction) {
+        Class<?> rawClass = getRawClass(paramType);
+        return excludeFunction != null && excludeFunction.apply(rawClass);
+    }
+
+    private static void collectReferencedClasses(Class<?> clazz, Function<Class<?>,Boolean> excludeFunction, Set<Class<?>> visited, Set<Class<?>> collected) {
+        for (Field field : getAllFields(clazz)) {
+            Type type = field.getGenericType();
+            if (type instanceof ParameterizedType paramaterizedType) {
+                Type[] paramTypes = paramaterizedType.getActualTypeArguments();
+                for (Type paramType : paramTypes) {
+                    Class<?> rawClass = getRawClass(paramType);
+                    if (!visited.contains(rawClass)) {
+                        if (!isExcluded(paramType, excludeFunction)) {
+                            collected.add(rawClass);
+                        }
+                        visited.add(rawClass);
+                        collectReferencedClasses(rawClass, excludeFunction, visited, collected);
+                    }
+                }
+            } else {
+                Class<?> rawClass = getRawClass(type);
+                if (!isExcluded(type, excludeFunction)) {
+                    collected.add(rawClass);
+                }
+            }
+        }
+    }
+
+    private static boolean hasTestAnnotation(Method method) {
+        Annotation[] annotations = method.getDeclaredAnnotations();
+        for (Annotation annotation : annotations) {
+            Class<? extends Annotation> type = annotation.annotationType();
+            String name = type.getName();
+            if (name.startsWith("org.junit.jupiter.api.Test")) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+

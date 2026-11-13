@@ -1,0 +1,266 @@
+// # License & Terms
+//
+// This file is part of **Cascara**.
+//
+// **Cascara** is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+//
+// ---
+//
+// ## Special Runtime Exception
+//
+// As a special exception, the copyright holders of this library give you
+// permission to link this library with independent modules to produce an
+// executable, regardless of the license terms of these independent modules,
+// and to copy and distribute the resulting executable under terms of your
+// choice, provided that you also meet, for each linked independent module,
+// the terms and conditions of the license of that module.
+//
+// An independent module is a module which is not derived from or based on
+// this library. If you modify this library, you may extend this exception
+// to your version of the library, but you are not obligated to do so. If
+// you do not wish to do so, delete this exception statement from your
+// version.
+
+package io.github.qishr.cascara.common.util;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.module.ModuleDescriptor;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.report.NoOpReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
+
+public abstract class AbstractClassFinder {
+    protected static final String DOT_CLASS = ".class";
+    protected static final String DOT_JAR = ".jar";
+    protected static final String MODULE_INFO = "module-info";
+
+    protected Reporter reporter = new NoOpReporter();
+
+    protected abstract String scanDirectoryUrl(Path directory, URL[] urls, String moduleName);
+
+    protected Set<String> classNames = new HashSet<>();
+    protected Path virtualReferencePath;
+    protected Set<String> excluded;
+    protected Map<String, DiscoveredModule> discoveredModules = new HashMap<>();
+    protected Map<String, String> classToModule = new HashMap<>();
+    protected Map<String, ModuleDescriptor> descriptors = new HashMap<>();
+
+
+    public Set<String> getClasses() {
+        return classNames;
+    }
+
+    public boolean containsClass(String className) {
+        return classNames.contains(className);
+    }
+
+    public Set<DiscoveredModule> getDiscoveredModules() {
+        return new HashSet<DiscoveredModule>(discoveredModules.values());
+    }
+
+    protected static Set<String> pathSet(String classPath) {
+        if (classPath == null || classPath.isBlank()) {
+            return Set.of();
+        }
+        String[] pathArray = classPath.split(File.pathSeparator, -1);
+        Set<String> classPaths = new HashSet<>();
+        Collections.addAll(classPaths, pathArray);
+        return classPaths;
+    }
+
+    @Nullable
+    protected String scanJar(Path path, String moduleName) {
+        try{
+            // TODO: Try-with
+            JarFile jar = JarFile.open(path);
+            String jarModuleName = jar.getModuleName();
+            Set<String> jarClassNames = jar.getClassNames();
+            if (jarClassNames == null) {
+                reporter.warn(GenericMessage.WARN, "No classes found in JAR " + path);
+                return null;
+            }
+            if (jarModuleName == null || jarModuleName.isEmpty()) {
+                reporter.warn(GenericMessage.WARN, "Scanning non-modular JAR: " + path);
+            } else {
+                reporter.warn(GenericMessage.WARN, "Scanning modular (" + jarModuleName + ") JAR: " + path);
+            }
+            // Set<String> classNames = new HashSet<>();
+            // for (String className : jarClassNames) {
+
+
+            //     if (className.equals("io.github.qishr.cascara.common.security.InvalidKeyException")) {
+            //         System.out.println("Debug");
+            //     }
+
+
+            //     if (!isExcluded(className)) {
+            //         if (!(reporter instanceof NoOpReporter)) {
+            //             reporter.debug("  Found class: " + className);
+            //         }
+
+            //         // addClassToModule(className, jarModuleName);
+            //         // classNames.add(className);
+
+            //         addClass(className); // ------------------------------------------------ 1
+            //     } else {
+            //         if (!(reporter instanceof NoOpReporter)) {
+            //             reporter.trace("  Class excluded: " + className);
+            //         }
+            //     }
+            // }
+
+            // TODO: Scan class file. Without doing that we miss nested classes.
+
+            register(jarClassNames, jarModuleName, path);
+
+            if (jarModuleName == null) {
+                return moduleName;
+            }
+
+            return jarModuleName;
+        } catch(IOException e) {
+            error(e);
+            return null;
+        }
+    }
+
+    protected String scanDirectory(Path directory, String moduleName) {
+        try {
+            URL url = URL.of(directory.toUri(), null);
+            URL[] urls = new URL[] {url};
+            scanDirectoryUrl(directory, urls, moduleName);
+            try(Stream<Path> jarFiles = Files.walk(directory)) {
+                for (Path jarFile : jarFiles.toList()) {
+                    if (jarFile.toString().endsWith(DOT_JAR)) {
+                        moduleName = scanJar(jarFile, moduleName);
+                    }
+                }
+            }
+        } catch (MalformedURLException e) {
+            error(e);
+        } catch (IOException e) {
+            error(e);
+        }
+        return moduleName;
+    }
+
+    protected String scanClassFile(Path directory, Path file, URLClassLoader classLoader, String moduleName, Set<String> discovered) throws LocalizableIOException {
+        String className = "";
+        String relativePath = "";
+        try {
+            relativePath = directory.toUri().relativize(file.toUri()).getPath();
+            className = relativePath.replace(File.separatorChar, '.').replace(DOT_CLASS, "");
+            if (className.equals(MODULE_INFO)) {
+                ModuleDescriptor descriptor;
+                try (InputStream is = Files.newInputStream(file)) {
+                    descriptor = ModuleDescriptor.read(is);
+                }
+                moduleName = descriptor.name();
+                addModuleDescriptor(moduleName, descriptor);
+            } else {
+                Class<?> clazz = classLoader.loadClass(className);
+                discovered.add(clazz.getName());
+                for (Class<?> declaredClass : clazz.getDeclaredClasses()) {
+                    if (!isExcluded(declaredClass.getName())) {
+                        discovered.add(declaredClass.getName());
+                    }
+                }
+            }
+        } catch (IllegalAccessError e) {
+            error(e);
+        } catch (java.lang.NoClassDefFoundError e) {
+            error(e);
+        } catch (Exception e) {
+            error(e);
+        }
+        return moduleName;
+    }
+
+    protected void register(Set<String> discovered, String moduleName, Path jarPath) {
+        if (moduleName == null) {
+            DiscoveredModule mod = discoveredModules.get(DiscoveredModule.UNNAMED);
+            if (mod == null) {
+                mod = new DiscoveredModule(DiscoveredModule.UNNAMED, discovered, jarPath);
+                discoveredModules.put(DiscoveredModule.UNNAMED, mod);
+            } else {
+                mod.getClasses().addAll(discovered);
+            }
+            for (String className : discovered) {
+                if (!isExcluded(className)) {
+                    classNames.add(className);
+                }
+            }
+        } else {
+            DiscoveredModule mod = new DiscoveredModule(moduleName, discovered, jarPath);
+            discoveredModules.put(moduleName, mod);
+            for (String className : discovered) {
+                if (!isExcluded(className)) {
+                    classToModule.put(className, moduleName);
+                    classNames.add(className);
+                }
+            }
+        }
+    }
+
+    protected void addModuleDescriptor(String moduleName, ModuleDescriptor descriptor) {
+        descriptors.put(moduleName, descriptor);
+    }
+
+    /// Parse path using virtual file system if provided, otherwise default OS file system
+    protected Path getPath(String pathString) {
+        if (virtualReferencePath != null) {
+            Path virtualPath = virtualReferencePath.getFileSystem().getPath(pathString);
+            if (Files.exists(virtualPath)) {
+                return virtualPath;
+            }
+        }
+        return Path.of(pathString);
+    }
+
+    protected boolean isExcluded(String classOrPkgName) {
+        String name = classOrPkgName + ".";
+        if (excluded != null) {
+            for (String prefix : excluded) {
+                if (name.startsWith(prefix)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    protected void error(Throwable t) {
+        reporter.error(t, GenericMessage.ERROR, t.getMessage());
+        if (reporter instanceof NoOpReporter) {
+            System.err.println(t.getMessage());
+        }
+    }
+}

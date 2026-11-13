@@ -1,0 +1,225 @@
+// # License & Terms
+//
+// This file is part of **Cascara**.
+//
+// **Cascara** is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+//
+// ---
+//
+// ## Special Runtime Exception
+//
+// As a special exception, the copyright holders of this library give you
+// permission to link this library with independent modules to produce an
+// executable, regardless of the license terms of these independent modules,
+// and to copy and distribute the resulting executable under terms of your
+// choice, provided that you also meet, for each linked independent module,
+// the terms and conditions of the license of that module.
+//
+// An independent module is a module which is not derived from or based on
+// this library. If you modify this library, you may extend this exception
+// to your version of the library, but you are not obligated to do so. If
+// you do not wish to do so, delete this exception statement from your
+// version.
+
+package io.github.qishr.cascara.common.exec;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import io.github.qishr.cascara.common.annotation.Beta;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.exec.ipc.IpcClient;
+import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
+import io.github.qishr.cascara.common.exec.ipc.IpcException;
+import io.github.qishr.cascara.common.exec.ipc.IpcServer;
+import io.github.qishr.cascara.common.lang.processor.Serializer;
+import io.github.qishr.cascara.common.type.lang.ThrowableSerializer.SerializedThrowable;
+
+@Beta
+public class IsolatedExecutor {
+
+    private final JvmProcess jvmProcess;
+    private JvmConfig jvmConfig;
+    private final Class<?> responseClass;
+    private final Class<? extends AbstractExecutionTask<?,?>> task;
+    private final Serializer<?> serializer;
+    private boolean ipcDebug;
+    private boolean exceptionForwarding;
+    private boolean diagnosticForwarding;
+    private boolean filterDiagnosticsByLevel;
+
+    private IsolatedExecutor(Class<? extends AbstractExecutionTask<?,?>> task, Class<?> response) {
+        this.jvmProcess = JvmProcess.forClass(task);
+        this.task = task;
+        this.responseClass = response;
+        serializer = IpcConfig.createSerializer();
+    }
+
+    public static IsolatedExecutor forTask(Class<? extends AbstractExecutionTask<?,?>> task, Class<?> response) {
+        return new IsolatedExecutor(task, response);
+    }
+
+    public static <T> Response<T> run(Class<? extends AbstractExecutionTask<?,?>> task, Object input, Class<?> response, JvmConfig jvmConfig) throws Throwable {
+        IsolatedExecutor exec = IsolatedExecutor.forTask(task, response);
+        return exec.run(input, jvmConfig);
+    }
+
+    public Serializer<?> getSerializer() {
+        return serializer;
+    }
+
+    public IsolatedExecutor setJvmConfig(JvmConfig jvmConfig) {
+        this.jvmConfig = jvmConfig;
+        return  this;
+    }
+
+    /// Enable debug output of IPC communications.
+    public IsolatedExecutor setIpcDebug(boolean enabled) {
+        ipcDebug = enabled;
+        return  this;
+    }
+
+    /// Forward diagnostics from the child JVM process to this
+    /// process's GlobalReporter.
+    public IsolatedExecutor setDiagnosticForwarding(boolean enabled) {
+        diagnosticForwarding = enabled;
+        return  this;
+    }
+
+    /// Forward thrown exception to the parent JVM
+    public IsolatedExecutor setExceptionForwarding(boolean enabled) {
+        exceptionForwarding = enabled;
+        return this;
+    }
+
+    /// Filter forwarded diagnostic reporting by the level specified in
+    /// this process's GlobalReporter.
+    public IsolatedExecutor setFilterDiagnosticsByLevel(boolean enabled) {
+        filterDiagnosticsByLevel = enabled;
+        return  this;
+    }
+
+    public <T> Response<T> run(Object input) throws Throwable {
+        return run(input, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Response<T> run(Object input, JvmConfig jvmConfig) throws Throwable {
+        if (jvmConfig == null) {
+            jvmConfig = this.jvmConfig;
+        }
+
+        String json = serializer.toString(input);
+
+        List<Diagnostic> diagnostics = new ArrayList<>();
+        T taskResponse;
+        JvmProcess.Response jvmResponse;
+
+        Throwable clientException = null;
+        try (IpcServer ipcServer = new IpcServer()) {
+            ipcServer
+                .setExceptionForwarding(exceptionForwarding)
+                .setDiagnosticForwarding(diagnosticForwarding)
+                .setFilterDiagnosticsByLevel(filterDiagnosticsByLevel)
+                .setIpcDebug(ipcDebug);
+
+            ipcServer.start();
+
+            jvmConfig.setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
+            jvmProcess.setConfig(jvmConfig);
+
+            jvmResponse = jvmProcess.run(json);
+
+            ipcServer.close();
+
+            clientException = ipcServer.getClientException();
+            diagnostics = ipcServer.getMessages(Diagnostic.class);
+
+            Class<T> targetClass = (Class<T>) responseClass;
+            List<T> outputs = ipcServer.getMessages(targetClass);
+            taskResponse = outputs.isEmpty() ? null : outputs.getFirst();
+
+        } catch (IpcException e) {
+            throw new ExecutionException(e, ExecutionMessage.DIAGNOSTIC_SERVER_FAILED, task.getName());
+        }
+
+        if (exceptionForwarding) {
+            if (clientException instanceof SerializedThrowable st) {
+                throw st.recreateOriginal();
+            }
+            if (clientException != null) {
+                throw clientException;
+            }
+        }
+
+        return new Response<T>(jvmResponse, task, taskResponse, diagnostics, !jvmResponse.timedOut && jvmResponse.exitCode == 0);
+    }
+
+    public static class Response<T> {
+        private final List<String> command;
+        private final JvmConfig jvmConfig;
+        private final String out;
+        private final String err;
+        private final Class<? extends AbstractExecutionTask<?,?>> task;
+        private final T payload;
+        private final List<Diagnostic> diagnostics;
+        private final boolean success;
+
+        Response(JvmProcess.Response jvmResponse, Class<? extends AbstractExecutionTask<?,?>> task, T payload, List<Diagnostic> diagnostics, boolean success) {
+            this.command = jvmResponse.command;
+            this.jvmConfig = jvmResponse.jvmConfig;
+            this.out = jvmResponse.out;
+            this.err = jvmResponse.err;
+            this.task = task;
+            this.payload = payload;
+            this.diagnostics = diagnostics;
+            this.success = success;
+        }
+
+        public T getPayload() {
+            return payload;
+        }
+
+        public T orElseThrow() {
+            if (success) {
+                return payload;
+            }
+            throw new ExecutionException(ExecutionMessage.TASK_FAILED, task.getName(), diagnostics);
+        }
+
+        public List<Diagnostic> getDiagnostics() {
+            return diagnostics;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public List<String> getCommand() {
+            return command;
+        }
+
+        public JvmConfig getJvmConfig() {
+            return jvmConfig;
+        }
+
+        public String getSystemOut() {
+            return out;
+        }
+
+        public String getSystemErr() {
+            return err;
+        }
+    }
+}

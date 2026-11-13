@@ -1,18 +1,16 @@
 package integration.test.fixtures.task;
 
 import integration.test.fixtures.VmInfo;
-import integration.test.fixtures.payload.ReporterTestInput;
 import integration.test.fixtures.payload.ReporterTestOutput;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.AbstractExecutionTask;
 
-public class GlobalReporterTestTask extends AbstractExecutionTask<ReporterTestInput, ReporterTestOutput> {
+public class GlobalReporterTestTask extends AbstractExecutionTask<String, ReporterTestOutput> {
     GlobalReporter reporter = GlobalReporter.forClass(GlobalReporterTestTask.class);
 
     @Override
-    public ReporterTestOutput run(ReporterTestInput input) throws Exception {
-
-        reporter.debug(input.testMessage());
+    public ReporterTestOutput run(String input) throws Exception {
+        reporter.debug(input);
 
         VmInfo info = new VmInfo();
         info.init();
@@ -23,7 +21,7 @@ public class GlobalReporterTestTask extends AbstractExecutionTask<ReporterTestIn
         return new ReporterTestOutput(
             42,
             "Hello from the isolated test process.\n" +
-            "Input was " + input.testMessage() +
+            "Input was " + input +
             ".\nLevel = " + reporter.getLevel()
         );
     }
