@@ -163,11 +163,6 @@ public final class SignerInfo {
                 }
             }
 
-
-
-
-            // TODO: This was added but is it needed and should it be here?
-            //
             // B. Re-encode signedAttrs as universal SET OF (0x31) per RFC 5652 Section 5.3
             byte[] encodedSignedAttrs = signedAttrs.getEncoded();
             if (encodedSignedAttrs != null && encodedSignedAttrs.length > 0) {
@@ -176,11 +171,6 @@ public final class SignerInfo {
                     encodedSignedAttrs[0] = (byte) 0x31; // Re-tag as universal SET OF (0x31) per RFC 5652
                 }
             }
-            //
-            //---------------------------------------------------------------
-
-
-
 
             sig.update(encodedSignedAttrs);
         } else {

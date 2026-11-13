@@ -53,7 +53,8 @@ class CertPathValidationTests extends TestBase {
 
         CertPathValidationResult result = CertPathVerifier.validatePath(chain, trustStore);
         if (!result.isValid()) {
-            REPORTER.error(result.getCause().get(), GenericMessage.ERROR, result.getErrorMessage());
+            // TODO: Check the message is correct
+            REPORTER.error(result.getCause(), result.getMessage());
         }
         assertTrue(result.isValid());
     }
@@ -65,10 +66,6 @@ class CertPathValidationTests extends TestBase {
         // Chain missing intermediate: only [leaf] provided
         List<X509Certificate> chain = List.of(leaf.certificate());
         TrustStore trustStore = new TrustStore(Set.of(rootCA.certificate()));
-
-        // System.out.println("Leaf issuer: " + leaf.certificate().getIssuerX500Principal().getName());
-        // System.out.println("Interm CA subject: " + intermediateCA.certificate().getSubjectX500Principal().getName());
-        // System.out.println("Principals equal? " + leaf.certificate().getIssuerX500Principal().equals(intermediateCA.certificate().getSubjectX500Principal()));
 
         CertPathValidationResult result = CertPathVerifier.validatePath(chain, trustStore);
         assertFalse(result.isValid());

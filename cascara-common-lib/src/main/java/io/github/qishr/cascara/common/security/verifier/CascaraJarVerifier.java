@@ -503,14 +503,14 @@ public class CascaraJarVerifier implements JarVerifier {
                         try {
                             return c.toX509Certificate();
                         } catch (CertificateException e) {
-                            // TODO Auto-generated catch block
+                            // TODO: Better exception
                             e.printStackTrace();
                             return null;
                         }
                     })
                     .toList();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
+                // TODO: Better exception
                 throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, e.getMessage());
             }
         }

@@ -6,7 +6,10 @@ public enum SecurityMessage implements DiagnosticMessage {
     NO_ALGORITHM("SEC-101", "No suitable algorithm found for: {0}"),
     UNSUPPORTED_ALGORITHM("SEC-102", "Unsupported algorithm: {0}"),
     UNSUPPORTED_DIGEST("SEC-103", "Unsupported digest: {0}"),
-    INVALID_KEY("SEC-104", "Invalid key: {0}");
+    INVALID_KEY("SEC-104", "Invalid key: {0}"),
+    EMPTY_CERT_CHAIN("SEC-105", "Empty certificate chain"),
+    EMPTY_TRUST_STORE("SEC-106", "Empty trust store"),
+    CERT_PATH_VALIDATION_FAILED("SEC-107", "Certificate path validation failed");
 
     private final String code;
     private final String format;

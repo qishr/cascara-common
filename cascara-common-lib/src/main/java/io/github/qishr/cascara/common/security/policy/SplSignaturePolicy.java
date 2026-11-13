@@ -141,8 +141,12 @@ public final class SplSignaturePolicy implements SignaturePolicy {
 
             // Evaluate the certificate chain extracted from PKCS#7 SignedData
             CertPathValidationResult vr = CertPathVerifier.validatePath(signerCertChain, this.trustStore); // Runs PKIX CertPathValidator
+
+
+
+
             if (!vr.isValid()) {
-                Throwable cause = vr.getCause().orElse(null);
+                Throwable cause = vr.getCause();
 
                 if (cause instanceof CertificateExpiredException) {
                     return SignatureStatus.CERTIFICATE_EXPIRED;
@@ -154,6 +158,9 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                 // CertPathValidatorException (BasicConstraints failure, untrusted root, broken chain, etc.)
                 return SignatureStatus.UNTRUSTED_SIGNER;
             }
+
+
+
 
             boolean anyRevoked = false;
 
@@ -219,9 +226,13 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                     .toList();
 
             CertPathValidationResult vr = CertPathVerifier.validatePath(chain, trustStore);
+
+
+
+
             if (!vr.isValid()) {
-                // TODO: This is code douplication from evaluate(JarFile)
-                Throwable cause = vr.getCause().orElse(null);
+                // TODO: This is code duplication from evaluate(JarFile)
+                Throwable cause = vr.getCause();
 
                 if (cause instanceof CertificateExpiredException) {
                     return SignatureStatus.CERTIFICATE_EXPIRED;
@@ -233,6 +244,10 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                 // CertPathValidatorException (BasicConstraints failure, untrusted root, broken chain, etc.)
                 return SignatureStatus.UNTRUSTED_SIGNER;
             }
+
+
+
+
         }
 
         // 2. If the classloader didn't pre-populate certs on CodeSource, inspect the location JAR:
@@ -242,7 +257,6 @@ public final class SplSignaturePolicy implements SignaturePolicy {
             if (!Files.isRegularFile(jarPath)) {
                 // Exploded directory on classpath, not a JAR
                 if (requireSignedClasses) {
-                    // TODO: requireSigned || ?
                     return SignatureStatus.NOT_SIGNED;
                 } else {
                     return SignatureStatus.VALID;
@@ -264,7 +278,6 @@ public final class SplSignaturePolicy implements SignaturePolicy {
             }
         }
 
-        // TODO: Is this right?
         return SignatureStatus.VALID;
     }
 
@@ -296,16 +309,6 @@ public final class SplSignaturePolicy implements SignaturePolicy {
         if (type == null) {
             return false;
         }
-
-
-
-        // // TODO: Remove these:
-        // ProtectionDomain pd = type.getProtectionDomain();
-        // CodeSource cs = (pd != null) ? pd.getCodeSource() : null;
-        // PermissionCollection pc = (pd != null) ? pd.getPermissions() : null;
-        // Principal[] pr = (pd != null) ? pd.getPrincipals() : null;
-
-
 
         // 1. JDK Bootstrap / Core Classes (null ClassLoader)
         ClassLoader cl = type.getClassLoader();
