@@ -143,10 +143,6 @@ public final class SplSignaturePolicy implements SignaturePolicy {
             CertPathValidationResult vr = CertPathVerifier.validatePath(signerCertChain, this.trustStore); // Runs PKIX CertPathValidator
 
             if (!vr.isValid()) {
-                // TODO: Reporter.debug to take DetailedMessage
-                // All reporter methods should handle this
-                // reporter debug and trace should use same formatting as error
-
                 // TODO: Make this warn or debug
                 REPORTER.error(vr.getCause(), vr.getMessage());
                 return vr.getStatus();
