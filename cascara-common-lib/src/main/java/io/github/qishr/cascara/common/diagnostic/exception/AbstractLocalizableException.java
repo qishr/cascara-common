@@ -36,7 +36,7 @@
 package io.github.qishr.cascara.common.diagnostic.exception;
 
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
-import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
 public class AbstractLocalizableException extends Exception implements LocalizableException {
 
@@ -97,7 +97,7 @@ public class AbstractLocalizableException extends Exception implements Localizab
         }
     }
 
-    /// Formats a [DiagnosticMessage] without localizing it.
+    /// Formats a [LocalizableMessage] without localizing it.
     private static String format(LocalizableMessage message, Object... details) {
         return DiagnosticLocalizer.DEFAULT.format(message, details);
     }

@@ -4,7 +4,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.spec.ECGenParameterSpec;
 
-import io.github.qishr.cascara.common.security.UnsupportedDigestException;
+import io.github.qishr.cascara.common.security.diagnostic.UnsupportedDigestException;
 
 public enum KeyAlgorithm {
     RSA("RSA", "SHA256withRSA", "1.2.840.113549.1.1.11"),

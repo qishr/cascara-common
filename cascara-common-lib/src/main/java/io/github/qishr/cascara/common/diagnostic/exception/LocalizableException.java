@@ -39,7 +39,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
-import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
 public interface LocalizableException {
 
@@ -68,11 +68,19 @@ public interface LocalizableException {
     StackTraceElement[] getStackTrace();
 
     static String formatMessage(DetailedMessage message) {
-        return AbstractLocalizableException.getLocalizer().format(message, message.getDetails());
+        if (message instanceof DetailedMessage dm) {
+            return AbstractLocalizableException.getLocalizer().format(dm.getMessage(), dm.getDetails());
+        } else {
+            return AbstractLocalizableException.getLocalizer().format(message, message.getDetails());
+        }
     }
 
     static String formatMessage(LocalizableMessage message, Object... details) {
-        return AbstractLocalizableException.getLocalizer().format(message, details);
+        if (message instanceof DetailedMessage dm) {
+            return AbstractLocalizableException.getLocalizer().format(dm.getMessage(), dm.getDetails());
+        } else {
+            return AbstractLocalizableException.getLocalizer().format(message, details);
+        }
     }
 
 }

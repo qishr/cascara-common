@@ -12,9 +12,9 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
-import io.github.qishr.cascara.common.security.SecurityMessage;
-import io.github.qishr.cascara.common.security.SignatureException;
-import io.github.qishr.cascara.common.security.SignatureStatus;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
+import io.github.qishr.cascara.common.security.diagnostic.SecurityMessage;
+import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.util.Pair;
 
 public final class JarManifestVerifier {

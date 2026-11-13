@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.diagnostic.message;
 
-public enum InetMessage implements DiagnosticMessage {
+public enum InetMessage implements LocalizableMessage {
     NETWORK_UNREACHABLE("INET-101", "Network unreachable"),
     CONNECTION_REFUSED("INET-102", "Connection refused: {0}"),
     CONNECTION_TIMEOUT("INET-103", "Connection timeout: {0}"),

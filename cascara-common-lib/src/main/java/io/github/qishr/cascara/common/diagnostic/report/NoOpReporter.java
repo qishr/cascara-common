@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 public class NoOpReporter implements Reporter {
@@ -107,10 +107,10 @@ public class NoOpReporter implements Reporter {
     //
 
     @Override
-    public void warn(Exception exception) {}
+    public void warn(Throwable exception) {}
 
     @Override
-    public void error(Exception e) {}
+    public void error(Throwable e) {}
 
     //
     // Plain
@@ -123,83 +123,83 @@ public class NoOpReporter implements Reporter {
     public void debug(String format, Object... args) {}
 
     @Override
-    public void info(DiagnosticMessage message, Object... args) {}
+    public void info(LocalizableMessage message, Object... args) {}
 
     @Override
-    public void warn(DiagnosticMessage message, Object... args) {}
+    public void warn(LocalizableMessage message, Object... args) {}
 
     @Override
-    public void error(DiagnosticMessage message, Object... args) {}
+    public void error(LocalizableMessage message, Object... args) {}
 
     @Override
-    public void error(Throwable cause, DiagnosticMessage message, Object... args) {}
+    public void error(Throwable cause, LocalizableMessage message, Object... args) {}
 
     //
     // With Location
     //
 
     @Override
-    public void infoAt(int line, int column, DiagnosticMessage message, Object... args) {}
+    public void infoAt(int line, int column, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void warnAt(int line, int column, DiagnosticMessage message, Object... args) {}
+    public void warnAt(int line, int column, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void errorAt(int line, int column, DiagnosticMessage message, Object... args) {}
+    public void errorAt(int line, int column, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void errorAt(int line, int column, Throwable cause, DiagnosticMessage message, Object... args) {}
+    public void errorAt(int line, int column, Throwable cause, LocalizableMessage message, Object... args) {}
 
     //
     // With Location invluding offset
     //
 
     @Override
-    public void infoAt(int line, int column, int start, int end, DiagnosticMessage message, Object... args) {}
+    public void infoAt(int line, int column, int start, int end, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void warnAt(int line, int column, int start, int end, DiagnosticMessage message, Object... args) {}
+    public void warnAt(int line, int column, int start, int end, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void errorAt(int line, int column, int start, int end, DiagnosticMessage message, Object... args) {}
+    public void errorAt(int line, int column, int start, int end, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void errorAt(int line, int column, int start, int end, Throwable cause, DiagnosticMessage message, Object... args) {}
+    public void errorAt(int line, int column, int start, int end, Throwable cause, LocalizableMessage message, Object... args) {}
 
     //
     // With Token
     //
 
     @Override
-    public void infoAt(Token token, DiagnosticMessage message, Object... args) {}
+    public void infoAt(Token token, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void warnAt(Token token, DiagnosticMessage message, Object... args) {}
+    public void warnAt(Token token, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void errorAt(Token token, DiagnosticMessage message, Object... args) {}
+    public void errorAt(Token token, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void errorAt(Token token, Throwable cause, DiagnosticMessage message, Object... args) {}
+    public void errorAt(Token token, Throwable cause, LocalizableMessage message, Object... args) {}
 
     //
     // With URI
     //
 
     @Override
-    public void warnAt(URI uri, int line, int column, DiagnosticMessage message, Object... args) {}
+    public void warnAt(URI uri, int line, int column, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void errorAt(URI uri, int line, int column, DiagnosticMessage message, Object... args) {}
+    public void errorAt(URI uri, int line, int column, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void warnAt(URI uri, Token token, DiagnosticMessage message, Object... args) {}
+    public void warnAt(URI uri, Token token, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void errorAt(URI uri, Token token, DiagnosticMessage message, Object... args) {}
+    public void errorAt(URI uri, Token token, LocalizableMessage message, Object... args) {}
 
     @Override
-    public void errorAt(URI uri, Token token, Throwable t, DiagnosticMessage message, Object... args) {}
+    public void errorAt(URI uri, Token token, Throwable t, LocalizableMessage message, Object... args) {}
 
     @Override
     public boolean reportsDebug() {

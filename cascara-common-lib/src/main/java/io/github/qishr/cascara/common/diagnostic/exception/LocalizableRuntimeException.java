@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.diagnostic.exception;
 
-import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
 public class LocalizableRuntimeException extends RuntimeException implements LocalizableException {
     // private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;

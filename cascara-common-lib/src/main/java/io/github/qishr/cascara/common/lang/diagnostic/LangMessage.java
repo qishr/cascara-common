@@ -35,9 +35,9 @@
 
 package io.github.qishr.cascara.common.lang.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
-public enum LangMessage implements DiagnosticMessage {
+public enum LangMessage implements LocalizableMessage {
     EXPECTED_STREAM_START("LANG-101", "Expected stream start."),
     EXPECTED_STREAM_END("TOKEN-102", "Expected steam end."),
     UNEXPECTED_STREAM_END("TOKEN-103", "Unexpected stream end."),
@@ -69,6 +69,7 @@ public enum LangMessage implements DiagnosticMessage {
     AST_FACTORY_FAIL_SEQUENCE("LANG-322", "AST factory failed to create sequence"),
     AST_FACTORY_FAIL_KEY("LANG-323", "AST factory failed to create key"),
     CONCURRENT_USE("LANG-324", "Serializer created on {0} and used on {1}"),
+    FIELD_NOT_ACCESSIBLE("LANG-325", "Field {0} is not accessible"),
 
     UNKNOWN_GENERIC_TYPE("LANG-501", "Could not resolve generic type argument for {0}");
 

@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.diagnostic.message;
 
-public enum GenericMessage implements DiagnosticMessage {
+public enum GenericMessage implements LocalizableMessage {
     INFO("INFO-101", "{0}"),
 
     // Warnings
@@ -56,26 +56,29 @@ public enum GenericMessage implements DiagnosticMessage {
     EXCEPTION("ERROR-401", "Exception: {0}"),
     RUNTIME_EXCEPTION("ERROR-402", "Runtime exception: {0}"),
     NPE("ERROR-403", "Null pointer exception: {0}"),
-    CLASS_NOT_FOUND("LANG-404", "No class definition found: {0}"),
-    CLASS_CAST_EXCEPTION("LANG-405", "Class cast exception: {0}"),
-    CLASS_NOT_SERIALIZABLE("LANG-406", "Class {0} is not serializable"),
-    NO_SUCH_METHOD("LANG-407", "No such method: {0}"),
-    NO_SUCH_CONSTRUCTOR("LANG-408", "No such constructor: {0}"),
-    FIELD_NOT_ACCESSIBLE("LANG-409", "Field {0} is not accessible"),
+    CLASS_NOT_FOUND("ERROR-404", "No class definition found: {0}"),
+    CLASS_CAST_EXCEPTION("ERROR-405", "Class cast exception: {0}"),
+    CLASS_NOT_SERIALIZABLE("ERROR-406", "Class {0} is not serializable"),
+    NO_SUCH_METHOD("ERROR-407", "No such method: {0}"),
+    NO_SUCH_CONSTRUCTOR("ERROR-408", "No such constructor: {0}"),
+    INVOCATION_TARGET_EXCEPTION("ERROR-410", "Invocation target exception: {0}"),
+    ILLEGAL_ARGUMENT_EXCEPTION("ERROR-411", "Iillegal argument exception {0}"),
+    INSTANTIATION_EXCEPTION("ERROR-412", "Instantiation exception: {0}"),
 
-    INVOCATION_TARGET_EXCEPTION("LANG-410", "Invocation target exception: {0}"),
-    ILLEGAL_ARGUMENT_EXCEPTION("LANG-411", "Iillegal argument exception {0}"),
-    INSTANTIATION_EXCEPTION("LANG-412", "Instantiation exception: {0}"),
+    EXCEPTION_IN_INITIALIZER("ERROR-413", "Exception in initializer for {0}"),
+    ABSTRACT_METHOD_ERROR("ERROR-414", "Abstract method error: {0}"),
+    SERVICE_CONFIG_ERROR("ERROR-415", "Service configuration error: {0}"),
+    SECURITY_EXCEPTION("ERROR-416", "Security exception: {0}"),
+    ILLEGAL_ACCESS_EXCEPTION("ERROR-417", "Illegal access exception: {0}"),
+    INACCESSIBLE_OBJECT_EXCEPTION("ERROR-418", "Inaccessible object exception: {0}"),
+    INCONSISTENT_STATE("ERROR-419","Inconsistent state"),
+    UNSUPPORTED_OPERATION("ERROR-420","Unsupported operation: {0}.{1}"),
+    UNSATISFIED_LINK_ERROR("ERROR-421","Unsatisfied link error: {0"),
+    INTERNAL_ERROR("ERROR-422","Internal error: {0}"),
 
-    EXCEPTION_IN_INITIALIZER("LANG-413", "Exception in initializer for {0}"),
-    ABSTRACT_METHOD_ERROR("LANG-414", "Abstract method error: {0}"),
-    SERVICE_CONFIG_ERROR("LANG-415", "Service configuration error: {0}"),
-    SECURITY_EXCEPTION("LANG-416", "Security exception: {0}"),
-    ILLEGAL_ACCESS_EXCEPTION("LANG-417", "Illegal access exception: {0}"),
-    INCONSISTENT_STATE("ERROR-418","Inconsistent state"),
-    UNSUPPORTED_OPERATION("ERROR-419","Unsupported operation: {0}.{1}"),
-    UNSATISFIED_LINK_ERROR("ERROR-420","Unsatisfied link error: {0"),
-    INTERNAL_ERROR("ERROR-421","Internal error: {0}"),
+    CERTIFICATE_EXCEPTION("ERROR-423", "Certificate exception: {0}"),
+    INVALID_ALGORITHM_PARAMETER_EXCEPTION("ERROR-423", "Invalid algorithm parameter exception: {0}"),
+    NO_SUCH_ALGORITHM_EXCEPTION("ERROR-423", "No such algorithm exception: {0}"),
 
     // IO Errors
     IO_ERROR("ERROR-301", "IO error: {0}"),

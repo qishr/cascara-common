@@ -1,20 +1,13 @@
 package io.github.qishr.cascara.common.security.cms;
 
 import java.math.BigInteger;
-// import java.security.InvalidKeyException;
 import java.security.MessageDigest;
-// import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.security.InvalidKeyException;
-import io.github.qishr.cascara.common.security.SignatureException;
-import io.github.qishr.cascara.common.security.SignatureStatus;
-import io.github.qishr.cascara.common.security.UnsupportedAlgorithmException;
-import io.github.qishr.cascara.common.security.UnsupportedDigestException;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
@@ -23,6 +16,11 @@ import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Tagged
 import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1Integer;
 import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectIdentifier;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
+import io.github.qishr.cascara.common.security.diagnostic.InvalidKeyException;
+import io.github.qishr.cascara.common.security.diagnostic.UnsupportedAlgorithmException;
+import io.github.qishr.cascara.common.security.diagnostic.UnsupportedDigestException;
+import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 
 public final class SignerInfo {
 
@@ -133,8 +131,6 @@ public final class SignerInfo {
         try {
             sig = Signature.getInstance(javaSigAlgorithm);
         } catch (java.security.NoSuchAlgorithmException e) {
-            // TODO: Better status code
-            // "No installed provider supports this key: sun.security.ec.ECPublicKeyImpl"
             throw new UnsupportedAlgorithmException(e, javaSigAlgorithm);
         } catch (Exception e) {
             throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Invalid signature: " + e.getMessage());
@@ -145,8 +141,6 @@ public final class SignerInfo {
         try {
             sig.initVerify(publicKey);
         } catch (java.security.InvalidKeyException e) {
-            // TODO: Better status code
-            // "No installed provider supports this key: sun.security.ec.ECPublicKeyImpl"
             throw new InvalidKeyException(e, publicKey.getClass().getName());
         } catch (Exception e) {
             throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Invalid signature: " + e.getMessage());
@@ -165,11 +159,6 @@ public final class SignerInfo {
                 }
             }
 
-
-
-
-            // TODO: This was added but is it needed and should it be here?
-            //
             // B. Re-encode signedAttrs as universal SET OF (0x31) per RFC 5652 Section 5.3
             byte[] encodedSignedAttrs = signedAttrs.getEncoded();
             if (encodedSignedAttrs != null && encodedSignedAttrs.length > 0) {
@@ -178,11 +167,6 @@ public final class SignerInfo {
                     encodedSignedAttrs[0] = (byte) 0x31; // Re-tag as universal SET OF (0x31) per RFC 5652
                 }
             }
-            //
-            //---------------------------------------------------------------
-
-
-
 
             sig.update(encodedSignedAttrs);
         } else {

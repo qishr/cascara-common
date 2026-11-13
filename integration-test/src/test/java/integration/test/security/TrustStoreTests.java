@@ -16,7 +16,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import io.github.qishr.cascara.common.security.TrustStore;
+import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 
 class TrustStoreTests {

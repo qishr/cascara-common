@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.security;
+package io.github.qishr.cascara.common.security.verifier;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -24,7 +24,9 @@ import javax.security.auth.x500.X500Principal;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
+import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIllegalStateException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
@@ -39,7 +41,11 @@ import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectId
 import io.github.qishr.cascara.common.security.cms.CertificateSet;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
-import io.github.qishr.cascara.common.util.JarVerifier;
+import io.github.qishr.cascara.common.security.diagnostic.SecurityMessage;
+import io.github.qishr.cascara.common.security.diagnostic.UnsupportedAlgorithmException;
+import io.github.qishr.cascara.common.security.diagnostic.UnsupportedDigestException;
+import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.util.Pair;
 
 public class CascaraJarVerifier implements JarVerifier {
@@ -91,8 +97,7 @@ public class CascaraJarVerifier implements JarVerifier {
             manifest = new Manifest(new ByteArrayInputStream(mf));
             return this;
         } catch (IOException e) {
-            // TODO: Better status code and more specific exception class
-            throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, e.getMessage());
+            throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, SecurityMessage.ERROR_READING_MANIFEST, e.getMessage());
         }
     }
 
@@ -111,8 +116,7 @@ public class CascaraJarVerifier implements JarVerifier {
         Attributes mfAttrs = manifest.getAttributes(entryName);
         if (mfAttrs == null) {
             // Not a signed entry (e.g., unindexed META-INF files)
-            // TODO: Better status code and/or more specific exception class
-            throw new SignatureException(SignatureStatus.NOT_SIGNED, GenericMessage.ERROR, entryName + " is not a signed entry");
+            throw new SignatureException(SignatureStatus.NOT_SIGNED, SecurityMessage.NOT_A_SIGNED_ENTRY, entryName);
         }
 
         try (InputStream contentStream = new ByteArrayInputStream(content)) {
@@ -134,7 +138,6 @@ public class CascaraJarVerifier implements JarVerifier {
                     md.update(buffer, 0, read);
                 }
             } catch (IOException e) {
-                // TODO: Better status code
                 throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, FileMessage.READ_ERROR, entryName);
             }
 
@@ -142,14 +145,12 @@ public class CascaraJarVerifier implements JarVerifier {
             byte[] expectedDigest = Base64.getDecoder().decode(expectedDigestBase64);
 
             if (!Arrays.equals(computedDigest, expectedDigest)) {
-                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, FileMessage.READ_ERROR, entryName);
+                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, SecurityMessage.INCORRECT_DIGEST, entryName);
             }
 
         } catch (LocalizableIOException e) {
-            // TODO: Better status code
             throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, FileMessage.READ_ERROR, entryName);
         } catch (IOException e) {
-            // TODO: Better status code
             throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, FileMessage.READ_ERROR, entryName);
         }
     }
@@ -203,17 +204,8 @@ public class CascaraJarVerifier implements JarVerifier {
     //
 
     private void assertSetup() {
-        if (signatures == null) {
-            // TODO: Better exception
-            throw new IllegalStateException("setSignatures has not been called");
-        }
-        if (manifest == null) {
-            // TODO: Better exception
-            throw new IllegalStateException("setManifest has not been called");
-        }
-        if (keys == null) {
-            // TODO: Better exception
-            throw new IllegalStateException("setKeys has not been called");
+        if (signatures == null || manifest == null || keys == null) {
+            throw new LocalizableIllegalStateException(SecurityMessage.INCOMPLETE_SETUP);
         }
     }
 
@@ -240,8 +232,7 @@ public class CascaraJarVerifier implements JarVerifier {
             byte[] expected = Base64.getDecoder().decode(sfManifestDigest);
 
             if (!Arrays.equals(computed, expected)) {
-                // TODO: Proper exception message
-                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Manifest does not match digest");
+                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, SecurityMessage.INCORRECT_DIGEST, "MANIFEST.MF");
             }
         }
         // TODO: WHat if sfManifestDigest *IS* null? Is it valid?
@@ -262,15 +253,13 @@ public class CascaraJarVerifier implements JarVerifier {
             Attributes mfEntryAttrs = mfEntries.get(entryName);
             if (mfEntryAttrs == null) {
                 // File listed in .SF missing from .MF!
-                // TODO: Proper exception message
-                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Missing attributes for " + entryName + " in MANIFEST.MF");
+                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, SecurityMessage.MISSING_ATTRIBUTES, entryName);
             }
 
             // Note: Section digest in .SF is calculated over the raw header lines of that section in MANIFEST.MF
             String mfEntryDigest = mfEntryAttrs.getValue("SHA-256-Digest");
             if (mfEntryDigest == null) {
-                // TODO: Proper exception message
-                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Missing digest for " + entryName);
+                throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, SecurityMessage.MISSING_DIGEST, entryName);
             }
         }
     }
@@ -280,12 +269,10 @@ public class CascaraJarVerifier implements JarVerifier {
         // `keys` cannot be null here due to earlier assertSetup() call
 
         if (keys.size() < signatureFiles.size()) {
-            // TODO: Proper exception
-            throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Missing key file");
+            throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, SecurityMessage.MISSING_KEY_FILE);
         }
         if (keys.size() > signatureFiles.size()) {
-            // TODO: Proper exception
-            throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Extra key file");
+            throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, SecurityMessage.EXTRA_KEY_FILE);
         }
 
         for (Entry<String,SignatureBlock> entry : keys.entrySet()) {
@@ -325,7 +312,7 @@ public class CascaraJarVerifier implements JarVerifier {
                 }
 
                 if (!signatureValid) {
-                    // TODO: Proper exception
+                    // TODO: Better exception
                     throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Signature verification failed for identity \"" + signerName + "\"");
                 }
 
@@ -335,9 +322,7 @@ public class CascaraJarVerifier implements JarVerifier {
             } catch (SignatureException e) {
                 throw e;
             } catch (Exception e) {
-                e.printStackTrace();
-                // TODO: Better status code
-                throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Signature check failed: " + e.getMessage());
+                throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, DetailedMessage.forException(e));
             }
         }
     }
@@ -484,6 +469,7 @@ public class CascaraJarVerifier implements JarVerifier {
                 // A simple wrapper that checks the structure an calls SignedData.parse
                 sd = signedDataOrNull(seq);
                 if (sd == null) {
+                    // TODO: Better exception
                     throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Unable to load signed data");
                 }
 
@@ -499,14 +485,14 @@ public class CascaraJarVerifier implements JarVerifier {
                         try {
                             return c.toX509Certificate();
                         } catch (CertificateException e) {
-                            // TODO Auto-generated catch block
+                            // TODO: Better exception
                             e.printStackTrace();
                             return null;
                         }
                     })
                     .toList();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
+                // TODO: Better exception
                 throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, e.getMessage());
             }
         }

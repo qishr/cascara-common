@@ -38,7 +38,7 @@ package io.github.qishr.cascara.common.diagnostic.exception;
 import java.io.IOException;
 
 import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
-import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
 public class LocalizableIOException extends IOException implements LocalizableException {
 

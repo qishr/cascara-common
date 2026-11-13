@@ -41,12 +41,10 @@ import java.lang.annotation.Target;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 
-// /**
-//  * Represents a custom annotation for marking methods.
-//  *
-//  * @annotation JsonElement
-//  * @param key The key of the annotation.
-//  */
+/// Represents a custom annotation for marking methods.
+///
+/// @annotation JsonElement
+/// @param key The key of the annotation.
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

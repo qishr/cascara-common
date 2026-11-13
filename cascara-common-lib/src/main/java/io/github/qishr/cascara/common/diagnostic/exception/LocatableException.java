@@ -38,7 +38,7 @@ package io.github.qishr.cascara.common.diagnostic.exception;
 import java.net.URI;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
 public abstract class LocatableException extends LocalizableRuntimeException {
     private final int line;

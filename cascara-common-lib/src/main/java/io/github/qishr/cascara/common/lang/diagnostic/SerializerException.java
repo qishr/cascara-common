@@ -37,22 +37,22 @@ package io.github.qishr.cascara.common.lang.diagnostic;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.exception.LocatableException;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 
 public class SerializerException extends LocatableException {
     /// Standard constructor for serializer-detected mapping errors.
-    public SerializerException(DiagnosticMessage message, Object... details) {
+    public SerializerException(LocalizableMessage message, Object... details) {
         super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, message, details);
     }
 
     /// Constructor
-    public SerializerException(AstNode node, Throwable cause, DiagnosticMessage message, Object... details) {
+    public SerializerException(AstNode node, Throwable cause, LocalizableMessage message, Object... details) {
         super(null, node.getStartLine(), node.getStartColumn(), cause, message, details);
     }
 
     /// Constructor for I/O or Stream failures.
-    public SerializerException(Throwable cause, DiagnosticMessage message, Object... details) {
+    public SerializerException(Throwable cause, LocalizableMessage message, Object... details) {
         super(null, Diagnostic.UNKNOWN_COORD, Diagnostic.UNKNOWN_COORD, cause, message, details);
     }
 
@@ -60,7 +60,7 @@ public class SerializerException extends LocatableException {
     // With Location
     //
 
-    public SerializerException(AstNode node, DiagnosticMessage message, Object... details) {
+    public SerializerException(AstNode node, LocalizableMessage message, Object... details) {
         this(node, null, message, details);
     }
 
