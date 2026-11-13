@@ -18,7 +18,7 @@ public final class CertPathValidationResult {
     private final TrustAnchor trustAnchor;
     private final int failedIndex;
     private final X509Certificate failedCertificate;
-    private final DetailedMessage message; // TODO: LocalizableMessage
+    private final DetailedMessage message;
     private final Throwable cause;
 
     private CertPathValidationResult(

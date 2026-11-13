@@ -131,8 +131,6 @@ public final class SignerInfo {
         try {
             sig = Signature.getInstance(javaSigAlgorithm);
         } catch (java.security.NoSuchAlgorithmException e) {
-            // TODO: Better status code
-            // "No installed provider supports this key: sun.security.ec.ECPublicKeyImpl"
             throw new UnsupportedAlgorithmException(e, javaSigAlgorithm);
         } catch (Exception e) {
             throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Invalid signature: " + e.getMessage());
@@ -143,8 +141,6 @@ public final class SignerInfo {
         try {
             sig.initVerify(publicKey);
         } catch (java.security.InvalidKeyException e) {
-            // TODO: Better status code
-            // "No installed provider supports this key: sun.security.ec.ECPublicKeyImpl"
             throw new InvalidKeyException(e, publicKey.getClass().getName());
         } catch (Exception e) {
             throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Invalid signature: " + e.getMessage());

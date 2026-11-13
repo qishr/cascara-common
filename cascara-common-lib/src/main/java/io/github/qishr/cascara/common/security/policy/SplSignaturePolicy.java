@@ -145,8 +145,9 @@ public final class SplSignaturePolicy implements SignaturePolicy {
             if (!vr.isValid()) {
                 // TODO: Reporter.debug to take DetailedMessage
                 // All reporter methods should handle this
-                // vr.gwetmessga should use detailde message
                 // reporter debug and trace should use same formatting as error
+
+                // TODO: Make this warn or debug
                 REPORTER.error(vr.getCause(), vr.getMessage());
                 return vr.getStatus();
             }

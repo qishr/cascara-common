@@ -107,7 +107,6 @@ public final class CertPathVerifier {
                     e
             );
         } catch (CertificateException | InvalidAlgorithmParameterException | NoSuchAlgorithmException e) {
-            // TODO: Better error message
             return CertPathValidationResult.invalid(
                     SignatureStatus.INVALID_SIGNATURE,
                     DetailedMessage.forException(e),
