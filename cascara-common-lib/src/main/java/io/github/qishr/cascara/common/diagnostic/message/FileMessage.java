@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.diagnostic.message;
 
-public enum FileMessage implements DiagnosticMessage {
+public enum FileMessage implements LocalizableMessage {
     FILE_NOT_FOUND("FILE-101", "File not found: {0}"),
     ACCESS_DENIED("FILE-102", "Access denied"),
     IS_DIRECTORY("FILE-103", "{0} is a directory"),

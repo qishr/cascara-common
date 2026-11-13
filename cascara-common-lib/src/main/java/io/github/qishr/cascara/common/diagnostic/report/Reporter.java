@@ -41,7 +41,7 @@ import java.util.function.Consumer;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 public interface Reporter {
@@ -104,12 +104,12 @@ public interface Reporter {
     /// Reports an [Exception] as a warning
     ///
     /// @param exception The exception to report.
-    void warn(Exception exception);
+    void warn(Throwable exception);
 
     /// Reports an [Exception] as an error
     ///
     /// @param exception The exception to report.
-    void error(Exception exception);
+    void error(Throwable exception);
 
     /// Reports a trace message through the reporter.
     /// @param format The format of the message to report.
@@ -123,24 +123,24 @@ public interface Reporter {
 
     /// Reports an informational message through the reporter.
     /// @param message The code of this warning.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void info(DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void info(LocalizableMessage message, Object... details);
 
     /// Reports a warning message including location information.
     /// @param message The code of this warning.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void warn(DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void warn(LocalizableMessage message, Object... details);
 
     /// Reports an error message including location information.
     /// @param message The code of this error.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void error(DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void error(LocalizableMessage message, Object... details);
 
     /// Reports an error message including location information.
     /// @param cause The cause of this report.
     /// @param message The code of this error.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void error(Throwable cause, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void error(Throwable cause, LocalizableMessage message, Object... details);
 
     /// Reports an informational message anchored to a resource location by line and column.
     /// Useful when text stream indices are unavailable.
@@ -148,8 +148,8 @@ public interface Reporter {
     /// @param line The 1-based line number of the diagnostic.
     /// @param column The 1-based column number of the diagnostic.
     /// @param message The semantic classification code for this warning.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void infoAt(int line, int column, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void infoAt(int line, int column, LocalizableMessage message, Object... details);
 
     /// Reports a warning anchored to a resource location by line and column.
     /// Useful when text stream indices are unavailable.
@@ -157,8 +157,8 @@ public interface Reporter {
     /// @param line The 1-based line number of the diagnostic.
     /// @param column The 1-based column number of the diagnostic.
     /// @param message The semantic classification code for this warning.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void warnAt(int line, int column, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void warnAt(int line, int column, LocalizableMessage message, Object... details);
 
     /// Reports an error anchored to a resource location by line and column.
     /// Useful when text stream indices are unavailable.
@@ -166,8 +166,8 @@ public interface Reporter {
     /// @param line The 1-based line number of the diagnostic.
     /// @param column The 1-based column number of the diagnostic.
     /// @param message The semantic classification code for this error.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void errorAt(int line, int column, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void errorAt(int line, int column, LocalizableMessage message, Object... details);
 
     /// Reports an error anchored to a resource location by line and column.
     /// Useful when text stream indices are unavailable.
@@ -176,8 +176,8 @@ public interface Reporter {
     /// @param column The 1-based column number of the diagnostic.
     /// @param cause The cause of this report.
     /// @param message The semantic classification code for this error.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void errorAt(int line, int column, Throwable cause, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void errorAt(int line, int column, Throwable cause, LocalizableMessage message, Object... details);
 
     /// Reports an informational message anchored to a precise character span within a resource.
     ///
@@ -186,8 +186,8 @@ public interface Reporter {
     /// @param start The 0-based absolute character index indicating the start of the span.
     /// @param end The 0-based absolute character index indicating the end of the span (exclusive).
     /// @param message The semantic classification code for this error.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void infoAt(int line, int column, int start, int end, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void infoAt(int line, int column, int start, int end, LocalizableMessage message, Object... details);
 
     /// Reports a warning anchored to a precise character span within a resource.
     ///
@@ -196,8 +196,8 @@ public interface Reporter {
     /// @param start The 0-based absolute character index indicating the start of the span.
     /// @param end The 0-based absolute character index indicating the end of the span (exclusive).
     /// @param message The semantic classification code for this warning.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void warnAt(int line, int column, int start, int end, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void warnAt(int line, int column, int start, int end, LocalizableMessage message, Object... details);
 
     /// Reports an error anchored to a precise character span within a resource.
     ///
@@ -206,8 +206,8 @@ public interface Reporter {
     /// @param start The 0-based absolute character index indicating the start of the span.
     /// @param end The 0-based absolute character index indicating the end of the span (exclusive).
     /// @param message The semantic classification code for this error.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void errorAt(int line, int column, int start, int end, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void errorAt(int line, int column, int start, int end, LocalizableMessage message, Object... details);
 
     /// Reports an error anchored to a precise character span within a resource.
     ///
@@ -217,50 +217,50 @@ public interface Reporter {
     /// @param end The 0-based absolute character index indicating the end of the span (exclusive).
     /// @param cause The cause of this report.
     /// @param message The semantic classification code for this error.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void errorAt(int line, int column, int start, int end, Throwable cause, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void errorAt(int line, int column, int start, int end, Throwable cause, LocalizableMessage message, Object... details);
 
     /// Reports an informational message derived from the location attributes of a structural token.
     ///
     /// @param token The syntactic [Token] supplying the positional bounds.
     /// @param message The semantic classification code for this error.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void infoAt(Token token, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void infoAt(Token token, LocalizableMessage message, Object... details);
 
     /// Reports a warning derived from the location attributes of a structural token.
     ///
     /// @param token The syntactic [Token] supplying the positional bounds.
     /// @param message The semantic classification code for this warning.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void warnAt(Token token, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void warnAt(Token token, LocalizableMessage message, Object... details);
 
     /// Reports an error derived from the location attributes of a structural token.
     ///
     /// @param token The syntactic [Token] supplying the positional bounds.
     /// @param message The semantic classification code for this error.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void errorAt(Token token, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void errorAt(Token token, LocalizableMessage message, Object... details);
 
     /// Reports an error derived from the location attributes of a structural token.
     ///
     /// @param token The syntactic [Token] supplying the positional bounds.
     /// @param cause The cause of this report.
     /// @param message The semantic classification code for this error.
-    /// @param details Arguments referenced by the format specifiers in the [DiagnosticMessage]'s localized format string.
-    void errorAt(Token token, Throwable cause, DiagnosticMessage message, Object... details);
+    /// @param details Arguments referenced by the format specifiers in the [LocalizableMessage]'s localized format string.
+    void errorAt(Token token, Throwable cause, LocalizableMessage message, Object... details);
 
     @Experimental
-    void warnAt(URI uri, int line, int column, DiagnosticMessage message, Object... details);
+    void warnAt(URI uri, int line, int column, LocalizableMessage message, Object... details);
 
     @Experimental
-    void errorAt(URI uri, int line, int column, DiagnosticMessage message, Object... details);
+    void errorAt(URI uri, int line, int column, LocalizableMessage message, Object... details);
 
     @Experimental
-    void warnAt(URI uri, Token token, DiagnosticMessage message, Object... details);
+    void warnAt(URI uri, Token token, LocalizableMessage message, Object... details);
 
     @Experimental
-    void errorAt(URI uri, Token token, DiagnosticMessage message, Object... details);
+    void errorAt(URI uri, Token token, LocalizableMessage message, Object... details);
 
     @Experimental
-    void errorAt(URI uri, Token token, Throwable t, DiagnosticMessage message, Object... details);
+    void errorAt(URI uri, Token token, Throwable t, LocalizableMessage message, Object... details);
 }

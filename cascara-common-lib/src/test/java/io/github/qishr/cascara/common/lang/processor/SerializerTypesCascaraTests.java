@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
@@ -29,13 +29,13 @@ public class SerializerTypesCascaraTests extends SerializerTestBase {
     }
 
     // This was failing because LangMessage is being treated as a regular Enum during
-    // serialization, but DiagnosticMessage uses a TypeDescriptor during deserialization.
+    // serialization, but LocalizableMessage uses a TypeDescriptor during deserialization.
     @Test
-    void test_DiagnosticMessage() {
+    void test_LocalizableMessage() {
         Serializer<?> serializer = newSerializer();
-        DiagnosticMessage original = LangMessage.AMBIGUOUS_POLYMORPHIC;
+        LocalizableMessage original = LangMessage.AMBIGUOUS_POLYMORPHIC;
         AstNode ast = serializer.toAst(original);
-        DiagnosticMessage deserialized = serializer.fromAst(ast, DiagnosticMessage.class);
+        LocalizableMessage deserialized = serializer.fromAst(ast, LocalizableMessage.class);
         assertNotNull(deserialized);
         assertEquals("LANG-317", deserialized.getCode());
     }
@@ -61,7 +61,7 @@ public class SerializerTypesCascaraTests extends SerializerTestBase {
 
     // getTypeDescriptor(jvmInstance.getClass() was failing in this test because
     // it was looking for an exact match on GenericMessage instead of checking
-    // for a matching supertype DiagnosticMessage.
+    // for a matching supertype LocalizableMessage.
     @Test
     void test_Diagnostic_withStackTrace() {
         Serializer<?> serializer = newSerializer();

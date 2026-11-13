@@ -142,25 +142,14 @@ public final class SplSignaturePolicy implements SignaturePolicy {
             // Evaluate the certificate chain extracted from PKCS#7 SignedData
             CertPathValidationResult vr = CertPathVerifier.validatePath(signerCertChain, this.trustStore); // Runs PKIX CertPathValidator
 
-
-
-
             if (!vr.isValid()) {
-                Throwable cause = vr.getCause();
-
-                if (cause instanceof CertificateExpiredException) {
-                    return SignatureStatus.CERTIFICATE_EXPIRED;
-                }
-                if (cause instanceof CertificateNotYetValidException) {
-                    return SignatureStatus.NOT_YET_VALID;
-                }
-
-                // CertPathValidatorException (BasicConstraints failure, untrusted root, broken chain, etc.)
-                return SignatureStatus.UNTRUSTED_SIGNER;
+                // TODO: Reporter.debug to take DetailedMessage
+                // All reporter methods should handle this
+                // vr.gwetmessga should use detailde message
+                // reporter debug and trace should use same formatting as error
+                REPORTER.error(vr.getCause(), vr.getMessage());
+                return vr.getStatus();
             }
-
-
-
 
             boolean anyRevoked = false;
 
@@ -227,27 +216,9 @@ public final class SplSignaturePolicy implements SignaturePolicy {
 
             CertPathValidationResult vr = CertPathVerifier.validatePath(chain, trustStore);
 
-
-
-
             if (!vr.isValid()) {
-                // TODO: This is code duplication from evaluate(JarFile)
-                Throwable cause = vr.getCause();
-
-                if (cause instanceof CertificateExpiredException) {
-                    return SignatureStatus.CERTIFICATE_EXPIRED;
-                }
-                if (cause instanceof CertificateNotYetValidException) {
-                    return SignatureStatus.NOT_YET_VALID;
-                }
-
-                // CertPathValidatorException (BasicConstraints failure, untrusted root, broken chain, etc.)
-                return SignatureStatus.UNTRUSTED_SIGNER;
+                return vr.getStatus();
             }
-
-
-
-
         }
 
         // 2. If the classloader didn't pre-populate certs on CodeSource, inspect the location JAR:

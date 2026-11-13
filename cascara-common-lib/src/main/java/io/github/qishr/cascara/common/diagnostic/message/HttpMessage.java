@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.diagnostic.message;
 
-public enum HttpMessage implements DiagnosticMessage {
+public enum HttpMessage implements LocalizableMessage {
     // Infrastructure Errors (Pre-response)
     // NAME_RESOLUTION_FAILED("HTTP-001", 1),
     // CONNECTION_TIMEOUT("HTTP-002", 1),

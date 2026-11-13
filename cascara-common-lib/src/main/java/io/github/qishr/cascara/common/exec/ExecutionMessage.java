@@ -34,9 +34,9 @@
 
 package io.github.qishr.cascara.common.exec;
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
-public enum ExecutionMessage implements DiagnosticMessage {
+public enum ExecutionMessage implements LocalizableMessage {
     PROCESS_FAILED("EXEC-101", "Failed to start process for {0}"),
     TASK_FAILED("EXEC-102", "Task {0} failed"),
     INPUT_FAILED("EXEC-103", "Failed to write input to task {0}"),

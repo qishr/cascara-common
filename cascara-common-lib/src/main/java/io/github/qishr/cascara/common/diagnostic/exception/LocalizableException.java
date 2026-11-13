@@ -39,7 +39,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
-import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
 public interface LocalizableException {
 

@@ -39,6 +39,7 @@ import java.net.URI;
 import java.text.MessageFormat;
 import java.time.Instant;
 
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 /// Represents a discrete event, log entry, or syntax/semantic problem identified

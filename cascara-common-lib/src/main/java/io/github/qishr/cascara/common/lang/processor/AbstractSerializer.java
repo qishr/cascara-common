@@ -61,10 +61,11 @@ import io.github.qishr.cascara.common.annotation.AnySetter;
 import io.github.qishr.cascara.common.annotation.DataIgnore;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullReturnException;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 import io.github.qishr.cascara.common.diagnostic.report.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
@@ -288,7 +289,7 @@ public abstract class AbstractSerializer<
                 try {
                     map = (Map<?, ?>) field.get(jvmInstance);
                 } catch (IllegalAccessException e) {
-                    throw new SerializerException(e, GenericMessage.FIELD_NOT_ACCESSIBLE, fieldName);
+                    throw new SerializerException(e, LangMessage.FIELD_NOT_ACCESSIBLE, fieldName);
                 }
                 if (map != null) {
                     for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -304,7 +305,7 @@ public abstract class AbstractSerializer<
 			try {
 				value = field.get(jvmInstance);
 			} catch (IllegalAccessException e) {
-                throw new SerializerException(e, GenericMessage.FIELD_NOT_ACCESSIBLE, field.getName());
+                throw new SerializerException(e, LangMessage.FIELD_NOT_ACCESSIBLE, field.getName());
 			}
             if (value != null) {
                 K keyNode = astFactory.createKey(fieldName);
@@ -926,7 +927,7 @@ public abstract class AbstractSerializer<
                         try {
                             method.invoke(instance, key, value);
                         } catch (IllegalAccessException e) {
-                            throw new SerializerException(e, GenericMessage.FIELD_NOT_ACCESSIBLE, method.getName());
+                            throw new SerializerException(e, LangMessage.FIELD_NOT_ACCESSIBLE, method.getName());
                         } catch (InvocationTargetException e) {
                             throw new SerializerException(e, GenericMessage.INVOCATION_TARGET_EXCEPTION, method.getName());
                         }
@@ -1213,7 +1214,7 @@ public abstract class AbstractSerializer<
     //
 
     protected SerializerException error(Throwable t, Object... details) {
-        DiagnosticMessage d = DiagnosticMessage.forException(t);
+        DetailedMessage d = DetailedMessage.forException(t);
         if (d == null) {
             return new SerializerException(t, GenericMessage.ERROR, t.getMessage());
         } else {
@@ -1221,7 +1222,7 @@ public abstract class AbstractSerializer<
         }
     }
 
-    protected void warn(DiagnosticMessage message, Object... details) {
+    protected void warn(LocalizableMessage message, Object... details) {
         reporter.warn(message, details);
     }
 

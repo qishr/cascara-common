@@ -1,8 +1,8 @@
 package io.github.qishr.cascara.common.trackable;
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
-public enum TrackingMessage implements DiagnosticMessage {
+public enum TrackingMessage implements LocalizableMessage {
     // Data
     UI_DATA_ERROR("UI-101", "UI data error."),
     PROPERTY_NOT_RECOGNIZED("UI-102","Unrecognized property name: {0}."),

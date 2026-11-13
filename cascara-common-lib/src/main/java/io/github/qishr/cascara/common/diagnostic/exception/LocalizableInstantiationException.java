@@ -1,7 +1,7 @@
 package io.github.qishr.cascara.common.diagnostic.exception;
 
 import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
-import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
 public class LocalizableInstantiationException extends InstantiationException implements LocalizableException {
     private final Throwable cause;

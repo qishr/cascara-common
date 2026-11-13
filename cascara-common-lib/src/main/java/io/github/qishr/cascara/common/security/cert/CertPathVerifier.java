@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
 import io.github.qishr.cascara.common.security.diagnostic.SecurityMessage;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 
@@ -98,14 +98,19 @@ public final class CertPathVerifier {
                     status,
                     failedIndex,
                     failedCert,
-                    SecurityMessage.CERT_PATH_VALIDATION_FAILED,
+                    new DetailedMessage(
+                        SecurityMessage.CERT_PATH_VALIDATION_FAILED,
+                        failedCert == null
+                            ? "Unknown"
+                            : failedCert.getSubjectX500Principal().getName()
+                    ),
                     e
             );
         } catch (CertificateException | InvalidAlgorithmParameterException | NoSuchAlgorithmException e) {
             // TODO: Better error message
             return CertPathValidationResult.invalid(
                     SignatureStatus.INVALID_SIGNATURE,
-                    GenericMessage.ERROR,
+                    DetailedMessage.forException(e),
                     e
             );
         }

@@ -62,9 +62,9 @@ import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.annotation.Priority;
 import io.github.qishr.cascara.common.annotation.SingletonInitializer;
+import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
 import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
@@ -340,7 +340,7 @@ public class SPLBranch implements SPL {
                     method.setAccessible(true);
                     method.invoke(instance);
                 } catch (Throwable t) {
-                    DiagnosticMessage message = DiagnosticMessage.forException(t);
+                    DetailedMessage message = DetailedMessage.forException(t);
                     if (message == null) {
                         throw new ServiceException(
                             t,

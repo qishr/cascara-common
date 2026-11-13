@@ -1,8 +1,8 @@
 package io.github.qishr.cascara.common.security.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
-public enum SecurityMessage implements DiagnosticMessage {
+public enum SecurityMessage implements LocalizableMessage {
     NO_ALGORITHM("SEC-101", "No suitable algorithm found for: {0}"),
     UNSUPPORTED_ALGORITHM("SEC-102", "Unsupported algorithm: {0}"),
     UNSUPPORTED_DIGEST("SEC-103", "Unsupported digest: {0}"),

@@ -1,6 +1,6 @@
 package io.github.qishr.cascara.common.diagnostic.exception;
 
-import io.github.qishr.cascara.common.diagnostic.LocalizableMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
 public class LocalizableSecurityException extends SecurityException implements LocalizableException {
 

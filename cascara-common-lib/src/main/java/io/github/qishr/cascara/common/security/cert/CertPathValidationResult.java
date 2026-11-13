@@ -3,28 +3,31 @@ package io.github.qishr.cascara.common.security.cert;
 import java.security.cert.CertPath;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
-import java.util.Optional;
 
+import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 
+@Experimental
 public final class CertPathValidationResult {
-    private final SignatureStatus status;
+    @NonNull private final SignatureStatus status;
     private final CertPath certPath;
     private final TrustAnchor trustAnchor;
     private final int failedIndex;
     private final X509Certificate failedCertificate;
-    private final DiagnosticMessage message;
+    private final DetailedMessage message; // TODO: LocalizableMessage
     private final Throwable cause;
 
     private CertPathValidationResult(
-            SignatureStatus status,
+            @NonNull SignatureStatus status,
             CertPath certPath,
             TrustAnchor trustAnchor,
             int failedIndex,
             X509Certificate failedCertificate,
-            DiagnosticMessage message,
+            DetailedMessage message,
             Throwable cause) {
         this.status = status;
         this.certPath = certPath;
@@ -41,32 +44,33 @@ public final class CertPathValidationResult {
     }
 
     public static CertPathValidationResult invalid(
-            SignatureStatus status,
+            @NonNull SignatureStatus status,
             int failedIndex,
             X509Certificate failedCertificate,
-            DiagnosticMessage message,
+            DetailedMessage message,
             Throwable cause) {
         return new CertPathValidationResult(
                 status, null, null, failedIndex, failedCertificate, message, cause);
     }
 
     public static CertPathValidationResult invalid(
-            SignatureStatus status,
-            DiagnosticMessage message,
+            @NonNull SignatureStatus status,
+            DetailedMessage message,
             Throwable cause) {
         return invalid(status, -1, null, message, cause);
     }
 
     public static CertPathValidationResult invalid(
-            SignatureStatus status,
-            DiagnosticMessage message) {
-        return invalid(status, -1, null, message, null);
+            @NonNull SignatureStatus status,
+            LocalizableMessage message) {
+        return invalid(status, -1, null, new DetailedMessage(message), null);
     }
 
     public boolean isValid() {
         return status == SignatureStatus.VALID;
     }
 
+    @NonNull
     public SignatureStatus getStatus() {
         return status;
     }
@@ -81,7 +85,7 @@ public final class CertPathValidationResult {
     }
 
     @Nullable
-    public DiagnosticMessage getMessage() {
+    public DetailedMessage getMessage() {
         return message;
     }
 

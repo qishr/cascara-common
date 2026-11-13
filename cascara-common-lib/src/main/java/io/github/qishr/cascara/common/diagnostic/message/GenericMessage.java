@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.diagnostic.message;
 
-public enum GenericMessage implements DiagnosticMessage {
+public enum GenericMessage implements LocalizableMessage {
     INFO("INFO-101", "{0}"),
 
     // Warnings
@@ -61,8 +61,6 @@ public enum GenericMessage implements DiagnosticMessage {
     CLASS_NOT_SERIALIZABLE("LANG-406", "Class {0} is not serializable"),
     NO_SUCH_METHOD("LANG-407", "No such method: {0}"),
     NO_SUCH_CONSTRUCTOR("LANG-408", "No such constructor: {0}"),
-    FIELD_NOT_ACCESSIBLE("LANG-409", "Field {0} is not accessible"),
-
     INVOCATION_TARGET_EXCEPTION("LANG-410", "Invocation target exception: {0}"),
     ILLEGAL_ARGUMENT_EXCEPTION("LANG-411", "Iillegal argument exception {0}"),
     INSTANTIATION_EXCEPTION("LANG-412", "Instantiation exception: {0}"),
@@ -72,10 +70,11 @@ public enum GenericMessage implements DiagnosticMessage {
     SERVICE_CONFIG_ERROR("LANG-415", "Service configuration error: {0}"),
     SECURITY_EXCEPTION("LANG-416", "Security exception: {0}"),
     ILLEGAL_ACCESS_EXCEPTION("LANG-417", "Illegal access exception: {0}"),
-    INCONSISTENT_STATE("ERROR-418","Inconsistent state"),
-    UNSUPPORTED_OPERATION("ERROR-419","Unsupported operation: {0}.{1}"),
-    UNSATISFIED_LINK_ERROR("ERROR-420","Unsatisfied link error: {0"),
-    INTERNAL_ERROR("ERROR-421","Internal error: {0}"),
+    INACCESSIBLE_OBJECT_EXCEPTION("LANG-418", "Inaccessible object exception: {0}"),
+    INCONSISTENT_STATE("ERROR-419","Inconsistent state"),
+    UNSUPPORTED_OPERATION("ERROR-420","Unsupported operation: {0}.{1}"),
+    UNSATISFIED_LINK_ERROR("ERROR-421","Unsatisfied link error: {0"),
+    INTERNAL_ERROR("ERROR-422","Internal error: {0}"),
 
     // IO Errors
     IO_ERROR("ERROR-301", "IO error: {0}"),

@@ -37,6 +37,8 @@ package io.github.qishr.cascara.common.diagnostic;
 
 import java.text.MessageFormat;
 
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+
 @FunctionalInterface
 public interface DiagnosticLocalizer {
     public static final String FORMATTING_ERROR = "Problem encountered while formatting error with code %s: %s";

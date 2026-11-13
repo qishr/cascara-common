@@ -34,7 +34,8 @@
 
 
 package io.github.qishr.cascara.common.diagnostic.message;
-public enum DnsMessage implements DiagnosticMessage {
+
+public enum DnsMessage implements LocalizableMessage {
     UNKNOWN_HOST("DNS-101", "Unknown Host: {0}"),
     TIMEOUT("DNS-102", "DNS Timeout: {0}");
 

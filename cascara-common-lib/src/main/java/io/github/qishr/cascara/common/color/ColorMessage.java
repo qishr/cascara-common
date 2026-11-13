@@ -35,9 +35,9 @@
 
 package io.github.qishr.cascara.common.color;
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
-public enum ColorMessage implements DiagnosticMessage {
+public enum ColorMessage implements LocalizableMessage {
     INVALID_COLOR_FORMAT("COLOR-101", "Invalid color format: {0}"),
     INVALID_RGBA_FORMAT("COLOR-102", "Invalid RGBa format: {0}"),
     INVALID_Hsba_FORMAT("COLOR-103", "Invalid Hsba format: {0}"),

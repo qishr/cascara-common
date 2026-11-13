@@ -36,17 +36,17 @@
 package io.github.qishr.cascara.common.service;
 
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
 public class ServiceException extends LocalizableRuntimeException {
     /// Constructor for errors without an exception
-    public ServiceException(DiagnosticMessage message, Object... details) {
+    public ServiceException(LocalizableMessage message, Object... details) {
         super(null, message, details);
     }
 
     /// Constructor for errors with an exception
-    public ServiceException(Throwable cause, DiagnosticMessage message, Object... details) {
+    public ServiceException(Throwable cause, LocalizableMessage message, Object... details) {
         super(cause, message, details);
     }
 

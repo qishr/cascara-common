@@ -38,28 +38,28 @@ import java.util.List;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 
 public class ExecutionException extends LocalizableRuntimeException {
 
     private final List<Diagnostic> diagnostics;
 
-    public ExecutionException(DiagnosticMessage message, Object... details) {
+    public ExecutionException(LocalizableMessage message, Object... details) {
         super(message, details);
         this.diagnostics = null;
     }
 
-    public ExecutionException(List<Diagnostic> diagnostics, DiagnosticMessage message, Object... details) {
+    public ExecutionException(List<Diagnostic> diagnostics, LocalizableMessage message, Object... details) {
         super(message, details);
         this.diagnostics = diagnostics;
     }
 
-    public ExecutionException(Throwable cause, DiagnosticMessage message, Object... details) {
+    public ExecutionException(Throwable cause, LocalizableMessage message, Object... details) {
         super(cause, message, details);
         this.diagnostics = null;
     }
 
-    public ExecutionException(Throwable cause, List<Diagnostic> diagnostics, DiagnosticMessage message, Object... details) {
+    public ExecutionException(Throwable cause, List<Diagnostic> diagnostics, LocalizableMessage message, Object... details) {
         super(cause, message, details);
         this.diagnostics = diagnostics;
     }
