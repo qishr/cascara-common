@@ -33,24 +33,24 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic.exception;
+package io.github.qishr.cascara.common.i18n.exception;
 
-import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.Localizer;
 
 public class AbstractLocalizableException extends Exception implements LocalizableException {
 
-    private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
+    private static volatile Localizer localizer = Localizer.instance();
 
     private final LocalizableMessage diagnosticMessage;
     private final Object[] details;
 
-    public static DiagnosticLocalizer getLocalizer() {
+    public static Localizer getLocalizer() {
         return localizer;
     }
 
-    public static void setLocalizer(DiagnosticLocalizer customLocalizer) {
-        localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
+    public static void setLocalizer(Localizer customLocalizer) {
+        localizer = customLocalizer != null ? customLocalizer : Localizer.instance();
     }
 
     public AbstractLocalizableException(LocalizableMessage message, Object... details) {
@@ -83,7 +83,7 @@ public class AbstractLocalizableException extends Exception implements Localizab
         try {
             return localizer.format(diagnosticMessage, details);
         } catch (IllegalArgumentException e) {
-            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
+            return String.format(Localizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
         }
     }
 
@@ -91,14 +91,14 @@ public class AbstractLocalizableException extends Exception implements Localizab
     @Override
     public String getMessage() {
         try {
-            return DiagnosticLocalizer.DEFAULT.format(diagnosticMessage, details);
+            return Localizer.instance().format(diagnosticMessage, details);
         } catch (IllegalArgumentException e) {
-            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
+            return String.format(Localizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
         }
     }
 
     /// Formats a [LocalizableMessage] without localizing it.
     private static String format(LocalizableMessage message, Object... details) {
-        return DiagnosticLocalizer.DEFAULT.format(message, details);
+        return Localizer.instance().format(message, details);
     }
 }

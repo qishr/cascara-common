@@ -40,7 +40,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 
 public class TreeTests {
     @Test

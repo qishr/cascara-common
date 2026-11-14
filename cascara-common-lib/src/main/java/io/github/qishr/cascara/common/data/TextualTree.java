@@ -39,8 +39,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
 

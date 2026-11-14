@@ -37,6 +37,6 @@ package io.github.qishr.cascara.common.trackable;
 import io.github.qishr.cascara.common.trackable.tracker.InvalidationTracker;
 
 public interface Trackable {
-    void addTracker(InvalidationTracker listener);
-    void removeTracker(InvalidationTracker listener);
+    void addInvalidationTracker(InvalidationTracker listener);
+    void removeInvalidationTracker(InvalidationTracker listener);
 }

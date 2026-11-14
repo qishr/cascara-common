@@ -56,8 +56,8 @@ import io.github.qishr.cascara.common.annotation.DataField;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableInstantiationException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableInstantiationException;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 
 public class ReflectionUtils {

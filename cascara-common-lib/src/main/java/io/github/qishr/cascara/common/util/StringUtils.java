@@ -196,63 +196,6 @@ public class StringUtils {
         }
     }
 
-    public static String toKebabCase(String camelCase) {
-        StringBuilder sb = new StringBuilder();
-        int[] codePoints = camelCase.codePoints().toArray();
-        for (int i = 0; i < codePoints.length; i++) {
-            int codePoint = codePoints[i];
-            if (Character.isUpperCase(codePoint)) {
-                if (i + 1 < codePoints.length && Character.isLowerCase(codePoints[i+1])) {
-                    sb.append("-");
-                }
-                sb.append(Character.toLowerCase((char)codePoint));
-            } else {
-                sb.append(Character.toChars(codePoint));
-            }
-        }
-        return sb.toString();
-    }
-
-    public static String toPascalCase(String kebabCase) {
-        StringBuilder sb = new StringBuilder();
-        boolean nextUpper = true; // Start with uppercase
-        int[] codePoints = kebabCase.codePoints().toArray();
-        for (int i = 0; i < codePoints.length; i++) {
-            int codePoint = codePoints[i];
-            if (codePoint == '-') {
-                nextUpper = true;
-            } else {
-                if (nextUpper) {
-                    sb.append(Character.toChars(Character.toUpperCase(codePoint)));
-                    nextUpper = false;
-                } else {
-                    sb.append(Character.toChars(Character.toLowerCase(codePoint)));
-                }
-            }
-        }
-        return sb.toString();
-    }
-
-    public static String toCamelCase(String kebabCase) {
-        StringBuilder sb = new StringBuilder();
-        boolean nextUpper = false;
-        int[] codePoints = kebabCase.codePoints().toArray();
-        for (int i = 0; i < codePoints.length; i++) {
-            int codePoint = codePoints[i];
-            if (codePoint == '-') {
-                nextUpper = true;
-            } else {
-                if (nextUpper) {
-                    sb.append(Character.toChars(Character.toUpperCase(codePoint)));
-                    nextUpper = false;
-                } else {
-                    sb.append(Character.toChars(codePoint));
-                }
-            }
-        }
-        return sb.toString();
-    }
-
     public static List<Number> parseNumberList(String numbers) {
         List<Number> list = new ArrayList<>();
         String[] items = numbers.split(",");
@@ -276,5 +219,145 @@ public class StringUtils {
             }
         }
         return full;
+    }
+
+    public static String toCamelCase(String string) {
+        String[] segments;
+        if (string.contains(".")) {
+            segments = lowerCaseSplitOnDot(string);
+        } else {
+            Case fromCase = Case.of(string);
+            if (fromCase == Case.CAMEL) {
+                return string;
+            }
+            segments = fromCase.split(string);
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(segments[0]);
+        for (int i = 1; i < segments.length; i++) {
+            String segment = segments[i];
+            sb.append(Character.toChars(Character.toUpperCase(segment.codePointAt(0))));
+            sb.append(segment.substring(1));
+        }
+        return sb.toString();
+    }
+
+    public static String toKebabCase(String string) {
+        String[] segments;
+        if (string.contains(".")) {
+            segments = lowerCaseSplitOnDot(string);
+        } else {
+            Case fromCase = Case.of(string);
+            if (fromCase == Case.KEBAB) {
+                return string;
+            }
+            segments = fromCase.split(string);
+        }
+        return String.join("-", segments);
+    }
+
+    public static String toPascalCase(String string) {
+        String[] segments;
+        if (string.contains(".")) {
+            segments = lowerCaseSplitOnDot(string);
+        } else {
+            Case fromCase = Case.of(string);
+            if (fromCase == Case.PASCAL) {
+                return string;
+            }
+            segments = fromCase.split(string);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < segments.length; i++) {
+            String segment = segments[i];
+            sb.append(Character.toChars(Character.toUpperCase(segment.codePointAt(0))));
+            sb.append(segment.substring(1));
+        }
+        return sb.toString();
+    }
+
+    public static String toSnakeCase(String string) {
+        String[] segments;
+        if (string.contains(".")) {
+            segments = lowerCaseSplitOnDot(string);
+        } else {
+            Case fromCase = Case.of(string);
+            if (fromCase == Case.SNAKE) {
+                return string;
+            }
+            segments = fromCase.split(string);
+        }
+        return String.join("_", segments);
+    }
+
+    private static String[] lowerCaseSplitOnDot(String string) {
+        String[] split = string.split("\\.", -1);
+        String[] segments = new String[split.length];
+        for (int i = 0; i < split.length; i++) {
+            segments[i] = split[i].toLowerCase();
+        }
+        return segments;
+    }
+
+    public enum Case {
+        CAMEL,
+        KEBAB,
+        PASCAL,
+        SNAKE,
+        UNKNOWN;
+
+        public static Case of(String string) {
+            if (string == null || string.isBlank() || string.length() < 2) {
+                return UNKNOWN;
+            }
+            int[] codePoints = string.codePoints().toArray();
+            if (Character.isUpperCase(codePoints[0])) {
+                if (!Character.isUpperCase(codePoints[1])) {
+                    return PASCAL;
+                } else {
+                    return UNKNOWN;
+                }
+            }
+            if (string.contains("-")) {
+                return KEBAB;
+            }
+            if (string.contains("_")) {
+                return SNAKE;
+            }
+            return CAMEL;
+        }
+
+        public String[] split(String string) {
+            if (this == CAMEL || this == PASCAL) {
+                return splitOnUppercase(string);
+            } else if (this == KEBAB) {
+                return string.split("-", -1);
+            } else if (this == SNAKE) {
+                return string.split("_", -1);
+            } else {
+                return new String[]{string};
+            }
+        }
+
+        private String[] splitOnUppercase(String string) {
+            List<String> segments = new ArrayList<>();
+            int[] codePoints = string.codePoints().toArray();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < codePoints.length; i++) {
+                int codePoint = codePoints[i];
+                if (Character.isUpperCase(codePoint)) {
+                    if (i > 0 && Character.isLowerCase(codePoints[i-1])) {
+                        // split
+                        segments.add(sb.toString());
+                        sb.setLength(0);
+                    }
+                }
+                sb.append(Character.toChars(Character.toLowerCase(codePoint)));
+            }
+            if (!sb.isEmpty()) {
+                segments.add(sb.toString());
+            }
+            return segments.toArray(new String[]{});
+        }
     }
 }

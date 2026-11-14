@@ -43,7 +43,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
+import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.lang.ast.*;
 import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 

@@ -49,22 +49,24 @@ tasks.named('test', Test) {
     }
 
     // Capture source set output paths lazily during configuration time
-    def mainClassesDir = sourceSets.main.output.classesDirs
-    def testClassesDir = sourceSets.test.output.classesDirs
-    def runtimeClasspath = configurations.testRuntimeClasspath
+    def mainClassesDir = sourceSets.main.output.classesDirs.asPath
+    def testClassesDir = sourceSets.test.output.classesDirs.asPath
+    def testResourcesDir = sourceSets.test.output.resourcesDir.absolutePath
+    def testOutputs = "${testClassesDir}${File.pathSeparator}${testResourcesDir}"
+    def runtimeClasspath = configurations.testRuntimeClasspath.asPath
 
     doFirst {
         def mainModuleName = 'cascara.common'
 
         jvmArgs([
-            '--module-path', "${mainClassesDir.asPath}${File.pathSeparator}${runtimeClasspath.asPath}",
+            '--module-path', "${mainClassesDir}${File.pathSeparator}${runtimeClasspath}",
             '--add-modules', mainModuleName,
-            '--patch-module', "${mainModuleName}=${testClassesDir.asPath}",
+            '--patch-module', "${mainModuleName}=${testOutputs}",
             '--add-reads', "${mainModuleName}=ALL-UNNAMED",
             '--add-modules', 'org.junit.platform.launcher',
-            '--add-reads', 'cascara.common=org.junit.jupiter.api',
+            '--add-reads', "${mainModuleName}=org.junit.jupiter.api",
             '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
-            '--add-opens', 'java.base/java.lang=cascara.common'
+            '--add-opens', "java.base/java.lang=${mainModuleName}"
         ])
     }
 }

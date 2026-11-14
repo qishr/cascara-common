@@ -32,25 +32,25 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.i18n.detect;
 
-package io.github.qishr.cascara.common.diagnostic.exception;
+// import com.sun.jna.platform.win32.Advapi32Util;
+// import com.sun.jna.platform.win32.WinReg;
 
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-
-public class UnexpectedNullReturnException extends LocalizableRuntimeException {
-
-    public UnexpectedNullReturnException(String instanceName, String instanceMethod) {
-        super(GenericMessage.UNEXPECTED_NULL_RETURN, instanceName, buildMethoDetails(instanceName, instanceMethod));
-    }
-
-    // TODO: Consistency with UnimplementedMethodException
-    private static Object[] buildMethoDetails(String instanceName, String instanceMethod) {
-        // Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
-        // String className = caller.getL().getName();
-        // String methodName = caller.getR();
-        Object[] details = new Object[2];
-        details[0] = instanceName;
-        details[1] = instanceMethod;
-        return details;
-    }
+public class WindowsRegistryLocaleDetector {
+    // public static Locale detectFromRegistry() {
+    //     try {
+    //         // Read "LocaleName" from HKEY_CURRENT_USER\Control Panel\International
+    //         String localeName = Advapi32Util.registryGetStringValue(
+    //             WinReg.HKEY_CURRENT_USER,
+    //             "Control Panel\\International",
+    //             "LocaleName"
+    //         );
+    //         // Example: "en-US" → Locale("en", "US")
+    //         return Locale.forLanguageTag(localeName);
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //         return null;
+    //     }
+    // }
 }

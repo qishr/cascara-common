@@ -32,43 +32,27 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.i18n.detect;
 
-package io.github.qishr.cascara.common.diagnostic.exception;
+// import java.util.Locale;
 
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+// import com.sun.jna.Library;
+// import com.sun.jna.Native;
 
-public class LocalizableRuntimeException extends RuntimeException implements LocalizableException {
-    // private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
+// public interface Kernel32 extends Library {
+//     Kernel32 INSTANCE = Native.load("kernel32", Kernel32.class);
+//     short GetSystemDefaultLangID();
+// }
 
-    private final LocalizableMessage diagnosticMessage;
-    private final Object[] details;
-
-    // public static void setLocalizer(DiagnosticLocalizer customLocalizer) {
-    //     localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
+public class WindowsLangIDLocaleDetector {
+    // public static Locale detectFromLangID() {
+    //     short langID = Kernel32.INSTANCE.GetSystemDefaultLangID();
+    //     // Map LangID to Locale (simplified example)
+    //     switch (langID) {
+    //         case 0x0409: return Locale.US;    // en-US
+    //         case 0x040C: return Locale.FRENCH; // fr-FR
+    //         case 0x0410: return Locale.ITALIAN; // it-IT
+    //         default: return null;
+    //     }
     // }
-
-    public LocalizableRuntimeException(LocalizableMessage message, Object... details) {
-        super(AbstractLocalizableException.getLocalizer().format(message, details));
-        this.diagnosticMessage = message;
-        this.details = details != null ? details : new Object[0];
-    }
-
-    public LocalizableRuntimeException(Throwable cause, LocalizableMessage message, Object... details) {
-        super(AbstractLocalizableException.getLocalizer().format(message, details), cause);
-        this.diagnosticMessage = message;
-        this.details = details != null ? details : new Object[0];
-    }
-
-	public LocalizableMessage getLocalizableMessage() {
-		return diagnosticMessage;
-	}
-
-	public Object[] getDetails() {
-		return details;
-	}
-
-    @Override
-    public String getLocalizedMessage() {
-        return AbstractLocalizableException.getLocalizer().format(diagnosticMessage, details);
-    }
 }

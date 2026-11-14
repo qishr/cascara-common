@@ -1,7 +1,7 @@
 package io.github.qishr.cascara.common.security.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableSecurityException;
 
 public class TrustStoreException extends LocalizableSecurityException {
 

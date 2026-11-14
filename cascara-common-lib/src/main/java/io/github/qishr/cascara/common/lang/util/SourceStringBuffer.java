@@ -39,7 +39,7 @@ import java.io.InputStream;
 import java.io.Reader;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
+import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.SPL;
 

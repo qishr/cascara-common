@@ -1,16 +1,16 @@
-package io.github.qishr.cascara.common.diagnostic.exception;
+package io.github.qishr.cascara.common.i18n.exception;
 
-import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 
 public class LocalizableInstantiationException extends InstantiationException implements LocalizableException {
     private final Throwable cause;
-    private final DetailedMessage detailedMessage;
+    private final DiagnosticMessage detailedMessage;
 
     public LocalizableInstantiationException(Throwable cause) {
-        super(LocalizableException.formatMessage(DetailedMessage.forException(cause)));
+        super(LocalizableException.formatMessage(DiagnosticMessage.forException(cause)));
         this.cause = cause;
-        this.detailedMessage = DetailedMessage.forException(cause);
+        this.detailedMessage = DiagnosticMessage.forException(cause);
     }
 
     @Override

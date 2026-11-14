@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableInstantiationException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableInstantiationException;
 
 public class DetailedMessageTests {
     @Test

@@ -35,6 +35,8 @@
 
 package io.github.qishr.cascara.common.diagnostic.message;
 
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+
 public enum HttpMessage implements LocalizableMessage {
     // Infrastructure Errors (Pre-response)
     // NAME_RESOLUTION_FAILED("HTTP-001", 1),

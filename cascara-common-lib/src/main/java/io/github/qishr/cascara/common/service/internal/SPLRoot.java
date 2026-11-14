@@ -45,7 +45,6 @@ import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.filewatcher.FileWatcher;
@@ -150,8 +149,8 @@ public class SPLRoot extends SPLBranch {
         if (!Cascara.instance().isFileTimeSupported()) {
             if (Files.exists(propsFile)) {
                 try {
-                    properties = Properties.load(propsFile);
-                } catch (LocalizableIOException e) {
+                    properties = Properties.fromFile(propsFile);
+                } catch (IOException e) {
                     // Ignore and fall through to EMPTY_PROPERTIES
                 }
             }
@@ -301,14 +300,14 @@ public class SPLRoot extends SPLBranch {
             try {
                 propsFileWatcher.watchFile(propsFile, () -> {
                     try {
-                        properties = Properties.load(propsFile);
-                    } catch (LocalizableIOException e) {}
+                        properties = Properties.fromFile(propsFile);
+                    } catch (IOException e) {}
                 });
             } catch (IOException e) {}
 
             try {
-                properties = Properties.load(propsFile);
-            } catch (LocalizableIOException e) {}
+                properties = Properties.fromFile(propsFile);
+            } catch (IOException e) {}
         }
     }
 

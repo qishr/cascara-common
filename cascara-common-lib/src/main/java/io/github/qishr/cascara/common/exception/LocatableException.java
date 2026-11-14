@@ -32,13 +32,13 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
-package io.github.qishr.cascara.common.diagnostic.exception;
+package io.github.qishr.cascara.common.exception;
 
 import java.net.URI;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
 
 public abstract class LocatableException extends LocalizableRuntimeException {
     private final int line;

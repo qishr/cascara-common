@@ -32,27 +32,18 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.i18n.detect;
 
-package io.github.qishr.cascara.common.diagnostic.exception;
+import java.util.Locale;
 
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.util.Pair;
-import io.github.qishr.cascara.common.util.ReflectionUtils;
+public class SystemPropertyLocaleDetector {
+    @SuppressWarnings("deprecation")
+    public static Locale detectFromSystemProps() {
+        String language = System.getProperty("user.language");
+        String country = System.getProperty("user.country");
+        String variant = System.getProperty("user.variant");
 
-public class UnimplementedMethodException extends LocalizableRuntimeException {
-
-    public UnimplementedMethodException() {
-        super(GenericMessage.UNSUPPORTED_OPERATION, buildMethoDetails());
-    }
-
-    private static Object[] buildMethoDetails() {
-        Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
-        if (caller == null) {
-            return null;
-        }
-        Object[] details = new Object[2];
-        details[0] = caller.getL().getName();
-        details[1] = caller.getR();
-        return details;
+        if (language == null) return null;
+        return (country == null) ? new Locale(language) : new Locale(language, country, variant);
     }
 }

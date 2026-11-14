@@ -35,6 +35,8 @@
 
 package io.github.qishr.cascara.common.diagnostic.message;
 
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+
 public enum GenericMessage implements LocalizableMessage {
     INFO("INFO-101", "{0}"),
 
@@ -51,6 +53,7 @@ public enum GenericMessage implements LocalizableMessage {
     RESOURCE_INACCESSIBLE("ERROR-107", "Resource '{0}' cannot be loaded. Module " +
         "'{1}' does not open package '{2}' to module '{3}'. " +
         "To fix this, add 'opens {4} to {5};' to the module-info.java of '{6}'"),
+    STREAM_READ_ERROR("ERROR-108", "Failed to read from stream"),
 
     // JRE Exceptions
     EXCEPTION("ERROR-401", "Exception: {0}"),

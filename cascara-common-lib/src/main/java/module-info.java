@@ -44,14 +44,16 @@ module cascara.common {
     exports io.github.qishr.cascara.common.color;
     exports io.github.qishr.cascara.common.data;
     exports io.github.qishr.cascara.common.diagnostic;
-    exports io.github.qishr.cascara.common.diagnostic.exception;
     exports io.github.qishr.cascara.common.diagnostic.format;
     exports io.github.qishr.cascara.common.diagnostic.log;
     exports io.github.qishr.cascara.common.diagnostic.message;
     exports io.github.qishr.cascara.common.diagnostic.report;
+    exports io.github.qishr.cascara.common.exception;
     exports io.github.qishr.cascara.common.exec;
     exports io.github.qishr.cascara.common.exec.ipc;
     exports io.github.qishr.cascara.common.filewatcher;
+    exports io.github.qishr.cascara.common.i18n;
+    exports io.github.qishr.cascara.common.i18n.exception;
     exports io.github.qishr.cascara.common.lang.generic;
     exports io.github.qishr.cascara.common.lang.ast;
     exports io.github.qishr.cascara.common.lang.streaming;

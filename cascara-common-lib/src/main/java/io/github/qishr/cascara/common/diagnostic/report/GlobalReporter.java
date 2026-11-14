@@ -195,6 +195,14 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
     }
 
     /// Sets the reporting level for the specified class.
+    /// @param cls the class to set the level for.
+    /// @param level the level to set for the class.
+    public GlobalReporter setLevel(Class<?> cls, Level level) {
+        // TODO: getCanonicalName ?
+        return setLevel(cls.getName(), level);
+    }
+
+    /// Sets the reporting level for the specified class.
     /// @param fqcn the fully qualified class name of the class to set the level for.
     /// @param level the level to set for the class.
     public GlobalReporter setLevel(String fqcn, Level level) {

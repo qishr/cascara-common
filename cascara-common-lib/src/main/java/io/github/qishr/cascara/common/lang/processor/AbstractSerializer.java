@@ -61,13 +61,13 @@ import io.github.qishr.cascara.common.annotation.AnySetter;
 import io.github.qishr.cascara.common.annotation.DataIgnore;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullReturnException;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 import io.github.qishr.cascara.common.diagnostic.report.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.exception.UnexpectedNullReturnException;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.AstNodeFactory;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
@@ -1214,7 +1214,7 @@ public abstract class AbstractSerializer<
     //
 
     protected SerializerException error(Throwable t, Object... details) {
-        DetailedMessage d = DetailedMessage.forException(t);
+        DiagnosticMessage d = DiagnosticMessage.forException(t);
         if (d == null) {
             return new SerializerException(t, GenericMessage.ERROR, t.getMessage());
         } else {

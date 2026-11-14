@@ -33,57 +33,42 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic.exception;
+package io.github.qishr.cascara.common.i18n.exception;
 
-import java.io.IOException;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 
-import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
-
-public class LocalizableIOException extends IOException implements LocalizableException {
+public class LocalizableRuntimeException extends RuntimeException implements LocalizableException {
+    // private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
 
     private final LocalizableMessage diagnosticMessage;
     private final Object[] details;
 
-    public LocalizableIOException(LocalizableMessage message, Object... details) {
-        this(null, message, details);
-    }
+    // public static void setLocalizer(DiagnosticLocalizer customLocalizer) {
+    //     localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
+    // }
 
-    public LocalizableIOException(Throwable cause, LocalizableMessage message, Object... details) {
-        super(cause);
+    public LocalizableRuntimeException(LocalizableMessage message, Object... details) {
+        super(AbstractLocalizableException.getLocalizer().format(message, details));
         this.diagnosticMessage = message;
-        this.details = details;
+        this.details = details != null ? details : new Object[0];
     }
 
-    /// Returns a diagnostic error code for the error message.
-    @Override
+    public LocalizableRuntimeException(Throwable cause, LocalizableMessage message, Object... details) {
+        super(AbstractLocalizableException.getLocalizer().format(message, details), cause);
+        this.diagnosticMessage = message;
+        this.details = details != null ? details : new Object[0];
+    }
+
 	public LocalizableMessage getLocalizableMessage() {
 		return diagnosticMessage;
 	}
 
-    /// Returns the details, if any, to be used in formatting the error message.
-    @Override
 	public Object[] getDetails() {
 		return details;
 	}
 
-    /// Returns a localized, formatted error message.
     @Override
     public String getLocalizedMessage() {
-        try {
-            return AbstractLocalizableException.getLocalizer().format(diagnosticMessage, details);
-        } catch (IllegalArgumentException e) {
-            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
-        }
-    }
-
-    /// Returns a localized, formatted error message.
-    @Override
-    public String getMessage() {
-        try {
-            return DiagnosticLocalizer.DEFAULT.format(diagnosticMessage, details);
-        } catch (IllegalArgumentException e) {
-            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
-        }
+        return AbstractLocalizableException.getLocalizer().format(diagnosticMessage, details);
     }
 }

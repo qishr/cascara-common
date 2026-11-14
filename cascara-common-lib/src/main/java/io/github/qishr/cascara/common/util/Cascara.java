@@ -49,7 +49,7 @@ import java.util.Map;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.exception.UnexpectedNullParameterException;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.semver.SemVerException;
@@ -185,7 +185,7 @@ public class Cascara {
         Path path = getSharedPath().resolve(CASCARA_PROPERTIES);
         if (Files.isRegularFile(path)) {
             try {
-                Properties properties = Properties.load(path);
+                Properties properties = Properties.fromFile(path);
                 String version = properties.get(ACTIVE_VERSION);
                 if (version != null && !version.isBlank()) {
                     if (installedVersions.contains(version)) {

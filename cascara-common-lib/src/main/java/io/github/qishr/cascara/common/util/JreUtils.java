@@ -42,9 +42,9 @@ import java.nio.charset.StandardCharsets;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 
 public class JreUtils {
     public static String getResourceAsString(Class<?> clazz, String path) throws LocalizableIOException {

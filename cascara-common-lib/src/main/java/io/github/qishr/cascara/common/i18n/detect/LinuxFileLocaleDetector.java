@@ -32,31 +32,31 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.i18n.detect;
 
-package io.github.qishr.cascara.common.diagnostic.exception;
+import java.io.File;
+import java.io.FileReader;
+import java.util.Locale;
+import java.util.Scanner;
 
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.util.Pair;
-import io.github.qishr.cascara.common.util.ReflectionUtils;
+public class LinuxFileLocaleDetector {
+    @SuppressWarnings("deprecation")
+    public static Locale detect() {
+        File localeFile = new File("/etc/default/locale");
+        if (!localeFile.exists()) return null;
 
-// TODO: This should extend IllegalArgumentException and implement LocalizableException
-public class UnexpectedNullParameterException extends LocalizableRuntimeException {
-
-    public UnexpectedNullParameterException(String paramName) {
-        super(GenericMessage.UNEXPECTED_NULL_PARAMETER, buildMethoDetails(paramName));
-    }
-
-    // TODO: Consistency with UnimplementedMethodException
-    private static Object[] buildMethoDetails(String paramName) {
-        Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
-        if (caller == null) {
-            return null;
+        try (Scanner scanner = new Scanner(new FileReader(localeFile))) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine().trim();
+                if (line.startsWith("LANG=")) {
+                    String lang = line.split("=")[1].replace("\"", ""); // e.g., "en_US.UTF-8"
+                    String[] parts = lang.split("[._]");
+                    return new Locale(parts[0], parts.length > 1 ? parts[1] : "");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        String className = caller.getL().getName();
-        String methodName = caller.getR();
-        Object[] details = new Object[2];
-        details[0] = className + "." + methodName;
-        details[1] = paramName;
-        return details;
+        return null;
     }
 }

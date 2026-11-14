@@ -33,13 +33,13 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic.exception;
+package io.github.qishr.cascara.common.i18n.exception;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
-import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 
 public interface LocalizableException {
 
@@ -67,8 +67,8 @@ public interface LocalizableException {
 
     StackTraceElement[] getStackTrace();
 
-    static String formatMessage(DetailedMessage message) {
-        if (message instanceof DetailedMessage dm) {
+    static String formatMessage(DiagnosticMessage message) {
+        if (message instanceof DiagnosticMessage dm) {
             return AbstractLocalizableException.getLocalizer().format(dm.getMessage(), dm.getDetails());
         } else {
             return AbstractLocalizableException.getLocalizer().format(message, message.getDetails());
@@ -76,7 +76,7 @@ public interface LocalizableException {
     }
 
     static String formatMessage(LocalizableMessage message, Object... details) {
-        if (message instanceof DetailedMessage dm) {
+        if (message instanceof DiagnosticMessage dm) {
             return AbstractLocalizableException.getLocalizer().format(dm.getMessage(), dm.getDetails());
         } else {
             return AbstractLocalizableException.getLocalizer().format(message, details);

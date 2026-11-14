@@ -43,7 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
@@ -75,7 +75,7 @@ public abstract class AbstractExecutionTask<I, O> {
             targetClass = (Class<AbstractExecutionTask<Object, Object>>) Class.forName(targetClassName);
             task = ReflectionUtils.createInstance(targetClass);
         } catch (InstantiationException | IllegalArgumentException | SecurityException | ClassNotFoundException e) {
-            throw new ExecutionException(e, DetailedMessage.forException(e), targetClassName);
+            throw new ExecutionException(e, DiagnosticMessage.forException(e), targetClassName);
         }
 
         // Execute the lifecycle (read stdin -> run task -> write to IPC/stdout)

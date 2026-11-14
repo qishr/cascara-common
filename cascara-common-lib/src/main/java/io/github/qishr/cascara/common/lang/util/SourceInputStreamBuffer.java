@@ -42,9 +42,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
-import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.property.Properties;
 
 @Experimental
