@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableClassCastException;
 import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.trackable.Trackable;
 import io.github.qishr.cascara.common.trackable.TrackableValue;
@@ -109,32 +110,38 @@ public class TrackableProperty<T> extends Property<T> implements TrackableValue<
     @Override
     public void setValue(T v) {
         T oldValue = super.getValue();
-        super.setValue(v);
+        try {
+            super.setValue(v);
 
-        if (oldValue instanceof Trackable t) {
-            t.removeInvalidationTracker(invalidationTracker);
-        }
+            if (oldValue instanceof Trackable t) {
+                t.removeInvalidationTracker(invalidationTracker);
+            }
 
-        if (v instanceof Trackable t) {
-            t.addInvalidationTracker(invalidationTracker);
-        } else {
-            // TODO: This seems mad. To be removed soon.
-            // System.out.println("Unhandled type: " + (
-            //     v == null
-            //         ? "null"
-            //         : v.getClass().getName()
-            // ));
-        }
+            if (v instanceof Trackable t) {
+                t.addInvalidationTracker(invalidationTracker);
+            } else {
+                // TODO: This seems mad. To be removed soon.
+                // System.out.println("Unhandled type: " + (
+                //     v == null
+                //         ? "null"
+                //         : v.getClass().getName()
+                // ));
+            }
 
-        if (oldValue == null && v == null) {
-            return;
-        }
+            if (oldValue == null && v == null) {
+                return;
+            }
 
-        if (oldValue == null || v == null) {
-            invalidate(oldValue, v);
-        }
-        else if (!oldValue.equals(v)) {
-            invalidate(oldValue, v);
+            if (oldValue == null || v == null) {
+                invalidate(oldValue, v);
+            }
+            else if (!oldValue.equals(v)) {
+                invalidate(oldValue, v);
+            }
+        } catch (java.lang.ClassCastException e) {
+            // TODO: LocalizableRuntimeException.forException(e)
+            // DiagnosticMessage dm = DiagnosticMessage.forException(e);
+            throw new LocalizableClassCastException(e);
         }
     }
 

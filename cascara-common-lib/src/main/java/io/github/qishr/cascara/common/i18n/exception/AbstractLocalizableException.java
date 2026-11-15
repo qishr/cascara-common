@@ -40,35 +40,25 @@ import io.github.qishr.cascara.common.i18n.Localizer;
 
 public class AbstractLocalizableException extends Exception implements LocalizableException {
 
-    private static volatile Localizer localizer = Localizer.instance();
-
-    private final LocalizableMessage diagnosticMessage;
+    private final LocalizableMessage localizableMessage;
     private final Object[] details;
 
-    public static Localizer getLocalizer() {
-        return localizer;
-    }
-
-    public static void setLocalizer(Localizer customLocalizer) {
-        localizer = customLocalizer != null ? customLocalizer : Localizer.instance();
-    }
-
     public AbstractLocalizableException(LocalizableMessage message, Object... details) {
-        super(format(message, details));
-        this.diagnosticMessage = message;
+        super(Localizer.instance().format(message, details));
+        this.localizableMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
     public AbstractLocalizableException(Throwable cause, LocalizableMessage message, Object... details) {
-        super(format(message, details));
-        this.diagnosticMessage = message;
+        super(Localizer.instance().format(message, details));
+        this.localizableMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
     /// Returns a diagnostic error code for the error message.
     @Override
 	public LocalizableMessage getLocalizableMessage() {
-		return diagnosticMessage;
+		return localizableMessage;
 	}
 
     /// Returns the details, if any, to be used in formatting the error message.
@@ -80,25 +70,12 @@ public class AbstractLocalizableException extends Exception implements Localizab
     /// Returns a localized, formatted error message.
     @Override
     public String getLocalizedMessage() {
-        try {
-            return localizer.format(diagnosticMessage, details);
-        } catch (IllegalArgumentException e) {
-            return String.format(Localizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
-        }
+        return Localizer.instance().format(localizableMessage, details);
     }
 
-    /// Returns a localized, formatted error message.
+    /// Returns a formatted error message, only localized if cascara.lang.localize-exceptions is set to true.
     @Override
     public String getMessage() {
-        try {
-            return Localizer.instance().format(diagnosticMessage, details);
-        } catch (IllegalArgumentException e) {
-            return String.format(Localizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
-        }
-    }
-
-    /// Formats a [LocalizableMessage] without localizing it.
-    private static String format(LocalizableMessage message, Object... details) {
-        return Localizer.instance().format(message, details);
+        return Localizer.instance().formatException(localizableMessage, details);
     }
 }

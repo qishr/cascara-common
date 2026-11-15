@@ -3,7 +3,6 @@ package io.github.qishr.cascara.common.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,10 +21,7 @@ import io.github.qishr.cascara.common.property.Properties;
 public class InternationalizationTests {
 
     private void loadFromResources(String languageTag) throws IOException {
-        InputStream is = JreUtils.getResourceAsStream(getClass(), "/" + languageTag + ".properties");
-        Properties properties = Properties.fromStream(is);
-        LocalizedMessages translations = LocalizedMessages.fromProperties(properties);
-        Localizer.instance().registerTranslations(translations);
+        Localizer.instance().registerTranslations(getClass(), "/" + languageTag + ".properties");
     }
 
     @BeforeEach

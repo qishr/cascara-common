@@ -36,39 +36,43 @@
 package io.github.qishr.cascara.common.i18n.exception;
 
 import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.Localizer;
 
 public class LocalizableRuntimeException extends RuntimeException implements LocalizableException {
-    // private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
-
-    private final LocalizableMessage diagnosticMessage;
+    private final LocalizableMessage localizableMessage;
     private final Object[] details;
 
-    // public static void setLocalizer(DiagnosticLocalizer customLocalizer) {
-    //     localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
-    // }
-
     public LocalizableRuntimeException(LocalizableMessage message, Object... details) {
-        super(AbstractLocalizableException.getLocalizer().format(message, details));
-        this.diagnosticMessage = message;
+        super(Localizer.instance().format(message, details));
+        this.localizableMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
     public LocalizableRuntimeException(Throwable cause, LocalizableMessage message, Object... details) {
-        super(AbstractLocalizableException.getLocalizer().format(message, details), cause);
-        this.diagnosticMessage = message;
+        super(Localizer.instance().format(message, details), cause);
+        this.localizableMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
+    /// {@inheritDoc}
 	public LocalizableMessage getLocalizableMessage() {
-		return diagnosticMessage;
+		return localizableMessage;
 	}
 
+    /// {@inheritDoc}
 	public Object[] getDetails() {
 		return details;
 	}
 
+    /// {@inheritDoc}
     @Override
     public String getLocalizedMessage() {
-        return AbstractLocalizableException.getLocalizer().format(diagnosticMessage, details);
+        return Localizer.instance().format(localizableMessage, details);
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public String getMessage() {
+        return Localizer.instance().formatException(localizableMessage, details);
     }
 }

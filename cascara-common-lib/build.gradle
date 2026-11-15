@@ -39,27 +39,83 @@ test {
     ]
 }
 
-tasks.named('test', Test) {
-    description = 'Runs tests in a JPMS modular environment.'
+tasks.withType(Jar).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
 
-    modularity.inferModulePath = true
+tasks.named('test', Test) {
+    description = 'Runs tests in a JPMS modular environment (exploded classes).'
+
+    // Ensure main and test resources are fully processed before test execution
+    dependsOn tasks.named('processResources'), tasks.named('processTestResources')
 
     useJUnitPlatform {
         excludeTags 'requires-jar'
     }
 
-    // Capture source set output paths lazily during configuration time
+    modularity.inferModulePath = false
+
+    // Capture source set paths lazily during configuration time
+    def runtimeClasspath = configurations.testRuntimeClasspath.asPath
     def mainClassesDir = sourceSets.main.output.classesDirs.asPath
+    def mainResourcesDir = sourceSets.main.output.resourcesDir.absolutePath
     def testClassesDir = sourceSets.test.output.classesDirs.asPath
     def testResourcesDir = sourceSets.test.output.resourcesDir.absolutePath
-    def testOutputs = "${testClassesDir}${File.pathSeparator}${testResourcesDir}"
-    def runtimeClasspath = configurations.testRuntimeClasspath.asPath
+
+    // Patch main resources, test classes, and test resources together into cascara.common
+    def patchOutputs = "${mainResourcesDir}${File.pathSeparator}${testClassesDir}${File.pathSeparator}${testResourcesDir}"
 
     doFirst {
         def mainModuleName = 'cascara.common'
 
         jvmArgs([
             '--module-path', "${mainClassesDir}${File.pathSeparator}${runtimeClasspath}",
+            '--add-modules', mainModuleName,
+            '--patch-module', "${mainModuleName}=${patchOutputs}",
+            '--add-reads', "${mainModuleName}=ALL-UNNAMED",
+            '--add-modules', 'org.junit.platform.launcher',
+            '--add-reads', "${mainModuleName}=org.junit.jupiter.api",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+            '--add-opens', "java.base/java.lang=${mainModuleName}"
+        ])
+    }
+}
+
+tasks.register('testJarJPMS', Test) {
+    description = 'Runs tests against the packaged JAR in a JPMS modular environment.'
+    group = 'verification'
+
+    dependsOn tasks.named('jar'), tasks.named('compileTestJava'), tasks.named('processTestResources')
+
+    useJUnitPlatform {
+        includeTags 'requires-jar'
+        excludeTags 'no-jar'
+    }
+
+    modularity.inferModulePath = true
+
+    testClassesDirs = project.sourceSets.test.output.classesDirs
+
+    classpath = files(
+        tasks.named('jar').flatMap { it.archiveFile },
+        project.sourceSets.test.output,
+        configurations.testRuntimeClasspath.filter { File file ->
+            !file.name.contains("cascara-common")
+        }
+    )
+
+    // Capture source set output paths lazily during configuration time
+    def testClassesDir = sourceSets.test.output.classesDirs.asPath
+    def testResourcesDir = sourceSets.test.output.resourcesDir.absolutePath
+    def testOutputs = "${testClassesDir}${File.pathSeparator}${testResourcesDir}"
+    def jarPath = tasks.named('jar').get().archiveFile.get().asFile.absolutePath
+    def runtimeLibs = configurations.testRuntimeClasspath.filter { !it.name.contains('cascara-common') }.asPath
+    def runtimeClasspath = "${jarPath}${File.pathSeparator}${runtimeLibs}"
+
+    doFirst {
+        def mainModuleName = 'cascara.common'
+        jvmArgs([
+            '--module-path', "${runtimeClasspath}",
             '--add-modules', mainModuleName,
             '--patch-module', "${mainModuleName}=${testOutputs}",
             '--add-reads', "${mainModuleName}=ALL-UNNAMED",
@@ -71,11 +127,17 @@ tasks.named('test', Test) {
     }
 }
 
-tasks.register('testClasspath', Test) {
+tasks.register('testWithoutJPMS', Test) {
     description = 'Runs tests in a non-modular classpath environment (exploded classes only).'
     group = 'verification'
 
     dependsOn tasks.named('compileTestJava'), tasks.named('processTestResources')
+
+    useJUnitPlatform {
+        excludeTags 'requires-jar'
+    }
+
+    modularity.inferModulePath = false
 
     // Reference sourceSets safely via project scope during configuration time
     testClassesDirs = project.sourceSets.test.output.classesDirs
@@ -88,20 +150,20 @@ tasks.register('testClasspath', Test) {
             !file.name.contains("cascara-common")
         }
     )
-
-    useJUnitPlatform {
-        excludeTags 'requires-jar'
-    }
-
-    modularity.inferModulePath = false
 }
 
-
-tasks.register('testJarClasspath', Test) {
+tasks.register('testJarWithoutJPMS', Test) {
     description = 'Runs tests against the packaged JAR on a non-modular flat classpath.'
     group = 'verification'
 
     dependsOn tasks.named('jar'), tasks.named('compileTestJava'), tasks.named('processTestResources')
+
+    useJUnitPlatform {
+        includeTags 'requires-jar'
+        excludeTags 'no-jar'
+    }
+
+    modularity.inferModulePath = false
 
     testClassesDirs = project.sourceSets.test.output.classesDirs
 
@@ -112,21 +174,12 @@ tasks.register('testJarClasspath', Test) {
             !file.name.contains("cascara-common")
         }
     )
-
-    useJUnitPlatform {
-        includeTags 'requires-jar'
-        excludeTags 'no-jar'
-    }
-
-    modularity.inferModulePath = false
 }
-
 
 // Ensure running `gradle check` triggers all test modes
 tasks.named('check') {
-    dependsOn tasks.named('test'), tasks.named('testClasspath'), tasks.named('testJarClasspath')
+    dependsOn tasks.named('test'), tasks.named('testJarJPMS'), tasks.named('testWithoutJPMS'), tasks.named('testJarWithoutJPMS')
 }
-
 
 tasks.named('processResources', ProcessResources) { task ->
     // Capture configuration-phase values into local final variables
@@ -141,7 +194,10 @@ tasks.named('processResources', ProcessResources) { task ->
     inputs.property("projectVersion", projectVersionVal)
 
     doLast {
-        def versionText = "Manifest-Version: 1.0\r\nCascara-Version: ${cascaraVersionVal}\r\nImplementation-Version: ${projectVersionVal}\r\n"
+        def versionText = "Manifest-Version: 1.0\r\n" +
+                          "Cascara-Version: ${cascaraVersionVal}\r\n" +
+                          "Implementation-Version: ${projectVersionVal}\r\n" +
+                          "Module-Name: cascara.common\r\n"
 
         // Write to resources directory using the captured destination directory File object
         def resManifest = new File(destDir, "META-INF/MANIFEST.MF")

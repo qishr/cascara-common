@@ -736,7 +736,7 @@ public abstract class AbstractSerializer<
             try {
                 if (key != null) result.put(key, val);
             } catch(ClassCastException e) {
-                throw new SerializerException(node, e, GenericMessage.CLASS_CAST_EXCEPTION, ReflectionUtils.getTypeName(targetType));
+                throw new SerializerException(node, e, GenericMessage.JRE_CLASS_CAST_EXCEPTION, ReflectionUtils.getTypeName(targetType));
             }
         }
 

@@ -1,12 +1,24 @@
 package io.github.qishr.cascara.common.util;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
+import io.github.qishr.cascara.common.semver.SemVer;
+
 public class EnvironmentAwareTests {
     static boolean isModularEnvironment() {
         return EnvironmentAwareTests.class.getModule().isNamed();
+    }
+
+    @Test
+    void test_cascaraVersionAllEnvironments() throws Exception {
+        SemVer cascaraVersion = Cascara.instance().getVersion();
+        assertNotNull(cascaraVersion);
+        assertNotEquals("0.0.0", cascaraVersion.toString());
     }
 
     // TODO: Uncomment these and make them use synthetic / virtual / test JARs
@@ -17,17 +29,9 @@ public class EnvironmentAwareTests {
     @Tag("requires-jar")
     @EnabledIf("isModularEnvironment")
     void test_cascaraVersionWithModularJar() throws Exception {
-        // SemVer jarCascaraVersion;
-
-        // Path jarPath = GradleArtifactResolver.resolveJarPath("cascara-common");
-        // try (JarFile jarFile = JarFile.open(jarPath)) {
-        //     jarCascaraVersion = new SemVer(jarFile.getManifest().get("Cascara-Version"));
-        // }
-        // assertNotNull(jarCascaraVersion);
-        // assertNotEquals("0.0.0", jarCascaraVersion.toString());
-
-        // SemVer cascaraVersion = Cascara.instance().getVersion();
-        // assertEquals(jarCascaraVersion, cascaraVersion);
+        SemVer cascaraVersion = Cascara.instance().getVersion();
+        assertNotNull(cascaraVersion);
+        assertNotEquals("0.0.0", cascaraVersion.toString());
     }
 
     /// This test runs in these environments:
@@ -36,29 +40,9 @@ public class EnvironmentAwareTests {
     @Test
     @Tag("requires-jar")
     void test_cascaraVersionWithJar() throws Exception {
-        // SemVer jarCascaraVersion;
-
-        // Path jarPath = GradleArtifactResolver.resolveJarPath("cascara-common");
-        // try (JarFile jarFile = JarFile.open(jarPath)) {
-        //     jarCascaraVersion = new SemVer(jarFile.getManifest().get("Cascara-Version"));
-        // }
-        // assertNotNull(jarCascaraVersion);
-        // assertNotEquals("0.0.0", jarCascaraVersion.toString());
-
-        // SemVer cascaraVersion = Cascara.instance().getVersion();
-        // assertEquals(jarCascaraVersion, cascaraVersion);
-    }
-
-    @Test
-    @Tag("requires-jar")
-    void test_commonVersionWithJar() throws Exception {
-        // SemVer jarCommonVersion;
-        // Path jarPath = GradleArtifactResolver.resolveJarPath("cascara-common");
-        // try (JarFile jarFile = JarFile.open(jarPath)) {
-        //     jarCommonVersion = new SemVer(jarFile.getManifest().get("Cascara-Version"));
-        // }
-        // assertNotNull(jarCommonVersion);
-        // assertNotEquals("0.0.0", jarCommonVersion.toString());
+        SemVer cascaraVersion = Cascara.instance().getVersion();
+        assertNotNull(cascaraVersion);
+        assertNotEquals("0.0.0", cascaraVersion.toString());
     }
 
     /// This test runs in these environments:
@@ -67,20 +51,33 @@ public class EnvironmentAwareTests {
     @Test
     @Tag("no-jar")
     void test_cascaraVersionWithoutJar() throws Exception {
-        // // SemVer cascaraVersion = Cascara.instance().getVersion();
-        // // assertEquals("0.0.0", cascaraVersion.toString());
-        // // // assertEquals("0.11.0", cascaraVersion.toString());
+        SemVer cascaraVersion = Cascara.instance().getVersion();
+        assertNotNull(cascaraVersion);
+        assertNotEquals("0.0.0", cascaraVersion.toString());
+    }
 
-        // SemVer jarCascaraVersion;
+    @Test
+    @Tag("no-jar")
+    void test_commonVersionWithoutJar() throws Exception {
+        SemVer jarCommonVersion = Cascara.instance().getCommonVersion();
+        assertNotNull(jarCommonVersion);
+        assertNotEquals("0.0.0", jarCommonVersion.toString());
+    }
 
-        // Path jarPath = GradleArtifactResolver.resolveJarPath("cascara-common");
-        // try (JarFile jarFile = JarFile.open(jarPath)) {
-        //     jarCascaraVersion = new SemVer(jarFile.getManifest().get("Cascara-Version"));
-        // }
-        // assertNotNull(jarCascaraVersion);
-        // assertNotEquals("0.0.0", jarCascaraVersion.toString());
+    @Test
+    @Tag("requires-jar")
+    void test_commonVersionWithJar() throws Exception {
+        SemVer jarCommonVersion = Cascara.instance().getCommonVersion();
+        assertNotNull(jarCommonVersion);
+        assertNotEquals("0.0.0", jarCommonVersion.toString());
+    }
 
-        // SemVer cascaraVersion = Cascara.instance().getVersion();
-        // assertEquals(jarCascaraVersion, cascaraVersion);
+    @Test
+    @Tag("requires-jar")
+    @EnabledIf("isModularEnvironment")
+    void test_commonVersionWithModularJar() throws Exception {
+        SemVer jarCommonVersion = Cascara.instance().getCommonVersion();
+        assertNotNull(jarCommonVersion);
+        assertNotEquals("0.0.0", jarCommonVersion.toString());
     }
 }

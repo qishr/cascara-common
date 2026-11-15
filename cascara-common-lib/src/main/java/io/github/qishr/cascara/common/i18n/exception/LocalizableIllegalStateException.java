@@ -40,7 +40,7 @@ import io.github.qishr.cascara.common.i18n.Localizer;
 
 public class LocalizableIllegalStateException extends IllegalStateException implements LocalizableException {
 
-    private final LocalizableMessage diagnosticMessage;
+    private final LocalizableMessage localizableMessage;
     private final Object[] details;
 
     public LocalizableIllegalStateException(LocalizableMessage message, Object... details) {
@@ -49,39 +49,31 @@ public class LocalizableIllegalStateException extends IllegalStateException impl
 
     public LocalizableIllegalStateException(Throwable cause, LocalizableMessage message, Object... details) {
         super(cause);
-        this.diagnosticMessage = message;
+        this.localizableMessage = message;
         this.details = details;
     }
 
-    /// Returns a diagnostic error code for the error message.
+    /// {@inheritDoc}
     @Override
 	public LocalizableMessage getLocalizableMessage() {
-		return diagnosticMessage;
+		return localizableMessage;
 	}
 
-    /// Returns the details, if any, to be used in formatting the error message.
+    /// {@inheritDoc}
     @Override
 	public Object[] getDetails() {
 		return details;
 	}
 
-    /// Returns a localized, formatted error message.
+    /// {@inheritDoc}
     @Override
     public String getLocalizedMessage() {
-        try {
-            return AbstractLocalizableException.getLocalizer().format(diagnosticMessage, details);
-        } catch (IllegalArgumentException e) {
-            return String.format(Localizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
-        }
+        return Localizer.instance().format(localizableMessage, details);
     }
 
-    /// Returns a localized, formatted error message.
+    /// {@inheritDoc}
     @Override
     public String getMessage() {
-        try {
-            return Localizer.instance().format(diagnosticMessage, details);
-        } catch (IllegalArgumentException e) {
-            return String.format(Localizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
-        }
+        return Localizer.instance().formatException(localizableMessage, details);
     }
 }

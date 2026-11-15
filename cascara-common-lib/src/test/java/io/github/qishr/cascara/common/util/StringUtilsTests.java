@@ -91,6 +91,11 @@ public class StringUtilsTests {
     }
 
     @Test
+    void test_camelAcronymToKebab() {
+        assertEquals("variable-uri", StringUtils.toKebabCase("variableURI"));
+    }
+
+    @Test
     void test_camelToPascal() {
         assertEquals("VariableName", StringUtils.toPascalCase("variableName"));
     }

@@ -73,12 +73,13 @@ public class JreUtils {
     /// @throws LocalizableIOException an exception detailing why the resource was inaccessible.
     @Nullable
     public static InputStream getResourceAsStream(Class<?> clazz, String path) throws LocalizableIOException {
+        String actualPath = path;
         InputStream is = clazz.getResourceAsStream(path);
 
         // Fallback 1: Handle leading slash path variation
         if (is == null && path.startsWith("/")) {
-            path = path.substring(1);
-            is = clazz.getResourceAsStream(path);
+            actualPath = path.substring(1);
+            is = clazz.getResourceAsStream(actualPath);
         }
 
         // Fallback 2: GraalVM Native Image package-relative resolution
@@ -91,11 +92,15 @@ public class JreUtils {
         // If clazz is in a JPMS module, check if the module opens the package to the class's module.
         // If it doesn't, put that detail in the exception.
         if (is == null) {
+            // Determine the package name of the resource from its path
+            String packageName = getPackageNameFromResourcePath(path);
+
+            if ("META-INF".equals(packageName)) {
+                throw new LocalizableIOException(FileMessage.FILE_NOT_FOUND, path);
+            }
+
             Module targetModule = clazz.getModule();
             if (targetModule.isNamed()) {
-                // Determine the package name of the resource from its path
-                String packageName = getPackageNameFromResourcePath(path);
-
                 if (!packageName.isEmpty()) {
                     Module myModule = clazz.getModule();
 

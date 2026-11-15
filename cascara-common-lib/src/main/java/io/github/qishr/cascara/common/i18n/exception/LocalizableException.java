@@ -38,7 +38,6 @@ package io.github.qishr.cascara.common.i18n.exception;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 
 public interface LocalizableException {
@@ -52,7 +51,7 @@ public interface LocalizableException {
     /// Returns a localized, formatted error message.
     String getLocalizedMessage();
 
-    /// Returns a localized, formatted error message.
+    /// Returns a formatted error message, only localized if `cascara.lang.localize-exceptions` is set to` true`.
     String getMessage();
 
     Throwable getCause();
@@ -61,26 +60,9 @@ public interface LocalizableException {
 
     void printStackTrace();
 
-    void printStackTrace(PrintStream s);
+    void printStackTrace(PrintStream stream);
 
-    void printStackTrace(PrintWriter s);
+    void printStackTrace(PrintWriter writer);
 
     StackTraceElement[] getStackTrace();
-
-    static String formatMessage(DiagnosticMessage message) {
-        if (message instanceof DiagnosticMessage dm) {
-            return AbstractLocalizableException.getLocalizer().format(dm.getMessage(), dm.getDetails());
-        } else {
-            return AbstractLocalizableException.getLocalizer().format(message, message.getDetails());
-        }
-    }
-
-    static String formatMessage(LocalizableMessage message, Object... details) {
-        if (message instanceof DiagnosticMessage dm) {
-            return AbstractLocalizableException.getLocalizer().format(dm.getMessage(), dm.getDetails());
-        } else {
-            return AbstractLocalizableException.getLocalizer().format(message, details);
-        }
-    }
-
 }

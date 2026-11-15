@@ -6,6 +6,8 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.ServiceConfigurationError;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.github.qishr.cascara.common.i18n.DetailedMessage;
 import io.github.qishr.cascara.common.i18n.LocalizableMessage;
@@ -56,10 +58,31 @@ public class DiagnosticMessage extends DetailedMessage {
 
 
 
+
             // NoClassDefFoundError - when trying to load in the definition of a class and no definition of the class could be found.
             case NoClassDefFoundError e -> new DiagnosticMessage(cause, GenericMessage.CLASS_NOT_FOUND, e.getMessage());
 
             case ClassNotFoundException e -> new DiagnosticMessage(cause, GenericMessage.CLASS_NOT_FOUND, e.getMessage());
+
+            case ClassCastException e -> {
+                // class java.net.URI cannot be cast to class java.lang.String (java.net.URI and java.lang.String are in module java.base of loader 'bootstrap')
+
+                Pattern pattern = Pattern.compile(
+                    "class\\s+([\\w.$]+)\\s+cannot be cast to class\\s+([\\w.$]+)"
+                );
+
+                Matcher matcher = pattern.matcher(e.getMessage());
+
+                if (!matcher.find()) {
+                    yield new DiagnosticMessage(cause, GenericMessage.JRE_CLASS_CAST_EXCEPTION, e.getMessage());
+                }
+
+                String source = matcher.group(1); // java.net.URI
+                String target = matcher.group(2); // java.lang.String
+
+                yield new DiagnosticMessage(cause, GenericMessage.CLASS_CAST_EXCEPTION, source, target);
+            }
+
 
 
 

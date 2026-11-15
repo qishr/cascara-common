@@ -47,6 +47,9 @@ tasks.named('sourcesJar') {
 }
 
 tasks.named('compileTestJava', JavaCompile) {
+    // TODO: This is specified for org.gradle.api.tasks.testing.Test
+    // in the build conventions, but there is no compileTestJava
+    // there. Should it be there instead of here?
     modularity.inferModulePath = true
 }
 
