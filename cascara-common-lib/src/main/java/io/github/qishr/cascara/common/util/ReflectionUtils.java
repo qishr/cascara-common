@@ -339,22 +339,35 @@ public class ReflectionUtils {
 
     @NonNull
     public static List<Field> getAllFields(Class<?> clazz) {
-        return getAllFields(clazz, null);
+        return getAllFields(clazz, null, null);
+    }
+
+    // @NonNull
+    // public static List<Field> getAllFields(Class<?> clazz, boolean includeSuper) {
+    //     return getAllFields(clazz, includeSuper, null);
+    // }
+
+    @NonNull
+    public static List<Field> getAllFields(Class<?> clazz, Function<Field,Boolean> excludeFields) {
+        return getAllFields(clazz, excludeFields, null);
     }
 
     @NonNull
-    public static List<Field> getAllFields(Class<?> clazz, Function<Field,Boolean> excludeFunction) {
+    public static List<Field> getAllFields(Class<?> clazz, Function<Field,Boolean> includeFields, Function<Class<?>,Boolean> includeSuper) {
         List<Field> fields = new ArrayList<>();
         Class<?> currentClass = clazz;
         while (currentClass != null && currentClass != Object.class) {
             // Add all fields declared in the current class (but not its superclasses)
             for (Field field : currentClass.getDeclaredFields()) {
-                if (excludeFunction == null || !excludeFunction.apply(field)) {
+                if (includeFields == null || includeFields.apply(field)) {
                     fields.add(field);
                 }
             }
             // Move up to the superclass for the next iteration
             currentClass = currentClass.getSuperclass();
+            if (includeSuper != null && !includeSuper.apply(currentClass)) {
+                break;
+            }
         }
         return fields;
     }

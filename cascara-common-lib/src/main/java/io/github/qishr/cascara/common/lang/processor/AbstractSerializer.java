@@ -1039,7 +1039,7 @@ public abstract class AbstractSerializer<
     /// Retrieves all declared fields for a class and all its superclasses (excluding Object).
     @NonNull
     private List<Field> getAllSerializableFields(Class<?> jvmType) {
-        return ReflectionUtils.getAllFields(jvmType, f -> f.isAnnotationPresent(DataIgnore.class));
+        return ReflectionUtils.getAllFields(jvmType, f -> !f.isAnnotationPresent(DataIgnore.class));
     }
 
     @SuppressWarnings("unchecked")
