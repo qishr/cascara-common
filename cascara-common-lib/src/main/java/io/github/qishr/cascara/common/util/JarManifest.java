@@ -44,7 +44,6 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.semver.SemVer;
 
@@ -71,7 +70,7 @@ public class JarManifest extends Manifest {
         InputStream is;
         try {
             is = JreUtils.getResourceAsStream(clazz, "/META-INF/MANIFEST.MF");
-        } catch (LocalizableIOException e) {
+        } catch (IOException e) {
             throw new LocalizableRuntimeException(
                 e,
                 GenericMessage.MANIFEST_READ,

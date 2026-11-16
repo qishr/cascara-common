@@ -64,11 +64,11 @@ public class TextualTree<T extends TreeData<T,V>,V> {
         root = node;
     }
 
-    public void render(Writer writer) throws LocalizableIOException {
+    public void render(Writer writer) throws IOException {
         render(writer, root, 0);
     }
 
-    public void render(Writer writer, TreeData<T,V> node, int indent) throws LocalizableIOException {
+    public void render(Writer writer, TreeData<T,V> node, int indent) throws IOException {
         if (node == null) return;
         try {
             writer.write(" ".repeat(TAB_SIZE * indent));
@@ -88,7 +88,7 @@ public class TextualTree<T extends TreeData<T,V>,V> {
     }
 
     /// Renders TreeData.getValue()
-    private void renderValue(Writer writer, V value, int indent) throws LocalizableIOException {
+    private void renderValue(Writer writer, V value, int indent) throws IOException {
         if (value instanceof List list && !list.isEmpty()) {
             Object firstElement = list.getFirst();
             if (firstElement instanceof TabularData firstRow) {
@@ -108,7 +108,7 @@ public class TextualTree<T extends TreeData<T,V>,V> {
         }
     }
 
-    private void renderTable(Writer writer, int columns, List<? extends TabularData> rows, int indent) throws LocalizableIOException {
+    private void renderTable(Writer writer, int columns, List<? extends TabularData> rows, int indent) throws IOException {
         TextualTable table = new TextualTable();
         table.setShowHeaders(false);
 

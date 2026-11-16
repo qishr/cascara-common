@@ -250,7 +250,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
     //
     //
 
-    protected void walk(Path sourcePath, String entryName, List<IOException> exceptions, BiConsumer<Path,Path> run) throws LocalizableIOException {
+    protected void walk(Path sourcePath, String entryName, List<IOException> exceptions, BiConsumer<Path,Path> run) throws IOException {
         List<Path> directoryListing;
         try {
             directoryListing = Files.walk(sourcePath)
@@ -392,7 +392,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
         }
     }
 
-    private void addFileInternal(byte[] content, Path entryPath) throws LocalizableIOException {
+    private void addFileInternal(byte[] content, Path entryPath) throws IOException {
         ensureParentExists(entryPath);
         try (OutputStream os = Files.newOutputStream(entryPath, StandardOpenOption.CREATE)) {
             os.write(content, 0, content.length);
@@ -401,7 +401,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
         }
     }
 
-    private void removeInternal(Path entryPath) throws LocalizableIOException {
+    private void removeInternal(Path entryPath) throws IOException {
         try {
             if (Files.isDirectory(entryPath)) {
                 Files.walkFileTree(entryPath, new SimpleFileVisitor<Path>() {
@@ -425,7 +425,7 @@ public class ZipFile implements ArchiveFile<ZipEntry> {
         }
     }
 
-    private void ensureParentExists(Path entryPath) throws LocalizableIOException {
+    private void ensureParentExists(Path entryPath) throws IOException {
         if (entryPath.getParent() != null) {
             try {
                 Files.createDirectories(entryPath.getParent());

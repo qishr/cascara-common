@@ -54,7 +54,6 @@ import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
 public abstract class AbstractClassFinder {
@@ -172,7 +171,7 @@ public abstract class AbstractClassFinder {
         return moduleName;
     }
 
-    protected String scanClassFile(Path directory, Path file, URLClassLoader classLoader, String moduleName, Set<String> discovered) throws LocalizableIOException {
+    protected String scanClassFile(Path directory, Path file, URLClassLoader classLoader, String moduleName, Set<String> discovered) throws IOException {
         String className = "";
         String relativePath = "";
         try {
