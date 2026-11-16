@@ -42,7 +42,7 @@ import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.util.StringUtils;
 import io.github.qishr.cascara.common.util.TermUtils;
 
@@ -138,8 +138,8 @@ public class TextualTable {
     /// Renders the table as text without any indentation.
     /// @param writer The Writer to output text to.
     /// @return The table (this) to allow method chaining.
-    /// @throws LocalizableRuntimeException If an error occurs during writing.
-    public TextualTable render(Writer writer) {
+    /// @throws IOException If an error occurs during writing.
+    public TextualTable render(Writer writer) throws Exception {
         render(writer, 0);
         return this;
     }
@@ -147,8 +147,8 @@ public class TextualTable {
     /// Renders the table as text with a given indentation level (number of spaces).
     /// @param writer The Writer to output text to.
     /// @param indent The number of spaces to indent each line.
-    /// @throws LocalizableRuntimeException If an error occurs during writing.
-    public TextualTable render(Writer writer, int indent) {
+    /// @throws IOException If an error occurs during writing.
+    public TextualTable render(Writer writer, int indent) throws IOException {
         try {
             // Top border
             if (style.top() != '\0') {
@@ -233,7 +233,7 @@ public class TextualTable {
             writer.flush();
             return this;
         } catch (IOException e) {
-            throw new LocalizableRuntimeException(e, GenericMessage.IO_ERROR, e.getMessage());
+            throw new LocalizableIOException(e, GenericMessage.IO_ERROR, e.getMessage());
         }
     }
 
