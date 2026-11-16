@@ -73,16 +73,23 @@ public class JreUtils {
     /// @throws LocalizableIOException an exception detailing why the resource was inaccessible.
     @Nullable
     public static InputStream getResourceAsStream(Class<?> clazz, String path) throws LocalizableIOException {
-        String actualPath = path;
         InputStream is = clazz.getResourceAsStream(path);
 
-        // Fallback 1: Handle leading slash path variation
-        if (is == null && path.startsWith("/")) {
-            actualPath = path.substring(1);
-            is = clazz.getResourceAsStream(actualPath);
+        if (is == null) {
+            // Fallbacl 1: Try root-relative lookup on the ClassLoader directly
+            String normalizedPath = path.startsWith("/") ? path.substring(1) : path;
+            ClassLoader cl = clazz.getClassLoader();
+            is = (cl != null)
+                ? cl.getResourceAsStream(normalizedPath)
+                : ClassLoader.getSystemResourceAsStream(normalizedPath);
+
+        }
+        // Fallback 12 to Class-relative lookup if needed
+        if (is == null) {
+            is = clazz.getResourceAsStream(path.startsWith("/") ? path : "/" + path);
         }
 
-        // Fallback 2: GraalVM Native Image package-relative resolution
+        // Fallback 3: GraalVM Native Image package-relative resolution
         if (is == null && !path.startsWith("/")) {
             String pkg = clazz.getPackageName();
             String fullPath = pkg.isEmpty() ? path : pkg.replace('.', '/') + "/" + path;

@@ -1,14 +1,20 @@
 package io.github.qishr.cascara.common.i18n;
 
-import java.io.IOException;
+import java.io.InputStream;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.CodeSource;
 import java.text.MessageFormat;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.util.Cascara;
-import io.github.qishr.cascara.common.util.JarManifest;
-import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.StringUtils;
 
 public class MessageFormatter {
@@ -88,8 +94,13 @@ public class MessageFormatter {
         }
 
         String className = StringUtils.toKebabCase(rawMessage.getClass().getSimpleName());
-        String moduleName = StringUtils.toKebabCase(getModuleName(rawMessage.getClass()));
-        String key = moduleName + "." + className + "." + message.getCode().toLowerCase();
+        String moduleName = getModuleName(rawMessage.getClass());
+        // String moduleName = StringUtils.toKebabCase(getModuleName(rawMessage.getClass()));
+        String code = message.getCode().toLowerCase();
+
+        String key = (moduleName != null && !moduleName.isBlank())
+            ? StringUtils.toKebabCase(moduleName) + "." + className + "." + code
+            : className + "." + code;
 
         // Attempt to get a format pattern from translation file
         String pattern = getPattern(key);
@@ -108,15 +119,60 @@ public class MessageFormatter {
     }
 
     private String getModuleName(Class<?> cls) {
+        // 1. Active JPMS Named Module
         Module module = cls.getModule();
         if (module.isNamed()) {
             return module.getName();
         }
+
+        // 2. Non-JPMS: Inspect the specific CodeSource location for this class
         try {
-            JarManifest manifest = JarManifest.parse(JreUtils.getResourceAsString(cls, "/META-INF/MANIFEST.MF"));
-            return manifest.getString("Module-Name");
-        } catch (IOException e) {
-            return null;
+            CodeSource cs = cls.getProtectionDomain().getCodeSource();
+            if (cs != null && cs.getLocation() != null) {
+                Path codeRoot = Path.of(cs.getLocation().toURI());
+
+                // Case A: Exploded build directory / IDE output
+                if (Files.isDirectory(codeRoot)) {
+                    Path moduleInfoPath = codeRoot.resolve("module-info.class");
+                    if (Files.exists(moduleInfoPath)) {
+                        try (InputStream is = Files.newInputStream(moduleInfoPath)) {
+                            return ModuleDescriptor.read(is).name();
+                        }
+                    }
+
+                    Path manifestPath = codeRoot.resolve("META-INF/MANIFEST.MF");
+                    if (Files.exists(manifestPath)) {
+                        try (InputStream is = Files.newInputStream(manifestPath)) {
+                            Manifest manifest = new Manifest(is);
+                            String name = getModuleNameFromManifest(manifest);
+                            if (name != null) return name;
+                        }
+                    }
+                }
+                // Case B: Packaged JAR on standard classpath
+                else if (Files.isRegularFile(codeRoot) && codeRoot.toString().endsWith(".jar")) {
+                    Set<ModuleReference> refs = ModuleFinder.of(codeRoot).findAll();
+                    if (!refs.isEmpty()) {
+                        return refs.iterator().next().descriptor().name();
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Fallback for security managers or un-mapped CodeSources
         }
+
+        return null;
+    }
+
+    private String getModuleNameFromManifest(Manifest manifest) {
+        Attributes attrs = manifest.getMainAttributes();
+        String name = attrs.getValue("Automatic-Module-Name");
+        if (name == null) name = attrs.getValue("Module-Name");
+        if (name == null) name = attrs.getValue("Bundle-SymbolicName");
+        if (name != null && !name.isBlank()) {
+            int semicolon = name.indexOf(';');
+            return semicolon > 0 ? name.substring(0, semicolon).trim() : name;
+        }
+        return null;
     }
 }

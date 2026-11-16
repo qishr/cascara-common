@@ -50,7 +50,7 @@ public class MessageLocalizer extends Localizer {
     // DO NOT use Reporter in this class, it would get into an infinite loop.
 
     private static final String fallbackLanguageTag = "en-US";
-    private static final Locale fallbackLocale = Locale.forLanguageTag(fallbackLanguageTag);
+    // private static final Locale fallbackLocale = Locale.forLanguageTag(fallbackLanguageTag);
 
     private final TrackableProperty<Locale> activeLocale = new TrackableProperty<>();
 
@@ -72,6 +72,7 @@ public class MessageLocalizer extends Localizer {
         setActiveLanguage(AUTOMATIC);
 
         String languageTagProp = System.getProperty("cascara.lang.locale");
+
         if (languageTagProp != null && !languageTagProp.isBlank()) {
             setActiveLanguage(languageTagProp);
         }
@@ -125,29 +126,21 @@ public class MessageLocalizer extends Localizer {
 
     /// @param languageTag IETF BCP 47 language tag string
     public void setActiveLanguage(String languageTag) {
-        boolean automatic = shouldUseAutoLocale(languageTag);
-        if (automatic) {
-            if (!usingAutoLocale) {
-                Locale locale = getSystemLocale();
-                String systemLanguageTag = locale.toLanguageTag();
-                if (translationsByLanguage.containsKey(systemLanguageTag)) {
-                    activeLanguageTag = systemLanguageTag;
-                    activeLocale.setValue(locale);
-                } else {
-                    activeLanguageTag = fallbackLanguageTag;
-                    activeLocale.setValue(fallbackLocale);
-                }
-            }
+        if (languageTag == null || languageTag.equalsIgnoreCase(AUTOMATIC)) {
+            usingAutoLocale = true;
+            Locale locale = getSystemLocale();
+            languageTag = locale.toLanguageTag();
         } else {
-            if (!languageTag.equals(activeLanguageTag)) {
-                Locale locale = Locale.forLanguageTag(languageTag);
-
-                // activeLanguageTag must be set before the activeLocale
-                activeLanguageTag = languageTag;
-                activeLocale.setValue(locale);
-            }
+            usingAutoLocale = false;
         }
-        usingAutoLocale = automatic;
+
+        if (!languageTag.equals(activeLanguageTag)) {
+            Locale locale = Locale.forLanguageTag(languageTag);
+
+            // activeLanguageTag must be set before the activeLocale
+            activeLanguageTag = languageTag;
+            activeLocale.setValue(locale);
+        }
     }
 
     /// {@inheritDoc}
@@ -188,7 +181,6 @@ public class MessageLocalizer extends Localizer {
         try {
             String languageTag = translation.getLanguageTag();
             if (languageTag == null) {
-                // REPORTER.error(GenericMessage.ERROR, "No `lang` key specified in translations file");
                 error("No `lang` key specified in translations file");
                 return false;
             }
@@ -199,7 +191,7 @@ public class MessageLocalizer extends Localizer {
             }
             mergeMaps(translations, translation.getTranslations());
             if (usingAutoLocale) {
-                setActiveLocale(HybridLocaleDetector.detectOSLocale());
+                setActiveLanguage(AUTOMATIC);
             }
             return true;
         } catch (Exception e) {
@@ -211,16 +203,6 @@ public class MessageLocalizer extends Localizer {
     //
     // Private Methods
     //
-
-    private boolean shouldUseAutoLocale(String languageTag) {
-        // If languageTag is null or "System", detect the system one
-        if (languageTag == null || languageTag.toLowerCase().equals(AUTOMATIC)) {
-            return true;
-        } else {
-            // Otherwise, check if the language is registered
-            return !translationsByLanguage.containsKey(languageTag);
-        }
-    }
 
     private String getPattern(String key) {
         String lowerCaseKey = key.toLowerCase();

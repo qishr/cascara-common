@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -125,5 +126,15 @@ public class InternationalizationTests {
 
         localizer.setActiveLanguage("ar-AE");
         assertEquals("رفض الاتصال: example.com", localizer.format(message));
+    }
+
+    @Test
+    void test_acceptSetLanguageWithNoTranslations() throws IOException {
+        Localizer localizer = Localizer.instance();
+
+        // There are no translations for Trinidad and Tobago at the moment.
+        localizer.setActiveLanguage("en-TT");
+
+        assertEquals("en-TT", localizer.getActiveLocale().toLanguageTag());
     }
 }

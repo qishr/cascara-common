@@ -67,6 +67,14 @@ public class TestModulePackager {
                 jos.write(entry.getValue());
                 jos.closeEntry();
             }
+
+            for (Map.Entry<String, String> entry : testJar.resources.entrySet()) {
+                jarEntry = new JarEntry(entry.getKey());
+                jos.putNextEntry(jarEntry);
+                jos.write(entry.getValue().getBytes());
+                jos.closeEntry();
+            }
+
         } catch (IOException e) {
             throw new TestJarException(e, GenericMessage.ERROR, e.getMessage());
         }

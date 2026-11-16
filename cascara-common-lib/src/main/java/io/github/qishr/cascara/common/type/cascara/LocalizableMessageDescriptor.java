@@ -77,7 +77,7 @@ public class LocalizableMessageDescriptor extends AbstractScalarDescriptor<Local
 
     @NonNull
     @Override
-    public Object toPrimitive(LocalizableMessage jvmInstance) {
+    public String toPrimitive(LocalizableMessage jvmInstance) {
         return jvmInstance.getClass().getName() + "#" + jvmInstance.name();
     }
 

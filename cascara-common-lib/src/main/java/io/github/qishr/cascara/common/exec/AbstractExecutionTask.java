@@ -43,9 +43,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
@@ -141,14 +143,6 @@ public abstract class AbstractExecutionTask<I, O> {
         I object = null;
         if (!json.isBlank()) {
             Object deserialized = serializer.fromString(json, inputClass);
-            // if (deserialized instanceof SerializedThrowable st) {
-            //     try {
-            //         deserialized = st.recreateOriginal();
-            //     } catch (InstantiationException e) {
-            //         // TODO Auto-generated catch block
-            //         e.printStackTrace();
-            //     }
-            // }
             object = (I) deserialized;
         }
 
@@ -164,7 +158,6 @@ public abstract class AbstractExecutionTask<I, O> {
                 response = run(object);
             } catch (Throwable e) {
                 thrownByTask = e;
-                // error(e, e.getMessage());
             }
         }
 

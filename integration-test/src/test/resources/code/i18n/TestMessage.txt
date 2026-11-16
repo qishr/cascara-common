@@ -1,0 +1,18 @@
+package com.example.providera;
+
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+
+public enum TestMessage implements LocalizableMessage {
+    TEST_MESSAGE("TEST-101", "Test Message");
+
+    private final String code;
+    private final String format;
+
+    TestMessage(String code, String format) {
+        this.code = code;
+        this.format = format;
+    }
+
+    @Override public String getCode() { return code; }
+    @Override public String getFormat() { return format; }
+}

@@ -168,9 +168,11 @@ public class ThrowableSerializer extends AbstractTypeDescriptor<Throwable> imple
         public Throwable recreateOriginal() throws InstantiationException {
             try {
                 Class<?> exceptionClass = Class.forName(originalClassName);
-                List<Pair<Class<?>,Object>> params = new ArrayList<>();
-                params.add(Pair.of(String.class, getMessage()));
+
+                List<Pair<Class<?>,Object>> params = List.of(Pair.of(String.class, getMessage()));
                 Throwable recreatedException = (Throwable) ReflectionUtils.createInstance(exceptionClass, params);
+
+                recreatedException.setStackTrace(getStackTrace());
                 return recreatedException;
             } catch (Throwable t) {
                 throw new LocalizableInstantiationException(t);
