@@ -47,7 +47,7 @@ import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 
 public class JreUtils {
-    public static String getResourceAsString(Class<?> clazz, String path) throws LocalizableIOException {
+    public static String getResourceAsString(Class<?> clazz, String path) throws IOException {
         InputStream inputStream = getResourceAsStream(clazz, path);
         InputStreamReader streamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         String content;
@@ -70,9 +70,9 @@ public class JreUtils {
 
     /// Returns an `InputStream` for a JRE resource.
     /// @return The `InputStream` returned by `Class.getResourceAsStream`.
-    /// @throws LocalizableIOException an exception detailing why the resource was inaccessible.
+    /// @throws IOException an exception detailing why the resource was inaccessible.
     @Nullable
-    public static InputStream getResourceAsStream(Class<?> clazz, String path) throws LocalizableIOException {
+    public static InputStream getResourceAsStream(Class<?> clazz, String path) throws IOException {
         InputStream is = clazz.getResourceAsStream(path);
 
         if (is == null) {
