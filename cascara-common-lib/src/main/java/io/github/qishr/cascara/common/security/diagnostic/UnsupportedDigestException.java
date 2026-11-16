@@ -1,6 +1,6 @@
 package io.github.qishr.cascara.common.security.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 

@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 public class NoOpReporter implements Reporter {

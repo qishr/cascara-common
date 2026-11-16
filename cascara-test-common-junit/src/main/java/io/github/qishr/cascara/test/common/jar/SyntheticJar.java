@@ -25,6 +25,7 @@ public class SyntheticJar {
     List<String> dependencies;
     Map<String, String> sources;
     Map<String, byte[]> classes;
+    Map<String, String> resources;
     SignedJarBundle signedBundle;
 
     public static SyntheticJar forUseIn(Class<?> hostClass) {
@@ -43,6 +44,7 @@ public class SyntheticJar {
         dependencies = new ArrayList<>();
         sources = new HashMap<>();
         classes = new HashMap<>();
+        resources = new HashMap<>();
     }
 
     public SignedJarBundle getSignedBundle() {
@@ -91,6 +93,11 @@ public class SyntheticJar {
                 throw new TestJarException(e, "Failed to read resource: " + resPath);
             }
         }
+        return this;
+    }
+
+    public SyntheticJar addResource(String path, String sourceText) {
+        this.resources.put(path, sourceText);
         return this;
     }
 

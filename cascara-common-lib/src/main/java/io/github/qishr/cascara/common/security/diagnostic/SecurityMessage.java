@@ -1,6 +1,6 @@
 package io.github.qishr.cascara.common.security.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 
 public enum SecurityMessage implements LocalizableMessage {
     NO_ALGORITHM("SEC-101", "No suitable algorithm found for: {0}"),

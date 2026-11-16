@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.service;
 
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 
 public enum ServiceMessage implements LocalizableMessage {
     CONFIGURATION_ERROR("SPL-102", "Configuration error: {0}"),

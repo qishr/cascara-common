@@ -36,8 +36,8 @@
 package io.github.qishr.cascara.common.lang.diagnostic;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.diagnostic.exception.AbstractLocalizableException;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.exception.AbstractLocalizableException;
 
 @Experimental
 public class JsonPointerException extends AbstractLocalizableException {

@@ -35,11 +35,13 @@
 
 package io.github.qishr.cascara.common.diagnostic.message;
 
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+
 public enum InetMessage implements LocalizableMessage {
     NETWORK_UNREACHABLE("INET-101", "Network unreachable"),
     CONNECTION_REFUSED("INET-102", "Connection refused: {0}"),
     CONNECTION_TIMEOUT("INET-103", "Connection timeout: {0}"),
-    TLS_HANDSHAKE_FAILED("INET-201", "TLS Handshake Failed: {0}");
+    TLS_HANDSHAKE_FAILED("INET-201", "TLS handshake failed: {0}");
 
     private final String code;
     private final String format;

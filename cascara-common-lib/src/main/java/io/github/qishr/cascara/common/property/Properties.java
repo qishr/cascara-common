@@ -36,6 +36,7 @@
 package io.github.qishr.cascara.common.property;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -48,11 +49,12 @@ import java.nio.charset.StandardCharsets;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.data.TabularData;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
-import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
-import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullReturnException;
-import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.exception.UnexpectedNullReturnException;
+import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.util.Duplicable;
 
 public class Properties implements TabularData, Duplicable<Properties>, Iterable<Property<?>> {
@@ -333,7 +335,10 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
         return PropertyParser.parse(text);
     }
 
-    public static Properties load(Path path) throws LocalizableIOException {
+    public static Properties fromFile(Path path) throws IOException {
+        if (path == null) {
+            throw new UnexpectedNullParameterException("path");
+        }
         if (Files.isRegularFile(path)) {
             try {
                 String content = Files.readString(path, StandardCharsets.UTF_8);
@@ -346,8 +351,23 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
         }
     }
 
+    public static Properties fromStream(InputStream is) throws IOException {
+        if (is == null) {
+            throw new UnexpectedNullParameterException("is");
+        }
+        try {
+            return parse(new String(is.readAllBytes(), StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new LocalizableIOException(e, GenericMessage.STREAM_READ_ERROR);
+        }
+    }
+
     public static class PropertyParser {
         public static Properties parse(String content) {
+            if (content == null) {
+                throw new UnexpectedNullParameterException("content");
+            }
+
             Properties properties = new Properties();
 
             for (String line : content.split("\\R")) {

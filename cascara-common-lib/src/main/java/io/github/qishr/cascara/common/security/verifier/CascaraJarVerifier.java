@@ -24,11 +24,11 @@ import javax.security.auth.x500.X500Principal;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.DetailedMessage;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIllegalStateException;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIllegalStateException;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
@@ -322,7 +322,7 @@ public class CascaraJarVerifier implements JarVerifier {
             } catch (SignatureException e) {
                 throw e;
             } catch (Exception e) {
-                throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, DetailedMessage.forException(e));
+                throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, DiagnosticMessage.forException(e));
             }
         }
     }

@@ -46,7 +46,7 @@ import io.github.qishr.cascara.common.trackable.property.TrackableProperty;
 
 @Experimental
 public class TrackableObject extends AbstractTrackable implements TrackableTabularData {
-    // DO NOT use GlobalReporter in this class. Since this class is used in the
+    // DO NOT use Reporter in this class. Since this class is used in the
     // logger, it would get into an infinite loop.
 
     private final Map<String,Trackable> map = new HashMap<>();
@@ -149,7 +149,6 @@ public class TrackableObject extends AbstractTrackable implements TrackableTabul
         return null;
     }
 
-    // @SuppressWarnings("rawtypes") // Needed by getPaletteColors in ThemeModule
     public final AbstractTrackable getObjectProperty(String key) {
         if (map.get(key) instanceof AbstractTrackable property) {
             return property;
@@ -230,7 +229,7 @@ public class TrackableObject extends AbstractTrackable implements TrackableTabul
             if (value instanceof Collection collection) {
                 list.setAll(collection);
             } else {
-                // TODO: Exception
+                // TODO: Exception?
                 warn("set: unexpected type: " + trackable);
             }
         } else if (trackable instanceof TrackableProperty property) {

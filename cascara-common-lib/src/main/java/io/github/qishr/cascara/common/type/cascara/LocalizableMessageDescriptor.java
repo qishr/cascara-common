@@ -35,9 +35,9 @@
 package io.github.qishr.cascara.common.type.cascara;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
-import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 
@@ -77,7 +77,7 @@ public class LocalizableMessageDescriptor extends AbstractScalarDescriptor<Local
 
     @NonNull
     @Override
-    public Object toPrimitive(LocalizableMessage jvmInstance) {
+    public String toPrimitive(LocalizableMessage jvmInstance) {
         return jvmInstance.getClass().getName() + "#" + jvmInstance.name();
     }
 

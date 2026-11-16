@@ -14,8 +14,8 @@ import java.util.jar.JarEntry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableSecurityException;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.security.policy.SignatureException;

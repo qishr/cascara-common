@@ -123,6 +123,7 @@ public class SplClassRegistrationSecurityTests extends SplTestBase {
         SPL layer = spl.create("testLayer");
 
         // Generate a dynamic proxy class with no CodeSource location
+        @SuppressWarnings("deprecation")
         Class<?> proxyClass = Proxy.getProxyClass(
                 SplClassRegistrationSecurityTests.class.getClassLoader(),
                 ServiceProvider.class

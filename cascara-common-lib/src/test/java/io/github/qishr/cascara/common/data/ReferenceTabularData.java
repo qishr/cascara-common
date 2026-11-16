@@ -38,7 +38,7 @@ package io.github.qishr.cascara.common.data;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
+import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
 
 /// A reference implementation of TabularData
 public class ReferenceTabularData implements TabularData {

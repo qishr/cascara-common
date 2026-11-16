@@ -33,26 +33,46 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic;
+package io.github.qishr.cascara.common.i18n.exception;
 
-import java.text.MessageFormat;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.Localizer;
 
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+public class LocalizableRuntimeException extends RuntimeException implements LocalizableException {
+    private final LocalizableMessage localizableMessage;
+    private final Object[] details;
 
-@FunctionalInterface
-public interface DiagnosticLocalizer {
-    public static final String FORMATTING_ERROR = "Problem encountered while formatting error with code %s: %s";
+    public LocalizableRuntimeException(LocalizableMessage message, Object... details) {
+        super(Localizer.instance().format(message, details));
+        this.localizableMessage = message;
+        this.details = details != null ? details : new Object[0];
+    }
 
-    /// Formats the code with dynamic arguments using the environment's current language bundle.
-    String format(LocalizableMessage message, Object... details);
+    public LocalizableRuntimeException(Throwable cause, LocalizableMessage message, Object... details) {
+        super(Localizer.instance().format(message, details), cause);
+        this.localizableMessage = message;
+        this.details = details != null ? details : new Object[0];
+    }
 
-    /// A default fail-safe implementation that falls back to standard MessageFormat
-    DiagnosticLocalizer DEFAULT = (message, details) -> {
-        try {
-            String pattern = message.getFormat().replace("'", "''");
-            return MessageFormat.format(pattern, details);
-        } catch (IllegalArgumentException e) {
-            return String.format(FORMATTING_ERROR, message.getCode(), message.getFormat());
-        }
-    };
+    /// {@inheritDoc}
+	public LocalizableMessage getLocalizableMessage() {
+		return localizableMessage;
+	}
+
+    /// {@inheritDoc}
+	public Object[] getDetails() {
+		return details;
+	}
+
+    /// {@inheritDoc}
+    @Override
+    public String getLocalizedMessage() {
+        return Localizer.instance().format(localizableMessage, details);
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public String getMessage() {
+        return Localizer.instance().formatException(localizableMessage, details);
+    }
 }

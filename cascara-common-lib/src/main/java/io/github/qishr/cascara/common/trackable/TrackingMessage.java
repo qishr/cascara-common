@@ -1,6 +1,6 @@
 package io.github.qishr.cascara.common.trackable;
 
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 
 public enum TrackingMessage implements LocalizableMessage {
     // Data

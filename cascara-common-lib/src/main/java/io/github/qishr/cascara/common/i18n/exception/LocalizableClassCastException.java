@@ -33,26 +33,45 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic.exception;
+package io.github.qishr.cascara.common.i18n.exception;
 
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.util.Pair;
-import io.github.qishr.cascara.common.util.ReflectionUtils;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.Localizer;
 
-public class UnimplementedMethodException extends LocalizableRuntimeException {
+public class LocalizableClassCastException extends ClassCastException implements LocalizableException {
 
-    public UnimplementedMethodException() {
-        super(GenericMessage.UNSUPPORTED_OPERATION, buildMethoDetails());
+    private final LocalizableMessage localizableMessage;
+    private final Object[] details;
+
+    public LocalizableClassCastException(Throwable cause) {
+        super(cause.getMessage());
+        DiagnosticMessage dm = DiagnosticMessage.forException(cause);
+        this.localizableMessage = dm.getMessage();
+        this.details = dm.getDetails();
     }
 
-    private static Object[] buildMethoDetails() {
-        Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true);
-        if (caller == null) {
-            return null;
-        }
-        Object[] details = new Object[2];
-        details[0] = caller.getL().getName();
-        details[1] = caller.getR();
-        return details;
+    /// {@inheritDoc}
+    @Override
+	public LocalizableMessage getLocalizableMessage() {
+		return localizableMessage;
+	}
+
+    /// {@inheritDoc}
+    @Override
+	public Object[] getDetails() {
+		return details;
+	}
+
+    /// {@inheritDoc}
+    @Override
+    public String getLocalizedMessage() {
+        return Localizer.instance().format(localizableMessage, details);
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public String getMessage() {
+        return Localizer.instance().formatException(localizableMessage, details);
     }
 }

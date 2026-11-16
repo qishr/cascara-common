@@ -35,9 +35,9 @@
 
 package io.github.qishr.cascara.common.service;
 
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
 
 public class ServiceException extends LocalizableRuntimeException {
     /// Constructor for errors without an exception

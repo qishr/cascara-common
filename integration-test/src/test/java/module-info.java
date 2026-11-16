@@ -52,6 +52,7 @@ module integration.test {
     // Exports
     exports integration.test.ast;
     exports integration.test.exec;
+    exports integration.test.i18n;
     exports integration.test.jar;
     exports integration.test.security;
     exports integration.test.spl;
@@ -62,6 +63,7 @@ module integration.test {
     // For JUnit
     opens integration.test.ast to org.junit.platform.commons;
     opens integration.test.exec to org.junit.platform.commons;
+    opens integration.test.i18n to org.junit.platform.commons;
     opens integration.test.jar to org.junit.platform.commons;
     opens integration.test.security to org.junit.platform.commons;
     opens integration.test.spl to org.junit.platform.commons;

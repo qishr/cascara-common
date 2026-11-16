@@ -42,9 +42,9 @@ import java.nio.charset.StandardCharsets;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 
 public class JreUtils {
     public static String getResourceAsString(Class<?> clazz, String path) throws LocalizableIOException {
@@ -75,13 +75,21 @@ public class JreUtils {
     public static InputStream getResourceAsStream(Class<?> clazz, String path) throws LocalizableIOException {
         InputStream is = clazz.getResourceAsStream(path);
 
-        // Fallback 1: Handle leading slash path variation
-        if (is == null && path.startsWith("/")) {
-            path = path.substring(1);
-            is = clazz.getResourceAsStream(path);
+        if (is == null) {
+            // Fallbacl 1: Try root-relative lookup on the ClassLoader directly
+            String normalizedPath = path.startsWith("/") ? path.substring(1) : path;
+            ClassLoader cl = clazz.getClassLoader();
+            is = (cl != null)
+                ? cl.getResourceAsStream(normalizedPath)
+                : ClassLoader.getSystemResourceAsStream(normalizedPath);
+
+        }
+        // Fallback 12 to Class-relative lookup if needed
+        if (is == null) {
+            is = clazz.getResourceAsStream(path.startsWith("/") ? path : "/" + path);
         }
 
-        // Fallback 2: GraalVM Native Image package-relative resolution
+        // Fallback 3: GraalVM Native Image package-relative resolution
         if (is == null && !path.startsWith("/")) {
             String pkg = clazz.getPackageName();
             String fullPath = pkg.isEmpty() ? path : pkg.replace('.', '/') + "/" + path;
@@ -91,11 +99,15 @@ public class JreUtils {
         // If clazz is in a JPMS module, check if the module opens the package to the class's module.
         // If it doesn't, put that detail in the exception.
         if (is == null) {
+            // Determine the package name of the resource from its path
+            String packageName = getPackageNameFromResourcePath(path);
+
+            if ("META-INF".equals(packageName)) {
+                throw new LocalizableIOException(FileMessage.FILE_NOT_FOUND, path);
+            }
+
             Module targetModule = clazz.getModule();
             if (targetModule.isNamed()) {
-                // Determine the package name of the resource from its path
-                String packageName = getPackageNameFromResourcePath(path);
-
                 if (!packageName.isEmpty()) {
                     Module myModule = clazz.getModule();
 

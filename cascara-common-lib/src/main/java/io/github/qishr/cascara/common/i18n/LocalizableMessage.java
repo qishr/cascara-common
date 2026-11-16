@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.diagnostic.message;
+package io.github.qishr.cascara.common.i18n;
 
 public interface LocalizableMessage {
     String name();

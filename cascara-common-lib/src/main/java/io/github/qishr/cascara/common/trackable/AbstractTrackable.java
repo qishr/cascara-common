@@ -49,13 +49,13 @@ public abstract class AbstractTrackable implements Trackable {
     }
 
     @Override
-    public void addTracker(InvalidationTracker listener) {
+    public void addInvalidationTracker(InvalidationTracker listener) {
         if (listeners.contains(listener)) return;
         listeners.add(listener);
     }
 
     @Override
-    public void removeTracker(InvalidationTracker listener) {
+    public void removeInvalidationTracker(InvalidationTracker listener) {
         listeners.remove(listener);
     }
 

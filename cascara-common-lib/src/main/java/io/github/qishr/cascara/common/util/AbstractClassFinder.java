@@ -51,10 +51,10 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
 public abstract class AbstractClassFinder {

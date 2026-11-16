@@ -35,8 +35,8 @@
 
 package io.github.qishr.cascara.common.color;
 
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
 
 public class ColorException extends LocalizableRuntimeException {
 

@@ -1,9 +1,9 @@
 package io.github.qishr.cascara.common.security.policy;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableSecurityException;
-import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullParameterException;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableSecurityException;
 
 public class SignatureException extends LocalizableSecurityException {
     @NonNull private final SignatureStatus signatureStatus;

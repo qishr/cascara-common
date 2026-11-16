@@ -32,43 +32,18 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
+package io.github.qishr.cascara.common.i18n.detect;
 
-package io.github.qishr.cascara.common.diagnostic.exception;
+import java.util.Locale;
 
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+public class SystemPropertyLocaleDetector {
+    @SuppressWarnings("deprecation")
+    public static Locale detectFromSystemProps() {
+        String language = System.getProperty("user.language");
+        String country = System.getProperty("user.country");
+        String variant = System.getProperty("user.variant");
 
-public class LocalizableRuntimeException extends RuntimeException implements LocalizableException {
-    // private static volatile DiagnosticLocalizer localizer = DiagnosticLocalizer.DEFAULT;
-
-    private final LocalizableMessage diagnosticMessage;
-    private final Object[] details;
-
-    // public static void setLocalizer(DiagnosticLocalizer customLocalizer) {
-    //     localizer = customLocalizer != null ? customLocalizer : DiagnosticLocalizer.DEFAULT;
-    // }
-
-    public LocalizableRuntimeException(LocalizableMessage message, Object... details) {
-        super(AbstractLocalizableException.getLocalizer().format(message, details));
-        this.diagnosticMessage = message;
-        this.details = details != null ? details : new Object[0];
-    }
-
-    public LocalizableRuntimeException(Throwable cause, LocalizableMessage message, Object... details) {
-        super(AbstractLocalizableException.getLocalizer().format(message, details), cause);
-        this.diagnosticMessage = message;
-        this.details = details != null ? details : new Object[0];
-    }
-
-	public LocalizableMessage getLocalizableMessage() {
-		return diagnosticMessage;
-	}
-
-	public Object[] getDetails() {
-		return details;
-	}
-
-    @Override
-    public String getLocalizedMessage() {
-        return AbstractLocalizableException.getLocalizer().format(diagnosticMessage, details);
+        if (language == null) return null;
+        return (country == null) ? new Locale(language) : new Locale(language, country, variant);
     }
 }

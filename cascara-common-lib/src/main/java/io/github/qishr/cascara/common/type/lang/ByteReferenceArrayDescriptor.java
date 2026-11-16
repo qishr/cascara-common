@@ -38,9 +38,9 @@ package io.github.qishr.cascara.common.type.lang;
 import java.util.Base64;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.type.AbstractScalarDescriptor;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 

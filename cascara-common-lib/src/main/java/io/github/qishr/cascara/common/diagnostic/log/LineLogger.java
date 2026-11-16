@@ -37,10 +37,10 @@ package io.github.qishr.cascara.common.diagnostic.log;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.format.LogFormatter;
 import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
+import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
 
 public class LineLogger implements  Logger {
     private LogFormatter formatter;

@@ -60,10 +60,10 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableIOException;
-import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 
 public class ZipFile implements ArchiveFile<ZipEntry> {
     protected Path archivePath = null;

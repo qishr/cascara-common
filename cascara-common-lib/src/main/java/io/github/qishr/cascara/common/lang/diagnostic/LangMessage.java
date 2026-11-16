@@ -35,7 +35,7 @@
 
 package io.github.qishr.cascara.common.lang.diagnostic;
 
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 
 public enum LangMessage implements LocalizableMessage {
     EXPECTED_STREAM_START("LANG-101", "Expected stream start."),

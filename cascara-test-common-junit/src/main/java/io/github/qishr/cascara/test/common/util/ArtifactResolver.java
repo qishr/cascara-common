@@ -13,8 +13,8 @@ import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.diagnostic.exception.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.exception.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ReflectionUtils;

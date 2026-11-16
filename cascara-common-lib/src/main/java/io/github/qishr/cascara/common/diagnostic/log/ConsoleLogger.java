@@ -40,11 +40,11 @@ import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.SingletonInitializer;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.diagnostic.format.ColoredLogFormatter;
 import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.format.LogFormatter;
 import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
+import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.util.JreUtils;
 
 @Experimental

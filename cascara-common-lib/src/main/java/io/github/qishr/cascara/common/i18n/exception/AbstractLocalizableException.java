@@ -33,32 +33,32 @@
 // version.
 
 
-package io.github.qishr.cascara.common.diagnostic.exception;
+package io.github.qishr.cascara.common.i18n.exception;
 
-import java.io.IOException;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.Localizer;
 
-import io.github.qishr.cascara.common.diagnostic.DiagnosticLocalizer;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+public class AbstractLocalizableException extends Exception implements LocalizableException {
 
-public class LocalizableIOException extends IOException implements LocalizableException {
-
-    private final LocalizableMessage diagnosticMessage;
+    private final LocalizableMessage localizableMessage;
     private final Object[] details;
 
-    public LocalizableIOException(LocalizableMessage message, Object... details) {
-        this(null, message, details);
+    public AbstractLocalizableException(LocalizableMessage message, Object... details) {
+        super(Localizer.instance().format(message, details));
+        this.localizableMessage = message;
+        this.details = details != null ? details : new Object[0];
     }
 
-    public LocalizableIOException(Throwable cause, LocalizableMessage message, Object... details) {
-        super(cause);
-        this.diagnosticMessage = message;
-        this.details = details;
+    public AbstractLocalizableException(Throwable cause, LocalizableMessage message, Object... details) {
+        super(Localizer.instance().format(message, details));
+        this.localizableMessage = message;
+        this.details = details != null ? details : new Object[0];
     }
 
     /// Returns a diagnostic error code for the error message.
     @Override
 	public LocalizableMessage getLocalizableMessage() {
-		return diagnosticMessage;
+		return localizableMessage;
 	}
 
     /// Returns the details, if any, to be used in formatting the error message.
@@ -70,20 +70,12 @@ public class LocalizableIOException extends IOException implements LocalizableEx
     /// Returns a localized, formatted error message.
     @Override
     public String getLocalizedMessage() {
-        try {
-            return AbstractLocalizableException.getLocalizer().format(diagnosticMessage, details);
-        } catch (IllegalArgumentException e) {
-            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
-        }
+        return Localizer.instance().format(localizableMessage, details);
     }
 
-    /// Returns a localized, formatted error message.
+    /// Returns a formatted error message, only localized if cascara.lang.localize-exceptions is set to true.
     @Override
     public String getMessage() {
-        try {
-            return DiagnosticLocalizer.DEFAULT.format(diagnosticMessage, details);
-        } catch (IllegalArgumentException e) {
-            return String.format(DiagnosticLocalizer.FORMATTING_ERROR, diagnosticMessage.getCode(), diagnosticMessage.getFormat());
-        }
+        return Localizer.instance().formatException(localizableMessage, details);
     }
 }

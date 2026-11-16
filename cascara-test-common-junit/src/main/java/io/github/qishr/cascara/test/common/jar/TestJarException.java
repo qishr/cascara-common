@@ -1,8 +1,8 @@
 package io.github.qishr.cascara.test.common.jar;
 
-import io.github.qishr.cascara.common.diagnostic.exception.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
 
 public class TestJarException extends LocalizableRuntimeException {
     public TestJarException(LocalizableMessage msg, Object... details) {

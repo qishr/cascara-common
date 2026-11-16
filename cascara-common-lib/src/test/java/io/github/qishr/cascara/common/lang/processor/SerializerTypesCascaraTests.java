@@ -10,7 +10,8 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.diagnostic.message.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.DetailedMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
@@ -57,6 +58,16 @@ public class SerializerTypesCascaraTests extends SerializerTestBase {
         GenericMessage deserialized = serializer.fromAst(ast, GenericMessage.class);
         assertNotNull(deserialized);
         assertEquals("ERROR-102", deserialized.getCode());
+    }
+
+    @Test
+    void test_DetailedMessage() {
+        Serializer<?> serializer = newSerializer();
+        DetailedMessage original = new DetailedMessage(GenericMessage.CLASS_CAST_EXCEPTION, "Class1", "Class2");
+        AstNode ast = serializer.toAst(original);
+        DetailedMessage deserialized = serializer.fromAst(ast, DetailedMessage.class);
+        assertNotNull(deserialized);
+        assertEquals("ERROR-406", deserialized.getCode());
     }
 
     // getTypeDescriptor(jvmInstance.getClass() was failing in this test because

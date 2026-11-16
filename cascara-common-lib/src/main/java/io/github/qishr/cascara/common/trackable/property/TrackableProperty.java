@@ -38,22 +38,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableClassCastException;
 import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.trackable.Trackable;
+import io.github.qishr.cascara.common.trackable.TrackableValue;
 import io.github.qishr.cascara.common.trackable.tracker.InvalidationTracker;
+import io.github.qishr.cascara.common.trackable.tracker.ValueTracker;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 
 @Experimental
-public class TrackableProperty<T> extends Property<T> implements Trackable {
+public class TrackableProperty<T> extends Property<T> implements TrackableValue<T> {
     private Object owner;
     private String mediaType;
     private boolean isDeclaredProperty;
-    private final List<InvalidationTracker> listeners = new ArrayList<>();
+    private final List<ValueTracker<T>> trackers = new ArrayList<>();
+    private final List<InvalidationTracker> invalidationTrackers = new ArrayList<>();
 
-    private InvalidationTracker listener = new InvalidationTracker() {
+    private InvalidationTracker invalidationTracker = new InvalidationTracker() {
 		@Override
 		public void invalidated(Trackable observable) {
-            invalidate();
+            invalidate(getValue(), getValue());
 		}
     };
 
@@ -106,59 +110,83 @@ public class TrackableProperty<T> extends Property<T> implements Trackable {
     @Override
     public void setValue(T v) {
         T oldValue = super.getValue();
-        super.setValue(v);
+        try {
+            super.setValue(v);
 
-        if (oldValue instanceof Trackable t) {
-            t.removeTracker(listener);
+            if (oldValue instanceof Trackable t) {
+                t.removeInvalidationTracker(invalidationTracker);
+            }
+
+            if (v instanceof Trackable t) {
+                t.addInvalidationTracker(invalidationTracker);
+            } else {
+                // TODO: This seems mad. To be removed soon.
+                // System.out.println("Unhandled type: " + (
+                //     v == null
+                //         ? "null"
+                //         : v.getClass().getName()
+                // ));
+            }
+
+            if (oldValue == null && v == null) {
+                return;
+            }
+
+            if (oldValue == null || v == null) {
+                invalidate(oldValue, v);
+            }
+            else if (!oldValue.equals(v)) {
+                invalidate(oldValue, v);
+            }
+        } catch (java.lang.ClassCastException e) {
+            // TODO: LocalizableRuntimeException.forException(e)
+            // DiagnosticMessage dm = DiagnosticMessage.forException(e);
+            throw new LocalizableClassCastException(e);
         }
+    }
 
-        if (v instanceof Trackable t) {
-            t.addTracker(listener);
-        } else {
-            // TODO: This seems mad. To be removed soon.
-            // System.out.println("Unhandled type: " + (
-            //     v == null
-            //         ? "null"
-            //         : v.getClass().getName()
-            // ));
+    public void setName(String name) {
+        super.setName(name);
+        invalidate(getValue(), getValue());
+    }
+
+    //
+    //
+    //
+
+    protected void invalidate(T oldValue, T newValue) {
+        for (ValueTracker<T> tracker : trackers) {
+
+            // TODO: oldValue, newValue
+
+            tracker.invalidated(oldValue, newValue);
         }
+        for (InvalidationTracker tracker : invalidationTrackers) {
+            tracker.invalidated(this);
+        }
+    }
 
-        if (oldValue == null && v == null) {
+    @Override
+    public void addTracker(ValueTracker<T> tracker) {
+        if (trackers.contains(tracker)) return;
+        trackers.add(tracker);
+    }
+
+    @Override
+    public void removeTracker(ValueTracker<T> tracker) {
+        trackers.remove(tracker);
+    }
+
+    @Override
+    public void addInvalidationTracker(InvalidationTracker tracker) {
+        if (invalidationTrackers.contains(tracker)) {
             return;
         }
-
-        if (oldValue == null || v == null) {
-            invalidate();
-        }
-        else if (!oldValue.equals(v)) {
-            invalidate();
-        }
-    }
-
-    public void setName(String s) {
-        super.setName(s);
-        // name = s;
-        invalidate();
-    }
-
-    //
-    //
-    //
-
-    protected void invalidate() {
-        for (InvalidationTracker listener : listeners) {
-            listener.invalidated(this);
-        }
+        invalidationTrackers.add(tracker);
     }
 
     @Override
-    public void addTracker(InvalidationTracker listener) {
-        if (listeners.contains(listener)) return;
-        listeners.add(listener);
-    }
-
-    @Override
-    public void removeTracker(InvalidationTracker listener) {
-        listeners.remove(listener);
+    public void removeInvalidationTracker(InvalidationTracker tracker) {
+        invalidationTrackers.remove(tracker);
     }
 }
