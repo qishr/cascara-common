@@ -41,7 +41,7 @@ public abstract class TestBase {
     }
 
     @BeforeEach
-    protected void setUp() throws IOException {
+    protected void setUp() {
         GlobalReporter.globalInstance().setSystemOutputEnabled(true);
         GlobalReporter.globalInstance().setLineConsumer(null);
         GlobalReporter.globalInstance()

@@ -25,11 +25,6 @@ import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 
 public class IsolatedInternationalizationTests extends ExecTestBase {
 
-    @BeforeEach
-    protected void setUp() throws IOException {
-        super.setUp();
-    }
-
     @Test
     void test_overridesEnumMessage() throws Throwable {
         IsolatedExecutor exec = IsolatedExecutor.forTask(LocalizerTestTask.class, String.class);

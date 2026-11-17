@@ -196,7 +196,8 @@ public abstract class AbstractClassFinder {
         } catch (IllegalAccessError e) {
             error(e);
         } catch (java.lang.NoClassDefFoundError e) {
-            error(e);
+            // Don't report
+            // error(new LocalizableClassNotFoundException(e, className));
         } catch (Exception e) {
             error(e);
         }
@@ -259,7 +260,7 @@ public abstract class AbstractClassFinder {
     protected void error(Throwable t) {
         reporter.error(t, GenericMessage.ERROR, t.getMessage());
         if (reporter instanceof NoOpReporter) {
-            System.err.println(t.getMessage());
+            System.err.println("AbstractClassFinder: " + t.getClass().getSimpleName() + ": " + t.getLocalizedMessage());
         }
     }
 }

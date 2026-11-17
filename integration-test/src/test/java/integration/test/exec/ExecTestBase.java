@@ -24,7 +24,7 @@ public class ExecTestBase extends VfsTestBase {
     protected static final String CASCARA_HOME = "CASCARA_HOME";
 
     @BeforeEach
-    protected void setUp() throws IOException {
+    protected void setUp() {
         super.setUp();
         GlobalReporter.globalInstance().getFormatConfig().setIncluedPid(true);
     }

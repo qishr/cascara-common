@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
+import io.github.qishr.cascara.test.common.util.TestException;
 
 public class VfsTestBase extends TestBase {
     private static final String vfsHomeDir = "/.cascara";
@@ -25,19 +26,23 @@ public class VfsTestBase extends TestBase {
     public SPL spl;
 
     @BeforeEach
-    protected void setUp() throws IOException {
+    protected void setUp() {
         super.setUp();
 
         Path zipFile = tempDir.resolve("cascara-vfs.zip");
         physicalHome = zipFile.toString() + "!" + vfsHomeDir;
 
         vfsUri = URI.create("jar:" + zipFile.toUri());
-        vFs = FileSystems.newFileSystem(vfsUri, Map.of("create", "true"));
-        Path vHome = vFs.getPath(vfsHomeDir);
 
-        Files.createDirectories(vHome);
-        Cascara.instance().setHomePath(vHome);
-        Files.createDirectories(Cascara.instance().getModulePath());
+        try {
+            vFs = FileSystems.newFileSystem(vfsUri, Map.of("create", "true"));
+            Path vHome = vFs.getPath(vfsHomeDir);
+            Files.createDirectories(vHome);
+            Cascara.instance().setHomePath(vHome);
+            Files.createDirectories(Cascara.instance().getModulePath());
+        } catch (IOException e) {
+            throw new TestException(e, "Failed to initialize VFS: " + e.getLocalizedMessage());
+        }
 
         rootLayer = SPL.getRoot();
         spl = rootLayer.create("baseTestLayer");

@@ -36,8 +36,6 @@
 package io.github.qishr.cascara.common.type.cascara;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.i18n.DetailedMessage;

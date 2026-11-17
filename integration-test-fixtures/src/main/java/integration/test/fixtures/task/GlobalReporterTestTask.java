@@ -2,11 +2,11 @@ package integration.test.fixtures.task;
 
 import integration.test.fixtures.VmInfo;
 import integration.test.fixtures.payload.ReporterTestOutput;
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.exec.AbstractExecutionTask;
 
 public class GlobalReporterTestTask extends AbstractExecutionTask<String, ReporterTestOutput> {
-    GlobalReporter reporter = GlobalReporter.forClass(GlobalReporterTestTask.class);
+    Reporter reporter = Reporter.forClass(GlobalReporterTestTask.class);
 
     @Override
     public ReporterTestOutput run(String input) throws Exception {

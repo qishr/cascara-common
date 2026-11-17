@@ -10,13 +10,13 @@ import integration.test.fixtures.beans.CascaraControl;
 import integration.test.fixtures.beans.SPLStatus;
 import integration.test.fixtures.payload.JmxTestInput;
 import integration.test.fixtures.payload.JmxTestOutput;
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.exec.AbstractExecutionTask;
 import io.github.qishr.cascara.common.util.Cascara;
 
 
 public class JmxTestTask extends AbstractExecutionTask<JmxTestInput, JmxTestOutput> {
-    GlobalReporter reporter = GlobalReporter.forClass(JmxTestTask.class);
+    private static final Reporter REPORTER = Reporter.forClass(JmxTestTask.class);
 
     @Override
     public JmxTestOutput run(JmxTestInput input) throws Exception {
@@ -25,14 +25,14 @@ public class JmxTestTask extends AbstractExecutionTask<JmxTestInput, JmxTestOutp
         Files.walk(Cascara.instance().getHomePath().getParent())
             .forEach(f -> System.out.println(f));
 
-        reporter.debug("Cascara home: " + Cascara.instance().getHomePath());
+            REPORTER.debug("Cascara home: " + Cascara.instance().getHomePath());
 
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
 
 
 
-        reporter.debug("Creating CascaraControl MBean");
+        REPORTER.debug("Creating CascaraControl MBean");
 
         // Create the MBean instance
         CascaraControl cascaraControl = new CascaraControl();
@@ -46,7 +46,7 @@ public class JmxTestTask extends AbstractExecutionTask<JmxTestInput, JmxTestOutp
 
 
 
-        reporter.debug("Creating SPLStatus MBean");
+        REPORTER.debug("Creating SPLStatus MBean");
 
         // Create the MBean instance
         SPLStatus serverStatus = new SPLStatus();
@@ -61,7 +61,7 @@ public class JmxTestTask extends AbstractExecutionTask<JmxTestInput, JmxTestOutp
 
 
 
-        reporter.debug("Setup Complete");
+        REPORTER.debug("Setup Complete");
 
         Thread.sleep(60000 * 60 * 24);
 

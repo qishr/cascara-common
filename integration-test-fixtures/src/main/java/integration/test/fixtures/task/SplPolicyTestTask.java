@@ -1,16 +1,16 @@
 package integration.test.fixtures.task;
 
 import integration.test.fixtures.payload.ReporterTestOutput;
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.exec.AbstractExecutionTask;
 
 public class SplPolicyTestTask extends AbstractExecutionTask<String, ReporterTestOutput> {
-    GlobalReporter reporter = GlobalReporter.forClass(SplPolicyTestTask.class);
+    private static final Reporter REPORTER = Reporter.forClass(SplPolicyTestTask.class);
 
     @Override
     public ReporterTestOutput run(String input) throws Exception {
 
-        reporter.debug(input);
+        REPORTER.debug(input);
 
         // displayVfsContents();
 
@@ -18,7 +18,7 @@ public class SplPolicyTestTask extends AbstractExecutionTask<String, ReporterTes
             42,
             "Hello from the isolated test process.\n" +
             "Input was " + input +
-            ".\nLevel = " + reporter.getLevel()
+            ".\nLevel = " + REPORTER.getLevel()
         );
     }
 }

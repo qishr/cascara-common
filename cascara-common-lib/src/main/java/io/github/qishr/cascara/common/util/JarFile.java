@@ -168,8 +168,10 @@ public class JarFile extends ZipFile {
         return getEntries().stream().map(f -> (java.util.jar.JarEntry) new JarFileEntry(f, getVerifier())).toList();
     }
 
-    public InputStream getInputStream(JarFileEntry entry) throws IOException {
-        verifyEntry(entry);
+    public InputStream getInputStream(ZipEntry entry) throws IOException {
+        if (entry instanceof JarFileEntry jarEntry) {
+            verifyEntry(jarEntry);
+        }
         return super.getInputStream(entry);
     }
 

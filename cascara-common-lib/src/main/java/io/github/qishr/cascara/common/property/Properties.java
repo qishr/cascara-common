@@ -99,6 +99,10 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
         return null;
     }
 
+    public int size() {
+        return propertiesList.size();
+    }
+
     public Object getValue(String name) {
         return get(name);
     }

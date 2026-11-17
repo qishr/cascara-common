@@ -14,9 +14,6 @@ public class MessageEnumTestTask extends AbstractExecutionTask<MessageEnumTestIn
 
         Localizer localizer = Localizer.instance();
 
-        String languageTag = localizer.getActiveLocale().toLanguageTag();
-        // System.out.println("Active locale: " + languageTag);
-
         // 1. Load the specified message enum
         Class<?> messageEnum = Class.forName(input.messageEnumFqcn);
 

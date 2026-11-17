@@ -45,7 +45,7 @@ import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
 
 public class SplTestBase extends VfsTestBase {
     @BeforeEach
-    protected void setUp() throws IOException {
+    protected void setUp() {
         super.setUp();
         resetSplPolicy();
     }

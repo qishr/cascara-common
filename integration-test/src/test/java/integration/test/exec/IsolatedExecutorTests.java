@@ -4,25 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
 import java.time.Duration;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import integration.test.fixtures.payload.ReporterTestOutput;
+import integration.test.fixtures.task.GlobalReporterTestTask;
+import integration.test.fixtures.task.ThrowableTestTask;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmConfig;
-import integration.test.fixtures.payload.ReporterTestOutput;
-import integration.test.fixtures.task.ThrowableTestTask;
-import integration.test.fixtures.task.GlobalReporterTestTask;
 
 public class IsolatedExecutorTests extends ExecTestBase {
-
-    @BeforeEach
-    protected void setUp() throws IOException {
-        super.setUp();
-    }
 
     @Test
     void test_IsolatedExecutor_1() throws Throwable {

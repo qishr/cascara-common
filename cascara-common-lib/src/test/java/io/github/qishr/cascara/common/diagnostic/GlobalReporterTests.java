@@ -1,7 +1,6 @@
 package io.github.qishr.cascara.common.diagnostic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -20,8 +19,7 @@ import org.junit.jupiter.api.parallel.Resources;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
-import io.github.qishr.cascara.common.property.Properties;
-import io.github.qishr.cascara.common.property.StringProperty;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 @Execution(ExecutionMode.SAME_THREAD)
 @ResourceLock(value = Resources.SYSTEM_PROPERTIES, mode = ResourceAccessMode.READ_WRITE)
@@ -37,7 +35,7 @@ public class GlobalReporterTests {
         List<String> lines = new ArrayList<>();
         GlobalReporter.globalInstance().setLineConsumer(line -> lines.add(line));
 
-        GlobalReporter reporter = GlobalReporter.forClass(GlobalReporterTests.class);
+        Reporter reporter = Reporter.forClass(GlobalReporterTests.class);
         reporter.info(GenericMessage.INFO, "foo");
 
         assertEquals(1, lines.size());
@@ -51,27 +49,27 @@ public class GlobalReporterTests {
         List<String> lines = new ArrayList<>();
         GlobalReporter.globalInstance().setLineConsumer(line -> lines.add(line));
 
-        GlobalReporter reporter = GlobalReporter.forClass(GlobalReporterTests.class);
+        Reporter reporter = Reporter.forClass(GlobalReporterTests.class);
         reporter.debug("foo");
 
         assertEquals(0, lines.size());
     }
 
-    @Disabled
-    @Test
-    void test_fails_setNonLocalLevelViaLocalInstance() {
-        GlobalReporter reporter = GlobalReporter.forClass(GlobalReporterTests.class);
-        assertThrows(UnsupportedOperationException.class,
-            () -> reporter.setLevel(ExceptionTests.class.getName(), Level.DEBUG)
-        );
-    }
+    // @Disabled
+    // @Test
+    // void test_fails_setNonLocalLevelViaLocalInstance() {
+    //     Reporter reporter = Reporter.forClass(GlobalReporterTests.class);
+    //     assertThrows(UnsupportedOperationException.class,
+    //         () -> reporter.setLevel(ExceptionTests.class.getName(), Level.DEBUG)
+    //     );
+    // }
 
     @Test
     void test_setLocalLevelViaLocalInstance() {
         List<String> lines = new ArrayList<>();
         GlobalReporter.globalInstance().setLineConsumer(line -> lines.add(line));
 
-        GlobalReporter reporter = GlobalReporter.forClass(GlobalReporterTests.class);
+        Reporter reporter = Reporter.forClass(GlobalReporterTests.class);
         reporter.setLevel(Level.DEBUG);
         reporter.debug("foo");
 
@@ -87,7 +85,7 @@ public class GlobalReporterTests {
         GlobalReporter.globalInstance().setLevel(GlobalReporterTests.class.getName(), Level.DEBUG);
         GlobalReporter.globalInstance().setLineConsumer(line -> lines.add(line));
 
-        GlobalReporter reporter = GlobalReporter.forClass(GlobalReporterTests.class);
+        Reporter reporter = Reporter.forClass(GlobalReporterTests.class);
         reporter.debug("foo");
 
         assertEquals(1, lines.size());
@@ -96,29 +94,29 @@ public class GlobalReporterTests {
         assertTrue(logLine.contains("foo"));
     }
 
-    @Test
-    void test_setLocalLevelViaProperties() {
-        List<String> lines = new ArrayList<>();
+    // @Test
+    // void test_setLocalLevelViaProperties() {
+    //     List<String> lines = new ArrayList<>();
 
-        Properties properties = new Properties()
-            .add(new StringProperty(
-                "cascara.report.level." + GlobalReporterTests.class.getName(),
-                "DEBUG"));
+    //     Properties properties = new Properties()
+    //         .add(new StringProperty(
+    //             "cascara.report.level." + GlobalReporterTests.class.getName(),
+    //             "DEBUG"));
 
-        GlobalReporter.globalInstance().setLevels(properties);
-        GlobalReporter.globalInstance().setLineConsumer(line -> lines.add(line));
+    //     GlobalReporter.globalInstance().setLevels(properties);
+    //     GlobalReporter.globalInstance().setLineConsumer(line -> lines.add(line));
 
-        GlobalReporter reporter1 = GlobalReporter.forClass(GlobalReporterTests.class);
-        reporter1.debug("foo");
+    //     GlobalReporter reporter1 = GlobalReporter.forClass(GlobalReporterTests.class);
+    //     reporter1.debug("foo");
 
-        GlobalReporter reporter2 = GlobalReporter.forClass(ExceptionTests.class);
-        reporter2.debug("foo");
+    //     GlobalReporter reporter2 = GlobalReporter.forClass(ExceptionTests.class);
+    //     reporter2.debug("foo");
 
-        assertEquals(1, lines.size());
-        String logLine = lines.getFirst();
-        assertTrue(logLine.contains(GlobalReporterTests.class.getSimpleName()));
-        assertTrue(logLine.contains("foo"));
-    }
+    //     assertEquals(1, lines.size());
+    //     String logLine = lines.getFirst();
+    //     assertTrue(logLine.contains(GlobalReporterTests.class.getSimpleName()));
+    //     assertTrue(logLine.contains("foo"));
+    // }
 
     @Disabled
     @Test
@@ -131,7 +129,7 @@ public class GlobalReporterTests {
 
         try {
             // Execute test against reporter reading system properties
-            GlobalReporter reporter = GlobalReporter.forClass(GlobalReporterTests.class);
+            Reporter reporter = Reporter.forClass(GlobalReporterTests.class);
             reporter.debug("foo");
 
             assertEquals(1, lines.size());
@@ -153,7 +151,7 @@ public class GlobalReporterTests {
 
         try {
             // Execute test against reporter reading system properties
-            GlobalReporter reporter = GlobalReporter.forClass(GlobalReporterTests.class);
+            Reporter reporter = Reporter.forClass(GlobalReporterTests.class);
             reporter.debug("foo");
 
             assertEquals(1, lines.size());

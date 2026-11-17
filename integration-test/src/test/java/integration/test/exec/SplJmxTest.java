@@ -16,7 +16,6 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXServiceURL;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -44,11 +43,6 @@ import org.junit.jupiter.api.parallel.Isolated;
 @Isolated
 public class SplJmxTest extends JmxTestBase {
     private static final Reporter REPORTER = Reporter.forClass(SplJmxTest.class);
-
-    @BeforeEach
-    protected void setUp() throws IOException {
-        super.setUp();
-    }
 
     private void displayBeanInfo(ClassLoadingMXBean classLoading) {
         REPORTER.debug("Currently loaded: " + classLoading.getLoadedClassCount());

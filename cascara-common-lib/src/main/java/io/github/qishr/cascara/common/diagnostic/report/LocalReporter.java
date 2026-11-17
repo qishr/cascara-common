@@ -34,11 +34,24 @@
 
 package io.github.qishr.cascara.common.diagnostic.report;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Consumer;
+
+import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 
-public class LocalReporter extends AbstractReporter<LocalReporter> {
+public class LocalReporter extends AbstractReporter<LocalReporter> implements DiagnosticReporter {
+
+    /// Consumes diagnostics included in the current Level or more
+    /// important, with ERROR being the most important.
+    protected Set<Consumer<Diagnostic>> diagnosticConsumers = new HashSet<>();
+
+    /// Consumes ERROR, WARN, and INFO diagnostics.
+    protected Consumer<Diagnostic> problemConsumer;
 
     public LocalReporter() {
         consoleLogger = new ConsoleLogger(formatConfig);
@@ -57,4 +70,83 @@ public class LocalReporter extends AbstractReporter<LocalReporter> {
             .setIncluedThread(false)
             .setIncluedSource(false);
     }
+
+
+
+
+    /// {@inheritDoc}
+    @Experimental
+    @Override
+    public boolean collectsProblems() {
+        return GlobalReporter.globalInstance().problemConsumer != null;
+    }
+
+    @Experimental
+    protected Set<Consumer<Diagnostic>> getDiagnosticConsumers() {
+        return diagnosticConsumers;
+    }
+
+    /// {@inheritDoc}
+    @Experimental
+    @Override
+    public LocalReporter addDiagnosticConsumer(Consumer<Diagnostic> consumer) {
+        diagnosticConsumers.add(consumer);
+        return this;
+    }
+
+    /// {@inheritDoc}
+    @Experimental
+    @Override
+    public LocalReporter removeDiagnosticConsumer(Consumer<Diagnostic> consumer) {
+        diagnosticConsumers.remove(consumer);
+        return this;
+    }
+
+    @Experimental
+    protected Consumer<Diagnostic> getProblemConsumer() {
+        return problemConsumer;
+    }
+
+    /// {@inheritDoc}
+    @Experimental
+    @Override
+    public LocalReporter setProblemConsumer(Consumer<Diagnostic> consumer) {
+        problemConsumer = consumer;
+        return this;
+    }
+
+
+
+
+
+
+
+    /// Central reporting method. All other reporting methods call this.
+    @Override
+    public void report(Diagnostic diagnostic) {
+
+        // if (this == globalInstance) {
+            // super.reportAnyLevel(diagnostic);
+            super.report(diagnostic);
+
+            for (Consumer<Diagnostic> consumer : diagnosticConsumers) {
+                consumer.accept(diagnostic);
+            }
+
+            if (getProblemConsumer() != null && isProblem(level)) {
+                getProblemConsumer().accept(diagnostic);
+            }
+
+            // if (SPL.hasBooted()) {
+            //     globalInstance.sendDiagnostic(diagnostic);
+            // } else {
+            //     globalInstance.queue.add(diagnostic);
+            // }
+        // } else {
+        //     if (this.level.includes(diagnostic.getLevel())) {
+        //         globalInstance.report(diagnostic);
+        //     }
+        // }
+    }
+
 }

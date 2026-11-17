@@ -54,25 +54,24 @@ public enum GenericMessage implements LocalizableMessage {
         "'{1}' does not open package '{2}' to module '{3}'. " +
         "To fix this, add 'opens {4} to {5};' to the module-info.java of '{6}'"),
     STREAM_READ_ERROR("ERROR-108", "Failed to read from stream"),
+    CONFIG_LOAD_FAILED("ERROR-109", "Failed to load config: {0}"),
 
     // JRE Exceptions
     EXCEPTION("ERROR-401", "Exception: {0}"),
     RUNTIME_EXCEPTION("ERROR-402", "Runtime exception: {0}"),
     NPE("ERROR-403", "Null pointer exception: {0}"),
-    CLASS_NOT_FOUND("ERROR-404", "No class definition found: {0}"),
+    CLASS_NOT_FOUND("ERROR-404", "Class not found: {0}"),
 
 
     JRE_CLASS_CAST_EXCEPTION("ERROR-405", "Class cast exception: {0}"),
     CLASS_CAST_EXCEPTION("ERROR-406", "Class {0} cannot be cast to {1}"),
 
 
-    CLASS_NOT_SERIALIZABLE("ERROR-416", "Class {0} is not serializable"),
     NO_SUCH_METHOD("ERROR-417", "No such method: {0}"),
     NO_SUCH_CONSTRUCTOR("ERROR-418", "No such constructor: {0}"),
     INVOCATION_TARGET_EXCEPTION("ERROR-420", "Invocation target exception: {0}"),
     ILLEGAL_ARGUMENT_EXCEPTION("ERROR-421", "Iillegal argument exception {0}"),
     INSTANTIATION_EXCEPTION("ERROR-422", "Instantiation exception: {0}"),
-
     EXCEPTION_IN_INITIALIZER("ERROR-423", "Exception in initializer for {0}"),
     ABSTRACT_METHOD_ERROR("ERROR-424", "Abstract method error: {0}"),
     SERVICE_CONFIG_ERROR("ERROR-425", "Service configuration error: {0}"),
@@ -83,10 +82,14 @@ public enum GenericMessage implements LocalizableMessage {
     UNSUPPORTED_OPERATION("ERROR-430","Unsupported operation: {0}.{1}"),
     UNSATISFIED_LINK_ERROR("ERROR-431","Unsatisfied link error: {0"),
     INTERNAL_ERROR("ERROR-432","Internal error: {0}"),
+    REFLECTIVE_OPERATION_EXCEPTION("ERROR-433","Reflective operation exception: {0}"),
 
+
+    // TODO: These should probably be in SecurityMessage...
     CERTIFICATE_EXCEPTION("ERROR-433", "Certificate exception: {0}"),
     INVALID_ALGORITHM_PARAMETER_EXCEPTION("ERROR-434", "Invalid algorithm parameter exception: {0}"),
     NO_SUCH_ALGORITHM_EXCEPTION("ERROR-435", "No such algorithm exception: {0}"),
+
 
     // IO Errors
     IO_ERROR("ERROR-301", "IO error: {0}"),
@@ -101,8 +104,9 @@ public enum GenericMessage implements LocalizableMessage {
     DIAGNOSTIC_FORMATTING_ERROR("ERROR-406", "Problem encountered while formatting error with code {0}: {1}"),
 
     // Resource Errors
-    NO_RESOURCE_PROVIDER("ERROR-501", "No resource provider for \"{0}\" URI scheme");
+    NO_RESOURCE_PROVIDER("ERROR-501", "No resource provider for \"{0}\" URI scheme"),
 
+    CLASS_NOT_SERIALIZABLE("ERROR-601", "Class {0} is not serializable");
 
     private final String code;
     private final String format;

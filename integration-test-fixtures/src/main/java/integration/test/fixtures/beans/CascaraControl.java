@@ -6,13 +6,15 @@ import javax.management.JMException;
 
 import integration.test.fixtures.TestService;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.report.ClassReporter;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
 
 public class CascaraControl implements CascaraControlMBean {
-    private static final GlobalReporter REPORTER = GlobalReporter.forClass(CascaraControl.class);
+    private static final ClassReporter REPORTER = Reporter.forClass(CascaraControl.class);
 
     public CascaraControl() {
     }
@@ -30,7 +32,7 @@ public class CascaraControl implements CascaraControlMBean {
         } catch (Exception e) {
             REPORTER.error(e, GenericMessage.ERROR, "Failed to load module", e.getMessage());
             // Strip non-serializable ZipPath references before crossing RMI boundary
-            throw new JMException(e.getClass().getName() + ": " + e.getMessage());
+            throw new JMException(e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 
@@ -44,7 +46,7 @@ public class CascaraControl implements CascaraControlMBean {
         } catch (Exception e) {
             REPORTER.error(e, GenericMessage.ERROR, "Failed to load module", e.getMessage());
             // Strip non-serializable ZipPath references before crossing RMI boundary
-            throw new JMException(e.getClass().getName() + ": " + e.getMessage());
+            throw new JMException(e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 

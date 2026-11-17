@@ -75,11 +75,17 @@ public final class JvmProcess {
     public Response run(String input) {
         try {
             return runAsync(input).get();
+        } catch (java.lang.IllegalThreadStateException e) {
+            // Caused by: java.lang.IllegalThreadStateException: process hasn't exited
+            throw new ExecutionException(e.getCause(), ExecutionMessage.PROCESS_NOT_EXITED, mainClass.getName());
         } catch (java.util.concurrent.ExecutionException e) {
-            if (e.getCause() instanceof ExecutionException ex) {
-                throw ex;
+            if (e.getCause() instanceof ExecutionException cause) {
+                throw cause;
             }
-            throw new ExecutionException(e.getCause(), ExecutionMessage.PROCESS_FAILED, mainClass.getName());
+            if (e.getCause() instanceof IllegalThreadStateException cause) {
+                throw new ExecutionException(cause, ExecutionMessage.PROCESS_NOT_EXITED, mainClass.getName());
+            }
+            throw new ExecutionException(e, ExecutionMessage.PROCESS_NOT_STARTED, mainClass.getName());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new ExecutionException(e, ExecutionMessage.INTERRUPT, mainClass.getName());
@@ -120,7 +126,7 @@ public final class JvmProcess {
             return CompletableFuture.failedFuture(
                 new io.github.qishr.cascara.common.exec.ExecutionException(
                     e,
-                    ExecutionMessage.PROCESS_FAILED,
+                    ExecutionMessage.PROCESS_NOT_STARTED,
                     mainClass.getName()
                 )
             );
@@ -151,10 +157,12 @@ public final class JvmProcess {
         CompletableFuture<Process> processCompletion = process.onExit();
 
         if (timeoutMs > 0) {
-            processCompletion = processCompletion.orTimeout(timeoutMs, TimeUnit.MILLISECONDS)
-                .exceptionally(ex -> {
+            processCompletion = processCompletion
+                .orTimeout(timeoutMs, TimeUnit.MILLISECONDS)
+                .exceptionallyCompose(ex -> {
                     process.destroyForcibly();
-                    return process;
+                    // Sends SIGKILL and returns a CompletableFuture that resolves ONLY when the process actually dies
+                    return process.destroyForcibly().onExit();
                 });
         }
 
@@ -162,11 +170,15 @@ public final class JvmProcess {
             CompletableFuture.allOf(stdoutFuture, stderrFuture).thenApply(v -> {
                 long elapsedNanos = System.nanoTime() - startTime;
                 boolean timedOut = !p.isAlive() && timeoutMs > 0 && (elapsedNanos / 1_000_000) >= timeoutMs;
-                int exitCode = timedOut ? -1 : p.exitValue();
+
+                int exitCode = timedOut
+                    ? -1
+                    : p.isAlive() ? -99 : p.exitValue();
 
                 return new Response(
                     command,
                     jvmConfig,
+                    p.pid(),
                     exitCode,
                     timedOut,
                     stdoutFuture.join(),
@@ -241,15 +253,17 @@ public final class JvmProcess {
     public static class Response {
         public final List<String> command;
         public final JvmConfig jvmConfig;
+        public final long pid;
         public final int exitCode;
         public final boolean timedOut;
         public final String out;
         public final String err;
         public final Duration duration;
 
-        Response( List<String> command, JvmConfig jvmjvmConfig, int exitCode, boolean timedOut, String out, String err, Duration duration) {
+        Response( List<String> command, JvmConfig jvmjvmConfig, long pid, int exitCode, boolean timedOut, String out, String err, Duration duration) {
             this.command = command;
             this.jvmConfig = jvmjvmConfig;
+            this.pid = pid;
             this.exitCode = exitCode;
             this.timedOut = timedOut;
             this.out = out;

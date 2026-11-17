@@ -55,7 +55,7 @@ public class JvmConfig {
     private boolean inheritParentModulePath = true;
     private boolean inheritParentClassPath = true;
     private final List<String> args = new ArrayList<>();
-    private Duration timeout = Duration.ofSeconds(10);
+    private Duration timeout = Duration.ofSeconds(20);
     private boolean debug;
 
     public Map<String, String> getSystemProperties() {

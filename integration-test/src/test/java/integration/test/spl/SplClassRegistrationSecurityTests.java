@@ -33,7 +33,7 @@ public class SplClassRegistrationSecurityTests extends SplTestBase {
     }
 
     @BeforeEach
-    protected void setUp() throws IOException {
+    protected void setUp() {
         super.setUp();
         System.setProperty(SPL.CASCARA_SPL_VERIFY, "true");
     }

@@ -36,16 +36,17 @@ package io.github.qishr.cascara.common.lang.processor;
 
 import org.junit.jupiter.api.BeforeEach;
 
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.ClassReporter;
 import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public abstract class SerializerTestBase {
-    protected GlobalReporter reporter;
+    protected ClassReporter reporter;
     // protected Serializer<?> serializer;
 
     @BeforeEach
     protected void setUp() {
-        reporter = GlobalReporter.forClass(getClass());
+        reporter = Reporter.forClass(getClass());
         // serializer = new SerializerImpl();
         // serializer.setReporter(new LocalReporter());
     }

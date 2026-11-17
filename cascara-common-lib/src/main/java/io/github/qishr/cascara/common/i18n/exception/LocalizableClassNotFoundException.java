@@ -32,15 +32,45 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.annotation;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
+package io.github.qishr.cascara.common.i18n.exception;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface ConfigurationProperty {
-    String name() default "";
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.Localizer;
+
+public class LocalizableClassNotFoundException extends ClassNotFoundException implements LocalizableException {
+
+    private final LocalizableMessage localizableMessage;
+    private final Object[] details;
+
+    public LocalizableClassNotFoundException(Throwable cause, String className) {
+        super(cause.getMessage());
+        localizableMessage = GenericMessage.CLASS_NOT_FOUND;
+        this.details = new Object[]{ className };
+    }
+
+    /// {@inheritDoc}
+    @Override
+	public LocalizableMessage getLocalizableMessage() {
+		return localizableMessage;
+	}
+
+    /// {@inheritDoc}
+    @Override
+	public Object[] getDetails() {
+		return details;
+	}
+
+    /// {@inheritDoc}
+    @Override
+    public String getLocalizedMessage() {
+        return Localizer.instance().format(localizableMessage, details);
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public String getMessage() {
+        return Localizer.instance().formatException(localizableMessage, details);
+    }
 }

@@ -74,25 +74,26 @@ public class NoOpReporter implements Reporter {
         return this;
     }
 
+    // TODO: SHould this be here?
     @Override
     public Reporter setLineConsumer(Consumer<String> logger) {
         return this;
     }
 
-    @Override
-    public NoOpReporter addDiagnosticConsumer(Consumer<Diagnostic> diagnosticCollector) {
-        return this;
-    }
+    // @Override
+    // public NoOpReporter addDiagnosticConsumer(Consumer<Diagnostic> diagnosticCollector) {
+    //     return this;
+    // }
 
-    @Override
-    public NoOpReporter removeDiagnosticConsumer(Consumer<Diagnostic> diagnosticCollector) {
-        return this;
-    }
+    // @Override
+    // public NoOpReporter removeDiagnosticConsumer(Consumer<Diagnostic> diagnosticCollector) {
+    //     return this;
+    // }
 
-    @Override
-    public NoOpReporter setProblemConsumer(Consumer<Diagnostic> diagnosticCollector) {
-        return this;
-    }
+    // @Override
+    // public NoOpReporter setProblemConsumer(Consumer<Diagnostic> diagnosticCollector) {
+    //     return this;
+    // }
 
     public NoOpReporter setDisableSystemOutput(boolean b) {
         return this;

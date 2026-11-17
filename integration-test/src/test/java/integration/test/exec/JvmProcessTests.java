@@ -4,36 +4,29 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import integration.test.fixtures.task.GlobalReporterTestTask;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcException;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
-import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
+import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
-import integration.test.fixtures.task.GlobalReporterTestTask;
 
 public class JvmProcessTests extends ExecTestBase {
     @RegisterExtension
     static final AssertReportedExtension assertReported = new AssertReportedExtension();
-
-    @BeforeEach
-    protected void setUp() throws IOException {
-        super.setUp();
-    }
 
     @Test
     void test_JvmProcess_withoutIPC() throws Exception {

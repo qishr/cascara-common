@@ -43,11 +43,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
-import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
@@ -113,71 +111,74 @@ public abstract class AbstractExecutionTask<I, O> {
 
     @SuppressWarnings("unchecked")
     public void run(Class<?> targetClass, Class<?> inputClass) {
-
-        // TODO: Make this configurable via -D
-        // same for spl boot errors to system.err
-
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
-
-        GlobalReporter.globalInstance().setStackTraceEnabled(true);
-
-        StringBuilder sb = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
-            char[] buffer = new char[4096];
-            int count;
-            while ((count = reader.read(buffer)) != -1) {
-                sb.append(buffer, 0, count);
-            }
-        } catch (IOException e) {
-            throw new ExecutionException(e, ExecutionMessage.PROCESS_FAILED, targetClass.getName());
-        }
-
-        String json = sb.toString();
-
-        Serializer<?> serializer = IpcConfig.createSerializer();
-        if (serializer == null) {
-            // TODO: Better exception
-            throw new ExecutionException(GenericMessage.ERROR,"Serializer not available");
-        }
-
-        I object = null;
-        if (!json.isBlank()) {
-            Object deserialized = serializer.fromString(json, inputClass);
-            object = (I) deserialized;
-        }
-
         Throwable thrownByTask = null;
-
         O response = null;
-        if (object == null) {
-            // TODO: ExecutionException
-            error("Failed to deserialize payload: " + json);
-            return;
-        } else {
-            try {
-                response = run(object);
-            } catch (Throwable e) {
-                thrownByTask = e;
-            }
-        }
 
-        // Emit task output payload via IpcClient if IPC is enabled, otherwise fallback to stdout
-        if (response != null || thrownByTask != null) {
-            try (IpcClient ipcClient = IpcClient.tryConnect(serializer)) {
-                if (ipcClient != null) {
-                    if (thrownByTask != null) {
-                        ipcClient.send(thrownByTask);
-                    } else {
-                        ipcClient.send(response);
-                    }
-                }else {
-                    System.out.println(serializer.toString(response));
+        try {
+            // TODO: Make this configurable via -D
+            // same for spl boot errors to system.err
+
+            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
+            GlobalReporter.globalInstance().setStackTraceEnabled(true);
+
+            StringBuilder sb = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+                char[] buffer = new char[4096];
+                int count;
+                while ((count = reader.read(buffer)) != -1) {
+                    sb.append(buffer, 0, count);
                 }
             } catch (IOException e) {
-                error(e, "Failed to transmit task output over IPC: " + e.getMessage());
-                // Fallback to stdout if socket transmit fails
-                System.out.println(serializer.toString(response));
+                throw new ExecutionException(e, ExecutionMessage.PROCESS_NOT_STARTED, targetClass.getName());
             }
+
+            String json = sb.toString();
+
+            Serializer<?> serializer = IpcConfig.createSerializer();
+            if (serializer == null) {
+                // TODO: Better exception
+                throw new ExecutionException(GenericMessage.ERROR,"Serializer not available");
+            }
+
+            I object = null;
+            if (!json.isBlank()) {
+                Object deserialized = serializer.fromString(json, inputClass);
+                object = (I) deserialized;
+            }
+
+            if (object == null) {
+                // TODO: ExecutionException
+                error("Failed to deserialize payload: " + json);
+                return;
+            } else {
+                try {
+                    response = run(object);
+                } catch (Throwable e) {
+                    thrownByTask = e;
+                }
+            }
+
+            // Emit task output payload via IpcClient if IPC is enabled, otherwise fallback to stdout
+            if (response != null || thrownByTask != null) {
+                try (IpcClient ipcClient = IpcClient.tryConnect(serializer)) {
+                    if (ipcClient != null) {
+                        if (thrownByTask != null) {
+                            ipcClient.send(thrownByTask);
+                        } else {
+                            ipcClient.send(response);
+                        }
+                    }else {
+                        System.out.println(serializer.toString(response));
+                    }
+                } catch (IOException e) {
+                    error(e, "Failed to transmit task output over IPC: " + e.getMessage());
+                    // Fallback to stdout if socket transmit fails
+                    System.out.println(serializer.toString(response));
+                }
+            }
+        } catch (Throwable t) {
+            error("Exception during task initialization: " + t.getLocalizedMessage());
         }
     }
 
@@ -196,6 +197,6 @@ public abstract class AbstractExecutionTask<I, O> {
     }
 
     protected void error(Throwable cause, String msg) {
-        System.err.println(msg);
+        System.err.println(cause == null ? "" : cause.getClass().getSimpleName() + ": " + msg);
     }
 }

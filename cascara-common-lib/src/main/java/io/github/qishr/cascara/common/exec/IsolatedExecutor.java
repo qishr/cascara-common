@@ -34,7 +34,9 @@
 
 package io.github.qishr.cascara.common.exec;
 
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import io.github.qishr.cascara.common.annotation.Beta;
@@ -55,9 +57,10 @@ public class IsolatedExecutor {
     private final Class<? extends AbstractExecutionTask<?,?>> task;
     private final Serializer<?> serializer;
     private boolean ipcDebug;
-    private boolean exceptionForwarding;
+    private boolean exceptionForwarding = true;
     private boolean diagnosticForwarding;
     private boolean filterDiagnosticsByLevel;
+    private Response<?> response;
 
     private IsolatedExecutor(Class<? extends AbstractExecutionTask<?,?>> task, Class<?> response) {
         this.jvmProcess = JvmProcess.forClass(task);
@@ -77,6 +80,10 @@ public class IsolatedExecutor {
 
     public Serializer<?> getSerializer() {
         return serializer;
+    }
+
+    public JvmConfig getJvmConfig() {
+        return jvmConfig;
     }
 
     public IsolatedExecutor setJvmConfig(JvmConfig jvmConfig) {
@@ -154,16 +161,45 @@ public class IsolatedExecutor {
             throw new ExecutionException(e, ExecutionMessage.DIAGNOSTIC_SERVER_FAILED, task.getName());
         }
 
+        Response<T> response = new Response<T>(jvmResponse, task, taskResponse, diagnostics, !jvmResponse.timedOut && jvmResponse.exitCode == 0);
+        this.response = response;
+
         if (exceptionForwarding) {
             if (clientException instanceof SerializedThrowable st) {
-                throw st.recreateOriginal();
+                StackTraceElement[] callerTrace = Thread.currentThread().getStackTrace();
+                Throwable childException = st.recreateOriginal();
+                stitchStackTrace(childException, callerTrace, jvmResponse.pid);
+                throw childException;
             }
             if (clientException != null) {
                 throw clientException;
             }
         }
 
-        return new Response<T>(jvmResponse, task, taskResponse, diagnostics, !jvmResponse.timedOut && jvmResponse.exitCode == 0);
+        return response;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Response<T> getResponse() {
+        return (Response<T>) response;
+    }
+
+    private void stitchStackTrace(Throwable target, StackTraceElement[] callerTrace, long pid) {
+        StackTraceElement[] childTrace = target.getStackTrace();
+
+        List<StackTraceElement> combined = new ArrayList<>(Arrays.asList(childTrace));
+
+        // Optional: Insert a visual boundary frame so it's obvious where the process boundary is
+        combined.add(new StackTraceElement(
+            String.format("--- Isolated Process %d Boundary ---", pid), "", "", -1
+        ));
+
+        // Append caller frames (skipping internal Thread.getStackTrace frames)
+        for (int i = 2; i < callerTrace.length; i++) {
+            combined.add(callerTrace[i]);
+        }
+
+        target.setStackTrace(combined.toArray(new StackTraceElement[0]));
     }
 
     public static class Response<T> {
@@ -175,6 +211,7 @@ public class IsolatedExecutor {
         private final T payload;
         private final List<Diagnostic> diagnostics;
         private final boolean success;
+        private final Duration duration;
 
         Response(JvmProcess.Response jvmResponse, Class<? extends AbstractExecutionTask<?,?>> task, T payload, List<Diagnostic> diagnostics, boolean success) {
             this.command = jvmResponse.command;
@@ -185,6 +222,7 @@ public class IsolatedExecutor {
             this.payload = payload;
             this.diagnostics = diagnostics;
             this.success = success;
+            this.duration = jvmResponse.duration;
         }
 
         public T getPayload() {
@@ -204,6 +242,10 @@ public class IsolatedExecutor {
 
         public boolean isSuccess() {
             return success;
+        }
+
+        public Duration getDuration() {
+            return duration;
         }
 
         public List<String> getCommand() {

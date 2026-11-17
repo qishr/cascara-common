@@ -48,35 +48,39 @@ public interface Reporter {
 
     /// Gets a `GlobalReporter` instance for the specifie class.
     /// @param clazz the class to get a `GlobalReporter` instance for.
-    static Reporter forClass(Class<?> clazz) {
-        return GlobalReporter.forSource(clazz.getName());
+    static ClassReporter forClass(Class<?> clazz) {
+        return GlobalReporter.forClass(clazz);
     }
 
     /// Sets the level of output when logging directly to the console.
     Reporter setLevel(Level level);
 
+    // TODO: Remove these from here - they belong solely to DiagnosticReproter...
+
     @Experimental
     Reporter setLineConsumer(Consumer<String> logger);
 
-    /// Registers a consumer to receive all diagnostics processed by this reporter.
-    /// This includes debugging info, trace states, warnings, and error diagnostics.
-    ///
-    /// @param consumer The consumer that processes each produced [Diagnostic].
-    @Experimental
-    Reporter addDiagnosticConsumer(Consumer<Diagnostic> consumer);
+    // /// Registers a consumer to receive all diagnostics processed by this reporter.
+    // /// This includes debugging info, trace states, warnings, and error diagnostics.
+    // ///
+    // /// @param consumer The consumer that processes each produced [Diagnostic].
+    // @Experimental
+    // Reporter addDiagnosticConsumer(Consumer<Diagnostic> consumer);
 
-    /// Unregisters a consumer of diagnostic reports.
-    ///
-    /// @param consumer The consumer that processes each produced [Diagnostic].
-    @Experimental
-    Reporter removeDiagnosticConsumer(Consumer<Diagnostic> consumer);
+    // /// Unregisters a consumer of diagnostic reports.
+    // ///
+    // /// @param consumer The consumer that processes each produced [Diagnostic].
+    // @Experimental
+    // Reporter removeDiagnosticConsumer(Consumer<Diagnostic> consumer);
 
-    /// Registers a consumer to receive only problem-level diagnostics.
-    /// This collector is filtered to intercept only `Level.WARN` and `Level.ERROR` items.
-    ///
-    /// @param consumer The consumer that processes problem [Diagnostic] objects.
-    @Experimental
-    Reporter setProblemConsumer(Consumer<Diagnostic> consumer);
+    // /// Registers a consumer to receive only problem-level diagnostics.
+    // /// This collector is filtered to intercept only `Level.WARN` and `Level.ERROR` items.
+    // ///
+    // /// @param consumer The consumer that processes problem [Diagnostic] objects.
+    // @Experimental
+    // Reporter setProblemConsumer(Consumer<Diagnostic> consumer);
+
+    // TODO: This should probably move too...
 
     /// Checks whether any active consumer is collecting problems.
     ///

@@ -230,7 +230,7 @@ public class SPLRoot extends SPLBranch {
                     }
                     REPORTER.warn(e);
                     continue;
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     if (isLoggingBootErrorsToConsole()) {
                         System.err.println(e.getMessage());
                     }

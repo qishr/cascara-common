@@ -58,6 +58,7 @@ import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.diagnostic.report.ClassReporter;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.ReportWriter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
@@ -295,10 +296,9 @@ public class IpcServer implements AutoCloseable {
 
                     // Forward diagnostics from the child JVM process
                     if (diagnosticForwarding && payload instanceof Diagnostic diagnostic) {
-
                         if (filterDiagnosticsByLevel) {
                             // This reports forwarded diagnostics that are included in the source's level:
-                            GlobalReporter reporter = GlobalReporter.forSource(diagnostic.getSource());
+                            ClassReporter reporter = GlobalReporter.forSource(diagnostic.getSource());
                             if (reporter != null) {
                                 reporter.report(diagnostic);
                             }

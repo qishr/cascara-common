@@ -54,7 +54,8 @@ import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.semver.SemVerException;
 
-public class Cascara {
+// TODO: @ConfigNamepsace("cascara") ?
+public class Cascara extends AbstractConfig {
     private static final String CASCARA_HOME = "CASCARA_HOME";
     private static final String CASC_HOME = "CASC_HOME";
 
@@ -125,6 +126,10 @@ public class Cascara {
         return getActiveVersionPath().resolve(SPL_PROPRTTIES);
     }
 
+    public Path getCascaraPropertiesPath() {
+        return getSharedPath().resolve(CASCARA_PROPERTIES);
+    }
+
     @SuppressWarnings("null")
     @NonNull
     public Path getModulePath() {
@@ -182,7 +187,12 @@ public class Cascara {
     @Nullable
     public String getActiveVersionString() {
         List<String> installedVersions = getInstalledVersions();
-        Path path = getSharedPath().resolve(CASCARA_PROPERTIES);
+
+
+        // Path path = getSharedPath().resolve(CASCARA_PROPERTIES);
+        Path path = getCascaraPropertiesPath();
+
+
         if (Files.isRegularFile(path)) {
             try {
                 Properties properties = Properties.fromFile(path);

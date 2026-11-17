@@ -36,7 +36,6 @@ package io.github.qishr.cascara.common.service.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
@@ -558,7 +557,7 @@ public class SPLBranch implements SPL {
                 } catch (AbstractMethodError | ServiceConfigurationError e) {
                     registrationFailure("Incompatible module.", jarPath, e, isAutoRegistration);
                 } catch (Exception e) {
-                    REPORTER.debug(e.getClass().getName() + " while loading " + className + ": " + e.getMessage());
+                    REPORTER.debug(e.getClass().getSimpleName() + " while loading " + className + ": " + e.getMessage());
                     registrationFailure("Failed to instantiate candidate provider " + className + ".", jarPath, e, true);
                 }
             }
@@ -609,10 +608,10 @@ public class SPLBranch implements SPL {
     }
 
     protected static void verifySignature(JarFile jar) {
+
         List<ZipEntry> entries = jar.getEntries();
         for (ZipEntry entry : entries) {
             try (InputStream in = jar.getInputStream(entry)) {
-                in.transferTo(OutputStream.nullOutputStream());
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -793,7 +792,7 @@ public class SPLBranch implements SPL {
                 declaredProviders.add(provider);
             }
         } catch(AbstractMethodError | ServiceConfigurationError e) {
-            registrationFailure("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e, isAutoRegistration);
+            registrationFailure("Incompatible module: " + instance.getClass().getSimpleName() + ".", jarPath, e, isAutoRegistration);
         }
     }
 

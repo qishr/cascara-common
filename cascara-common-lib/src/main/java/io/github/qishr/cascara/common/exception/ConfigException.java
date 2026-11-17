@@ -32,15 +32,15 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.annotation;
+package io.github.qishr.cascara.common.exception;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface PropertiesNamespace {
-    String value() default "";
+public class ConfigException extends LocalizableRuntimeException {
+
+    public ConfigException(Throwable cause, LocalizableMessage message, Object... details) {
+        super(cause, message, details);
+    }
+
 }
