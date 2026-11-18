@@ -74,7 +74,7 @@ module cascara.common {
     exports io.github.qishr.cascara.common.security.asn1.types.string;
     exports io.github.qishr.cascara.common.security.cert;
     exports io.github.qishr.cascara.common.security.cms;
-    exports io.github.qishr.cascara.common.security.diagnostic;
+    exports io.github.qishr.cascara.common.security.exception;
     exports io.github.qishr.cascara.common.security.policy;
     exports io.github.qishr.cascara.common.security.verifier;
     exports io.github.qishr.cascara.common.semver;

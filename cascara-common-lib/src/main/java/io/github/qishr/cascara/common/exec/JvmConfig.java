@@ -62,8 +62,12 @@ public class JvmConfig {
         return systemProperties;
     }
 
-    public JvmConfig setSystemProperty(String key, String value) {
-        this.systemProperties.put(key, value);
+    public JvmConfig setSystemProperty(String key, Object value) {
+        if (value == null) {
+            systemProperties.remove(key);
+        } else {
+            systemProperties.put(key, value.toString());
+        }
         return this;
     }
 
@@ -71,8 +75,12 @@ public class JvmConfig {
         return environmentVariables;
     }
 
-    public JvmConfig setEnv(String key, String value) {
-        this.environmentVariables.put(key, value);
+    public JvmConfig setEnv(String key, Object value) {
+        if (value == null) {
+            environmentVariables.remove(key);
+        } else {
+            environmentVariables.put(key, value.toString());
+        }
         return this;
     }
 
@@ -92,7 +100,7 @@ public class JvmConfig {
     /// Configures JPMS --add-opens syntax: module/package=targetModule
     /// e.g., "java.base/java.lang=cascara.common"
     public JvmConfig addOpens(String target) {
-        this.addOpens.add(target);
+        addOpens.add(target);
         return this;
     }
 
@@ -102,7 +110,7 @@ public class JvmConfig {
 
     /// Configures JPMS --add-reads syntax: sourceModule=targetModule
     public JvmConfig addReads(String target) {
-        this.addReads.add(target);
+        addReads.add(target);
         return this;
     }
 
@@ -111,7 +119,7 @@ public class JvmConfig {
     }
 
     public JvmConfig setModulePath(String modulePath) {
-        this.customModulePath = modulePath;
+        customModulePath = modulePath;
         return this;
     }
 
@@ -120,7 +128,7 @@ public class JvmConfig {
     }
 
     public JvmConfig setClassPath(String classPath) {
-        this.customClassPath = classPath;
+        customClassPath = classPath;
         return this;
     }
 
@@ -147,7 +155,7 @@ public class JvmConfig {
     }
 
     public JvmConfig setArg(String arg) {
-        this.args.add(arg);
+        args.add(arg);
         return this;
     }
 
@@ -170,7 +178,7 @@ public class JvmConfig {
     }
 
     public JvmConfig setDebug(boolean enabled) {
-        this.debug = enabled;
+        debug = enabled;
         return this;
     }
 
@@ -179,7 +187,7 @@ public class JvmConfig {
     }
 
     public JvmConfig setModuleName(String name) {
-        this.moduleName = name;
+        moduleName = name;
         return this;
     }
 }

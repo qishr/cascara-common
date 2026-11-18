@@ -38,7 +38,7 @@ package io.github.qishr.cascara.common.service;
 import java.util.function.Predicate;
 
 import io.github.qishr.cascara.common.annotation.Beta;
-import io.github.qishr.cascara.common.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.exception.UnexpectedNullValueException;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.util.ContentType;
 
@@ -76,7 +76,7 @@ public class CapabilityQueries {
     /// Matches if a property is a boolean flag set to true
     public static Predicate<ServiceMetadata> supportsJvmTypeOrSupertype(Class<?> jvmType) {
         if (jvmType == null) {
-            throw new UnexpectedNullParameterException("jvmType");
+            throw new UnexpectedNullValueException("jvmType");
         }
         return meta -> {
             Properties props = meta.getProperties();
@@ -96,7 +96,7 @@ public class CapabilityQueries {
     /// Matches if a property is a boolean flag set to true
     public static Predicate<ServiceMetadata> supportsExactJvmType(Class<?> jvmType) {
         if (jvmType == null) {
-            throw new UnexpectedNullParameterException("jvmType");
+            throw new UnexpectedNullValueException("jvmType");
         }
         return meta -> {
             Properties props = meta.getProperties();

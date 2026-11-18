@@ -51,7 +51,7 @@ import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.data.TabularData;
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.exception.UnexpectedNullValueException;
 import io.github.qishr.cascara.common.exception.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
@@ -79,7 +79,7 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
     @Nullable
     public <T> Property<T> getProperty(String name) {
         if (name == null) {
-            throw new UnexpectedNullParameterException("name");
+            throw new UnexpectedNullValueException("name");
         }
 
         List<Property<?>> snapshot = new ArrayList<>(propertiesList);
@@ -110,7 +110,7 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
     @Nullable
     public <T> T get(String name) {
         if (name == null) {
-            throw new UnexpectedNullParameterException("name");
+            throw new UnexpectedNullValueException("name");
         }
 
         List<Property<?>> snapshot = new ArrayList<>(propertiesList);
@@ -341,7 +341,7 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
 
     public static Properties fromFile(Path path) throws IOException {
         if (path == null) {
-            throw new UnexpectedNullParameterException("path");
+            throw new UnexpectedNullValueException("path");
         }
         if (Files.isRegularFile(path)) {
             try {
@@ -357,7 +357,7 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
 
     public static Properties fromStream(InputStream is) throws IOException {
         if (is == null) {
-            throw new UnexpectedNullParameterException("is");
+            throw new UnexpectedNullValueException("is");
         }
         try {
             return parse(new String(is.readAllBytes(), StandardCharsets.UTF_8));
@@ -369,7 +369,7 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
     public static class PropertyParser {
         public static Properties parse(String content) {
             if (content == null) {
-                throw new UnexpectedNullParameterException("content");
+                throw new UnexpectedNullValueException("content");
             }
 
             Properties properties = new Properties();

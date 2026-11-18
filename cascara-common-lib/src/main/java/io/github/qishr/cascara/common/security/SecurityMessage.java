@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.security.diagnostic;
+package io.github.qishr.cascara.common.security;
 
 import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 
@@ -17,7 +17,8 @@ public enum SecurityMessage implements LocalizableMessage {
     MISSING_ATTRIBUTES("SEC-112", "Missing attributes for entry {0} in MANIFEST.MF"),
     MISSING_DIGEST("SEC-113", "Missing digest for {0}"),
     MISSING_KEY_FILE("SEC-114", "Missing key file"),
-    EXTRA_KEY_FILE("SEC-115", "Extra key file");
+    EXTRA_KEY_FILE("SEC-115", "Extra key file"),
+    VERIFIER_INIT_FAILED("SEC-116", "Jar verifier initialization failed: {0}");
 
     private final String code;
     private final String format;

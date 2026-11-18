@@ -16,6 +16,21 @@ import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 
 public abstract class TestBase {
+    // Environment variables
+    public static final String EV_CASCARA_HOME = "CASCARA_HOME";
+
+    // System properties
+    public static final String SP_CASCARA_SPL_DISCOVER = "cascara.spl.discover";
+    public static final String SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE = "cascara.spl.boot-errors-to-console";
+    public static final String SP_CASCARA_SPL_VERIFY = "cascara.spl.verify";
+    public static final String SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED = "cascara.spl.policy.require-signed";
+    public static final String SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES = "cascara.spl.policy.require-signed-classes";
+    public static final String SP_CASCARA_SPL_POLICY_CHECK_EXPIRY = "cascara.spl.policy.check-expiry";
+
+    // Properties file path system properties
+    public static final String SP_CASCARA_REPORT_PROPERTIES = "cascara.report.properties";
+    public static final String SP_CASCARA_SPL_PROPERTIES = "cascara.spl.properties";
+
     private static final Reporter REPORTER = Reporter.forClass(TestBase.class);
 
     @TempDir

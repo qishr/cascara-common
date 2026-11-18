@@ -50,6 +50,9 @@ import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
+import io.github.qishr.cascara.common.type.cascara.LocalizableMessageDescriptor;
+import io.github.qishr.cascara.common.type.cascara.SignatureExceptionSerializer;
+import io.github.qishr.cascara.common.type.lang.ThrowableSerializer;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
@@ -141,6 +144,13 @@ public abstract class AbstractExecutionTask<I, O> {
                 throw new ExecutionException(GenericMessage.ERROR,"Serializer not available");
             }
 
+            // Register ThrowableSeriaizer and LocalizableMessageDescriptor
+            // so that even if SPL isn't evailable, exceptions and
+            // diagnostic messages can still be serialized.
+            serializer.registerTypeDescriptor(new ThrowableSerializer());
+            serializer.registerTypeDescriptor(new LocalizableMessageDescriptor());
+            serializer.registerTypeDescriptor(new SignatureExceptionSerializer());
+
             I object = null;
             if (!json.isBlank()) {
                 Object deserialized = serializer.fromString(json, inputClass);
@@ -197,6 +207,8 @@ public abstract class AbstractExecutionTask<I, O> {
     }
 
     protected void error(Throwable cause, String msg) {
-        System.err.println(cause == null ? "" : cause.getClass().getSimpleName() + ": " + msg);
+        System.err.println(cause == null
+            ? msg
+            : (cause.getClass().getSimpleName() + ": " + msg));
     }
 }

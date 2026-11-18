@@ -16,9 +16,9 @@ import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Tagged
 import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1Integer;
 import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectIdentifier;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
-import io.github.qishr.cascara.common.security.diagnostic.InvalidKeyException;
-import io.github.qishr.cascara.common.security.diagnostic.UnsupportedAlgorithmException;
-import io.github.qishr.cascara.common.security.diagnostic.UnsupportedDigestException;
+import io.github.qishr.cascara.common.security.exception.InvalidKeyException;
+import io.github.qishr.cascara.common.security.exception.UnsupportedAlgorithmException;
+import io.github.qishr.cascara.common.security.exception.UnsupportedDigestException;
 import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 

@@ -40,10 +40,10 @@ import io.github.qishr.cascara.common.util.Pair;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 // TODO: This should extend IllegalArgumentException and implement LocalizableException
-public class UnexpectedNullParameterException extends LocalizableRuntimeException {
+public class UnexpectedNullValueException extends LocalizableRuntimeException {
 
-    public UnexpectedNullParameterException(String paramName) {
-        super(GenericMessage.UNEXPECTED_NULL_PARAMETER, buildMethoDetails(paramName));
+    public UnexpectedNullValueException(String paramName) {
+        super(GenericMessage.UNEXPECTED_NULL_VALUE, buildMethoDetails(paramName));
     }
 
     // TODO: Consistency with UnimplementedMethodException

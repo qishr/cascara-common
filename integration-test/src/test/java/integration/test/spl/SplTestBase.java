@@ -61,6 +61,6 @@ public class SplTestBase extends VfsTestBase {
             .requireSigned(false)
             .build();
         SPL.setSignaturePolicy(policy);
-        System.setProperty(SPL.CASCARA_SPL_VERIFY, "false");
+        System.setProperty(SP_CASCARA_SPL_VERIFY, "false");
     }
 }

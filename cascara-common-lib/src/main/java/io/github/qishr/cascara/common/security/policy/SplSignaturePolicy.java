@@ -62,7 +62,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
         this.requireSigned = builder.requireSigned;
         this.requireSignedClasses = builder.requireSignedClasses;
         this.checkExpiry = builder.checkExpiry;
-        this.trustStore = builder.trustStore != null ? builder.trustStore : TrustStore.fromSystemProperties();
+        this.trustStore = builder.trustStore != null ? builder.trustStore : TrustStore.load();
         this.trustSystemModules = builder.trustSystemModules;
         this.allowedDigestAlgorithms = builder.allowedDigestAlgorithms;
         this.crl = builder.crl;
@@ -93,6 +93,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                 if (requireSigned) {
                     return SignatureStatus.NOT_SIGNED;
                 } else {
+                    REPORTER.debug("Valid JAR: No manifest and signature not required");
                     return SignatureStatus.VALID;
                 }
             }
@@ -102,6 +103,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                 if (requireSigned) {
                     return SignatureStatus.NOT_SIGNED;
                 } else {
+                    REPORTER.debug("Valid JAR: No certs and signature not required");
                     return SignatureStatus.VALID;
                 }
             }
@@ -120,6 +122,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                 }
             }
 
+            // TODO: Misleading comment - constructor prevents trust store form being null
             // If no trust store is configured, check revocation if CRL present, otherwise VALID
             if (trustStore == null) {
                 for (Certificate cert : certs) {
@@ -127,6 +130,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                         return SignatureStatus.CERTIFICATE_REVOKED;
                     }
                 }
+                REPORTER.debug("Valid JAR: Empty trust store and not revoked");
                 return SignatureStatus.VALID;
             }
 
@@ -143,8 +147,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
             CertPathValidationResult vr = CertPathVerifier.validatePath(signerCertChain, this.trustStore); // Runs PKIX CertPathValidator
 
             if (!vr.isValid()) {
-                // TODO: Make this warn or debug
-                REPORTER.error(vr.getCause(), vr.getMessage());
+                REPORTER.debug("Cert path failed validation");
                 return vr.getStatus();
             }
 
@@ -157,6 +160,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                         anyRevoked = true;
                         continue;
                     }
+                    REPORTER.debug("Valid JAR: trusted certificate");
                     return SignatureStatus.VALID;
                 }
             }
@@ -174,9 +178,18 @@ public final class SplSignaturePolicy implements SignaturePolicy {
         }
     }
 
-    @Override
+
+
+
+
+
+
+
+
+
     public SignatureStatus evaluate(Class<?> type) {
         if (!requireSignedClasses) {
+            REPORTER.debug("Valid class: signed classes not required");
             return SignatureStatus.VALID;
         }
 
@@ -187,6 +200,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
 
         // 1. System/Framework Exemption
         if (trustSystemModules && isSystemOrFrameworkClass(type)) {
+            REPORTER.debug("Valid: trusted system module");
             return SignatureStatus.VALID;
         }
 
@@ -195,59 +209,130 @@ public final class SplSignaturePolicy implements SignaturePolicy {
 
         if (cs == null || cs.getLocation() == null) {
             // Loose in-memory class, bootstrap class, or synthetic generated class
-            if (requireSigned) {
-                return SignatureStatus.NOT_SIGNED;
-            } else {
-                return SignatureStatus.VALID;
-            }
+            return SignatureStatus.NOT_SIGNED;
         }
 
-        // 1. If CodeSource certificates are already attached by the classloader:
+        // 2. Check CodeSource certificates attached by the ClassLoader
         java.security.cert.Certificate[] certs = cs.getCertificates();
         if (certs != null && certs.length > 0) {
-            // Evaluate the cert chain against policy
-            List<X509Certificate> chain = Arrays.stream(certs)
-                    .filter(c -> c instanceof X509Certificate)
-                    .map(c -> (X509Certificate) c)
-                    .toList();
-
-            CertPathValidationResult vr = CertPathVerifier.validatePath(chain, trustStore);
-
-            if (!vr.isValid()) {
-                return vr.getStatus();
-            }
+            return validateCertificates(certs);
         }
 
-        // 2. If the classloader didn't pre-populate certs on CodeSource, inspect the location JAR:
+        // 3. Inspect the specific .class entry inside the JAR file
         URL locationUrl = cs.getLocation();
         try {
             Path jarPath = Path.of(locationUrl.toURI());
             if (!Files.isRegularFile(jarPath)) {
                 // Exploded directory on classpath, not a JAR
-                if (requireSignedClasses) {
-                    return SignatureStatus.NOT_SIGNED;
-                } else {
-                    return SignatureStatus.VALID;
-                }
+                return SignatureStatus.NOT_SIGNED;
             }
 
-            // Evaluate the JAR file using Cascara's JarFile & policy
             try (JarFile jar = JarFile.open(jarPath)) {
-                SignatureStatus status = evaluate(jar);
-                if (status != SignatureStatus.VALID) {
-                    return status;
+                // First verify the JAR container itself passes policy
+                SignatureStatus containerStatus = evaluate(jar);
+                if (containerStatus != SignatureStatus.VALID) {
+                    return containerStatus;
                 }
+
+                // Extract/read the class entry to populate its certificates
+                String entryName = type.getName().replace('.', '/') + ".class";
+                jar.extractFile(entryName); // Consumes stream so entry.getCertificates() populates
+                JarEntry entry = jar.getJarEntry(entryName);
+
+                java.security.cert.Certificate[] entryCerts = (entry != null) ? entry.getCertificates() : null;
+                if (entryCerts == null || entryCerts.length == 0) {
+                    return SignatureStatus.NOT_SIGNED;
+                }
+
+                return validateCertificates(entryCerts);
             }
         } catch (URISyntaxException | IOException e) {
-            if (requireSignedClasses) {
-                return SignatureStatus.NOT_SIGNED;
-            } else {
-                return SignatureStatus.VALID;
-            }
+            return SignatureStatus.NOT_SIGNED;
+        }
+    }
+
+    private SignatureStatus validateCertificates(java.security.cert.Certificate[] certs) {
+        List<X509Certificate> chain = Arrays.stream(certs)
+                .filter(c -> c instanceof X509Certificate)
+                .map(c -> (X509Certificate) c)
+                .toList();
+
+        if (chain.isEmpty()) {
+            return SignatureStatus.NOT_SIGNED;
         }
 
-        return SignatureStatus.VALID;
+        CertPathValidationResult vr = CertPathVerifier.validatePath(chain, trustStore);
+        return vr.isValid() ? SignatureStatus.VALID : vr.getStatus();
     }
+
+
+
+
+
+    // @Override
+    // public SignatureStatus evaluate(Class<?> type) {
+    //     if (!requireSignedClasses) {
+    //         REPORTER.debug("Valid class: signed classes not required");
+    //         return SignatureStatus.VALID;
+    //     }
+
+    //     // Dynamic runtime proxies have no signed bytecode on disk
+    //     if (Proxy.isProxyClass(type)) {
+    //         return SignatureStatus.NOT_SIGNED;
+    //     }
+
+    //     // 1. System/Framework Exemption
+    //     if (trustSystemModules && isSystemOrFrameworkClass(type)) {
+    //         REPORTER.debug("Valid: trusted system module");
+    //         return SignatureStatus.VALID;
+    //     }
+
+    //     ProtectionDomain pd = type.getProtectionDomain();
+    //     CodeSource cs = (pd != null) ? pd.getCodeSource() : null;
+
+    //     if (cs == null || cs.getLocation() == null) {
+    //         // Loose in-memory class, bootstrap class, or synthetic generated class
+    //         return SignatureStatus.NOT_SIGNED;
+    //     }
+
+    //     // 1. If CodeSource certificates are already attached by the classloader:
+    //     java.security.cert.Certificate[] certs = cs.getCertificates();
+    //     if (certs != null && certs.length > 0) {
+    //         // Evaluate the cert chain against policy
+    //         List<X509Certificate> chain = Arrays.stream(certs)
+    //                 .filter(c -> c instanceof X509Certificate)
+    //                 .map(c -> (X509Certificate) c)
+    //                 .toList();
+
+    //         CertPathValidationResult vr = CertPathVerifier.validatePath(chain, trustStore);
+
+    //         if (!vr.isValid()) {
+    //             return vr.getStatus();
+    //         }
+    //     }
+
+    //     // 2. If the classloader didn't pre-populate certs on CodeSource, inspect the location JAR:
+    //     URL locationUrl = cs.getLocation();
+    //     try {
+    //         Path jarPath = Path.of(locationUrl.toURI());
+    //         if (!Files.isRegularFile(jarPath)) {
+    //             // Exploded directory on classpath, not a JAR
+    //             return SignatureStatus.NOT_SIGNED;
+    //         }
+
+    //         // Evaluate the JAR file using Cascara's JarFile & policy
+    //         try (JarFile jar = JarFile.open(jarPath)) {
+    //             SignatureStatus status = evaluate(jar);
+    //             if (status != SignatureStatus.VALID) {
+    //                 return status;
+    //             }
+    //         }
+    //     } catch (URISyntaxException | IOException e) {
+    //         return SignatureStatus.NOT_SIGNED;
+    //     }
+
+    //     return SignatureStatus.VALID;
+    // }
 
     /// Checks whether a certificate is directly trusted by the TrustStore or issued by a CA anchor in the TrustStore.
     private boolean isCertificateTrusted(X509Certificate cert) {

@@ -9,36 +9,27 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.reflect.Type;
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 import io.github.qishr.cascara.common.annotation.ConfigProperty;
-import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.exception.ConfigException;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 
-@Experimental
 public abstract class AbstractConfig {
 
     private static final Map<Class<? extends AbstractConfig>, AbstractConfig> INSTANCES = new ConcurrentHashMap<>();
 
     private String configNameSpace;
 
-    private static class ConfigField {
-        Field decl;
-        String propName;
-        String envName;
-        boolean isMap;
-        ConfigField(Field decl, String propName, String envName, boolean isMap) {
-            this.decl = decl;
-            this.propName = propName;
-            this.envName = envName;
-            this.isMap = isMap;
-        }
-    }
+    private static record ConfigField(
+        Field field,
+        String propName,
+        String envName,
+        boolean isMap
+    ) {}
 
     protected AbstractConfig() {}
 
@@ -52,7 +43,6 @@ public abstract class AbstractConfig {
                 instance.init();
                 return instance;
             } catch (ReflectiveOperationException e) {
-                // throw new ConfigException("Failed to instantiate config: " + clazz.getName(), e);
                 throw new ConfigException(e, GenericMessage.CONFIG_LOAD_FAILED, clazz.getName());
             }
         });
@@ -137,57 +127,64 @@ public abstract class AbstractConfig {
         }
     }
 
-    private Path getPropertiesPath() {
-        String fileName = configNameSpace == null
-            ? "cascara"
-            : configNameSpace;
-        String envName = StringUtils.toSnakeCase(fileName).toUpperCase() + "_PROPERTIES";
-        String propName = fileName + ".properties";
+    private void collectConfigFields(Map<String,ConfigField> configFields) {
+        List<Field> fields = ReflectionUtils.getFields(
+            getClass(),
+            f -> f.isAnnotationPresent(ConfigProperty.class),
+            c -> c != AbstractConfig.class
+        );
 
-        String pathString = System.getenv(envName);
-        if (pathString == null) {
-            pathString = System.getProperty(propName);
+        for (Field decl : fields) {
+            // Try to make the field accessible.
+            try {
+                decl.setAccessible(true);
+            } catch (InaccessibleObjectException e) {
+                // TODO: Exception?
+                continue;
+            }
+
+            ConfigProperty anno = decl.getAnnotation(ConfigProperty.class);
+
+            String propName =
+                (configNameSpace == null
+                    ? ""
+                    : configNameSpace + ".") +
+                (anno.name().isEmpty()
+                    ? StringUtils.toKebabCase(decl.getName())
+                    : anno.name());
+
+            String envName =
+                (configNameSpace == null
+                    ? ""
+                    : StringUtils.toSnakeCase(configNameSpace).toUpperCase() + "_") +
+                (anno.name().isEmpty()
+                    ? StringUtils.toSnakeCase(decl.getName())
+                    : StringUtils.toSnakeCase(anno.name())).toUpperCase();
+
+            boolean isMap = ReflectionUtils.canAssign(decl.getType(), Map.class);
+
+            configFields.put(decl.getName(), new ConfigField(decl, propName, envName, isMap));
         }
-
-        if (pathString == null) {
-            return null;
-        }
-
-        FileSystem fs = Cascara.instance().getHomePath().getFileSystem();
-        return fs.getPath(pathString);
     }
 
     private void setValue(ConfigField field, String valueString) {
-        if (valueString == null) {
-            return;
-        }
-
-        Object value = parseValue(valueString, field.decl.getType());
-
+        Object value = parseValue(valueString, field.field.getType());
         try {
-            field.decl.set(this, value);
+            field.field.set(this, value);
         } catch (Exception e) {
             // TODO
             e.printStackTrace();
         }
-
     }
 
     private void setMapValues(ConfigField field, Properties configProperties) {
-        Type valueType = ReflectionUtils.getValueTypeOfMapType(field.decl.getGenericType());
+        Type valueType = ReflectionUtils.getValueTypeOfMapType(field.field.getGenericType());
 
         if (!(valueType instanceof Class valueClass)) {
-            throw new IllegalArgumentException("Map value not a class: " + field.decl.getName());
+            throw new IllegalArgumentException("Map value not a class: " + field.field.getName());
         }
 
-
-
-
-        // TODO: Instead of overwriting the entire map, add to it.
-
-
-
-
+        // TODO: Instead of overwriting the entire map, add to it?
 
         Map<String,Object> map = new HashMap<>();
 
@@ -205,99 +202,37 @@ public abstract class AbstractConfig {
         }
 
         try {
-            field.decl.set(this, map);
+            field.field.set(this, map);
         } catch (Exception e) {
             // TODO
             e.printStackTrace();
         }
     }
 
-    private void collectConfigFields(Map<String,ConfigField> configFields) {
-        List<Field> fields = ReflectionUtils.getAllFields(
-            getClass(),
-            f -> f.isAnnotationPresent(ConfigProperty.class),
-            c -> c != AbstractConfig.class
-        );
-
-        for (Field decl : fields) {
-            // Try to make the field accessible.
-            try {
-                decl.setAccessible(true);
-            } catch (InaccessibleObjectException e) {
-                // TODO: Exception?
-                continue;
-            }
-
-            ConfigProperty anno = decl.getAnnotation(ConfigProperty.class);
-            if (anno == null) {
-                continue;
-            }
-
-            String propName =
-                (configNameSpace == null
-                    ? ""
-                    : configNameSpace + ".") +
-                (anno.name().isEmpty()
-                    ? StringUtils.toKebabCase(decl.getName())
-                    : StringUtils.toKebabCase(anno.name()));
-
-            String envName =
-                (configNameSpace == null
-                    ? ""
-                    : StringUtils.toSnakeCase(configNameSpace).toUpperCase() + "_") +
-                (anno.name().isEmpty()
-                    ? StringUtils.toSnakeCase(decl.getName())
-                    : StringUtils.toSnakeCase(anno.name())).toUpperCase();
-
-            boolean isMap = ReflectionUtils.canAssign(decl.getType(), Map.class);
-
-            // Object rawValue;
-
-            // try {
-            //     rawValue = decl.get(this);
-            // } catch (IllegalArgumentException | IllegalAccessException e) {
-            //     // TODO: Exception?
-            //     e.printStackTrace();
-            //     continue;
-            // }
-
-            // String valueString = rawValue == null
-            //     ? null
-            //     : String.valueOf(rawValue);
-
-            configFields.put(decl.getName(), new ConfigField(decl, propName, envName, isMap));
-            // configFields.put(propName, new ConfigField(decl, propName, envName, isMap, valueString));
-        }
-    }
-
-    //
-    //
-    //
-
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private Object parseValue(String text, Class<?> targetType) {
-        if (text == null) {
+    private Object parseValue(String value, Class<?> targetType) {
+        if (value == null) {
             return null;
         }
 
-        // 1. Numeric Narrowing
+        // 1. Numeric Types
         if (targetType == boolean.class || targetType == Boolean.class) {
-            return Boolean.parseBoolean(text);
+            return Boolean.parseBoolean(value);
         }
         if (targetType == int.class || targetType == Integer.class) {
-            return Integer.parseInt(text);
+            return Integer.parseInt(value);
         }
         if (targetType == long.class || targetType == Long.class) {
-            return Long.parseLong(text);
+            return Long.parseLong(value);
         }
         if (targetType == double.class || targetType == Double.class) {
-            return Double.parseDouble(text);
+            return Double.parseDouble(value);
         }
         if (targetType == float.class || targetType == Float.class) {
-            return Float.parseFloat(text);
+            return Float.parseFloat(value);
         }
         if (targetType == short.class || targetType == Short.class) {
-            return Short.parseShort(text);
+            return Short.parseShort(value);
         }
 
         // TODO...
@@ -306,24 +241,43 @@ public abstract class AbstractConfig {
         // }
 
         // 2. Characters
-        if (targetType.isAssignableFrom(Character.class) || targetType.isAssignableFrom(char.class)) {
-            if (text.length() > 0) {
-                return text.charAt(0);
+        if (ReflectionUtils.canAssign(targetType, Character.class) || targetType.isAssignableFrom(char.class)) {
+            if (value.length() > 0) {
+                return value.charAt(0);
             } else {
                 return '\0';
             }
         }
 
         // 3. String-related Types
-        if (targetType.isAssignableFrom(CharSequence.class)) {
-            return text;
+        if (ReflectionUtils.canAssign(targetType, CharSequence.class)) {
+            return value;
         }
 
         // 4. Enums
         if (targetType.isEnum()) {
-            return Enum.valueOf((Class<Enum>) targetType, text.toUpperCase());
+            return Enum.valueOf((Class<Enum>) targetType, value.toUpperCase());
         }
 
         return null;
+    }
+
+    private Path getPropertiesPath() {
+        String fileName = configNameSpace == null
+            ? "cascara"
+            : configNameSpace;
+        String envName = StringUtils.toSnakeCase(fileName).toUpperCase() + "_PROPERTIES";
+        String propName = fileName + ".properties";
+
+        String pathString = System.getenv(envName);
+        if (pathString == null) {
+            pathString = System.getProperty(propName);
+        }
+
+        if (pathString == null) {
+            return null;
+        }
+
+        return Cascara.instance().getPath(pathString);
     }
 }

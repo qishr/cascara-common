@@ -1,7 +1,7 @@
 package io.github.qishr.cascara.common.security.policy;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
-import io.github.qishr.cascara.common.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.exception.UnexpectedNullValueException;
 import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableSecurityException;
 
@@ -11,7 +11,7 @@ public class SignatureException extends LocalizableSecurityException {
     public SignatureException(SignatureStatus signatureStatus, LocalizableMessage message, Object... details) {
         super(message, details);
         if (signatureStatus == null) {
-            throw new UnexpectedNullParameterException("signatureStatus");
+            throw new UnexpectedNullValueException("signatureStatus");
         }
         this.signatureStatus = signatureStatus;
     }
@@ -19,7 +19,7 @@ public class SignatureException extends LocalizableSecurityException {
     public SignatureException(Throwable t, SignatureStatus signatureStatus, LocalizableMessage message, Object... details) {
         super(t, message, details);
         if (signatureStatus == null) {
-            throw new UnexpectedNullParameterException("signatureStatus");
+            throw new UnexpectedNullValueException("signatureStatus");
         }
         this.signatureStatus = signatureStatus;
     }

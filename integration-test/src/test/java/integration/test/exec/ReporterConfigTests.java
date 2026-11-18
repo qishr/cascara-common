@@ -58,7 +58,7 @@ public class ReporterConfigTests extends ExecTestBase {
                 new JvmConfig()
                     .setModuleName(ReporterConfigApiOverrideTask.class.getModule().getName())
                     .setModulePath(getModulePath())
-                    .setEnv("CASCARA_REPORT_ALLOW_API_OVERRIDE", "false")
+                    .setEnv("CASCARA_REPORT_ALLOW_API_OVERRIDE", false)
             );
 
         assertThrows(UnsupportedOperationException.class, () -> exec.run("Meow!"));
@@ -111,7 +111,7 @@ public class ReporterConfigTests extends ExecTestBase {
                     .setEnv("CASCARA_HOME", getPhysicalHomePath())
 
                     // Specify the path of report.properties via system propery
-                    .setSystemProperty("cascara.report.properties", reportPropertiesPath.toString())
+                    .setSystemProperty(SP_CASCARA_REPORT_PROPERTIES, reportPropertiesPath)
             );
 
         exec.run("Woof!");

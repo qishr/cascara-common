@@ -46,7 +46,7 @@ public enum GenericMessage implements LocalizableMessage {
     // Errors
     ERROR("ERROR-101", "{0}"),
     UNIMPLEMENTED_METHOD("ERROR-102", "Unimplemented method: {0}.{1}"),
-    UNEXPECTED_NULL_PARAMETER("ERROR-103","Unexpected null paramter \"{1}\" in {0}"),
+    UNEXPECTED_NULL_VALUE("ERROR-103","Unexpected null value \"{1}\" in {0}"),
     UNEXPECTED_NULL_RETURN("ERROR-104", "Unexpected null return value from {0}.{1}"),
     MANIFEST_NOT_FOUND("ERROR-105", "Manifest not found for {0}"),
     MANIFEST_READ("ERROR-106", "Failed to read manifest for {0}"),

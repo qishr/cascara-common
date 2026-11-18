@@ -5,10 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
-import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Map;
+import java.time.Duration;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -16,32 +15,34 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 
-import io.github.qishr.cascara.common.security.policy.SignatureStatus;
+import integration.test.exec.ExecTestBase;
+import integration.test.fixtures.UnsignedProviderFixture;
+import integration.test.fixtures.task.SplRegisterClassTestTask;
+import integration.test.fixtures.task.SplRegisterDynamicClassTestTask;
+import integration.test.fixtures.task.SplRegisterProxyClassTestTask;
+import io.github.qishr.cascara.common.exec.IsolatedExecutor;
+import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.SPL;
-import io.github.qishr.cascara.common.service.ServiceProvider;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
 @Isolated
-public class SplClassRegistrationSecurityTests extends SplTestBase {
-
-    public static class UnsignedFixtureService implements ServiceProvider {
-
-    }
+public class SplClassRegistrationSecurityTests extends ExecTestBase {
 
     @BeforeEach
     protected void setUp() {
         super.setUp();
-        System.setProperty(SPL.CASCARA_SPL_VERIFY, "true");
+        System.setProperty(SP_CASCARA_SPL_VERIFY, "true");
     }
 
     @AfterEach
     protected void tearDown() throws IOException {
         SPL.setSignaturePolicy(SplSignaturePolicy.builder().build());
-        System.setProperty(SPL.CASCARA_SPL_VERIFY, "false");
+        System.setProperty(SP_CASCARA_SPL_VERIFY, "false");
         super.tearDown();
     }
 
@@ -51,22 +52,35 @@ public class SplClassRegistrationSecurityTests extends SplTestBase {
     // }
 
     @Test
-    void test_registerClass_unsignedClass_rejectedWhenRequireSigned() {
-        // Build policy with requireSignedClasses = true
-        SplSignaturePolicy policy = SplSignaturePolicy.builder()
-                .requireSignedClasses(true)
-                .build();
+    void test_registerClass_unsignedClass_rejectedWhenRequireSigned() throws Throwable {
+        IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterClassTestTask.class, Boolean.class)
+            .setDiagnosticForwarding(true)
+            .setJvmConfig(
+                new JvmConfig()
+                    .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
+                    .setModulePath(getModulePath())
+                    .setEnv(EV_CASCARA_HOME, getPhysicalHomePath())
+                    .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "debug")
+                    .setSystemProperty("cascara.report.level." + SplSignaturePolicy.class.getName(), "debug")
+                    .setSystemProperty(SP_CASCARA_SPL_VERIFY, true)
+                    .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, true)
+                    .setTimeout(Duration.ofMinutes(2))
+            );
 
-        SPL.setSignaturePolicy(policy);
-        SPL layer = spl.create("testLayer");
 
-        // Attempting to register an un-signed class (from current test classpath directory)
+        // exec.run(UnsignedProviderFixture.class.getName());
+
+        // TODO: Is this supposed to be signature exception or service exception?
+
         SignatureException ex = assertThrows(SignatureException.class, () -> {
-            layer.registerClass(UnsignedFixtureService.class);
+            exec.run(UnsignedProviderFixture.class.getName());
         });
+
+        debug(exec.getResponse());
 
         assertEquals(SignatureStatus.NOT_SIGNED, ex.getSignatureStatus());
     }
+
 
     @Test
     void test_registerClass_signedClass_acceptedWhenTrusted() throws Exception {
@@ -110,59 +124,89 @@ public class SplClassRegistrationSecurityTests extends SplTestBase {
         SPL layer = SPL.getRoot().create("testLayer");
         SPL.setSignaturePolicy(policy);
 
-        assertDoesNotThrow(() -> layer.registerClass(UnsignedFixtureService.class));
+        assertDoesNotThrow(() -> layer.registerClass(UnsignedProviderFixture.class));
     }
 
     @Test
-    void test_registerClass_proxyOrDynamicClass_rejectedWhenRequireSigned() {
-        SplSignaturePolicy policy = SplSignaturePolicy.builder()
-                .requireSignedClasses(true)
-                .build();
-
-        SPL.setSignaturePolicy(policy);
-        SPL layer = spl.create("testLayer");
-
-        // Generate a dynamic proxy class with no CodeSource location
-        @SuppressWarnings("deprecation")
-        Class<?> proxyClass = Proxy.getProxyClass(
-                SplClassRegistrationSecurityTests.class.getClassLoader(),
-                ServiceProvider.class
-        );
+    void test_registerClass_proxyOrDynamicClass_rejectedWhenRequireSigned() throws Throwable {
+        IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterProxyClassTestTask.class, Boolean.class)
+            .setDiagnosticForwarding(true)
+            .setJvmConfig(
+                new JvmConfig()
+                    .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
+                    .setModulePath(getModulePath())
+                    .setEnv(EV_CASCARA_HOME, getPhysicalHomePath())
+                    .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "debug")
+                    .setSystemProperty("cascara.report.level." + SplSignaturePolicy.class.getName(), "debug")
+                    .setSystemProperty(SP_CASCARA_SPL_VERIFY, true)
+                    .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, true)
+                    .setTimeout(Duration.ofMinutes(2))
+            );
 
         SignatureException ex = assertThrows(SignatureException.class, () -> {
-            layer.registerClass(proxyClass);
+            exec.run(UnsignedProviderFixture.class.getName());
         });
+
+        debug(exec.getResponse());
 
         assertEquals(SignatureStatus.NOT_SIGNED, ex.getSignatureStatus());
     }
 
+    // ****************************************
+    // TODO: This needs to use IsolatedExecutor
+    // ****************************************
+    // @Test
+    // void test_registerClass_dynamicClassWithoutSignedJar_rejectedWhenRequireSigned() {
+    //     SplSignaturePolicy policy = SplSignaturePolicy.builder()
+    //             .requireSignedClasses(true)
+    //             .build();
+
+    //     SPL.setSignaturePolicy(policy);
+    //     SPL layer = spl.create("testLayer");
+
+    //     // Create a dynamic proxy instance with a working handler so SPL's property checks pass
+    //     ServiceProvider proxyInstance = (ServiceProvider) Proxy.newProxyInstance(
+    //             SplClassRegistrationSecurityTests.class.getClassLoader(),
+    //             new Class<?>[]{ ServiceProvider.class },
+    //             (proxy, method, args) -> {
+    //                 if ("getServiceProperties".equals(method.getName())) {
+    //                     return Map.of(); // Return empty properties map cleanly
+    //                 }
+    //                 return null;
+    //             }
+    //     );
+
+    //     // Register the class of the dynamic proxy
+    //     Class<?> dynamicClass = proxyInstance.getClass();
+
+    //     SignatureException ex = assertThrows(SignatureException.class, () -> {
+    //         layer.registerClass(dynamicClass);
+    //     });
+
+    //     assertEquals(SignatureStatus.NOT_SIGNED, ex.getSignatureStatus());
+    // }
+
     @Test
-    void test_registerClass_dynamicClassWithoutSignedJar_rejectedWhenRequireSigned() {
-        SplSignaturePolicy policy = SplSignaturePolicy.builder()
-                .requireSignedClasses(true)
-                .build();
-
-        SPL.setSignaturePolicy(policy);
-        SPL layer = spl.create("testLayer");
-
-        // Create a dynamic proxy instance with a working handler so SPL's property checks pass
-        ServiceProvider proxyInstance = (ServiceProvider) Proxy.newProxyInstance(
-                SplClassRegistrationSecurityTests.class.getClassLoader(),
-                new Class<?>[]{ ServiceProvider.class },
-                (proxy, method, args) -> {
-                    if ("getServiceProperties".equals(method.getName())) {
-                        return Map.of(); // Return empty properties map cleanly
-                    }
-                    return null;
-                }
-        );
-
-        // Register the class of the dynamic proxy
-        Class<?> dynamicClass = proxyInstance.getClass();
+    void test_registerClass_dynamicClassWithoutSignedJar_rejectedWhenRequireSigned() throws Throwable {
+        IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterDynamicClassTestTask.class, Boolean.class)
+            .setDiagnosticForwarding(true)
+            .setJvmConfig(
+                new JvmConfig()
+                    .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
+                    .setModulePath(getModulePath())
+                    .setEnv(EV_CASCARA_HOME, getPhysicalHomePath())
+                    .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "debug")
+                    .setSystemProperty("cascara.report.level." + SplSignaturePolicy.class.getName(), "debug")
+                    .setSystemProperty(SP_CASCARA_SPL_VERIFY, true)
+                    .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, true)
+                    .setTimeout(Duration.ofMinutes(2))
+            );
 
         SignatureException ex = assertThrows(SignatureException.class, () -> {
-            layer.registerClass(dynamicClass);
+            exec.run(UnsignedProviderFixture.class.getName());
         });
+
+        debug(exec.getResponse());
 
         assertEquals(SignatureStatus.NOT_SIGNED, ex.getSignatureStatus());
     }

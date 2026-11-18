@@ -12,8 +12,8 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
-import io.github.qishr.cascara.common.security.diagnostic.SecurityMessage;
 import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.util.Pair;
 
@@ -84,7 +84,7 @@ public final class JarManifestVerifier {
 
         Pair<String,String> digestPair = getAlgorithmAndDigest(mfAttrs);
         if (digestPair == null) {
-            throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, SecurityMessage.NO_ALGORITHM, entryName);
+            throw new SignatureException(SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "No algorithm for " + entryName);
         }
 
         String algorithm = digestPair.getL();
@@ -112,7 +112,7 @@ public final class JarManifestVerifier {
         try {
             return MessageDigest.getInstance(name);
         } catch (NoSuchAlgorithmException e) {
-            throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, SecurityMessage.UNSUPPORTED_ALGORITHM, name);
+            throw new SignatureException(e, SignatureStatus.INVALID_SIGNATURE, GenericMessage.ERROR, "Unsupported algorithm: " + name);
         }
     }
 

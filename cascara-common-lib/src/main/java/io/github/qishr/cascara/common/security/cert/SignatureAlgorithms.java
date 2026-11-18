@@ -6,8 +6,8 @@ import java.security.interfaces.ECKey;
 import java.security.interfaces.RSAKey;
 import java.util.Map;
 
-import io.github.qishr.cascara.common.security.diagnostic.UnsupportedAlgorithmException;
-import io.github.qishr.cascara.common.security.diagnostic.UnsupportedDigestException;
+import io.github.qishr.cascara.common.security.exception.UnsupportedAlgorithmException;
+import io.github.qishr.cascara.common.security.exception.UnsupportedDigestException;
 
 public final class SignatureAlgorithms {
 

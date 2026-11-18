@@ -50,6 +50,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -1039,7 +1040,7 @@ public abstract class AbstractSerializer<
     /// Retrieves all declared fields for a class and all its superclasses (excluding Object).
     @NonNull
     private List<Field> getAllSerializableFields(Class<?> jvmType) {
-        return ReflectionUtils.getAllFields(jvmType, f -> !f.isAnnotationPresent(DataIgnore.class));
+        return ReflectionUtils.getFields(jvmType, f -> !f.isAnnotationPresent(DataIgnore.class));
     }
 
     @SuppressWarnings("unchecked")
@@ -1095,6 +1096,14 @@ public abstract class AbstractSerializer<
         // using SPL for TypeDescriptor lookups would result in calls back to
         // to GlobalReporter.
         if (!providerFactoryEnabled) {
+
+            // Non-exact match
+            for (Entry<Class<?>,TypeDescriptor<?>> entry : typeDescriptors.entrySet()) {
+                if (ReflectionUtils.canAssign(jvmType, entry.getKey())) {
+                    return entry.getValue();
+                }
+            }
+
             classesWithNoTypeDescriptors.add(jvmType.getName());
             return null;
         }

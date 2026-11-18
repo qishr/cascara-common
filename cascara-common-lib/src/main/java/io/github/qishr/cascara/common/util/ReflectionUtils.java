@@ -339,21 +339,16 @@ public class ReflectionUtils {
 
     @NonNull
     public static List<Field> getAllFields(Class<?> clazz) {
-        return getAllFields(clazz, null, null);
-    }
-
-    // @NonNull
-    // public static List<Field> getAllFields(Class<?> clazz, boolean includeSuper) {
-    //     return getAllFields(clazz, includeSuper, null);
-    // }
-
-    @NonNull
-    public static List<Field> getAllFields(Class<?> clazz, Function<Field,Boolean> excludeFields) {
-        return getAllFields(clazz, excludeFields, null);
+        return getFields(clazz, null, null);
     }
 
     @NonNull
-    public static List<Field> getAllFields(Class<?> clazz, Function<Field,Boolean> includeFields, Function<Class<?>,Boolean> includeSuper) {
+    public static List<Field> getFields(Class<?> clazz, Function<Field,Boolean> excludeFields) {
+        return getFields(clazz, excludeFields, null);
+    }
+
+    @NonNull
+    public static List<Field> getFields(Class<?> clazz, Function<Field,Boolean> includeFields, Function<Class<?>,Boolean> includeSuper) {
         List<Field> fields = new ArrayList<>();
         Class<?> currentClass = clazz;
         while (currentClass != null && currentClass != Object.class) {

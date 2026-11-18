@@ -101,7 +101,7 @@ public class ColorUtils {
 
     public static ColorPrimitive toColor(String colorString) {
         if (colorString == null) {
-            throw new LocalizableRuntimeException(GenericMessage.UNEXPECTED_NULL_PARAMETER, "ColorUtils", "toColor");
+            throw new LocalizableRuntimeException(GenericMessage.UNEXPECTED_NULL_VALUE, "ColorUtils", "toColor");
         }
         if (colorString.isEmpty()) {
             throw new LocalizableRuntimeException(ColorMessage.INVALID_COLOR_FORMAT, colorString);

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -18,7 +17,8 @@ import java.util.Set;
 
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.security.diagnostic.TrustStoreException;
+import io.github.qishr.cascara.common.security.SecurityConfig;
+import io.github.qishr.cascara.common.security.exception.TrustStoreException;
 
 public final class TrustStore {
 
@@ -32,20 +32,16 @@ public final class TrustStore {
         return new TrustStore(Set.of());
     }
 
-    /**
-     * Loads a TrustStore from standard Cascara system properties:
-     * -Dcascara.truststore=/path/to/truststore.jks
-     * -Dcascara.truststore.password=secret
-     * @throws IOException
-     */
-    public static TrustStore fromSystemProperties() {
-        String pathStr = System.getProperty("cascara.truststore");
-        if (pathStr == null || pathStr.isBlank()) {
+    /// Loads a TrustStore from standard Cascara system properties:
+    /// -Dcascara.truststore=/path/to/truststore.jks
+    /// -Dcascara.truststore.password=secret
+    /// @throws IOException
+    public static TrustStore load() {
+        SecurityConfig config = SecurityConfig.get();
+        if (config.getTrustStorePath() == null) {
             return empty();
         }
-
-        String passwordStr = System.getProperty("cascara.truststore.password", "");
-        return load(Paths.get(pathStr), passwordStr.toCharArray());
+        return load(config.getTrustStorePath(), config.getTrustStorePassword().toCharArray());
     }
 
     public static TrustStore load(Path path, char[] password) {
@@ -82,6 +78,10 @@ public final class TrustStore {
 
     public boolean contains(X509Certificate cert) {
         return trustedCertificates.contains(cert);
+    }
+
+    public boolean isEmpty() {
+        return trustedCertificates.isEmpty();
     }
 
     public boolean isTrusted(X509Certificate cert, boolean checkExpiry) {

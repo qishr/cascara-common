@@ -17,17 +17,34 @@ public class ConfigTests {
 
     @ConfigNamespace("cascara.test")
     public static class TestConfig extends AbstractConfig {
-        @ConfigProperty(name = "level")
-        private Map<String,Level> levels = new HashMap<>();
-
         @ConfigProperty
         private boolean autoFlush = false;
+
+        // Names are converted to kebab case by default.
+        // This overrides the default.
+        @ConfigProperty(name = "dotted.name")
+        private String dottedName = "value";
 
         @ConfigProperty
         private Level level = Level.INFO;
 
+        @ConfigProperty(name = "level")
+        private Map<String,Level> levels = new HashMap<>();
+
         public static TestConfig get() {
             return get(TestConfig.class);
+        }
+
+        public boolean isAutoFlush() {
+            return autoFlush;
+        }
+
+        public String getDottedName() {
+            return dottedName;
+        }
+
+        public Level getLevel() {
+            return level;
         }
 
         public Level getLevel(String fqcn) {
@@ -36,14 +53,6 @@ public class ConfigTests {
 
         public Map<String,Level> getLevels() {
             return levels;
-        }
-
-        public boolean isAutoFlush() {
-            return autoFlush;
-        }
-
-        public Level getLevel() {
-            return level;
         }
     }
 
@@ -60,6 +69,13 @@ public class ConfigTests {
         System.setProperty("cascara.test.auto-flush", "true");
         TestConfig cfg = TestConfig.get();
         assertTrue(cfg.isAutoFlush());
+    }
+
+    @Test
+    void test_string_dottedName() {
+        System.setProperty("cascara.test.dotted.name", "coffee");
+        TestConfig cfg = TestConfig.get();
+        assertEquals("coffee", cfg.getDottedName());
     }
 
     @Test

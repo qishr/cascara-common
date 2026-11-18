@@ -49,7 +49,7 @@ import java.util.Map;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.exception.UnexpectedNullValueException;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.semver.SemVerException;
@@ -89,6 +89,12 @@ public class Cascara extends AbstractConfig {
 
     public String getHomeEnvVar() {
         return homeEnvVar;
+    }
+
+    public Path getPath(String pathString) {
+        return vfs == null
+            ? Path.of(pathString)
+            : vfs.getPath(pathString);
     }
 
     @SuppressWarnings("null")
@@ -319,7 +325,7 @@ public class Cascara extends AbstractConfig {
 
     private static SemVer toSemVer(String version) {
         if (version == null || version.isBlank()) {
-            throw new UnexpectedNullParameterException("version");
+            throw new UnexpectedNullValueException("version");
         }
         int dots = 0;
         for (int i = 0; i < version.length(); i++) {

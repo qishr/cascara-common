@@ -60,7 +60,6 @@ import io.github.qishr.cascara.common.type.cascara.LocalizableMessageDescriptor;
 import io.github.qishr.cascara.common.type.lang.StackTraceElementSerializer;
 import io.github.qishr.cascara.common.type.time.InstantDescriptor;
 import io.github.qishr.cascara.common.type.time.ZonedDateTimeDescriptor;
-import io.github.qishr.cascara.common.util.AbstractConfig;
 
 public class GlobalReporter extends ClassReporter implements DiagnosticReporter {
     public static final String SERIALIZATION_FORMAT = "application/json";

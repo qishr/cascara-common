@@ -65,7 +65,7 @@ import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
-import io.github.qishr.cascara.common.exception.UnexpectedNullParameterException;
+import io.github.qishr.cascara.common.exception.UnexpectedNullValueException;
 import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.security.policy.SignaturePolicy;
@@ -74,6 +74,7 @@ import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.service.ContentTypeProvider;
 import io.github.qishr.cascara.common.service.SPL;
+import io.github.qishr.cascara.common.service.SPLConfig;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMessage;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
@@ -92,8 +93,9 @@ import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 public class SPLBranch implements SPL {
     protected static final Reporter REPORTER = GlobalReporter.forClass(SPL.class);
 
-
     protected static SPLRoot rootLayer;
+
+    protected static SPLConfig config = SPLConfig.get();
 
     // TODO: Remove this
     protected boolean ownsReporter = false;
@@ -394,11 +396,16 @@ public class SPLBranch implements SPL {
 
     @Override
     public void registerClass(Class<?> type) {
-        if (type == null || !ServiceProvider.class.isAssignableFrom(type)) {
-            return;
+        if (type == null)
+        {
+            throw new UnexpectedNullValueException("type");
+        }
+        if (!ServiceProvider.class.isAssignableFrom(type)) {
+            throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, type.getName());
         }
 
-        boolean verify = isVerifyEnabled();
+        boolean verify = config.isVerifyEnabled();
+
         if (verify) {
             verifySignature(type);
         }
@@ -413,7 +420,7 @@ public class SPLBranch implements SPL {
         JarManifest manifest;
         Set<String> classes;
 
-        boolean verify = isVerifyEnabled();
+        boolean verify = config.isVerifyEnabled();
 
         try (JarFile jar = JarFile.open(jarPath, verify)) {
             moduleName = jar.getModuleName();
@@ -475,7 +482,7 @@ public class SPLBranch implements SPL {
 
     private SPLBranch createInternal(String name, boolean isPublic) {
         if (name == null) {
-            throw new UnexpectedNullParameterException("name");
+            throw new UnexpectedNullValueException("name");
         }
         SPLBranch layer = new SPLBranch();
         layer.parent = this;
@@ -597,6 +604,7 @@ public class SPLBranch implements SPL {
         }
 
         SignatureStatus status = policy.evaluate(cls);
+
         if (status != SignatureStatus.VALID) {
             throw new SignatureException(
                 status,
@@ -625,6 +633,7 @@ public class SPLBranch implements SPL {
         }
 
         SignatureStatus status = policy.evaluate(jar);
+
         if (status != SignatureStatus.VALID) {
             throw new SignatureException(
                 status,
@@ -685,12 +694,6 @@ public class SPLBranch implements SPL {
     //
     // Registration
     //
-
-    protected static boolean isVerifyEnabled() {
-        // TODO: Use propsFile for this too
-        String verify = System.getProperty(CASCARA_SPL_VERIFY);
-        return "true".equalsIgnoreCase(verify);
-    }
 
     private boolean isRegistered(String providerFqcn) {
         return rootLayer.bootProviders.contains(providerFqcn) || providersByFqcn.containsKey(providerFqcn);

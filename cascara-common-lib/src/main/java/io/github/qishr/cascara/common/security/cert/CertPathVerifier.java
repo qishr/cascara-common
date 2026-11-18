@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
-import io.github.qishr.cascara.common.security.diagnostic.SecurityMessage;
+import io.github.qishr.cascara.common.security.SecurityMessage;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 
 public final class CertPathVerifier {

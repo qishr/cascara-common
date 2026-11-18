@@ -215,7 +215,7 @@ public class SPLRoot extends SPLBranch {
         }
 
         REPORTER.debug("Registering providers");
-        boolean verify = isVerifyEnabled();
+        boolean verify = config.isVerifyEnabled();
         for (DiscoveredModule dm : discovered) {
             Path jarPath = dm.getJarPath();
             if (jarPath != null) {
@@ -264,21 +264,18 @@ public class SPLRoot extends SPLBranch {
     }
 
     private void loadPolicy() {
-        // TODO: Also allow loading from SPL properties file
-        // but provide a utility class that handles env vars,
-        // properties, and properties files which can be reused
-        // by other parts of Cascara.instance(). This should use the
-        // policy class's (or whatever other class it's reading
-        // settings for) schema to validate the settings.
-
-        // Access system properties through Cascara Properties class
-        Properties sysprops = Properties.fromSystemProperties();
-
         signaturePolicy = SplSignaturePolicy.builder()
-            .requireSigned(sysprops.getBoolean(CASCARA_SPL_POLICY_REQUIRE_SIGNED, false))
-            .checkExpiry(sysprops.getBoolean(CASCARA_SPL_POLICY_CHECK_EXPIRY, false))
+            .requireSigned(config.policyRequireSigned())
+            .checkExpiry(config.policyCheckExpiry())
+            .requireSignedClasses(config.policyRequireSignedClasses())
             .build();
-    }
+
+            // TODO: Remove these...
+            System.out.println("verify = " + config.isVerifyEnabled());
+            System.out.println("req signed = " + config.policyRequireSigned());
+            System.out.println("check expiry = " + config.policyCheckExpiry());
+            System.out.println("req signed classes = " + config.policyRequireSignedClasses());
+        }
 
     private void loadPreferences() {
         // TODO see above
@@ -327,7 +324,7 @@ public class SPLRoot extends SPLBranch {
             REPORTER.debug("  Cascara Version: " + Cascara.instance().getVersion());
             REPORTER.debug("  Module cascara.common Version: " + Cascara.instance().getCommonVersion());
             REPORTER.debug("  SPL Auto Discovery: " + isAutoDiscoverEnabled());
-            REPORTER.debug("  SPL Signature Verification: " + isVerifyEnabled());
+            REPORTER.debug("  SPL Signature Verification: " + config.isVerifyEnabled());
 
             REPORTER.debug("  JPMS Enabled: " + JreUtils.isJpmsEnabled());
             displayPaths("Module Path", System.getProperty("jdk.module.path"));

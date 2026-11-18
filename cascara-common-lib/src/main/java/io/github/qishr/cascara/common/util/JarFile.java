@@ -54,13 +54,17 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
 import java.util.zip.ZipEntry;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableSecurityException;
 import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.security.SecurityConfig;
+import io.github.qishr.cascara.common.security.SecurityMessage;
 import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.security.verifier.CascaraJarVerifier;
@@ -160,12 +164,12 @@ public class JarFile extends ZipFile {
         return manifest;
     }
 
-    public java.util.jar.JarEntry getJarEntry(String name) {
+    public JarEntry getJarEntry(String name) {
         return new JarFileEntry(getEntry(name), getVerifier());
     }
 
-    public List<java.util.jar.JarEntry> getJarEntries() {
-        return getEntries().stream().map(f -> (java.util.jar.JarEntry) new JarFileEntry(f, getVerifier())).toList();
+    public List<JarEntry> getJarEntries() {
+        return getEntries().stream().map(f -> (JarEntry) new JarFileEntry(f, getVerifier())).toList();
     }
 
     public InputStream getInputStream(ZipEntry entry) throws IOException {
@@ -383,22 +387,19 @@ public class JarFile extends ZipFile {
         }
     }
 
-    // TODO: does this need to be public?
-    @Experimental
     private JarVerifier getVerifier() {
         if (verify && verifier == null) {
             try {
                 verifier = createVerifier();
-            } catch (IOException e) {
-                // TODO: We might want to handle this differently
-                return null;
+            } catch (ClassNotFoundException | InstantiationException | IOException e) {
+                throw new LocalizableSecurityException(e, SecurityMessage.VERIFIER_INIT_FAILED, e.getLocalizedMessage());
             }
         }
         return verifier;
     }
 
     /// @throws IoException
-    private JarVerifier createVerifier() throws IOException {
+    private JarVerifier createVerifier() throws IOException, InstantiationException, ClassNotFoundException {
         byte[] mf = super.extractFile(MANIFEST_MF);
 
         Map<String, byte[]> signatures = new HashMap<>();
@@ -417,7 +418,21 @@ public class JarFile extends ZipFile {
             keys.put(alias, kfBytes);
         }
 
-        return new CascaraJarVerifier()
+        SecurityConfig config = SecurityConfig.get();
+        JarVerifier verifier = null;
+        if (!config.getJarVerifier().isEmpty()) {
+            Class<?> jvClass = Class.forName(config.getJarVerifier());
+            Object instance = ReflectionUtils.createInstance(jvClass);
+            if (instance instanceof JarVerifier jv) {
+                verifier = jv;
+            }
+        }
+
+        if (verifier == null) {
+            verifier = new CascaraJarVerifier();
+        }
+
+        return verifier
                 .setKeys(keys)
                 .setSignatures(signatures)
                 .setManifest(mf);
@@ -508,7 +523,7 @@ public class JarFile extends ZipFile {
     //
     //
 
-    public class JarFileEntry extends java.util.jar.JarEntry {
+    public class JarFileEntry extends JarEntry {
         private Attributes attr;
         private Certificate[] certs;
         private CodeSigner[] signers;

@@ -225,7 +225,7 @@ public class DeserializationTargetResolver {
     /// Retrieves all declared fields for a class and all its superclasses (excluding Object).
     @NonNull
     private static List<Field> getAllSerializableFields(Class<?> jvmType) {
-        return ReflectionUtils.getAllFields(jvmType, f -> !f.isAnnotationPresent(DataIgnore.class));
+        return ReflectionUtils.getFields(jvmType, f -> !f.isAnnotationPresent(DataIgnore.class));
     }
 
     private static int intersectionSize(Set<String> a, Set<String> b) {
