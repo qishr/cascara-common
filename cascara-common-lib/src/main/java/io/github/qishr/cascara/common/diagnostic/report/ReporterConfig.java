@@ -6,10 +6,10 @@ import java.util.Map;
 import io.github.qishr.cascara.common.annotation.ConfigProperty;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.util.AbstractConfig;
+import io.github.qishr.cascara.common.util.Config;
 
 @ConfigNamespace("cascara.report")
-public class ReporterConfig extends AbstractConfig {
+public class ReporterConfig extends Config {
     @ConfigProperty(name = "level")
     private Map<String,Level> levels = new HashMap<>();
 

@@ -55,7 +55,7 @@ import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.semver.SemVerException;
 
 // TODO: @ConfigNamepsace("cascara") ?
-public class Cascara extends AbstractConfig {
+public class Cascara extends Config {
     private static final String CASCARA_HOME = "CASCARA_HOME";
     private static final String CASC_HOME = "CASC_HOME";
 
@@ -64,7 +64,7 @@ public class Cascara extends AbstractConfig {
     private static final String CASCARA_PROPERTIES = "cascara.properties";
     private static final String CONTENT_TYPES = "content-types.yaml";
     private static final String SCHEMAS = "schemas";
-    private static final String SPL_PROPRTTIES = "spl.properties";
+    private static final String SPL_PROPRTTIES = "cascara.spl.properties";
     private static final String MODULEPATH = "modulepath";
 
     private String homeEnvVar;

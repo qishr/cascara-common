@@ -11,18 +11,19 @@ import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigProperty;
+import io.github.qishr.cascara.common.annotation.ConfigProperty.Source;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 
 public class ConfigTests {
 
     @ConfigNamespace("cascara.test")
-    public static class TestConfig extends AbstractConfig {
+    public static class TestConfig extends Config {
         @ConfigProperty
         private boolean autoFlush = false;
 
         // Names are converted to kebab case by default.
         // This overrides the default.
-        @ConfigProperty(name = "dotted.name")
+        @ConfigProperty(name = "dotted.name", exclude = {Source.ENVIRONMENT_VARIABLE})
         private String dottedName = "value";
 
         @ConfigProperty
@@ -61,7 +62,7 @@ public class ConfigTests {
         System.clearProperty("cascara.test.auto-flush");
         System.clearProperty("cascara.test.level");
         System.clearProperty("cascara.test.level.com.example.Test");
-        AbstractConfig.reset();
+        Config.reset();
     }
 
     @Test

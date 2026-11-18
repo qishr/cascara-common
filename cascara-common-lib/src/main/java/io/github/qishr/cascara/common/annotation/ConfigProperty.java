@@ -43,4 +43,12 @@ import java.lang.annotation.ElementType;
 @Target(ElementType.FIELD)
 public @interface ConfigProperty {
     String name() default "";
+    Source[] include() default {};
+    Source[] exclude() default {};
+
+    public enum Source {
+        SYSTEM_PROPERTY,
+        FILE,
+        ENVIRONMENT_VARIABLE
+    }
 }

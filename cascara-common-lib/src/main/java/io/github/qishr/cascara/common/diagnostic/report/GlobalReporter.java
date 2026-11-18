@@ -83,6 +83,8 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
     /// Consumes ERROR, WARN, and INFO diagnostics.
     protected Consumer<Diagnostic> problemConsumer;
 
+    private static ReporterConfig config;
+
     GlobalReporter() {}
 
     private GlobalReporter init() {
@@ -99,7 +101,7 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
 
         // TODO: support full JlsName
 
-        ReporterConfig config = ReporterConfig.get();
+        config = ReporterConfig.get();
 
         allowApiOverride = config.allowApiOverride();
 
@@ -318,13 +320,19 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
             GlobalReporter root = globalInstance;
             reporter = new ClassReporter(fqcn);
             root.classInstances.put(fqcn, reporter);
-            String envKey = fqcn.replace('.', '_').toUpperCase();
-            Level envLevel = root.envLevels.get(envKey);
-            if (envLevel == null) {
-                reporter.level = root.level;
-            } else {
-                reporter.level = envLevel;
+
+            Level level = config.getLevel(fqcn);
+            if (level != null) {
+                reporter.level = level;
             }
+
+
+            // TODO: Remove this
+            if (fqcn.contains("SPL")) {
+                System.out.println("Debug: SPL level = " + reporter.level);
+            }
+
+
         }
         return reporter;
     }

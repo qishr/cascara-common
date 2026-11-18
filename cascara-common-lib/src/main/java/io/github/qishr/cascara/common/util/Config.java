@@ -18,11 +18,13 @@ import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 
-public abstract class AbstractConfig {
+public abstract class Config {
 
-    private static final Map<Class<? extends AbstractConfig>, AbstractConfig> INSTANCES = new ConcurrentHashMap<>();
+    private static final Map<Class<? extends Config>, Config> INSTANCES = new ConcurrentHashMap<>();
 
     private String configNameSpace;
+
+    private Properties configProperties;
 
     private static record ConfigField(
         Field field,
@@ -31,10 +33,10 @@ public abstract class AbstractConfig {
         boolean isMap
     ) {}
 
-    protected AbstractConfig() {}
+    protected Config() {}
 
     @SuppressWarnings("unchecked")
-    public static <T extends AbstractConfig> T get(Class<T> configClass) {
+    public static <T extends Config> T get(Class<T> configClass) {
         return (T) INSTANCES.computeIfAbsent(configClass, clazz -> {
             try {
                 // 1. Run constructor & inline Java field initializers
@@ -52,6 +54,10 @@ public abstract class AbstractConfig {
         INSTANCES.clear();
     }
 
+    public Properties getProperties() {
+        return configProperties;
+    }
+
     protected void init() {
         ConfigNamespace ns = getClass().getAnnotation(ConfigNamespace.class);
         if (ns != null) {
@@ -59,11 +65,13 @@ public abstract class AbstractConfig {
         }
 
         // 1. Create map of fields
+        configProperties = new Properties();
         Map<String,ConfigField> configFields = new HashMap<>();
         collectConfigFields(configFields);
 
+        // TODO: Use include/exclude properties of annotation
+
         // 2. Load from global properties file
-        Properties configProperties = new Properties();
         if (getClass() != Cascara.class) {
             Path propertiesPath = Cascara.instance().getCascaraPropertiesPath();
             try {
@@ -116,7 +124,7 @@ public abstract class AbstractConfig {
         for (Entry<String,ConfigField> entry : configFields.entrySet()) {
             ConfigField field = entry.getValue();
             if (field.isMap) {
-                setMapValues(field, configProperties);
+                setMapValues(field);
             } else {
                 String value = configProperties.get(field.propName);
                 if (value == null) {
@@ -131,26 +139,26 @@ public abstract class AbstractConfig {
         List<Field> fields = ReflectionUtils.getFields(
             getClass(),
             f -> f.isAnnotationPresent(ConfigProperty.class),
-            c -> c != AbstractConfig.class
+            c -> c != Config.class
         );
 
-        for (Field decl : fields) {
+        for (Field field : fields) {
             // Try to make the field accessible.
             try {
-                decl.setAccessible(true);
+                field.setAccessible(true);
             } catch (InaccessibleObjectException e) {
                 // TODO: Exception?
                 continue;
             }
 
-            ConfigProperty anno = decl.getAnnotation(ConfigProperty.class);
+            ConfigProperty anno = field.getAnnotation(ConfigProperty.class);
 
             String propName =
                 (configNameSpace == null
                     ? ""
                     : configNameSpace + ".") +
                 (anno.name().isEmpty()
-                    ? StringUtils.toKebabCase(decl.getName())
+                    ? StringUtils.toKebabCase(field.getName())
                     : anno.name());
 
             String envName =
@@ -158,12 +166,26 @@ public abstract class AbstractConfig {
                     ? ""
                     : StringUtils.toSnakeCase(configNameSpace).toUpperCase() + "_") +
                 (anno.name().isEmpty()
-                    ? StringUtils.toSnakeCase(decl.getName())
+                    ? StringUtils.toSnakeCase(field.getName())
                     : StringUtils.toSnakeCase(anno.name())).toUpperCase();
 
-            boolean isMap = ReflectionUtils.canAssign(decl.getType(), Map.class);
+            boolean isMap = ReflectionUtils.canAssign(field.getType(), Map.class);
 
-            configFields.put(decl.getName(), new ConfigField(decl, propName, envName, isMap));
+            try {
+                Object value = field.get(this);
+                if (value != null) {
+                    if (isMap) {
+                        // TODO: Populate configProperties
+                    } else {
+                        configProperties.set(propName, value.toString());
+                    }
+                }
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            configFields.put(field.getName(), new ConfigField(field, propName, envName, isMap));
         }
     }
 
@@ -177,7 +199,7 @@ public abstract class AbstractConfig {
         }
     }
 
-    private void setMapValues(ConfigField field, Properties configProperties) {
+    private void setMapValues(ConfigField field) {
         Type valueType = ReflectionUtils.getValueTypeOfMapType(field.field.getGenericType());
 
         if (!(valueType instanceof Class valueClass)) {

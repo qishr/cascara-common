@@ -94,7 +94,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setSystemProperty(SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
             .setSystemProperty(SP_CASCARA_SPL_VERIFY, "true")
             .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
-            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "debug")
             .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
             .setTimeout(Duration.ofSeconds(120))
             .setDebug(PROCESS_DEBUG_ENABLED));
@@ -349,7 +349,6 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             );
 
         // 6. Run the test task
-        // try { exec.run(jarPath.toString()); } catch (Throwable t) { System.err.println(t.getLocalizedMessage()); }
         assertThrows(ServiceException.class, () -> exec.run(jarPath.toString()));
         debug(exec.getResponse());
     }

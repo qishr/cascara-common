@@ -6,10 +6,10 @@ import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigProperty;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.util.AbstractConfig;
+import io.github.qishr.cascara.common.util.Config;
 
 @ConfigNamespace("cascara.sec")
-public class SecurityConfig extends AbstractConfig {
+public class SecurityConfig extends Config {
     @ConfigProperty(name = "trust-store")
     private Path trustStorePath;
 

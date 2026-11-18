@@ -49,6 +49,7 @@ import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.filewatcher.FileWatcher;
 import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.security.policy.SignaturePolicy;
 import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
@@ -62,7 +63,7 @@ import io.github.qishr.cascara.common.util.JreUtils;
 import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
 public class SPLRoot extends SPLBranch {
-    private static final Properties EMPTY_PROPERTIES = new Properties();
+    // private static final Properties EMPTY_PROPERTIES = new Properties();
 
     private static SignaturePolicy signaturePolicy;
 
@@ -76,8 +77,8 @@ public class SPLRoot extends SPLBranch {
     private ContentTypeResolver contentTypeStore;
     private Set<ContentType> contentTypes;
 
-    private FileWatcher propsFileWatcher;
-    private Properties properties;
+    // private FileWatcher propsFileWatcher;
+    // private Properties properties;
 
     private SPLRoot() {
         isBooting = true;
@@ -86,9 +87,9 @@ public class SPLRoot extends SPLBranch {
         contentTypes = new HashSet<>();
         moduleLayer = ModuleLayer.boot();
         loadPolicy();
-        loadPreferences();
+        // loadPreferences();
         displayEnvironmentInformation();
-        if (isAutoDiscoverEnabled()) {
+        if (config.isDiscoveryEnabled()) {
             autoDiscover();
         }
         isBooting = false;
@@ -140,23 +141,7 @@ public class SPLRoot extends SPLBranch {
     }
 
     public String getPreferredProviderClassName(Class<?> serviceType) {
-        return getProperties().getString(serviceType.getName());
-    }
-
-    public Properties getProperties() {
-        Path propsFile = Cascara.instance().getSplPropertiesPath();
-
-        if (!Cascara.instance().isFileTimeSupported()) {
-            if (Files.exists(propsFile)) {
-                try {
-                    properties = Properties.fromFile(propsFile);
-                } catch (IOException e) {
-                    // Ignore and fall through to EMPTY_PROPERTIES
-                }
-            }
-        }
-
-        return properties == null ? EMPTY_PROPERTIES : properties;
+        return config.getPreferredProvider(serviceType.getName());
     }
 
     //
@@ -225,13 +210,13 @@ public class SPLRoot extends SPLBranch {
                         verifySignature(jar);
                     }
                 } catch (SignatureException e) {
-                    if (isLoggingBootErrorsToConsole()) {
+                    if (config.bootErrorsToConsole()) {
                         System.err.println(e.getMessage());
                     }
                     REPORTER.warn(e);
                     continue;
                 } catch (Throwable e) {
-                    if (isLoggingBootErrorsToConsole()) {
+                    if (config.bootErrorsToConsole()) {
                         System.err.println(e.getMessage());
                     }
                     REPORTER.warn(e);
@@ -251,64 +236,21 @@ public class SPLRoot extends SPLBranch {
         }
     }
 
-    private boolean isLoggingBootErrorsToConsole() {
-        // TODO: Use propsFile for this too
-        String b = System.getProperty(CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE);
-        return "true".equalsIgnoreCase(b);
-    }
-
-    private boolean isAutoDiscoverEnabled() {
-        // TODO: Use propsFile for this too
-        String autoDiscover = System.getProperty(CASCARA_SPL_DISCOVER);
-        return !"false".equalsIgnoreCase(autoDiscover);
-    }
-
     private void loadPolicy() {
         signaturePolicy = SplSignaturePolicy.builder()
             .requireSigned(config.policyRequireSigned())
             .checkExpiry(config.policyCheckExpiry())
             .requireSignedClasses(config.policyRequireSignedClasses())
             .build();
-
-            // TODO: Remove these...
-            System.out.println("verify = " + config.isVerifyEnabled());
-            System.out.println("req signed = " + config.policyRequireSigned());
-            System.out.println("check expiry = " + config.policyCheckExpiry());
-            System.out.println("req signed classes = " + config.policyRequireSignedClasses());
-        }
-
-    private void loadPreferences() {
-        // TODO see above
-        Path propsFile = Cascara.instance().getSplPropertiesPath();
-
-        if (Cascara.instance().isFileTimeSupported()) {
-            if (!Files.exists(propsFile)) {
-                try {
-                    Files.createFile(propsFile);
-                } catch (IOException e) {
-                    // e.printStackTrace();
-                    // TODO: Human readable IO exception details...
-                    REPORTER.error(e, FileMessage.WRITE_ERROR, propsFile);
-                    return;
-                }
-            }
-
-            propsFileWatcher = new FileWatcher();
-            try {
-                propsFileWatcher.watchFile(propsFile, () -> {
-                    try {
-                        properties = Properties.fromFile(propsFile);
-                    } catch (IOException e) {}
-                });
-            } catch (IOException e) {}
-
-            try {
-                properties = Properties.fromFile(propsFile);
-            } catch (IOException e) {}
-        }
     }
 
     private void displayEnvironmentInformation() {
+
+
+        // TODO: Remove this
+        System.out.println("SPL level = " + REPORTER.getLevel());
+
+
         if (REPORTER.getLevel().includes(Level.DEBUG)) {
             REPORTER.debug("Environment Information:");
 
@@ -323,7 +265,7 @@ public class SPLRoot extends SPLBranch {
 
             REPORTER.debug("  Cascara Version: " + Cascara.instance().getVersion());
             REPORTER.debug("  Module cascara.common Version: " + Cascara.instance().getCommonVersion());
-            REPORTER.debug("  SPL Auto Discovery: " + isAutoDiscoverEnabled());
+            REPORTER.debug("  SPL Auto Discovery: " + config.isDiscoveryEnabled());
             REPORTER.debug("  SPL Signature Verification: " + config.isVerifyEnabled());
 
             REPORTER.debug("  JPMS Enabled: " + JreUtils.isJpmsEnabled());
@@ -333,6 +275,12 @@ public class SPLRoot extends SPLBranch {
             REPORTER.debug("  Console: " + JreUtils.isRunningInTerminal());
             // REPORTER.debug("  Eclipse: " + JreUtils.isRunningViaEclipse());
             // REPORTER.debug("  Gradle: " + JreUtils.isRunningViaGradle());
+
+            REPORTER.debug("SPL Config:");
+            Properties splProperties = config.getProperties();
+            for (Property<?> p : splProperties) {
+                REPORTER.debug("  " + p.getName() + " = " + p.asString());
+            }
         }
     }
 

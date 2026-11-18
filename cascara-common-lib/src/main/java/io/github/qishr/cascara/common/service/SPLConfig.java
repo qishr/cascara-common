@@ -1,14 +1,20 @@
 package io.github.qishr.cascara.common.service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigProperty;
 import io.github.qishr.cascara.common.annotation.NonNull;
-import io.github.qishr.cascara.common.util.AbstractConfig;
+import io.github.qishr.cascara.common.util.Config;
 
 @ConfigNamespace("cascara.spl")
-public class SPLConfig extends AbstractConfig {
+public class SPLConfig extends Config {
     @ConfigProperty()
     private boolean discover;
+
+    @ConfigProperty()
+    private boolean bootErrorsToConsole;
 
     @ConfigProperty()
     private boolean verify;
@@ -22,6 +28,9 @@ public class SPLConfig extends AbstractConfig {
     @ConfigProperty(name = "policy.require-signed-classes")
     private boolean policyRequireSignedClasses;
 
+    @ConfigProperty(name = "provider")
+    private Map<String,String> preferredProviders = new HashMap<>();
+
     @NonNull
     public static SPLConfig get() {
         return get(SPLConfig.class);
@@ -29,6 +38,10 @@ public class SPLConfig extends AbstractConfig {
 
     public boolean isDiscoveryEnabled() {
         return discover;
+    }
+
+    public boolean bootErrorsToConsole() {
+        return bootErrorsToConsole;
     }
 
     public boolean isVerifyEnabled() {
@@ -45,5 +58,13 @@ public class SPLConfig extends AbstractConfig {
 
     public boolean policyRequireSignedClasses() {
         return policyRequireSignedClasses;
+    }
+
+    public String getPreferredProvider(String serviceName) {
+        return preferredProviders.get(serviceName);
+    }
+
+    public Map<String,String> getPreferredProviders() {
+        return preferredProviders;
     }
 }

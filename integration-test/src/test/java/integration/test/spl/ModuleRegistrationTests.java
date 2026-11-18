@@ -65,18 +65,11 @@ class ModuleRegistrationTests extends SplTestBase {
 
     @Test
     void loadsPreferredProviderFromVirtualHome() throws IOException {
-        Path propsFile = Cascara.instance().getSplPropertiesPath();
-        Files.writeString(propsFile,
-            "io.github.qishr.cascara.common.io.ResourceProvider=" +
+        Path splPropertiesPath = Cascara.instance().getSplPropertiesPath();
+        Files.writeString(splPropertiesPath,
+            "provider.io.github.qishr.cascara.common.io.ResourceProvider = " +
             "io.github.qishr.cascara.common.io.provider.FileResourceProvider\n"
         );
-
-        // Verify SPL reads correctly from NIO Path operations
-        // Reporter reporter = new LocalReporter();
-        //.setLevel(Level.DEBUG);
-        SPL spl = SPL.getRoot();
-        // ServiceProviderRoot root = ServiceProviderLayer.getRoot();
-        assertNotNull(spl);
 
         // Verify SPL works
         SourceBuffer buf = SPL.load(SourceBuffer.class);
