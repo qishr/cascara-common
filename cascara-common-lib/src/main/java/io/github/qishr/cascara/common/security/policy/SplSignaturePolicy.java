@@ -93,7 +93,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                 if (requireSigned) {
                     return SignatureStatus.NOT_SIGNED;
                 } else {
-                    REPORTER.debug("Valid JAR: No manifest and signature not required");
+                    REPORTER.trace("Valid JAR: No manifest and signature not required");
                     return SignatureStatus.VALID;
                 }
             }
@@ -103,7 +103,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                 if (requireSigned) {
                     return SignatureStatus.NOT_SIGNED;
                 } else {
-                    REPORTER.debug("Valid JAR: No certs and signature not required");
+                    REPORTER.trace("Valid JAR: No certs and signature not required");
                     return SignatureStatus.VALID;
                 }
             }
@@ -130,7 +130,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                         return SignatureStatus.CERTIFICATE_REVOKED;
                     }
                 }
-                REPORTER.debug("Valid JAR: Empty trust store and not revoked");
+                REPORTER.trace("Valid JAR: Empty trust store and not revoked");
                 return SignatureStatus.VALID;
             }
 
@@ -147,7 +147,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
             CertPathValidationResult vr = CertPathVerifier.validatePath(signerCertChain, this.trustStore); // Runs PKIX CertPathValidator
 
             if (!vr.isValid()) {
-                REPORTER.debug("Cert path failed validation");
+                REPORTER.trace("Cert path failed validation");
                 return vr.getStatus();
             }
 
@@ -160,7 +160,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
                         anyRevoked = true;
                         continue;
                     }
-                    REPORTER.debug("Valid JAR: trusted certificate");
+                    REPORTER.trace("Valid JAR: trusted certificate");
                     return SignatureStatus.VALID;
                 }
             }
@@ -178,18 +178,9 @@ public final class SplSignaturePolicy implements SignaturePolicy {
         }
     }
 
-
-
-
-
-
-
-
-
-
     public SignatureStatus evaluate(Class<?> type) {
         if (!requireSignedClasses) {
-            REPORTER.debug("Valid class: signed classes not required");
+            REPORTER.trace("Valid class: signed classes not required");
             return SignatureStatus.VALID;
         }
 
@@ -200,7 +191,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
 
         // 1. System/Framework Exemption
         if (trustSystemModules && isSystemOrFrameworkClass(type)) {
-            REPORTER.debug("Valid: trusted system module");
+            REPORTER.trace("Valid: trusted system module");
             return SignatureStatus.VALID;
         }
 

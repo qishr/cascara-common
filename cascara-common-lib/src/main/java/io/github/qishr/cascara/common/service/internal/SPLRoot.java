@@ -87,7 +87,6 @@ public class SPLRoot extends SPLBranch {
         contentTypes = new HashSet<>();
         moduleLayer = ModuleLayer.boot();
         loadPolicy();
-        // loadPreferences();
         displayEnvironmentInformation();
         if (config.isDiscoveryEnabled()) {
             autoDiscover();
@@ -245,12 +244,6 @@ public class SPLRoot extends SPLBranch {
     }
 
     private void displayEnvironmentInformation() {
-
-
-        // TODO: Remove this
-        System.out.println("SPL level = " + REPORTER.getLevel());
-
-
         if (REPORTER.getLevel().includes(Level.DEBUG)) {
             REPORTER.debug("Environment Information:");
 

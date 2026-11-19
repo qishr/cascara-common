@@ -63,7 +63,6 @@ import io.github.qishr.cascara.common.annotation.Priority;
 import io.github.qishr.cascara.common.annotation.SingletonInitializer;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.exception.UnexpectedNullValueException;
 import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
@@ -91,7 +90,7 @@ import io.github.qishr.cascara.common.util.ReflectionUtils;
 import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
 public class SPLBranch implements SPL {
-    protected static final Reporter REPORTER = GlobalReporter.forClass(SPL.class);
+    protected static final Reporter REPORTER = Reporter.forClass(SPL.class);
 
     protected static SPLRoot rootLayer;
 

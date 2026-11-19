@@ -6,6 +6,7 @@ import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.service.ServiceException;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public class IpcConfig {
     public static final String SERIALIZER_CLASS = "io.github.qishr.cascara.lang.json.processor.JsonSerializer";
@@ -46,13 +47,18 @@ public class IpcConfig {
         // JSON module is on the module path and it doesn't violate
         // the SPL Signature Policy.
         try {
-            SPL layer = SPL.getRoot();
             if (serializerClass == null) {
                 serializerClass = Class.forName(IpcConfig.SERIALIZER_CLASS);
-                layer.registerClass(serializerClass);
             }
-            return new ProcessorFactory(layer).createSerializer(SERIALIZATION_FORMAT);
+            if (serializerClass != null) {
+                return (Serializer<?>) ReflectionUtils.createInstance(serializerClass);
+            }
         } catch (ClassNotFoundException e) {
+            // TODO: Remove this
+            System.err.println("IpcConfig: " + e.getLocalizedMessage());
+        } catch (InstantiationException e) {
+            // TODO: Remove this
+            System.err.println("IpcConfig: " + e.getLocalizedMessage());
         }
 
         return null;

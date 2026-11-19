@@ -349,6 +349,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             );
 
         // 6. Run the test task
+        // try {exec.run(jarPath.toString());} catch(Throwable t){}
         assertThrows(ServiceException.class, () -> exec.run(jarPath.toString()));
         debug(exec.getResponse());
     }

@@ -11,22 +11,22 @@ import io.github.qishr.cascara.common.util.Config;
 @ConfigNamespace("cascara.spl")
 public class SPLConfig extends Config {
     @ConfigProperty()
-    private boolean discover;
+    private boolean discover = true;
 
     @ConfigProperty()
-    private boolean bootErrorsToConsole;
+    private boolean bootErrorsToConsole = false;
 
     @ConfigProperty()
-    private boolean verify;
+    private boolean verify = false;
 
     @ConfigProperty(name = "policy.check-expiry")
-    private boolean policyCheckExpiry;
+    private boolean policyCheckExpiry = false;
 
     @ConfigProperty(name = "policy.require-signed")
-    private boolean policyRequireSigned;
+    private boolean policyRequireSigned = false;
 
     @ConfigProperty(name = "policy.require-signed-classes")
-    private boolean policyRequireSignedClasses;
+    private boolean policyRequireSignedClasses = false;
 
     @ConfigProperty(name = "provider")
     private Map<String,String> preferredProviders = new HashMap<>();

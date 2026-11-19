@@ -115,10 +115,6 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
         for (Entry<String,Level> property : config.getLevels().entrySet()) {
             String fqcn = property.getKey();
             Level level = property.getValue();
-
-            // TODO: Remove this
-            // System.out.println("Debug: " + fqcn + " = " + level);
-
             if (level != null) {
                 setLevelInternal(fqcn, level);
             }
@@ -151,6 +147,7 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
     }
 
     public static void configureSerializer() {
+        // TODO: Remove this
         try {
             Serializer<?> serializer = IpcConfig.createSerializer();
             if (serializer != null) {
@@ -170,7 +167,8 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
                     globalInstance.serializer = serializer;
                 }
             }
-        } catch (Throwable e) {}
+        } catch (Throwable e) {
+        }
     }
 
     @Experimental
@@ -325,14 +323,6 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
             if (level != null) {
                 reporter.level = level;
             }
-
-
-            // TODO: Remove this
-            if (fqcn.contains("SPL")) {
-                System.out.println("Debug: SPL level = " + reporter.level);
-            }
-
-
         }
         return reporter;
     }
