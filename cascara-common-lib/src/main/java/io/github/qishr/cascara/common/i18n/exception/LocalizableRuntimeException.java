@@ -35,6 +35,7 @@
 
 package io.github.qishr.cascara.common.i18n.exception;
 
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 import io.github.qishr.cascara.common.i18n.Localizer;
 
@@ -52,6 +53,11 @@ public class LocalizableRuntimeException extends RuntimeException implements Loc
         super(Localizer.instance().format(message, details), cause);
         this.localizableMessage = message;
         this.details = details != null ? details : new Object[0];
+    }
+
+    public static LocalizableRuntimeException of(Exception exception) {
+        DiagnosticMessage dm = DiagnosticMessage.forException(exception);
+        return new LocalizableRuntimeException(exception, dm.getMessage(), dm.getDetails());
     }
 
     /// {@inheritDoc}

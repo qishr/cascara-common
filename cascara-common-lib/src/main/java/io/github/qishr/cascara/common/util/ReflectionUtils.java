@@ -426,9 +426,6 @@ public class ReflectionUtils {
         String queryingModule = null;
         StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
 
-        // System.out.println("\n---- getCaller ----");
-        // Thread.dumpStack();
-
         for (StackTraceElement frame : callStack) {
             String moduleName = frame.getModuleName();
             String className = frame.getClassName();

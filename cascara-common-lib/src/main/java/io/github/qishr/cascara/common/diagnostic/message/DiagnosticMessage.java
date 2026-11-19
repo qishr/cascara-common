@@ -71,6 +71,7 @@ public class DiagnosticMessage extends DetailedMessage {
             case NumberFormatException e -> new DiagnosticMessage(cause, GenericMessage.NUMBER_FORMAT_EXCEPTION, e.getMessage());
 
 
+
             // NoClassDefFoundError - when trying to load in the definition of a class and no definition of the class could be found.
             case NoClassDefFoundError e -> new DiagnosticMessage(cause, GenericMessage.CLASS_NOT_FOUND, e.getMessage());
 
@@ -119,16 +120,13 @@ public class DiagnosticMessage extends DetailedMessage {
             // AbstractMethodError - when an application tries to call an abstract method.
             case AbstractMethodError e -> new DiagnosticMessage(cause, GenericMessage.ABSTRACT_METHOD_ERROR, e.getMessage());
 
-
             case ReflectiveOperationException e -> new DiagnosticMessage(cause, GenericMessage.REFLECTIVE_OPERATION_EXCEPTION, e.getMessage());
-
-
-
 
 
 
             // ServiceConfigurationError - when something goes wrong while locating, loading, or instantiating a service provider.
             case ServiceConfigurationError e -> new DiagnosticMessage(cause, GenericMessage.SERVICE_CONFIG_ERROR, e.getMessage());
+
 
 
             // Security exceptions
@@ -145,36 +143,5 @@ public class DiagnosticMessage extends DetailedMessage {
 
             default -> new DiagnosticMessage(cause, GenericMessage.ERROR, cause.getMessage());
         };
-
-
-
     }
-
-    // Instantiation / Invocation errors:
-    // InaccessibleObjectException
-    // IllegalAccessException
-    // IllegalArgumentException
-    // InvocationTargetException
-    // NoSuchMethodException
-    // ExceptionInInitializerError
-    // AbstractMethodError
-    //
-
-    // Class loading errors:
-    // java.lang.Error
-    // java.lang.InternalError
-    // java.lang.UnsatisfiedLinkError
-    // java.lang.ClassNotFoundException
-    // java.lang.ExceptionInInitializerError
-    // java.lang.NoClassDefFoundError
-    // java.lang.IllegalAccessError
-
-    // Others:
-    // NullPointerException
-    // ServiceConfigurationError
-    // SecurityException
-    // IllegalAccessException
-    // UnsatisfiedLinkError
-    // InternalError
-    // Error
 }

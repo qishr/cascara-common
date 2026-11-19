@@ -614,14 +614,11 @@ public class SPLBranch implements SPL {
         }
     }
 
-    protected static void verifySignature(JarFile jar) {
+    protected static void verifySignature(JarFile jar) throws IOException {
 
         List<ZipEntry> entries = jar.getEntries();
         for (ZipEntry entry : entries) {
             try (InputStream in = jar.getInputStream(entry)) {
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
             }
         }
 

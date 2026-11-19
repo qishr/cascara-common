@@ -63,13 +63,14 @@ public enum LangMessage implements LocalizableMessage {
     FIELD_NOT_ACCESSIBLE_REASON("LANG-316", "Field {0} is not accessible: {1}"),
     AMBIGUOUS_POLYMORPHIC("LANG-317", "Ambiguous polymorphic type resolution for base class {0}"),
     AMBIGUOUS_TARGET_TYPE("LANG-318", "Ambiguous target type {0}"),
-    NON_SCALAR_KEY("LANG-319", "Non-scalar key not supported {0}"),
-    AST_FACTORY_FAIL_SCALAR("LANG-320", "AST factory failed to create scalar"),
-    AST_FACTORY_FAIL_MAP("LANG-321", "AST factory failed to create map"),
-    AST_FACTORY_FAIL_SEQUENCE("LANG-322", "AST factory failed to create sequence"),
-    AST_FACTORY_FAIL_KEY("LANG-323", "AST factory failed to create key"),
-    CONCURRENT_USE("LANG-324", "Serializer created on {0} and used on {1}"),
-    FIELD_NOT_ACCESSIBLE("LANG-325", "Field {0} is not accessible"),
+    NON_SCALAR_KEY("LANG-319", "Non-scalar key not supported: {0}"),
+    NON_STRING_KEY("LANG-320", "Non-string key not supported: {0}"),
+    AST_FACTORY_FAIL_SCALAR("LANG-321", "AST factory failed to create scalar"),
+    AST_FACTORY_FAIL_MAP("LANG-322", "AST factory failed to create map"),
+    AST_FACTORY_FAIL_SEQUENCE("LANG-323", "AST factory failed to create sequence"),
+    AST_FACTORY_FAIL_KEY("LANG-324", "AST factory failed to create key"),
+    CONCURRENT_USE("LANG-325", "Serializer created on {0} and used on {1}"),
+    FIELD_NOT_ACCESSIBLE("LANG-326", "Field {0} is not accessible"),
 
     UNKNOWN_GENERIC_TYPE("LANG-501", "Could not resolve generic type argument for {0}");
 

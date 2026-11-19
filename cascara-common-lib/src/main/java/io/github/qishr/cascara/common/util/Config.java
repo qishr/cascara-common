@@ -39,6 +39,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.ConfigSetting.Source;
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.exception.ConfigException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
 
@@ -108,7 +112,7 @@ public abstract class Config {
                         settings.add(setting);
                     }
                 }
-            } catch (IOException e) {
+            } catch (IOException ignored) {
                 // Ignore it
             }
         }
@@ -127,7 +131,7 @@ public abstract class Config {
                         settings.add(setting);
                     }
                 }
-            } catch (IOException e) {
+            } catch (IOException ignored) {
                 // Ignore it
             }
         }
@@ -135,10 +139,10 @@ public abstract class Config {
         // 4. Load from system properties
         System.getProperties().forEach((k,v) -> {
             if (configNameSpace == null || k.toString().startsWith(configNameSpace)) {
-                if (v != null && v instanceof String val && !val.isBlank()) {
+                if (v != null && v instanceof String value) {
                     String name = k.toString();
                     if (include(name, Source.SYSTEM_PROPERTY)) {
-                        Setting setting = new Setting(name, val, Source.SYSTEM_PROPERTY, null);
+                        Setting setting = new Setting(name, value, Source.SYSTEM_PROPERTY, null);
                         settings.add(setting);
                     }
                 }
@@ -148,10 +152,10 @@ public abstract class Config {
         // 5. Load from environment variables
         for (Entry<String,ConfigField> entry : configFields.entrySet()) {
             ConfigField field = entry.getValue();
-            String val = System.getenv(field.envName);
-            if (val != null && !val.isBlank()) {
+            String value = System.getenv(field.envName);
+            if (value != null) {
                 if (include(field.propName, Source.ENVIRONMENT_VARIABLE)) {
-                    Setting setting = new Setting(field.propName, val, Source.ENVIRONMENT_VARIABLE, null);
+                    Setting setting = new Setting(field.propName, value, Source.ENVIRONMENT_VARIABLE, null);
                     settings.add(setting);
                 }
             }
@@ -184,8 +188,7 @@ public abstract class Config {
             try {
                 field.setAccessible(true);
             } catch (InaccessibleObjectException e) {
-                // TODO: Exception?
-                continue;
+                throw LocalizableRuntimeException.of(e);
             }
 
             ConfigSetting anno = field.getAnnotation(ConfigSetting.class);
@@ -207,23 +210,26 @@ public abstract class Config {
                     : StringUtils.toSnakeCase(anno.name())).toUpperCase();
 
             boolean isMap = ReflectionUtils.canAssign(field.getType(), Map.class);
+            ConfigField configField = new ConfigField(field, anno, propName, envName, isMap);
+            configFields.put(field.getName(), configField);
 
             try {
                 Object value = field.get(this);
                 if (value != null) {
                     if (isMap) {
-                        // TODO: Populate settings
+                        Type keyType = ReflectionUtils.getKeyTypeOfMapType(field.getGenericType());
+                        if (!ReflectionUtils.canAssign(keyType, String.class)) {
+                            throw new LocalizableRuntimeException(LangMessage.NON_STRING_KEY, keyType);
+                        }
+                        settings.addAll(mapToSettings(configField, value));
                     } else {
                         Setting setting = new Setting(propName, value.toString(), Source.DEFAULT, null);
                         settings.add(setting);
                     }
                 }
             } catch (IllegalArgumentException | IllegalAccessException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                throw LocalizableRuntimeException.of(e);
             }
-
-            configFields.put(field.getName(), new ConfigField(field, anno, propName, envName, isMap));
         }
     }
 
@@ -232,8 +238,8 @@ public abstract class Config {
         try {
             field.field.set(this, value);
         } catch (Exception e) {
-            // TODO
-            e.printStackTrace();
+            DiagnosticMessage dm = DiagnosticMessage.forException(e);
+            throw new LocalizableRuntimeException(dm, dm.getDetails());
         }
     }
 
@@ -243,8 +249,6 @@ public abstract class Config {
         if (!(valueType instanceof Class valueClass)) {
             throw new IllegalArgumentException("Map value not a class: " + field.field.getName());
         }
-
-        // TODO: Instead of overwriting the entire map, add to it?
 
         Map<String,Object> map = new HashMap<>();
 
@@ -264,8 +268,7 @@ public abstract class Config {
         try {
             field.field.set(this, map);
         } catch (Exception e) {
-            // TODO
-            e.printStackTrace();
+            throw LocalizableRuntimeException.of(e);
         }
     }
 
@@ -295,12 +298,16 @@ public abstract class Config {
             return Short.parseShort(value);
         }
 
-        // TODO...
-        // if (targetType == byte.class || targetType == Byte.class) {
-        //     return Byte.parseInt(text);
-        // }
+        // 2. Bytes
+        if (targetType == byte.class || targetType == Byte.class) {
+            if (value.length() > 0) {
+                return (byte) value.charAt(0);
+            } else {
+                return 0x00;
+            }
+        }
 
-        // 2. Characters
+        // 3. Characters
         if (ReflectionUtils.canAssign(targetType, Character.class) || targetType.isAssignableFrom(char.class)) {
             if (value.length() > 0) {
                 return value.charAt(0);
@@ -309,17 +316,31 @@ public abstract class Config {
             }
         }
 
-        // 3. String-related Types
+        // 4. String-related Types
         if (ReflectionUtils.canAssign(targetType, CharSequence.class)) {
             return value;
         }
 
-        // 4. Enums
+        // 5. Enums
         if (targetType.isEnum()) {
             return Enum.valueOf((Class<Enum>) targetType, value.toUpperCase());
         }
 
         return null;
+    }
+
+    // When this is called, mapObject is known to be a Map and its key is known to be a String.
+    private List<Setting> mapToSettings(ConfigField field, Object mapObject) {
+        Map<?,?> map = (Map<?,?>)  mapObject;
+        List<Setting> settings = new ArrayList<>();
+        for (Entry<?,?> entry : map.entrySet()) {
+            String stringValue = entry.getValue() == null
+                ? null
+                : entry.getValue().toString();
+            String name = field.propName + "." + entry.getKey().toString();
+            settings.add(new Setting(name, stringValue, Source.DEFAULT, null));
+        }
+        return settings;
     }
 
     private boolean include(String name, Source source) {

@@ -51,10 +51,13 @@ import io.github.qishr.cascara.common.annotation.SubType;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
+import io.github.qishr.cascara.common.type.TypeConfig;
 import io.github.qishr.cascara.common.util.ClassHierarchy;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public class DeserializationTargetResolver {
+    private static final TypeConfig config = TypeConfig.get();
+
     private Map<Class<?>,Set<Class<?>>> permittedSubclassesCache = new HashMap<>();
     private Map<Class<?>,Set<Class<?>>> allSubclassesCache = new HashMap<>();
     private Map<String,Class<?>> specificSubclassCache = new HashMap<>();
@@ -71,9 +74,18 @@ public class DeserializationTargetResolver {
 
         // 0. Overrides specified by AbstractTypeRegistry
         if (rawClass.isInterface() || Modifier.isAbstract(rawClass.getModifiers())) {
-            Class<?> concreteClass = AbstractTypeRegistry.resolve(rawClass);
-            if (concreteClass != null && !Modifier.isAbstract(concreteClass.getModifiers())) {
-                targetClass = (Class<C>) concreteClass;
+            String concreteName = config.getMapping(rawClass.getCanonicalName());
+            if (concreteName != null) {
+                // TODO: loadClassSafely in ClassHierarchy could be adapted to work better here
+                Class<?> concreteClass = null;
+                try {
+                    concreteClass = Class.forName(concreteName);
+                } catch (ClassNotFoundException ignored) {
+                }
+
+                if (concreteClass != null && !Modifier.isAbstract(concreteClass.getModifiers())) {
+                    targetClass = (Class<C>) concreteClass;
+                }
             }
         }
 

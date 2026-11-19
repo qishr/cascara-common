@@ -60,8 +60,7 @@ public class JarManifest extends Manifest {
         try {
             manifest.read(new ByteArrayInputStream(text.getBytes()));
         } catch (IOException e) {
-            // TODO: Proper error message
-            throw new LocalizableRuntimeException(e, GenericMessage.ERROR, e.getMessage());
+            throw new LocalizableRuntimeException(e, GenericMessage.MANIFEST_PARSE, e.getMessage());
         }
         return manifest;
     }
@@ -71,21 +70,13 @@ public class JarManifest extends Manifest {
         try {
             is = JreUtils.getResourceAsStream(clazz, "/META-INF/MANIFEST.MF");
         } catch (IOException e) {
-            throw new LocalizableRuntimeException(
-                e,
-                GenericMessage.MANIFEST_READ,
-                clazz.getSimpleName()
-            );
+            throw new LocalizableRuntimeException(e, GenericMessage.MANIFEST_READ, clazz.getSimpleName());
         }
         try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
             String content = br.lines().collect(Collectors.joining("\n"));
             return parse(content);
         } catch (Exception e) {
-            throw new LocalizableRuntimeException(
-                e,
-                GenericMessage.MANIFEST_READ,
-                clazz.getSimpleName()
-            );
+            throw new LocalizableRuntimeException(e, GenericMessage.MANIFEST_READ, clazz.getSimpleName());
         }
     }
 

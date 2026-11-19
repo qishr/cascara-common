@@ -50,11 +50,12 @@ public enum GenericMessage implements LocalizableMessage {
     UNEXPECTED_NULL_RETURN("ERROR-104", "Unexpected null return value from {0}.{1}"),
     MANIFEST_NOT_FOUND("ERROR-105", "Manifest not found for {0}"),
     MANIFEST_READ("ERROR-106", "Failed to read manifest for {0}"),
-    RESOURCE_INACCESSIBLE("ERROR-107", "Resource '{0}' cannot be loaded. Module " +
+    MANIFEST_PARSE("ERROR-107", "Failed to parse manifest for {0}"),
+    RESOURCE_INACCESSIBLE("ERROR-108", "Resource '{0}' cannot be loaded. Module " +
         "'{1}' does not open package '{2}' to module '{3}'. " +
         "To fix this, add 'opens {4} to {5};' to the module-info.java of '{6}'"),
-    STREAM_READ_ERROR("ERROR-108", "Failed to read from stream"),
-    CONFIG_LOAD_FAILED("ERROR-109", "Failed to load config: {0}"),
+    STREAM_READ_ERROR("ERROR-109", "Failed to read from stream"),
+    CONFIG_LOAD_FAILED("ERROR-110", "Failed to load config: {0}"),
 
     // JRE Exceptions
     EXCEPTION("ERROR-401", "Exception: {0}"),

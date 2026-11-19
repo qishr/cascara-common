@@ -248,12 +248,20 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
     }
 
     /// Copies
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public Properties addAll(Properties properties) {
         if (properties == null) {
             throw new UnexpectedNullValueException("properties");
         }
-        for (Property<?> foreign : properties.asList()) {
+        return addAll(properties.asList());
+    }
+
+    /// Copies
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Properties addAll(List<? extends Property<?>> properties) {
+        if (properties == null) {
+            throw new UnexpectedNullValueException("properties");
+        }
+        for (Property<?> foreign : properties) {
             Property local = getProperty(foreign.getName());
             if (local == null) {
                 local = createProperty();
