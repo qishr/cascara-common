@@ -10,26 +10,29 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
-import io.github.qishr.cascara.common.annotation.ConfigProperty;
-import io.github.qishr.cascara.common.annotation.ConfigProperty.Source;
+import io.github.qishr.cascara.common.annotation.ConfigSetting;
+import io.github.qishr.cascara.common.annotation.ConfigSetting.Source;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 
 public class ConfigTests {
 
     @ConfigNamespace("cascara.test")
     public static class TestConfig extends Config {
-        @ConfigProperty
+        @ConfigSetting
         private boolean autoFlush = false;
 
         // Names are converted to kebab case by default.
         // This overrides the default.
-        @ConfigProperty(name = "dotted.name", exclude = {Source.ENVIRONMENT_VARIABLE})
+        @ConfigSetting(name = "dotted.name")
         private String dottedName = "value";
 
-        @ConfigProperty
+        @ConfigSetting(exclude = { Source.SYSTEM_PROPERTY })
+        private Integer excludedSetting = 42;
+
+        @ConfigSetting(exclude = { Source.ENVIRONMENT_VARIABLE })
         private Level level = Level.INFO;
 
-        @ConfigProperty(name = "level")
+        @ConfigSetting(name = "level", include = { Source.SYSTEM_PROPERTY })
         private Map<String,Level> levels = new HashMap<>();
 
         public static TestConfig get() {
@@ -42,6 +45,10 @@ public class ConfigTests {
 
         public String getDottedName() {
             return dottedName;
+        }
+
+        public Integer getExcludedSetting() {
+            return excludedSetting;
         }
 
         public Level getLevel() {
@@ -60,6 +67,8 @@ public class ConfigTests {
     @AfterEach
     void tearDown() {
         System.clearProperty("cascara.test.auto-flush");
+        System.clearProperty("cascara.test.dotted.name");
+        System.clearProperty("cascara.test.excluded-setting");
         System.clearProperty("cascara.test.level");
         System.clearProperty("cascara.test.level.com.example.Test");
         Config.reset();
@@ -77,6 +86,13 @@ public class ConfigTests {
         System.setProperty("cascara.test.dotted.name", "coffee");
         TestConfig cfg = TestConfig.get();
         assertEquals("coffee", cfg.getDottedName());
+    }
+
+    @Test
+    void test_exclude() {
+        System.setProperty("cascara.test.excluded-setting", "86");
+        TestConfig cfg = TestConfig.get();
+        assertEquals(42, cfg.getExcludedSetting());
     }
 
     @Test

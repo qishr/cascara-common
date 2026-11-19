@@ -41,12 +41,13 @@ import java.lang.annotation.ElementType;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface ConfigProperty {
+public @interface ConfigSetting {
     String name() default "";
     Source[] include() default {};
     Source[] exclude() default {};
 
     public enum Source {
+        DEFAULT,
         SYSTEM_PROPERTY,
         FILE,
         ENVIRONMENT_VARIABLE

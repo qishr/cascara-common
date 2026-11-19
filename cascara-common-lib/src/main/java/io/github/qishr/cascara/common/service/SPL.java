@@ -41,7 +41,9 @@ import java.util.function.Predicate;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.data.TreeNode;
+import io.github.qishr.cascara.common.property.Properties.PropertyName;
 import io.github.qishr.cascara.common.security.policy.SignaturePolicy;
 import io.github.qishr.cascara.common.service.internal.SPLRoot;
 import io.github.qishr.cascara.common.service.internal.SPLUtils;
@@ -49,14 +51,33 @@ import io.github.qishr.cascara.common.trackable.TrackableArray;
 
 public interface SPL extends TreeNode<SPL> {
     // Property names used in service capabilities
-    public static final String SP_SERVICE_NAME = "serviceName";
-    public static final String SP_JAR_PATH = "jarPath";
-    public static final String SP_PROVIDER_NAME = "providerName";
-    public static final String SP_MODULE_NAME = "moduleName";
-    public static final String SP_MODULE_VERSION = "moduleVersion";
-    public static final String SP_JVM_TYPE = "jvmType";
-    public static final String SP_TITLE = "title";
-    public static final String SP_CONTENT_TYPE = "contentType";
+    public enum ProviderProperty implements PropertyName {
+        SERVICE_NAME("serviceName"),
+        JAR_PATH("jarPath"),
+        PROVIDER_NAME("providerName"),
+        MODULE_NAME("moduleName"),
+        MODULE_VERSION("moduleVersion"),
+        JVM_TYPE("jvmType"),
+        TITLE("title"),
+        CONTENT_TYPE("contentType");
+        @NonNull private final String string;
+        ProviderProperty(@NonNull String string) {
+            this.string = string;
+        }
+        @Nullable
+        public static ProviderProperty of(String string) {
+            for (ProviderProperty constant : values()) {
+                if (constant.name().equalsIgnoreCase(string)) {
+                    return constant;
+                }
+            }
+            return null;
+        }
+        @NonNull
+        public String asString() {
+            return string;
+        }
+    }
 
     /// Retrieves the root Service Provider Layer.
     @NonNull

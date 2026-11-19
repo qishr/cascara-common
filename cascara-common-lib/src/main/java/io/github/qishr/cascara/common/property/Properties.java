@@ -56,12 +56,36 @@ import io.github.qishr.cascara.common.exception.UnexpectedNullReturnException;
 import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.util.Duplicable;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public class Properties implements TabularData, Duplicable<Properties>, Iterable<Property<?>> {
-    List<Property<?>> propertiesList = new ArrayList<>();
+    private List<Property<?>> propertiesList = new ArrayList<>();
 
     // TODO: Concurrency
-    Map<String,Property<?>> propertiesMap = new HashMap<>();
+    private Map<String,Property<?>> propertiesMap = new HashMap<>();
+
+    private Class<? extends Property<?>> propertyClass;
+
+    /// For enums that represent property names
+    public static interface PropertyName {
+        String asString();
+    }
+
+    public Properties() {}
+
+    public Properties(Class<? extends Property<?>> propertyClass) {
+        this.propertyClass = propertyClass;
+    }
+
+    public Property<?> createProperty() {
+        if (propertyClass != null) {
+            try {
+                return ReflectionUtils.createInstance(propertyClass);
+            } catch (InstantiationException e) {
+            }
+        }
+        return new Property<>();
+    }
 
     public boolean containsKey(String k) {
         return null != getProperty(k);
@@ -131,6 +155,15 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
     }
 
     @Nullable
+    public String getString(PropertyName name) {
+        Property<?> property = getProperty(name.asString());
+        if (property == null) {
+            return null;
+        }
+        return property.asString();
+    }
+
+    @Nullable
     public String getString(String name) {
         Property<?> property = getProperty(name);
         if (property == null) {
@@ -189,78 +222,60 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
         return property.asBoolean(defaultValue);
     }
 
+    public Properties set(PropertyName name, Object value) {
+        if (name == null) {
+            throw new UnexpectedNullValueException("name");
+        }
+        return set(name.asString(), value);
+    }
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public Properties set(String name, Object value) {
-        Property prop = getProperty(name);
-        if (prop == null) {
-            prop = new Property<>(name);
-            add(prop);
+        if (name == null) {
+            throw new UnexpectedNullValueException("name");
         }
-        prop.setValue(value);
-        return this;
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public Properties set(String k, double v) {
-        Property prop = getProperty(k);
-        if (prop == null) {
-            prop = new Property(k);
-            add(prop);
-        }
-        prop.setValue(v);
-        return this;
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public Properties set(String k, int v) {
-        Property prop = getProperty(k);
-        if (prop == null) {
-            prop = new Property(k);
-            add(prop);
-        }
-        prop.setValue(v);
-        return this;
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public Properties set(String k, boolean v) {
-        Property prop = getProperty(k);
-        if (prop == null) {
-            prop = new Property(k);
-            add(prop);
-        }
-        prop.setValue(v);
-        return this;
-    }
-
-    public Properties addAll(Properties properties) {
-        for (Property<?> prop : properties.asList()) {
-            set(prop.getName(), prop.getValue());
-        }
-        return this;
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public Properties add(Property<?> property) {
-        Property existing = getProperty(property.getName());
-        if (existing != null) {
-            existing.setValue(property.getValue());
-        } else {
-            propertiesList.add(property);
-            propertiesMap.put(property.getName(), property);
-        }
-        return this;
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public Properties add(String name, Object value) {
         Property existing = getProperty(name);
         if (existing != null) {
             existing.setValue(value);
         } else {
-            Property property = new Property(name, value);
+            Property property = createProperty();
+            property.setName(name);
+            property.setValue(value);
             propertiesList.add(property);
             propertiesMap.put(property.getName(), property);
+        }
+        return this;
+    }
+
+    /// Copies
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Properties addAll(Properties properties) {
+        if (properties == null) {
+            throw new UnexpectedNullValueException("properties");
+        }
+        for (Property<?> foreign : properties.asList()) {
+            Property local = getProperty(foreign.getName());
+            if (local == null) {
+                local = createProperty();
+                local.copyFrom(foreign);
+                propertiesList.add(local);
+                propertiesMap.put(local.getName(), local);
+            } else {
+                local.setValue(foreign.getValue());
+            }
+        }
+        return this;
+    }
+
+    // Adds without copying
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Properties add(Property<?> property) {
+        Property existing = getProperty(property.getName());
+        if (existing == null) {
+            propertiesList.add(property);
+            propertiesMap.put(property.getName(), property);
+        } else {
+            existing.copyFrom(property);
         }
         return this;
     }
@@ -311,11 +326,11 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (Property<?> prop : propertiesList) {
-            sb.append(prop.getName());
-            sb.append(" = ");
-            sb.append(prop.getValue());
-            sb.append("\n");
+        for (int i = 0; i < size(); i++) {
+            if (i > 0) {
+                sb.append("\n");
+            }
+            sb.append(propertiesList.get(i));
         }
         return sb.toString();
     }
@@ -330,7 +345,7 @@ public class Properties implements TabularData, Duplicable<Properties>, Iterable
         Properties properties = new Properties();
         for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
             String name = String.valueOf(entry.getKey());
-            properties.add(name, entry.getValue());
+            properties.set(name, entry.getValue());
         }
         return properties;
     }

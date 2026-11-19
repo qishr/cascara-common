@@ -41,8 +41,9 @@ import java.util.Map;
 
 import io.github.qishr.cascara.common.data.TabularData;
 import io.github.qishr.cascara.common.type.PrimitiveType;
+import io.github.qishr.cascara.common.util.Duplicable;
 
-public class Property<T> implements TabularData {
+public class Property<T> implements TabularData, Duplicable<Property<T>> {
     private static final String TABULAR_NAME_FIELD = "name";
     private static final String TABULAR_VALUE_FIELD = "value";
 
@@ -60,6 +61,13 @@ public class Property<T> implements TabularData {
     public Property(String k, T v) {
         name = k;
         value = v;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Property<T> copyFrom(Property<?> property) {
+        name = property.getName();
+        value = (T) property.getValue();
+        return this;
     }
 
     public String getName() {
@@ -198,4 +206,18 @@ public class Property<T> implements TabularData {
         }
         return null;
 	}
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name);
+        sb.append(" = ");
+        sb.append(value);
+        return sb.toString();
+    }
+
+    @Override
+    public Property<T> duplicate() {
+        return new Property<>(name, value);
+    }
 }

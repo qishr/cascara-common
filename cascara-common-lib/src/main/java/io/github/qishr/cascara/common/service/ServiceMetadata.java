@@ -38,6 +38,8 @@ package io.github.qishr.cascara.common.service;
 import java.util.Objects;
 
 import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.property.Properties.PropertyName;
+import io.github.qishr.cascara.common.service.SPL.ProviderProperty;
 import io.github.qishr.cascara.common.util.ContentType;
 
 public class ServiceMetadata {
@@ -56,7 +58,7 @@ public class ServiceMetadata {
         this.contentType = contentType;
         this.isSingleton = isSingleton;
         this.priority = priority;
-        String capTypeString = properties.getString(SPL.SP_JVM_TYPE);
+        String capTypeString = properties.getString(ProviderProperty.JVM_TYPE);
         try {
             capabilityType = capTypeString == null ? null : Class.forName(capTypeString);
         } catch (Exception e) {
@@ -100,17 +102,22 @@ public class ServiceMetadata {
         return properties;
     }
 
+    public String getProperty(PropertyName name) {
+        if (properties == null) return null;
+        return properties.getString(name);
+    }
+
     public String getProperty(String name) {
         if (properties == null) return null;
         return properties.getString(name);
     }
 
     public String getJarPath() {
-        return getProperty(SPL.SP_JAR_PATH);
+        return getProperty(ProviderProperty.JAR_PATH);
     }
 
     public String getTitle() {
-        return getProperty(SPL.SP_TITLE);
+        return getProperty(ProviderProperty.TITLE);
     }
 
     public ContentType getContentType() {

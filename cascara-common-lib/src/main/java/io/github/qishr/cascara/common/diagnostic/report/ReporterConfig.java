@@ -3,20 +3,20 @@ package io.github.qishr.cascara.common.diagnostic.report;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.github.qishr.cascara.common.annotation.ConfigProperty;
+import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.util.Config;
 
 @ConfigNamespace("cascara.report")
 public class ReporterConfig extends Config {
-    @ConfigProperty(name = "level")
+    @ConfigSetting(name = "level")
     private Map<String,Level> levels = new HashMap<>();
 
-    @ConfigProperty
+    @ConfigSetting
     private Level level = Level.INFO;
 
-    @ConfigProperty
+    @ConfigSetting
     private boolean allowApiOverride = true;
 
     public static ReporterConfig get() {

@@ -37,21 +37,30 @@ package io.github.qishr.cascara.common.exec;
 import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 
 public enum ExecutionMessage implements LocalizableMessage {
-    PROCESS_NOT_STARTED("EXEC-101", "Failed to start process for {0}"),
-    PROCESS_NOT_EXITED("EXEC-102", "Process for {0} has not exited"),
-    TASK_FAILED("EXEC-103", "Task {0} failed"),
-    INPUT_FAILED("EXEC-104", "Failed to write input to task {0}"),
-    OUTPUT_FAILED("EXEC-105", "Failed to read output of task {0}.\n System.out: \"{1}\"\n System.err: \"{2}\""),
-    INTERRUPT("EXEC-106", "Task {0} was interrupted"),
+    TASK_FAILED("EXEC-101", "Task {0} failed"),
+    MAIN_CLASS_ERROR("EXEC-102", "Error resolving main class {0}"),
+    UNRESOLVE_INPUT_CLASS("EXEC-103", "Error resolving input class {0}"),
+
+    // Process Errors
+    PROCESS_NOT_STARTED("EXEC-201", "Failed to start process for {0}"),
+    PROCESS_NOT_EXITED("EXEC-202", "Process for {0} has not exited"),
+    INPUT_FAILED("EXEC-203", "Failed to write input to task {0}"),
+    OUTPUT_FAILED("EXEC-204", "Failed to read output of task {0}.\n System.out: \"{1}\"\n System.err: \"{2}\""),
+    INTERRUPT("EXEC-205", "Task {0} was interrupted"),
+
+    // Serialization Errors
+    NO_DESERIALIZER("EXEC-301", "No serializer available"),
+    DESERIALIZATION_FAILED("EXEC-302", "Failed to deserialize {0}"),
+    DIAGNOSTIC_SERVER_FAILED("EXEC-303", "Failed to initialize DiagnosticIpcServer for task {0}"),
+    DIAGNOSTIC_DESERIALIZATION_FAILED("EXEC-304", "Failed to deserialize diagnostics for task {0}"),
 
     // IPC Errors
-    DIAGNOSTIC_SERVER_FAILED("EXEC-201", "Failed to initialize DiagnosticIpcServer for task {0}"),
-    DIAGNOSTIC_DESERIALIZATION_FAILED("EXEC-202", "Failed to deserialize diagnostics for task {0}"),
-    NO_DESERIALIZER("EXEC-203", "No serializer available"),
-    DESERIALIZATION_FAILED("EXEC-204", "Failed to deserialize {0}"),
-    IPC_RECV_FAILED("EXEC-205", "IPC receive failed: {0}"),
-    NO_SOCKET_FILE("EXEC-206", "Socket file does not exist: {0}"),
-    CONNECT_FAILED("EXEC-207", "IPC connection failed: {0}");
+    IPC_INIT_FAILED("EXEC-401", "IPC initialization failed"),
+    IPC_NO_SOCKET_FILE("EXEC-402", "Socket file does not exist: {0}"),
+    IPC_CONNECT_FAILED("EXEC-403", "IPC connection failed: {0}"),
+    IPC_RECV_FAILED("EXEC-404", "IPC receive failed"),
+    IPC_CLOSE_FAILED("EXEC-405", "IPC close failed"),
+    IPC_REMOVE_FAILED("EXEC-406", "Failed to remove IPC socket file");
 
     private final String code;
     private final String format;

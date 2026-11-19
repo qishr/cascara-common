@@ -48,9 +48,9 @@ public class InternationalizationTests {
         Localizer localizer = Localizer.instance();
 
         Properties properties = new Properties()
-            .add("meta.lang", "en-US")
-            .add("meta.title", "English")
-            .add("title.example", "Example Title");
+            .set("meta.lang", "en-US")
+            .set("meta.title", "English")
+            .set("title.example", "Example Title");
 
         LocalizedMessages translation = LocalizedMessages.fromProperties(properties);
 

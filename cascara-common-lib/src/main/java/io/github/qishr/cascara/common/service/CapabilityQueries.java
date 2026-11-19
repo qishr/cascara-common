@@ -40,6 +40,7 @@ import java.util.function.Predicate;
 import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.exception.UnexpectedNullValueException;
 import io.github.qishr.cascara.common.property.Properties;
+import io.github.qishr.cascara.common.service.SPL.ProviderProperty;
 import io.github.qishr.cascara.common.util.ContentType;
 
 public class CapabilityQueries {
@@ -47,7 +48,7 @@ public class CapabilityQueries {
     /// Matches if a property has a specific exact value (matches JSON Schema types like String, Boolean, Number)
     public static Predicate<ServiceMetadata> hasExactValue(String key, Object expectedValue) {
         return meta -> {
-            if (meta.getContentType() != null && SPL.SP_CONTENT_TYPE.equals(key)) {
+            if (meta.getContentType() != null && ProviderProperty.of(key) == ProviderProperty.CONTENT_TYPE) {
                 if (meta.getContentType().matches(String.valueOf(expectedValue))) {
                     return true;
                 }
@@ -80,7 +81,7 @@ public class CapabilityQueries {
         }
         return meta -> {
             Properties props = meta.getProperties();
-            String capTypeString = props.getString(SPL.SP_JVM_TYPE);
+            String capTypeString = props.getString(ProviderProperty.JVM_TYPE);
             Class<?> capabilityType;
             try {
                 // TODO: For performance, have Properties be able to return the Class<?> instead of a string
@@ -100,7 +101,7 @@ public class CapabilityQueries {
         }
         return meta -> {
             Properties props = meta.getProperties();
-            String capTypeString = props.getString(SPL.SP_JVM_TYPE);
+            String capTypeString = props.getString(ProviderProperty.JVM_TYPE);
 
             if (capTypeString != null && capTypeString.equals(jvmType.getName())) {
                 return true;

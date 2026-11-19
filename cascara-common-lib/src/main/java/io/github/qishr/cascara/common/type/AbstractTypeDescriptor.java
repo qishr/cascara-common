@@ -32,12 +32,11 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-
 package io.github.qishr.cascara.common.type;
 
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.property.Properties;
-import io.github.qishr.cascara.common.service.SPL;
+import io.github.qishr.cascara.common.service.SPL.ProviderProperty;
 
 public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
     public static final String KEYWORD_TYPE = "type";
@@ -51,7 +50,7 @@ public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
         // this(jvmType.getName(), schemaType);
         this.jvmType = jvmType;
         this.schemaType = schemaType;
-        properties.set(SPL.SP_JVM_TYPE, jvmType.getName());
+        properties.set(ProviderProperty.JVM_TYPE, jvmType.getName());
         if (schemaType != null) {
             properties.set(KEYWORD_TYPE, schemaType.asString());
         }
@@ -66,7 +65,7 @@ public abstract class AbstractTypeDescriptor<T> implements TypeDescriptor<T> {
             e.printStackTrace();
         }
         this.schemaType = schemaType;
-        properties.set(SPL.SP_JVM_TYPE, jvmFqcn);
+        properties.set(ProviderProperty.JVM_TYPE, jvmFqcn);
         if (schemaType != null) {
             properties.set(KEYWORD_TYPE, schemaType.asString());
         }

@@ -35,27 +35,23 @@
 package io.github.qishr.cascara.common.service.internal;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
-import io.github.qishr.cascara.common.filewatcher.FileWatcher;
-import io.github.qishr.cascara.common.property.Properties;
-import io.github.qishr.cascara.common.property.Property;
 import io.github.qishr.cascara.common.security.policy.SignaturePolicy;
 import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
+import io.github.qishr.cascara.common.util.Config.Setting;
 import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.util.ContentTypeResolver;
 import io.github.qishr.cascara.common.util.JarFile;
@@ -258,8 +254,6 @@ public class SPLRoot extends SPLBranch {
 
             REPORTER.debug("  Cascara Version: " + Cascara.instance().getVersion());
             REPORTER.debug("  Module cascara.common Version: " + Cascara.instance().getCommonVersion());
-            REPORTER.debug("  SPL Auto Discovery: " + config.isDiscoveryEnabled());
-            REPORTER.debug("  SPL Signature Verification: " + config.isVerifyEnabled());
 
             REPORTER.debug("  JPMS Enabled: " + JreUtils.isJpmsEnabled());
             displayPaths("Module Path", System.getProperty("jdk.module.path"));
@@ -270,9 +264,9 @@ public class SPLRoot extends SPLBranch {
             // REPORTER.debug("  Gradle: " + JreUtils.isRunningViaGradle());
 
             REPORTER.debug("SPL Config:");
-            Properties splProperties = config.getProperties();
-            for (Property<?> p : splProperties) {
-                REPORTER.debug("  " + p.getName() + " = " + p.asString());
+            List<Setting> settings = config.getSettings();
+            for (Setting s : settings) {
+                REPORTER.debug("  " + s);
             }
         }
     }

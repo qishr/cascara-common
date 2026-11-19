@@ -77,18 +77,18 @@ public final class JvmProcess {
             return runAsync(input).get();
         } catch (java.lang.IllegalThreadStateException e) {
             // Caused by: java.lang.IllegalThreadStateException: process hasn't exited
-            throw new ExecutionException(e.getCause(), ExecutionMessage.PROCESS_NOT_EXITED, mainClass.getName());
+            throw ExecutionException.processNotExited(e.getCause(), mainClass.getName());
         } catch (java.util.concurrent.ExecutionException e) {
             if (e.getCause() instanceof ExecutionException cause) {
                 throw cause;
             }
             if (e.getCause() instanceof IllegalThreadStateException cause) {
-                throw new ExecutionException(cause, ExecutionMessage.PROCESS_NOT_EXITED, mainClass.getName());
+                throw ExecutionException.processNotExited(cause, mainClass.getName());
             }
-            throw new ExecutionException(e, ExecutionMessage.PROCESS_NOT_STARTED, mainClass.getName());
+            throw ExecutionException.processNotStarted(e, mainClass.getName());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new ExecutionException(e, ExecutionMessage.INTERRUPT, mainClass.getName());
+            throw ExecutionException.processInterrupted(e, mainClass.getName());
         }
     }
 
@@ -124,11 +124,7 @@ public final class JvmProcess {
             process = pb.start();
         } catch (IOException e) {
             return CompletableFuture.failedFuture(
-                new io.github.qishr.cascara.common.exec.ExecutionException(
-                    e,
-                    ExecutionMessage.PROCESS_NOT_STARTED,
-                    mainClass.getName()
-                )
+                ExecutionException.processNotStarted(e, mainClass.getName())
             );
         }
 
@@ -143,12 +139,7 @@ public final class JvmProcess {
             } catch (IOException e) {
                 process.destroyForcibly();
                 return CompletableFuture.failedFuture(
-                    new io.github.qishr.cascara.common.exec.ExecutionException(
-                        e,
-                        ExecutionMessage.INPUT_FAILED,
-                        mainClass.getName(),
-                        null
-                    )
+                    ExecutionException.processInputFailed(e, mainClass.getName())
                 );
             }
         }

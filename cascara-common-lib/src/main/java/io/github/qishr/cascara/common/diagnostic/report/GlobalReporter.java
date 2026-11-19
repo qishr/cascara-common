@@ -54,6 +54,7 @@ import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
+import io.github.qishr.cascara.common.exec.ipc.IpcException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.type.cascara.LocalizableMessageDescriptor;
@@ -64,11 +65,11 @@ import io.github.qishr.cascara.common.type.time.ZonedDateTimeDescriptor;
 public class GlobalReporter extends ClassReporter implements DiagnosticReporter {
     public static final String SERIALIZATION_FORMAT = "application/json";
 
-    // private static ReporterConfig config;
     private static GlobalReporter globalInstance = new GlobalReporter().init();
-    private final Map<String,ClassReporter> classInstances = new HashMap<>();
 
-    private final Map<String,Level> envLevels = new HashMap<>();
+    private static ReporterConfig config;
+
+    private final Map<String,ClassReporter> classInstances = new HashMap<>();
 
     boolean allowApiOverride;
 
@@ -83,8 +84,6 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
     /// Consumes ERROR, WARN, and INFO diagnostics.
     protected Consumer<Diagnostic> problemConsumer;
 
-    private static ReporterConfig config;
-
     GlobalReporter() {}
 
     private GlobalReporter init() {
@@ -96,18 +95,11 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
         lineLogger = new LineLogger();
         lineLogger.setFormatConfig(formatConfig);
 
-        // TODO:
-        // CASCARA_REPORT_CONFIG=/path/
-
         // TODO: support full JlsName
 
         config = ReporterConfig.get();
 
         allowApiOverride = config.allowApiOverride();
-
-        // TODO: Remove this
-        // System.out.println("Debug: allowApiOverride = " + allowApiOverride);
-
 
         setLevelInternal(config.getLevel());
 
@@ -141,13 +133,10 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
     /// @param fqcn the fully qualified name of the class to get a `GlobalReporter` instance for.
     public static ClassReporter forSource(String fqcn) {
         ClassReporter reporter = forSourceInternal(fqcn);
-        // System.out.println("GLOBALREPORTER for " + fqcn + " " + reporter.level);
-        // Thread.dumpStack();
         return reporter;
     }
 
     public static void configureSerializer() {
-        // TODO: Remove this
         try {
             Serializer<?> serializer = IpcConfig.createSerializer();
             if (serializer != null) {
@@ -167,7 +156,8 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
                     globalInstance.serializer = serializer;
                 }
             }
-        } catch (Throwable e) {
+        } catch (IpcException ignored) {
+            // Reporter will still function without a serializer, so ignore this exception.
         }
     }
 

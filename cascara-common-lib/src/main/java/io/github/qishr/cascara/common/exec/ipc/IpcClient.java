@@ -45,7 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import io.github.qishr.cascara.common.exec.ExecutionException;
-import io.github.qishr.cascara.common.exec.ExecutionMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 
 public final class IpcClient implements AutoCloseable {
@@ -71,33 +71,37 @@ public final class IpcClient implements AutoCloseable {
 
         Path socketPath = Path.of(socketPathStr);
         if (!Files.exists(socketPath)) {
-            throw new ExecutionException(ExecutionMessage.NO_SOCKET_FILE, socketPathStr);
+            throw ExecutionException.noSocketFile(socketPath);
         }
 
         try {
-            UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
-            SocketChannel channel = SocketChannel.open(address);
+            try {
+                UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
+                SocketChannel channel = SocketChannel.open(address);
 
-            // Read the IPC handshake header from the server
-            BufferedReader reader = new BufferedReader(
-                Channels.newReader(channel, StandardCharsets.UTF_8)
-            );
+                // Read the IPC handshake header from the server
+                BufferedReader reader = new BufferedReader(
+                    Channels.newReader(channel, StandardCharsets.UTF_8)
+                );
 
-            IpcConfig config = new IpcConfig();
-            while (true) {
-                String line = reader.readLine();
-                if (line.startsWith(IpcConfig.HEADER_SEPARATOR)) {
-                    break;
+                IpcConfig config = new IpcConfig();
+                while (true) {
+                    String line = reader.readLine();
+                    if (line.startsWith(IpcConfig.HEADER_SEPARATOR)) {
+                        break;
+                    }
+                    config.set(line);
                 }
-                config.set(line);
-            }
 
-            BufferedWriter writer = new BufferedWriter(
-                Channels.newWriter(channel, StandardCharsets.UTF_8)
-            );
-            return new IpcClient(channel, writer, serializer, config);
-        } catch (IOException | NumberFormatException e) {
-            throw new ExecutionException(ExecutionMessage.CONNECT_FAILED, e.getMessage());
+                BufferedWriter writer = new BufferedWriter(
+                    Channels.newWriter(channel, StandardCharsets.UTF_8)
+                );
+                return new IpcClient(channel, writer, serializer, config);
+            } catch (IOException e) {
+                throw new LocalizableIOException(e);
+            }
+        } catch (Exception e) {
+            throw ExecutionException.connectionFailed(e, e.getMessage());
         }
     }
 

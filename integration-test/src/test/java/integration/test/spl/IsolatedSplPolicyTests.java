@@ -321,6 +321,15 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // 3. Add the JAR to the module path
         String modulePath = getModulePath(); // + File.pathSeparator + jarPath;
 
+        // 4. Create a Cascara properties file
+        String cascaraProperties = """
+            cascara.spl.boot-errors-to-console = true
+            """;
+
+        Path cascaraPropertiesPath = Cascara.instance().getCascaraPropertiesPath();
+        Files.createDirectories(cascaraPropertiesPath.getParent());
+        Files.writeString(cascaraPropertiesPath, cascaraProperties);
+
         // 4. Create an SPL properties file
         String splProperties = """
             verify = true
@@ -344,6 +353,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
                     .setEnv(EV_CASCARA_HOME, getPhysicalHomePath())
                     .setSystemProperty("cascara.report.level." + SplRegisterJarTestTask.class.getName(), "debug")
                     .setSystemProperty("cascara.report.level." + SplSignaturePolicy.class.getName(), "debug")
+                    .setSystemProperty("cascara.report.level." + SPL.class.getName(), "debug")
                     .setSystemProperty(SP_CASCARA_SPL_PROPERTIES, splPropertiesPath)
                     .setTimeout(Duration.ofSeconds(120))
             );

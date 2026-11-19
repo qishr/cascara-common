@@ -70,7 +70,7 @@ public enum GenericMessage implements LocalizableMessage {
     NO_SUCH_METHOD("ERROR-417", "No such method: {0}"),
     NO_SUCH_CONSTRUCTOR("ERROR-418", "No such constructor: {0}"),
     INVOCATION_TARGET_EXCEPTION("ERROR-420", "Invocation target exception: {0}"),
-    ILLEGAL_ARGUMENT_EXCEPTION("ERROR-421", "Iillegal argument exception {0}"),
+    ILLEGAL_ARGUMENT_EXCEPTION("ERROR-421", "Iillegal argument: {0}"),
     INSTANTIATION_EXCEPTION("ERROR-422", "Instantiation exception: {0}"),
     EXCEPTION_IN_INITIALIZER("ERROR-423", "Exception in initializer for {0}"),
     ABSTRACT_METHOD_ERROR("ERROR-424", "Abstract method error: {0}"),
@@ -83,6 +83,7 @@ public enum GenericMessage implements LocalizableMessage {
     UNSATISFIED_LINK_ERROR("ERROR-431","Unsatisfied link error: {0"),
     INTERNAL_ERROR("ERROR-432","Internal error: {0}"),
     REFLECTIVE_OPERATION_EXCEPTION("ERROR-433","Reflective operation exception: {0}"),
+    NUMBER_FORMAT_EXCEPTION("ERROR-434", "Number format exception: {0}"),
 
 
     // TODO: These should probably be in SecurityMessage...

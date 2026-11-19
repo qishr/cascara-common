@@ -158,7 +158,7 @@ public class IsolatedExecutor {
             taskResponse = outputs.isEmpty() ? null : outputs.getFirst();
 
         } catch (IpcException e) {
-            throw new ExecutionException(e, ExecutionMessage.DIAGNOSTIC_SERVER_FAILED, task.getName());
+            throw ExecutionException.diagnosticServerFailed(e, task.getName());
         }
 
         Response<T> response = new Response<T>(jvmResponse, task, taskResponse, diagnostics, !jvmResponse.timedOut && jvmResponse.exitCode == 0);
@@ -233,7 +233,7 @@ public class IsolatedExecutor {
             if (success) {
                 return payload;
             }
-            throw new ExecutionException(ExecutionMessage.TASK_FAILED, task.getName(), diagnostics);
+            throw ExecutionException.taskFailed(task.getName(), diagnostics);
         }
 
         public List<Diagnostic> getDiagnostics() {

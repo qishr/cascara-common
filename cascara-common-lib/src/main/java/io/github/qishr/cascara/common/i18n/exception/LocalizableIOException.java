@@ -37,6 +37,7 @@ package io.github.qishr.cascara.common.i18n.exception;
 
 import java.io.IOException;
 
+import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 import io.github.qishr.cascara.common.i18n.Localizer;
 
@@ -44,6 +45,13 @@ public class LocalizableIOException extends IOException implements LocalizableEx
 
     private final LocalizableMessage localizableMessage;
     private final Object[] details;
+
+    public LocalizableIOException(Throwable cause) {
+        super(cause.getMessage());
+        DiagnosticMessage dm = DiagnosticMessage.forException(cause);
+        this.localizableMessage = dm.getMessage();
+        this.details = dm.getDetails();
+    }
 
     public LocalizableIOException(LocalizableMessage message, Object... details) {
         this(null, message, details);

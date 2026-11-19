@@ -4,31 +4,31 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
-import io.github.qishr.cascara.common.annotation.ConfigProperty;
+import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.util.Config;
 
 @ConfigNamespace("cascara.spl")
 public class SPLConfig extends Config {
-    @ConfigProperty()
+    @ConfigSetting()
     private boolean discover = true;
 
-    @ConfigProperty()
+    @ConfigSetting()
     private boolean bootErrorsToConsole = false;
 
-    @ConfigProperty()
+    @ConfigSetting()
     private boolean verify = false;
 
-    @ConfigProperty(name = "policy.check-expiry")
+    @ConfigSetting(name = "policy.check-expiry")
     private boolean policyCheckExpiry = false;
 
-    @ConfigProperty(name = "policy.require-signed")
+    @ConfigSetting(name = "policy.require-signed")
     private boolean policyRequireSigned = false;
 
-    @ConfigProperty(name = "policy.require-signed-classes")
+    @ConfigSetting(name = "policy.require-signed-classes")
     private boolean policyRequireSignedClasses = false;
 
-    @ConfigProperty(name = "provider")
+    @ConfigSetting(name = "provider")
     private Map<String,String> preferredProviders = new HashMap<>();
 
     @NonNull

@@ -43,12 +43,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
-import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
+import io.github.qishr.cascara.common.exec.ipc.IpcException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.type.cascara.LocalizableMessageDescriptor;
 import io.github.qishr.cascara.common.type.cascara.SignatureExceptionSerializer;
@@ -78,7 +77,7 @@ public abstract class AbstractExecutionTask<I, O> {
             targetClass = (Class<AbstractExecutionTask<Object, Object>>) Class.forName(targetClassName);
             task = ReflectionUtils.createInstance(targetClass);
         } catch (InstantiationException | IllegalArgumentException | SecurityException | ClassNotFoundException e) {
-            throw new ExecutionException(e, DiagnosticMessage.forException(e), targetClassName);
+            throw ExecutionException.mainClassError(e, targetClassName);
         }
 
         // Execute the lifecycle (read stdin -> run task -> write to IPC/stdout)
@@ -109,7 +108,7 @@ public abstract class AbstractExecutionTask<I, O> {
             superclass = rawType.getGenericSuperclass();
         }
 
-        throw new ExecutionException(LangMessage.UNKNOWN_GENERIC_TYPE, clazz.getName());
+        throw ExecutionException.unresolvedInputClass(clazz.getName());
     }
 
     @SuppressWarnings("unchecked")
@@ -133,15 +132,16 @@ public abstract class AbstractExecutionTask<I, O> {
                     sb.append(buffer, 0, count);
                 }
             } catch (IOException e) {
-                throw new ExecutionException(e, ExecutionMessage.PROCESS_NOT_STARTED, targetClass.getName());
+                throw new LocalizableIOException(thrownByTask);
             }
 
             String json = sb.toString();
 
-            Serializer<?> serializer = IpcConfig.createSerializer();
-            if (serializer == null) {
-                // TODO: Better exception
-                throw new ExecutionException(GenericMessage.ERROR,"Serializer not available");
+            Serializer<?> serializer;
+            try {
+                serializer = IpcConfig.createSerializer();
+            } catch (IpcException e) {
+                throw ExecutionException.noSerializer();
             }
 
             // Register ThrowableSeriaizer and LocalizableMessageDescriptor

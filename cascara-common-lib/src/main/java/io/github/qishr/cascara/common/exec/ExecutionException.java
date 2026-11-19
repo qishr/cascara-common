@@ -34,9 +34,11 @@
 
 package io.github.qishr.cascara.common.exec;
 
+import java.nio.file.Path;
 import java.util.List;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
 
@@ -44,24 +46,76 @@ public class ExecutionException extends LocalizableRuntimeException {
 
     private final List<Diagnostic> diagnostics;
 
-    public ExecutionException(LocalizableMessage message, Object... details) {
+    private ExecutionException(LocalizableMessage message) {
+        super(message, new Object[]{});
+        this.diagnostics = null;
+    }
+
+    private ExecutionException(LocalizableMessage message, Object... details) {
         super(message, details);
         this.diagnostics = null;
     }
 
-    public ExecutionException(List<Diagnostic> diagnostics, LocalizableMessage message, Object... details) {
+    private ExecutionException(List<Diagnostic> diagnostics, LocalizableMessage message, Object... details) {
         super(message, details);
         this.diagnostics = diagnostics;
     }
 
-    public ExecutionException(Throwable cause, LocalizableMessage message, Object... details) {
+    private ExecutionException(Throwable cause, LocalizableMessage message, Object... details) {
         super(cause, message, details);
         this.diagnostics = null;
     }
 
-    public ExecutionException(Throwable cause, List<Diagnostic> diagnostics, LocalizableMessage message, Object... details) {
-        super(cause, message, details);
-        this.diagnostics = diagnostics;
+    public static ExecutionException noSocketFile(Path socketPath) {
+        return new ExecutionException(ExecutionMessage.IPC_NO_SOCKET_FILE, socketPath);
+    }
+
+    public static ExecutionException connectionFailed(Throwable cause, String message) {
+        return new ExecutionException(cause, ExecutionMessage.IPC_CONNECT_FAILED, message);
+    }
+
+    public static ExecutionException receiveFailed(Throwable cause, String message) {
+        return new ExecutionException(cause, ExecutionMessage.IPC_RECV_FAILED, message);
+    }
+
+    public static ExecutionException diagnosticServerFailed(Throwable cause, String taskName) {
+        return new ExecutionException(cause, ExecutionMessage.DIAGNOSTIC_SERVER_FAILED, taskName);
+    }
+
+    public static ExecutionException noSerializer() {
+        return new ExecutionException(ExecutionMessage.NO_DESERIALIZER);
+    }
+
+    public static ExecutionException mainClassError(Throwable cause, String typeName) {
+        return new ExecutionException(cause, ExecutionMessage.MAIN_CLASS_ERROR, typeName);
+    }
+
+    public static ExecutionException unresolvedInputClass(String typeName) {
+        return new ExecutionException(ExecutionMessage.UNRESOLVE_INPUT_CLASS, typeName);
+    }
+
+    public static ExecutionException unknownClass(Throwable cause, String typeName) {
+        return new ExecutionException(cause, GenericMessage.CLASS_NOT_FOUND, typeName);
+    }
+
+    public static ExecutionException processNotStarted(Throwable cause, String mainClass) {
+        return new ExecutionException(cause, ExecutionMessage.PROCESS_NOT_STARTED, mainClass);
+    }
+
+    public static ExecutionException processNotExited(Throwable cause, String mainClass) {
+        return new ExecutionException(cause, ExecutionMessage.PROCESS_NOT_EXITED, mainClass);
+    }
+
+    public static ExecutionException processInterrupted(Throwable cause, String mainClass) {
+        return new ExecutionException(cause, ExecutionMessage.INTERRUPT, mainClass);
+    }
+
+    public static ExecutionException processInputFailed(Throwable cause, String mainClass) {
+        return new ExecutionException(cause, ExecutionMessage.INPUT_FAILED, mainClass);
+    }
+
+    public static ExecutionException taskFailed(String taskName, List<Diagnostic> diagnostics) {
+        return new ExecutionException(diagnostics, ExecutionMessage.TASK_FAILED, taskName);
     }
 
     public List<Diagnostic> getDiagnostics() {

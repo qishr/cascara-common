@@ -34,6 +34,7 @@ public class DiagnosticMessage extends DetailedMessage {
             // NullPointerException - if the specified object is null and the method is an instance method.
             case NullPointerException e -> new DiagnosticMessage(cause, GenericMessage.NPE, e.getMessage());
 
+            case NumberFormatException e -> new DiagnosticMessage(cause, GenericMessage.NUMBER_FORMAT_EXCEPTION, e.getMessage());
 
 
             // NoClassDefFoundError - when trying to load in the definition of a class and no definition of the class could be found.

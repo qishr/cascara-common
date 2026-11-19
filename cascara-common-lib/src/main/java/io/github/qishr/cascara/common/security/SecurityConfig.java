@@ -3,20 +3,20 @@ package io.github.qishr.cascara.common.security;
 import java.nio.file.Path;
 
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
-import io.github.qishr.cascara.common.annotation.ConfigProperty;
+import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.util.Config;
 
 @ConfigNamespace("cascara.sec")
 public class SecurityConfig extends Config {
-    @ConfigProperty(name = "trust-store")
+    @ConfigSetting(name = "trust-store")
     private Path trustStorePath;
 
-    @ConfigProperty(name = "trust-store.password")
+    @ConfigSetting(name = "trust-store.password")
     private String trustStorePassword;
 
-    @ConfigProperty()
+    @ConfigSetting()
     private String jarVerifier;
 
     @NonNull

@@ -1,10 +1,10 @@
 package io.github.qishr.cascara.common.exec.ipc;
 
-import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.exec.ExecutionMessage;
 import io.github.qishr.cascara.common.lang.processor.ProcessorFactory;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.semver.SemVer;
-import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.util.ReflectionUtils;
 
@@ -31,8 +31,8 @@ public class IpcConfig {
     private String ipcSerializer;
     private static Class<?> serializerClass;
 
-    @Nullable
-    public static Serializer<?> createSerializer() {
+    @NonNull
+    public static Serializer<?> createSerializer() throws IpcException {
         if (serializerClass == null) {
             try {
                 Serializer<?> s = new ProcessorFactory().createSerializer(SERIALIZATION_FORMAT);
@@ -53,15 +53,10 @@ public class IpcConfig {
             if (serializerClass != null) {
                 return (Serializer<?>) ReflectionUtils.createInstance(serializerClass);
             }
-        } catch (ClassNotFoundException e) {
-            // TODO: Remove this
-            System.err.println("IpcConfig: " + e.getLocalizedMessage());
-        } catch (InstantiationException e) {
-            // TODO: Remove this
-            System.err.println("IpcConfig: " + e.getLocalizedMessage());
+        } catch (Throwable e) {
+            throw new IpcException(e, ExecutionMessage.NO_DESERIALIZER);
         }
-
-        return null;
+        throw new IpcException(ExecutionMessage.NO_DESERIALIZER);
     }
 
     public void set(String header) {

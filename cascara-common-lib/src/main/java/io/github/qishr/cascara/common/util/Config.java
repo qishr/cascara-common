@@ -3,35 +3,29 @@ package io.github.qishr.cascara.common.util;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
+import java.lang.reflect.Type;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.lang.reflect.Type;
-import java.nio.file.Path;
 
-import io.github.qishr.cascara.common.annotation.ConfigProperty;
+import io.github.qishr.cascara.common.annotation.ConfigNamespace;
+import io.github.qishr.cascara.common.annotation.ConfigSetting;
+import io.github.qishr.cascara.common.annotation.ConfigSetting.Source;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.exception.ConfigException;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
-import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 
 public abstract class Config {
 
     private static final Map<Class<? extends Config>, Config> INSTANCES = new ConcurrentHashMap<>();
 
     private String configNameSpace;
-
-    private Properties configProperties;
-
-    private static record ConfigField(
-        Field field,
-        String propName,
-        String envName,
-        boolean isMap
-    ) {}
+    private Map<String,ConfigField> configFields;
+    private Properties settings;
 
     protected Config() {}
 
@@ -54,8 +48,8 @@ public abstract class Config {
         INSTANCES.clear();
     }
 
-    public Properties getProperties() {
-        return configProperties;
+    public List<Setting> getSettings() {
+        return settings.asList().stream().map(e -> (Setting)e).toList();
     }
 
     protected void init() {
@@ -65,18 +59,21 @@ public abstract class Config {
         }
 
         // 1. Create map of fields
-        configProperties = new Properties();
-        Map<String,ConfigField> configFields = new HashMap<>();
+        settings = new Properties(Setting.class);
+        configFields = new HashMap<>();
         collectConfigFields(configFields);
-
-        // TODO: Use include/exclude properties of annotation
 
         // 2. Load from global properties file
         if (getClass() != Cascara.class) {
             Path propertiesPath = Cascara.instance().getCascaraPropertiesPath();
             try {
                 Properties cascaraProperties = Properties.fromFile(propertiesPath);
-                configProperties.addAll(cascaraProperties);
+                for (Property<?> prop : cascaraProperties) {
+                    if (include(prop.getName(), Source.FILE)) {
+                        Setting setting = new Setting(prop.getName(), prop.asString(), Source.FILE, propertiesPath);
+                        settings.add(setting);
+                    }
+                }
             } catch (IOException e) {
                 // Ignore it
             }
@@ -91,10 +88,12 @@ public abstract class Config {
                     String qualifiedName = configNameSpace == null
                         ? prop.getName()
                         : configNameSpace + "." + prop.getName();
-                    configProperties.set(qualifiedName, prop.asString());
+                    if (include(qualifiedName, Source.FILE)) {
+                        Setting setting = new Setting(qualifiedName, prop.asString(), Source.FILE, propertiesPath);
+                        settings.add(setting);
+                    }
                 }
             } catch (IOException e) {
-                System.err.println(e.getLocalizedMessage());
                 // Ignore it
             }
         }
@@ -103,20 +102,24 @@ public abstract class Config {
         System.getProperties().forEach((k,v) -> {
             if (configNameSpace == null || k.toString().startsWith(configNameSpace)) {
                 if (v != null && v instanceof String val && !val.isBlank()) {
-                    configProperties.set(k.toString(), val);
+                    String name = k.toString();
+                    if (include(name, Source.SYSTEM_PROPERTY)) {
+                        Setting setting = new Setting(name, val, Source.SYSTEM_PROPERTY, null);
+                        settings.add(setting);
+                    }
                 }
             }
         });
-        // TODO: Why does this not work instead of the above?
-        // configProperties.addAll(Properties.fromSystemProperties());
 
         // 5. Load from environment variables
         for (Entry<String,ConfigField> entry : configFields.entrySet()) {
             ConfigField field = entry.getValue();
             String val = System.getenv(field.envName);
             if (val != null && !val.isBlank()) {
-                configProperties.set(field.propName, val);
-                continue;
+                if (include(field.propName, Source.ENVIRONMENT_VARIABLE)) {
+                    Setting setting = new Setting(field.propName, val, Source.ENVIRONMENT_VARIABLE, null);
+                    settings.add(setting);
+                }
             }
         }
 
@@ -126,7 +129,7 @@ public abstract class Config {
             if (field.isMap) {
                 setMapValues(field);
             } else {
-                String value = configProperties.get(field.propName);
+                String value = settings.get(field.propName);
                 if (value == null) {
                     continue;
                 }
@@ -138,7 +141,7 @@ public abstract class Config {
     private void collectConfigFields(Map<String,ConfigField> configFields) {
         List<Field> fields = ReflectionUtils.getFields(
             getClass(),
-            f -> f.isAnnotationPresent(ConfigProperty.class),
+            f -> f.isAnnotationPresent(ConfigSetting.class),
             c -> c != Config.class
         );
 
@@ -151,7 +154,7 @@ public abstract class Config {
                 continue;
             }
 
-            ConfigProperty anno = field.getAnnotation(ConfigProperty.class);
+            ConfigSetting anno = field.getAnnotation(ConfigSetting.class);
 
             String propName =
                 (configNameSpace == null
@@ -175,9 +178,10 @@ public abstract class Config {
                 Object value = field.get(this);
                 if (value != null) {
                     if (isMap) {
-                        // TODO: Populate configProperties
+                        // TODO: Populate settings
                     } else {
-                        configProperties.set(propName, value.toString());
+                        Setting setting = new Setting(propName, value.toString(), Source.DEFAULT, null);
+                        settings.add(setting);
                     }
                 }
             } catch (IllegalArgumentException | IllegalAccessException e) {
@@ -185,7 +189,7 @@ public abstract class Config {
                 e.printStackTrace();
             }
 
-            configFields.put(field.getName(), new ConfigField(field, propName, envName, isMap));
+            configFields.put(field.getName(), new ConfigField(field, anno, propName, envName, isMap));
         }
     }
 
@@ -210,7 +214,7 @@ public abstract class Config {
 
         Map<String,Object> map = new HashMap<>();
 
-        for (Property<?> property : configProperties) {
+        for (Property<?> property : settings) {
             String name = property.getName();
             if (name.startsWith(field.propName) && name.length() > field.propName.length()) {
                 String valString = property.asString();
@@ -284,6 +288,40 @@ public abstract class Config {
         return null;
     }
 
+    private boolean include(String name, Source source) {
+        ConfigField field = null;
+        for (ConfigField f : configFields.values()) {
+            if (f.isMap && name.startsWith(f.propName + ".")) {
+                field = f;
+                break;
+            } else if (f.propName.equals(name)) {
+                field = f;
+                break;
+            }
+        }
+        if (field == null) {
+            return false;
+        }
+        if (field.anno.include().length > 0) {
+            boolean included = false;
+            for (Source s : field.anno.include()) {
+                if (s == source) {
+                    included = true;
+                    break;
+                }
+            }
+            if (!included) return false;
+        }
+        if (field.anno.exclude().length > 0) {
+            for (Source s : field.anno.exclude()) {
+                if (s == source) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     private Path getPropertiesPath() {
         String fileName = configNameSpace == null
             ? "cascara"
@@ -301,5 +339,59 @@ public abstract class Config {
         }
 
         return Cascara.instance().getPath(pathString);
+    }
+
+    private static record ConfigField(
+        Field field,
+        ConfigSetting anno,
+        String propName,
+        String envName,
+        boolean isMap
+    ) {}
+
+    public static class Setting extends Property<String> {
+        private Source source;
+        private Path path;
+
+        public Setting(String name, String value, Source source, Path path) {
+            super(name, value);
+            this.source = source;
+            this.path = path;
+        }
+
+        @Override
+        public Setting copyFrom(Property<?> property) {
+            super.copyFrom(property);
+            if (property instanceof Setting s) {
+                source = s.source;
+                path = s.path;
+            }
+            return this;
+        }
+
+        @Override
+        public Setting duplicate() {
+            return new Setting(getName(), getValue(), source, path);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder()
+                .append(getName())
+                .append(" = ")
+                .append(getValue())
+                .append(" (")
+                .append(source);
+
+            if (path != null) {
+                sb.append(" ").append(path);
+            }
+
+            sb.append(")");
+            return sb.toString();
+        }
+
+        public Source getSource() { return source; }
+        public Path getPath() { return path; }
     }
 }

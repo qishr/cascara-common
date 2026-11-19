@@ -74,7 +74,6 @@ public class IpcServer implements AutoCloseable {
     private static final Reporter REPORTER = Reporter.forClass(IpcServer.class);
 
     private Path socketPath;
-    // private Serializer<?> serializer;
     private ServerSocketChannel serverChannel;
     private final ConcurrentHashMap<String, List<Object>> payloadsByType = new ConcurrentHashMap<>();
     private final Phaser activeConnections = new Phaser(1); // 1 registered for the server itself
@@ -121,7 +120,7 @@ public class IpcServer implements AutoCloseable {
             this.serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
             this.serverChannel.bind(address);
         } catch (IOException e) {
-            throw new IpcException(e, e.getMessage());
+            throw new IpcException(e, ExecutionMessage.IPC_INIT_FAILED);
         }
         listenAsync();
         return this;
@@ -166,14 +165,14 @@ public class IpcServer implements AutoCloseable {
                 listenerFuture.join();
             }
         } catch (IOException e) {
-            throw new IpcException(e, e.getMessage());
+            throw new IpcException(e, ExecutionMessage.IPC_CLOSE_FAILED);
         } finally {
             try {
                 if (socketPath != null) {
                     Files.deleteIfExists(socketPath);
                 }
             } catch (IOException e) {
-                throw new IpcException(e, e.getMessage());
+                throw new IpcException(e, ExecutionMessage.IPC_REMOVE_FAILED);
             } finally {
                 // Guarantees the server deregisters even if socket cleanup throws
                 activeConnections.arriveAndAwaitAdvance();
@@ -185,18 +184,7 @@ public class IpcServer implements AutoCloseable {
         if (listenerFuture != null && !listenerFuture.isDone()) {
             return;
         }
-        // AtomicReference<Throwable> childThreadException = new AtomicReference<>();
         this.listenerFuture = CompletableFuture.runAsync(() -> listenLoop());
-        // {
-        //     try {
-        //         listenLoop();
-        //     } catch (Throwable e) {
-        //         childThreadException.set(e);
-        //     }
-        // });
-        // if (childThreadException.get() != null) {
-        //     throw childThreadException.get();
-        // }
     }
 
     private void listenLoop() {
@@ -234,14 +222,16 @@ public class IpcServer implements AutoCloseable {
     }
 
     private void handleClientConnection(SocketChannel clientChannel) throws Throwable {
+        Serializer<?> serializer;
+        try {
+            serializer = IpcConfig.createSerializer();
+        } catch (IpcException e) {
+            throw ExecutionException.noSerializer();
+        }
+
         try (clientChannel;
              BufferedReader reader = new BufferedReader(
                  Channels.newReader(clientChannel, StandardCharsets.UTF_8))) {
-
-            Serializer<?>  serializer = IpcConfig.createSerializer();
-            if (serializer == null) {
-                throw new ExecutionException(ExecutionMessage.NO_DESERIALIZER);
-            }
 
             // Send server PID etc in the IPC handshake header
             IpcConfig config = new IpcConfig();
@@ -280,6 +270,7 @@ public class IpcServer implements AutoCloseable {
                         ReportWriter writer = REPORTER.getWriter(Level.ERROR);
                         writer.write(2, payloadJson);
 
+                        // TODO:
                         e.printStackTrace();
 
                         // This will close the connection and the client will
@@ -313,12 +304,11 @@ public class IpcServer implements AutoCloseable {
                         .computeIfAbsent(className, k -> new CopyOnWriteArrayList<>())
                         .add(payload);
                 } catch (ClassNotFoundException e) {
-                    // TODO all the other related exceptions
-                    throw new ExecutionException(e, GenericMessage.CLASS_NOT_FOUND, className);
+                    throw ExecutionException.unknownClass(e, className);
                 } finally {}
             }
         } catch (IOException e) {
-            throw new ExecutionException(e, ExecutionMessage.IPC_RECV_FAILED, e.getMessage());
+            throw ExecutionException.receiveFailed(e, e.getMessage());
         }
     }
 }
