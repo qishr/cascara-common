@@ -1,3 +1,37 @@
+// # License & Terms
+//
+// This file is part of **Cascara**.
+//
+// **Cascara** is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <https://www.gnu.org/licenses/>.
+//
+// ---
+//
+// ## Special Runtime Exception
+//
+// As a special exception, the copyright holders of this library give you
+// permission to link this library with independent modules to produce an
+// executable, regardless of the license terms of these independent modules,
+// and to copy and distribute the resulting executable under terms of your
+// choice, provided that you also meet, for each linked independent module,
+// the terms and conditions of the license of that module.
+//
+// An independent module is a module which is not derived from or based on
+// this library. If you modify this library, you may extend this exception
+// to your version of the library, but you are not obligated to do so. If
+// you do not wish to do so, delete this exception statement from your
+// version.
+
 package io.github.qishr.cascara.common.security.policy;
 
 import java.io.IOException;
@@ -255,75 +289,6 @@ public final class SplSignaturePolicy implements SignaturePolicy {
         CertPathValidationResult vr = CertPathVerifier.validatePath(chain, trustStore);
         return vr.isValid() ? SignatureStatus.VALID : vr.getStatus();
     }
-
-
-
-
-
-    // @Override
-    // public SignatureStatus evaluate(Class<?> type) {
-    //     if (!requireSignedClasses) {
-    //         REPORTER.debug("Valid class: signed classes not required");
-    //         return SignatureStatus.VALID;
-    //     }
-
-    //     // Dynamic runtime proxies have no signed bytecode on disk
-    //     if (Proxy.isProxyClass(type)) {
-    //         return SignatureStatus.NOT_SIGNED;
-    //     }
-
-    //     // 1. System/Framework Exemption
-    //     if (trustSystemModules && isSystemOrFrameworkClass(type)) {
-    //         REPORTER.debug("Valid: trusted system module");
-    //         return SignatureStatus.VALID;
-    //     }
-
-    //     ProtectionDomain pd = type.getProtectionDomain();
-    //     CodeSource cs = (pd != null) ? pd.getCodeSource() : null;
-
-    //     if (cs == null || cs.getLocation() == null) {
-    //         // Loose in-memory class, bootstrap class, or synthetic generated class
-    //         return SignatureStatus.NOT_SIGNED;
-    //     }
-
-    //     // 1. If CodeSource certificates are already attached by the classloader:
-    //     java.security.cert.Certificate[] certs = cs.getCertificates();
-    //     if (certs != null && certs.length > 0) {
-    //         // Evaluate the cert chain against policy
-    //         List<X509Certificate> chain = Arrays.stream(certs)
-    //                 .filter(c -> c instanceof X509Certificate)
-    //                 .map(c -> (X509Certificate) c)
-    //                 .toList();
-
-    //         CertPathValidationResult vr = CertPathVerifier.validatePath(chain, trustStore);
-
-    //         if (!vr.isValid()) {
-    //             return vr.getStatus();
-    //         }
-    //     }
-
-    //     // 2. If the classloader didn't pre-populate certs on CodeSource, inspect the location JAR:
-    //     URL locationUrl = cs.getLocation();
-    //     try {
-    //         Path jarPath = Path.of(locationUrl.toURI());
-    //         if (!Files.isRegularFile(jarPath)) {
-    //             // Exploded directory on classpath, not a JAR
-    //             return SignatureStatus.NOT_SIGNED;
-    //         }
-
-    //         // Evaluate the JAR file using Cascara's JarFile & policy
-    //         try (JarFile jar = JarFile.open(jarPath)) {
-    //             SignatureStatus status = evaluate(jar);
-    //             if (status != SignatureStatus.VALID) {
-    //                 return status;
-    //             }
-    //         }
-    //     } catch (URISyntaxException | IOException e) {
-    //         return SignatureStatus.NOT_SIGNED;
-    //     }
-
-    //     return SignatureStatus.VALID;
-    // }
 
     /// Checks whether a certificate is directly trusted by the TrustStore or issued by a CA anchor in the TrustStore.
     private boolean isCertificateTrusted(X509Certificate cert) {

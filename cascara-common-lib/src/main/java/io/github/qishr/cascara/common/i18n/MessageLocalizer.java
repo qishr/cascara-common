@@ -63,15 +63,13 @@ public class MessageLocalizer extends Localizer {
     private MessageFormatter formatter;
 
     MessageLocalizer() {
-        String localizeExceptionsProp = System.getProperty("cascara.lang.localize-exceptions");
-        boolean localizeExceptions = "true".equalsIgnoreCase(localizeExceptionsProp);
-
-        formatter = new MessageFormatter(this::getPattern, localizeExceptions);
+        LangConfig config = LangConfig.get();
+        formatter = new MessageFormatter(this::getPattern, config.localizeExceptions());
 
         registerTranslations(Localizer.class, "/META-INF/fr-FR.properties");
         setActiveLanguage(AUTOMATIC);
 
-        String languageTagProp = System.getProperty("cascara.lang.locale");
+        String languageTagProp = config.getLocale();
 
         if (languageTagProp != null && !languageTagProp.isBlank()) {
             setActiveLanguage(languageTagProp);
