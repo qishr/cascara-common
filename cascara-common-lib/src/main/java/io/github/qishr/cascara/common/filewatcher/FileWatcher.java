@@ -59,7 +59,7 @@ public class FileWatcher {
 
     /// Executor to run the WatchService polling loop in the background
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
-        Thread thread = new Thread(runnable, "SPL-FileWatcher");
+        Thread thread = new Thread(runnable, "Cascara-FileWatcher");
         thread.setDaemon(true); // Allow JVM to exit cleanly
         return thread;
     });

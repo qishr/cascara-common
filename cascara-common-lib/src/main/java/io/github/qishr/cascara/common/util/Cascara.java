@@ -46,7 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.annotation.ConfigNamespace;
+import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.exception.UnexpectedNullValueException;
@@ -54,12 +55,24 @@ import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.semver.SemVerException;
 
-// TODO: @ConfigNamepsace("cascara") ?
+@ConfigNamespace("cascara")
 public class Cascara extends Config {
-    private static final String CASCARA_HOME = "CASCARA_HOME";
-    private static final String CASC_HOME = "CASC_HOME";
 
-    private static final ThreadLocal<Cascara> INSTANCE = ThreadLocal.withInitial(Cascara::new);
+    @ConfigSetting(name = "home")
+    private String physicalHome;
+
+    @ConfigSetting(name = "properties")
+    private String cascaraPropertiesPath;
+
+    @ConfigSetting(name = "spl.properties")
+    private String splPropertiesPath;
+
+    // These paths are determined based on cascaraPropertiesPath
+    // - content types path
+    // - schema path
+    // - shared path
+    // - module path
+
     private static final String ACTIVE_VERSION = "active-version";
     private static final String CASCARA_PROPERTIES = "cascara.properties";
     private static final String CONTENT_TYPES = "content-types.yaml";
@@ -67,46 +80,57 @@ public class Cascara extends Config {
     private static final String SPL_PROPRTTIES = "cascara.spl.properties";
     private static final String MODULEPATH = "modulepath";
 
-    private String homeEnvVar;
-    private Path homePath;
-    private FileSystem vfs;
+    private static Path apiSpecifiedHome;
 
-    private Cascara() {
-        setHomePathInternal(resolvePath(getHome()));
+    // The path of the .cascara directory. May be on a physical or virtual file system.
+    private Path home;
+
+    protected Cascara() {
+        // The default physicalCascaraPath
+        String userHome = System.getProperty("user.home");
+        physicalHome = userHome + File.separator + ".cascara";
     }
 
-    public static Cascara instance() {
-        return INSTANCE.get();
+    @Override
+    protected void init() {
+        if (apiSpecifiedHome == null) {
+            Path specifiedHome = getSpecifiedHomePath();
+            home = specifiedHome == null
+                ? Path.of(physicalHome)
+                : specifiedHome;
+        } else {
+            home = apiSpecifiedHome;
+            physicalHome = home.toString();
+        }
+
+        cascaraPropertiesPath = getSharedPath().resolve(CASCARA_PROPERTIES).toString();
+        splPropertiesPath = getActiveVersionPath().resolve(SPL_PROPRTTIES).toString();
+
+        super.init();
     }
 
-    public static void reset() {
-        INSTANCE.remove();
+    public static Cascara get(Path homePath) {
+        apiSpecifiedHome = homePath;
+        return get(Cascara.class, null, null, homePath);
+    }
+
+    public static Cascara get() {
+        apiSpecifiedHome = null;
+        return get(Cascara.class);
     }
 
     //
     //
     //
-
-    public String getHomeEnvVar() {
-        return homeEnvVar;
-    }
 
     public Path getPath(String pathString) {
-        return vfs == null
-            ? Path.of(pathString)
-            : vfs.getPath(pathString);
+        return home.getFileSystem().getPath(pathString);
     }
 
     @SuppressWarnings("null")
     @NonNull
-    public Path getHomePath() {
-        return homePath;
-    }
-
-    @Experimental
-    public void setHomePath(Path path) {
-        homeEnvVar = null;
-        setHomePathInternal(path);
+    public Path getHome() {
+        return home;
     }
 
     /// The path of the content types registry file.
@@ -120,7 +144,7 @@ public class Cascara extends Config {
     }
 
     public Path getSharedPath() {
-        return getHomePath().resolve("shared");
+        return getHome().resolve("shared");
     }
 
     /// The path of the properties file containing definitions of default or preferred service providers
@@ -129,11 +153,19 @@ public class Cascara extends Config {
     @SuppressWarnings("null")
     @NonNull
     public Path getSplPropertiesPath() {
-        return getActiveVersionPath().resolve(SPL_PROPRTTIES);
+        // This should never be null
+        if (splPropertiesPath == null ) {
+            throw new UnexpectedNullValueException("splPropertiesPath");
+        }
+        return getPath(splPropertiesPath);
     }
 
     public Path getCascaraPropertiesPath() {
-        return getSharedPath().resolve(CASCARA_PROPERTIES);
+        // This should never be null
+        if (cascaraPropertiesPath == null ) {
+            throw new UnexpectedNullValueException("cascaraPropertiesPath");
+        }
+        return getPath(cascaraPropertiesPath);
     }
 
     @SuppressWarnings("null")
@@ -144,7 +176,7 @@ public class Cascara extends Config {
 
     public List<String> getInstalledVersions() {
         List<String> versions = new ArrayList<>();
-        Path homePath = getHomePath();
+        Path homePath = getHome();
 
         if (Files.isDirectory(homePath)) {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(homePath)) {
@@ -184,9 +216,9 @@ public class Cascara extends Config {
     public Path getActiveVersionPath() {
         String version = getActiveVersionString();
         if (version == null) {
-            return getHomePath();
+            return getHome();
         }
-        return getHomePath().resolve(version);
+        return getHome().resolve(version);
     }
 
     // TODO: Cache this and only re-calculate if properties file is modified
@@ -194,10 +226,7 @@ public class Cascara extends Config {
     public String getActiveVersionString() {
         List<String> installedVersions = getInstalledVersions();
 
-
-        // Path path = getSharedPath().resolve(CASCARA_PROPERTIES);
         Path path = getCascaraPropertiesPath();
-
 
         if (Files.isRegularFile(path)) {
             try {
@@ -223,87 +252,62 @@ public class Cascara extends Config {
     }
 
     public boolean isFileTimeSupported() {
-        return !getHomePath().toUri().getScheme().equals("jar");
+        return !getHome().toUri().getScheme().equals("jar");
     }
 
     //
     // Private path-related methods
     //
 
-    private void closeVfs() {
-        if (vfs != null && vfs.isOpen()) {
-            try {
-                vfs.close();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void setHomePathInternal(Path path) {
-        closeVfs();
-
-        Pair<Path,String> zipPaths = splitZipPath(path);
-
+    private Path getHomePath(String specifiedHome) {
+        Pair<Path,String> zipPaths = splitZipPath(specifiedHome);
         if (zipPaths == null) {
-            homePath = path;
+            return Path.of(specifiedHome);
         } else {
             Path zipFile = zipPaths.getL();
             String entryPath = zipPaths.getR();
 
             URI uri = URI.create("jar:" + zipFile.toUri());
             try {
-                vfs = FileSystems.newFileSystem(uri, Map.of("create", "false"));
+                FileSystem vfs = FileSystems.newFileSystem(uri, Map.of("create", "false"));
+                return vfs.getPath(entryPath);
             } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                return null;
             }
-
-            homePath = vfs.getPath(entryPath);
         }
     }
 
-    private static Pair<Path,String> splitZipPath(Path path) {
-        String pathString = path.toString();
-        int bang = pathString.indexOf("!");
+    private Path getSpecifiedHomePath() {
+        String candidate = System.getenv("CASCARA_HOME");
+        if (candidate != null) {
+            Path path = getHomePath(candidate);
+            if (path != null) {
+                return path;
+            }
+        }
+        candidate = System.getProperty("cascara.home");
+        if (candidate != null) {
+            Path path = getHomePath(candidate);
+            if (path != null) {
+                return path;
+            }
+        }
+        return null;
+    }
+
+    private static Pair<Path,String> splitZipPath(String path) {
+        int bang = path.indexOf("!");
         if (bang == -1) {
             return null;
         }
-        String zipFile = pathString.substring(0, bang);
-        String entryPath = pathString.substring(bang + 1);
+        String zipFile = path.substring(0, bang);
+        String entryPath = path.substring(bang + 1);
 
         if (zipFile.startsWith("jar:")) {
             zipFile = zipFile.substring(4);
         }
 
         return Pair.of(Path.of(zipFile), entryPath);
-    }
-
-    private static Path resolvePath(String pathString) {
-        return Path.of(pathString);
-    }
-
-    @Nullable
-    private String getHome() {
-        String home = getHomeFromEnvVar(CASCARA_HOME);
-        if (home == null) {
-            home = getHomeFromEnvVar(CASC_HOME);
-        }
-        if (home == null) {
-            String userHome = System.getProperty("user.home");
-            home = userHome + File.separator + ".cascara";
-        }
-        return home;
-    }
-
-    @Nullable
-    private String getHomeFromEnvVar(String envVar) {
-        String home = System.getenv(envVar);
-        if (home != null) {
-            homeEnvVar = envVar;
-        }
-        return home;
     }
 
     //

@@ -7,6 +7,7 @@ import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import integration.test.exec.ExecTestBase;
 import integration.test.fixtures.payload.FunctionInput;
@@ -17,6 +18,7 @@ import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
 
+@Isolated
 public class UnserializableTests extends ExecTestBase {
     @RegisterExtension
     static final AssertReportedExtension assertReported = new AssertReportedExtension();

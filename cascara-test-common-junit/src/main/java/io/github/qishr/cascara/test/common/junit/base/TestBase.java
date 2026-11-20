@@ -10,9 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
-import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 
 public abstract class TestBase {
@@ -31,7 +29,7 @@ public abstract class TestBase {
     public static final String SP_CASCARA_REPORT_PROPERTIES = "cascara.report.properties";
     public static final String SP_CASCARA_SPL_PROPERTIES = "cascara.spl.properties";
 
-    private static final Reporter REPORTER = Reporter.forClass(TestBase.class);
+    // private static final Reporter REPORTER = Reporter.forClass(TestBase.class);
 
     @TempDir
     public Path tempDir;
@@ -45,18 +43,26 @@ public abstract class TestBase {
 
             return tempFile;
         } catch (IOException e) {
-            REPORTER.error(e, GenericMessage.ERROR, "Failed to create temp file");
+            System.err.println("Failed to create temp file");
             return null;
         }
     }
 
     @BeforeAll
     static void init() throws Exception {
-        rootCA = TestCertificateAuthority.create("Root CA");
+        // Do not call anything that acccesses the Cascara class or other Config classes from this method
     }
 
     @BeforeEach
     protected void setUp() {
+        try {
+            if (rootCA == null) {
+                rootCA = TestCertificateAuthority.create("Root CA");
+            }
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         GlobalReporter.globalInstance().setSystemOutputEnabled(true);
         GlobalReporter.globalInstance().setLineConsumer(null);
         GlobalReporter.globalInstance()

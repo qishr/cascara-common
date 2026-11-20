@@ -15,10 +15,10 @@ public class SplRegisterJarTestTask extends AbstractExecutionTask<String, Boolea
 
         REPORTER.debug(input);
 
-        System.out.println("Task: registering JAR");
-        Path jarPath = Cascara.instance().getPath(input);
+        // System.out.println("Task: registering JAR");
+        Path jarPath = Cascara.get().getPath(input);
         SPL.getRoot().registerJar(jarPath);
-        System.out.println("Task: OK");
+        // System.out.println("Task: OK");
 
         return true;
     }

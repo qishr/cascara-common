@@ -50,7 +50,6 @@ public class MessageLocalizer extends Localizer {
     // DO NOT use Reporter in this class, it would get into an infinite loop.
 
     private static final String fallbackLanguageTag = "en-US";
-    // private static final Locale fallbackLocale = Locale.forLanguageTag(fallbackLanguageTag);
 
     private final TrackableProperty<Locale> activeLocale = new TrackableProperty<>();
 

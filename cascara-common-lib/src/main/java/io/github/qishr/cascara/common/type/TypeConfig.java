@@ -49,6 +49,7 @@ public class TypeConfig extends Config {
     @ConfigSetting()
     private Map<String,String> mapping = new HashMap<>();
 
+    // TODO: Fix Config so that this can be private
     public TypeConfig() {
         // Core Java Collections & Interfaces Defaults
         addMapping(java.util.List.class, java.util.ArrayList.class);

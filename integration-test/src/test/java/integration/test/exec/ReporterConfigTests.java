@@ -7,6 +7,7 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import integration.test.fixtures.task.ReporterConfigApiOverrideTask;
 import integration.test.fixtures.task.ReporterConfigTask;
@@ -16,6 +17,7 @@ import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.junit.extension.AssertNotReportedExtension;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
 
+@Isolated
 public class ReporterConfigTests extends ExecTestBase {
 
     @RegisterExtension
@@ -31,6 +33,7 @@ public class ReporterConfigTests extends ExecTestBase {
                     .setModuleName(ReporterConfigTask.class.getModule().getName())
                     .setModulePath(getModulePath())
                     .setSystemProperty("cascara.report.level." + ReporterConfigTask.class.getName(), "debug")
+                    .setSystemProperty("cascara.spl.boot-info-to-console", true)
             );
 
         exec.run("Woof!");
@@ -71,7 +74,7 @@ public class ReporterConfigTests extends ExecTestBase {
             cascara.report.level.integration.test.fixtures.task.ReporterConfigTask = debug
             """;
 
-        Path cascaraPropertiesPath = Cascara.instance().getCascaraPropertiesPath();
+        Path cascaraPropertiesPath = Cascara.get().getCascaraPropertiesPath();
         Files.createDirectories(cascaraPropertiesPath.getParent());
         Files.writeString(cascaraPropertiesPath, cascaraProperties);
         syncVfs();
@@ -83,7 +86,9 @@ public class ReporterConfigTests extends ExecTestBase {
                     .setModuleName(ReporterConfigTask.class.getModule().getName())
                     .setModulePath(getModulePath())
                     .setEnv("CASCARA_HOME", getPhysicalHomePath())
-            );
+                    .setSystemProperty("cascara.spl.boot-info-to-console", true)
+                    .setDebug(PROCESS_DEBUG_ENABLED)
+                );
 
         exec.run("Woof!");
         debug(exec.getResponse());
@@ -97,7 +102,7 @@ public class ReporterConfigTests extends ExecTestBase {
             level.integration.test.fixtures.task.ReporterConfigTask = debug
             """;
 
-        Path reportPropertiesPath = Cascara.instance().getSharedPath().resolve("report.properties");
+        Path reportPropertiesPath = Cascara.get().getSharedPath().resolve("report.properties");
         Files.createDirectories(reportPropertiesPath.getParent());
         Files.writeString(reportPropertiesPath, reportProperties);
         syncVfs();

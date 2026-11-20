@@ -57,7 +57,7 @@ public class ConsoleLogger implements Logger {
     private boolean ansiColoringEnabled = true;
 
     public ConsoleLogger() {
-        formatConfig = new FormatConfig();
+        formatConfig = FormatConfig.get();
         init();
     }
 

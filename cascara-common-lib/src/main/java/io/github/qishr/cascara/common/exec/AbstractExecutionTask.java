@@ -157,16 +157,10 @@ public abstract class AbstractExecutionTask<I, O> {
                 object = (I) deserialized;
             }
 
-            if (object == null) {
-                // TODO: ExecutionException
-                error("Failed to deserialize payload: " + json);
-                return;
-            } else {
-                try {
-                    response = run(object);
-                } catch (Throwable e) {
-                    thrownByTask = e;
-                }
+            try {
+                response = run(object);
+            } catch (Throwable e) {
+                thrownByTask = e;
             }
 
             // Emit task output payload via IpcClient if IPC is enabled, otherwise fallback to stdout
@@ -193,7 +187,7 @@ public abstract class AbstractExecutionTask<I, O> {
     }
 
     protected void displayHomeContents() {
-        try(Stream<Path> jarFiles = Files.walk(Cascara.instance().getHomePath())) {
+        try(Stream<Path> jarFiles = Files.walk(Cascara.get().getHome())) {
             for (Path jarFile : jarFiles.toList()) {
                 System.out.println("> " + jarFile);
             }

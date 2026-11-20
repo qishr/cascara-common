@@ -34,21 +34,44 @@
 
 package io.github.qishr.cascara.common.diagnostic.format;
 
+import io.github.qishr.cascara.common.annotation.ConfigNamespace;
+import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.util.Config;
 
 @Experimental
-public class FormatConfig {
+@ConfigNamespace("cascara.report.format")
+public class FormatConfig extends Config {
+    @ConfigSetting()
     private boolean prefixEveryLine = true;
+
+    @ConfigSetting()
     private boolean includeStackTrace = false;
+
+    @ConfigSetting()
     private boolean includeProblemCodes = false;
+
+    @ConfigSetting()
     private boolean incluedTime = true;
+
+    @ConfigSetting()
     private boolean incluedPid = true;
+
+    @ConfigSetting()
     private boolean incluedThread = true;
+
+    @ConfigSetting()
     private boolean incluedSource = true;
 
+    @ConfigSetting()
     private boolean useSimpleClassName = false;
 
+    // TODO: Private
     public FormatConfig() {}
+
+    public static FormatConfig get() {
+        return get(FormatConfig.class);
+    }
 
     public boolean prefixEveryLine() {
         return prefixEveryLine;

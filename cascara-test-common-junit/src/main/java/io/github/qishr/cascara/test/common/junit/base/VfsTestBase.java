@@ -14,36 +14,39 @@ import org.junit.jupiter.api.BeforeEach;
 
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
+import io.github.qishr.cascara.common.util.Config;
 import io.github.qishr.cascara.test.common.util.TestException;
 
 public class VfsTestBase extends TestBase {
     private static final String vfsHomeDir = "/.cascara";
 
     private SPL rootLayer;
-    private FileSystem vFs;
+    private FileSystem vfs;
     private String physicalHome;
     private URI vfsUri;
     public SPL spl;
 
     @BeforeEach
     protected void setUp() {
-        super.setUp();
-
         Path zipFile = tempDir.resolve("cascara-vfs.zip");
         physicalHome = zipFile.toString() + "!" + vfsHomeDir;
 
         vfsUri = URI.create("jar:" + zipFile.toUri());
 
+        Config.resetAll();
+
         try {
-            vFs = FileSystems.newFileSystem(vfsUri, Map.of("create", "true"));
-            Path vHome = vFs.getPath(vfsHomeDir);
+            vfs = FileSystems.newFileSystem(vfsUri, Map.of("create", "true"));
+            Path vHome = vfs.getPath(vfsHomeDir);
             Files.createDirectories(vHome);
-            Cascara.instance().setHomePath(vHome);
-            Files.createDirectories(Cascara.instance().getModulePath());
+            Cascara.get(vHome);
+            Files.createDirectories(Cascara.get().getModulePath());
         } catch (IOException e) {
             throw new TestException(e, "Failed to initialize VFS: " + e.getLocalizedMessage());
         }
 
+        // This must come after VFS is set up
+        super.setUp();
         rootLayer = SPL.getRoot();
         spl = rootLayer.create("baseTestLayer");
     }
@@ -54,10 +57,10 @@ public class VfsTestBase extends TestBase {
         if (rootLayer != null && spl != null) {
             rootLayer.remove(spl.getName());
         }
-        Cascara.reset();
-        if (vFs != null && vFs.isOpen()) {
-            vFs.close();
+        if (vfs != null && vfs.isOpen()) {
+            vfs.close();
         }
+        Config.resetAll();
     }
 
     protected String getPhysicalHomePath() {
@@ -65,19 +68,28 @@ public class VfsTestBase extends TestBase {
     }
 
     protected FileSystem getVFS() {
-        return vFs;
+        return vfs;
     }
 
     protected void syncVfs() {
         try {
-            vFs.close();
+            vfs.close();
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
         try {
-            vFs = FileSystems.newFileSystem(vfsUri, Map.of());
-            Cascara.instance().setHomePath(vFs.getPath(vfsHomeDir));
+            vfs = FileSystems.newFileSystem(vfsUri, Map.of());
+
+
+            // Cascara.get().setHomePath(vFs.getPath(vfsHomeDir));
+
+
+            // Cascara.get().reset();
+            Config.resetAll();
+            Cascara.get(vfs.getPath(vfsHomeDir));
+
+
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -85,8 +97,8 @@ public class VfsTestBase extends TestBase {
     }
 
     protected void displayVfs() {
-        if (vFs != null && vFs.isOpen()) {
-            try (Stream<Path> walk = Files.walk(vFs.getPath("/"))) {
+        if (vfs != null && vfs.isOpen()) {
+            try (Stream<Path> walk = Files.walk(vfs.getPath("/"))) {
                 walk.filter(Files::isRegularFile).forEach(System.out::println);
             } catch (Exception e) {
                 e.printStackTrace();

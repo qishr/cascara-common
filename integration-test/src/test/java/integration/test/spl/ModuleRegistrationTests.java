@@ -65,7 +65,7 @@ class ModuleRegistrationTests extends SplTestBase {
 
     @Test
     void loadsPreferredProviderFromVirtualHome() throws IOException {
-        Path splPropertiesPath = Cascara.instance().getSplPropertiesPath();
+        Path splPropertiesPath = Cascara.get().getSplPropertiesPath();
         Files.writeString(splPropertiesPath,
             "provider.io.github.qishr.cascara.common.io.ResourceProvider = " +
             "io.github.qishr.cascara.common.io.provider.FileResourceProvider\n"
@@ -96,7 +96,7 @@ class ModuleRegistrationTests extends SplTestBase {
         REPORTER.debug("Test registering JAR");
 
         SyntheticJar testJar = SyntheticJar.forUseIn(ModuleRegistrationTests.class)
-            .setPath(Cascara.instance().getModulePath().resolve("provider-a.jar"))
+            .setPath(Cascara.get().getModulePath().resolve("provider-a.jar"))
             .setMinCascaraVersion("0.10.0")
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
@@ -142,7 +142,7 @@ class ModuleRegistrationTests extends SplTestBase {
 
         // Create synthetic module containing DemoSingleton
         SyntheticJar testJar = SyntheticJar.forUseIn(ModuleRegistrationTests.class)
-            .setPath(Cascara.instance().getModulePath().resolve("singleton.jar"))
+            .setPath(Cascara.get().getModulePath().resolve("singleton.jar"))
             .setMinCascaraVersion("0.10.0")
             .addSources("code/singleton/module-info.txt", "code/singleton/DemoSingletonImpl.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")

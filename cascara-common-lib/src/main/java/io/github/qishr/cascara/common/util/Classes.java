@@ -87,7 +87,7 @@ public class Classes {
                 if (set == null) {
                     Set<String> newSet = new ConcurrentSkipListSet<>();
 
-                    Path vrp = Cascara.instance().getModulePath();
+                    Path vrp = Cascara.get().getModulePath();
                     modulePath = new ModulePath(null, null, EXCLUDED, vrp);
                     classPath = new ClassPath(null, EXCLUDED, vrp);
 

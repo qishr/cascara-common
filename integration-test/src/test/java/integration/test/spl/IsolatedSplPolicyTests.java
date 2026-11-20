@@ -97,7 +97,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setSystemProperty("cascara.report.level." + SPL.class.getName(), "debug")
             .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
             .setTimeout(Duration.ofSeconds(120))
-            .setDebug(PROCESS_DEBUG_ENABLED));
+            .setDebug(PROCESS_DEBUG_ENABLED)
+        );
 
         Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
 
@@ -169,7 +170,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
         // 2. Package and sign JAR
-        Path jarPath = Cascara.instance().getModulePath().resolve("provider-a.jar");
+        Path jarPath = Cascara.get().getModulePath().resolve("provider-a.jar");
         SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
@@ -177,7 +178,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .packageJar(jarPath);
 
         syncVfs();
-        try(Stream<Path> jarFiles = Files.walk(Cascara.instance().getModulePath())) {
+        try(Stream<Path> jarFiles = Files.walk(Cascara.get().getModulePath())) {
             for (Path jarFile : jarFiles.toList()) {
                 System.out.println("> " + jarFile);
             }
@@ -248,13 +249,10 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .setDebug(PROCESS_DEBUG_ENABLED));
 
         // Response<Boolean> result =
+        // try {exec.run(jarPath.toString());} catch(Throwable t){}
         assertThrows(SignatureException.class, () -> exec.run("com.example.providera.ProviderA"));
 
         // debug(result);
-
-        // Expect a warning to be reported for ProviderA
-        // assertReported.warnContains("NOT_SIGNED");
-
     }
 
     // TODO: Remove this or change the way it works
@@ -311,7 +309,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
         // 2. Package and sign JAR
-        Path jarPath = Cascara.instance().getModulePath().resolve("provider-a.jar");
+        Path jarPath = Cascara.get().getModulePath().resolve("provider-a.jar");
         SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
@@ -319,25 +317,23 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             .packageJar(jarPath);
 
         // 3. Add the JAR to the module path
-        String modulePath = getModulePath(); // + File.pathSeparator + jarPath;
+        String modulePath = getModulePath();
 
-        // 4. Create a Cascara properties file
+        // 4a. Create a Cascara properties file
         String cascaraProperties = """
             cascara.spl.boot-errors-to-console = true
             """;
-
-        Path cascaraPropertiesPath = Cascara.instance().getCascaraPropertiesPath();
+        Path cascaraPropertiesPath = Cascara.get().getCascaraPropertiesPath();
         Files.createDirectories(cascaraPropertiesPath.getParent());
         Files.writeString(cascaraPropertiesPath, cascaraProperties);
 
-        // 4. Create an SPL properties file
+        // 4b. Create an SPL properties file
         String splProperties = """
             verify = true
             policy.check-expiry = true
             policy.require-signed = true
             """;
-
-        Path splPropertiesPath = Cascara.instance().getSplPropertiesPath();
+        Path splPropertiesPath = Cascara.get().getSplPropertiesPath();
         Files.createDirectories(splPropertiesPath.getParent());
         Files.writeString(splPropertiesPath, splProperties);
         syncVfs();
@@ -345,7 +341,6 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
         // 5. Set up isolated executor
         IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterJarTestTask.class, Boolean.class)
             .setDiagnosticForwarding(true)
-            // .setIpcDebug(true)
             .setJvmConfig(
                 new JvmConfig()
                     .setModuleName(ReporterConfigTask.class.getModule().getName())
@@ -353,7 +348,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
                     .setEnv(EV_CASCARA_HOME, getPhysicalHomePath())
                     .setSystemProperty("cascara.report.level." + SplRegisterJarTestTask.class.getName(), "debug")
                     .setSystemProperty("cascara.report.level." + SplSignaturePolicy.class.getName(), "debug")
-                    .setSystemProperty("cascara.report.level." + SPL.class.getName(), "debug")
+                    .setSystemProperty("cascara.spl.boot-info-to-console", true)
                     .setSystemProperty(SP_CASCARA_SPL_PROPERTIES, splPropertiesPath)
                     .setTimeout(Duration.ofSeconds(120))
             );

@@ -24,7 +24,7 @@ public class CascaraControl implements CascaraControlMBean {
         REPORTER.info(GenericMessage.INFO, "loadModule");
         try {
             SPL spl = SPL.getRoot();
-            Path jarPath = Cascara.instance().getModulePath().resolve("provider-a.jar");
+            Path jarPath = Cascara.get().getModulePath().resolve("provider-a.jar");
             SPL layer = spl.create("testLayer");
             layer.registerJar(jarPath);
             // Class<?> cls = Class.forName("com.example.providera.ProviderA");

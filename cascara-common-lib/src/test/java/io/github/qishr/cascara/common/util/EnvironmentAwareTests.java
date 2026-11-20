@@ -16,7 +16,7 @@ public class EnvironmentAwareTests {
 
     @Test
     void test_cascaraVersionAllEnvironments() throws Exception {
-        SemVer cascaraVersion = Cascara.instance().getVersion();
+        SemVer cascaraVersion = Cascara.get().getVersion();
         assertNotNull(cascaraVersion);
         assertNotEquals("0.0.0", cascaraVersion.toString());
     }
@@ -29,7 +29,7 @@ public class EnvironmentAwareTests {
     @Tag("requires-jar")
     @EnabledIf("isModularEnvironment")
     void test_cascaraVersionWithModularJar() throws Exception {
-        SemVer cascaraVersion = Cascara.instance().getVersion();
+        SemVer cascaraVersion = Cascara.get().getVersion();
         assertNotNull(cascaraVersion);
         assertNotEquals("0.0.0", cascaraVersion.toString());
     }
@@ -40,7 +40,7 @@ public class EnvironmentAwareTests {
     @Test
     @Tag("requires-jar")
     void test_cascaraVersionWithJar() throws Exception {
-        SemVer cascaraVersion = Cascara.instance().getVersion();
+        SemVer cascaraVersion = Cascara.get().getVersion();
         assertNotNull(cascaraVersion);
         assertNotEquals("0.0.0", cascaraVersion.toString());
     }
@@ -51,7 +51,7 @@ public class EnvironmentAwareTests {
     @Test
     @Tag("no-jar")
     void test_cascaraVersionWithoutJar() throws Exception {
-        SemVer cascaraVersion = Cascara.instance().getVersion();
+        SemVer cascaraVersion = Cascara.get().getVersion();
         assertNotNull(cascaraVersion);
         assertNotEquals("0.0.0", cascaraVersion.toString());
     }
@@ -59,7 +59,7 @@ public class EnvironmentAwareTests {
     @Test
     @Tag("no-jar")
     void test_commonVersionWithoutJar() throws Exception {
-        SemVer jarCommonVersion = Cascara.instance().getCommonVersion();
+        SemVer jarCommonVersion = Cascara.get().getCommonVersion();
         assertNotNull(jarCommonVersion);
         assertNotEquals("0.0.0", jarCommonVersion.toString());
     }
@@ -67,7 +67,7 @@ public class EnvironmentAwareTests {
     @Test
     @Tag("requires-jar")
     void test_commonVersionWithJar() throws Exception {
-        SemVer jarCommonVersion = Cascara.instance().getCommonVersion();
+        SemVer jarCommonVersion = Cascara.get().getCommonVersion();
         assertNotNull(jarCommonVersion);
         assertNotEquals("0.0.0", jarCommonVersion.toString());
     }
@@ -76,7 +76,7 @@ public class EnvironmentAwareTests {
     @Tag("requires-jar")
     @EnabledIf("isModularEnvironment")
     void test_commonVersionWithModularJar() throws Exception {
-        SemVer jarCommonVersion = Cascara.instance().getCommonVersion();
+        SemVer jarCommonVersion = Cascara.get().getCommonVersion();
         assertNotNull(jarCommonVersion);
         assertNotEquals("0.0.0", jarCommonVersion.toString());
     }

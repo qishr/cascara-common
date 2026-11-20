@@ -25,7 +25,7 @@ public class SplPolicyTests extends SplTestBase {
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
         // 2. Package and sign JAR
-        Path jarPath = Cascara.instance().getModulePath().resolve("provider-a.jar");
+        Path jarPath = Cascara.get().getModulePath().resolve("provider-a.jar");
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")

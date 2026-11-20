@@ -38,7 +38,7 @@ package io.github.qishr.cascara.common.util;
 import java.util.ArrayList;
 import java.util.List;
 
-/// A stable, persisted canonical content type used throughout Cascara.instance().
+/// A stable, persisted canonical content type used throughout Cascara.get().
 /// This class represents the authoritative identity of a content type,
 /// including its canonical ID, canonical name, and the full set of MIME
 /// types and filename suffixes associated with it.

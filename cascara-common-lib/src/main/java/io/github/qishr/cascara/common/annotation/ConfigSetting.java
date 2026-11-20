@@ -48,8 +48,9 @@ public @interface ConfigSetting {
 
     public enum Source {
         DEFAULT,
-        SYSTEM_PROPERTY,
+        STREAM,
         FILE,
+        SYSTEM_PROPERTY,
         ENVIRONMENT_VARIABLE
     }
 }

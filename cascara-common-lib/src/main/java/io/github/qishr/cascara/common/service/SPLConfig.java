@@ -51,6 +51,9 @@ public class SPLConfig extends Config {
     private boolean bootErrorsToConsole = false;
 
     @ConfigSetting()
+    private boolean bootInfoToConsole = false;
+
+    @ConfigSetting()
     private boolean verify = false;
 
     @ConfigSetting(name = "policy.check-expiry")
@@ -76,6 +79,10 @@ public class SPLConfig extends Config {
 
     public boolean bootErrorsToConsole() {
         return bootErrorsToConsole;
+    }
+
+    public boolean bootInfoToConsole() {
+        return bootInfoToConsole;
     }
 
     public boolean isVerifyEnabled() {

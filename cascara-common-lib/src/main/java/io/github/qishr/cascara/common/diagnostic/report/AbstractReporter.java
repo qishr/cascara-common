@@ -100,9 +100,9 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected abstract T self();
 
-    /// To be overridden by reporters neding specific default config
+    /// To be overridden by reporters needing specific default config
     protected FormatConfig defaultFormatConfig() {
-        return new FormatConfig();
+        return FormatConfig.get();
     }
 
     public T addLogger(Logger logger) {

@@ -7,6 +7,7 @@ import java.io.File;
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import integration.test.exec.ExecTestBase;
 import integration.test.fixtures.payload.MessageEnumTestInput;
@@ -20,6 +21,7 @@ import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.common.i18n.DetailedMessage;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 
+@Isolated
 public class IsolatedInternationalizationTests extends ExecTestBase {
 
     @Test

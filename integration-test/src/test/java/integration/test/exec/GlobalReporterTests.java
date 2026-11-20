@@ -7,6 +7,7 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.task.GlobalReporterTestTask;
@@ -19,6 +20,7 @@ import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtensi
 // ./gradlew :cascara-common:build publishToMavenLocal -x javadoc -x test -x testClasspath -x testJarClasspath --refresh-dependencies
 // ./gradlew :spl-test:build -x javadoc :spl-test:test --tests "*GlobalReporterTests*"
 
+@Isolated
 public class GlobalReporterTests extends ExecTestBase {
     @RegisterExtension
     static final AssertReportedExtension assertReported = new AssertReportedExtension();

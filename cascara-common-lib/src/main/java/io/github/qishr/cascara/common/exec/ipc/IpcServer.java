@@ -48,6 +48,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -67,6 +69,7 @@ import io.github.qishr.cascara.common.exec.ExecutionMessage;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
 import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.util.Cascara;
+import io.github.qishr.cascara.common.util.ReflectionUtils;
 
 public class IpcServer implements AutoCloseable {
     public static final String SERIALIZATION_FORMAT = "application/json";
@@ -134,17 +137,32 @@ public class IpcServer implements AutoCloseable {
         return socketPath;
     }
 
-    @SuppressWarnings("null")
+    private static Map<String,Class<?>> classCache = new ConcurrentHashMap<>();
+
+    private Class<?> resolveClass(String fqcn) {
+        return classCache.computeIfAbsent(fqcn, name -> {
+            Class<?> resolved;
+            try {
+                resolved = Class.forName(name);
+                return resolved;
+            } catch (ClassNotFoundException ignored) {
+                return null;
+            }
+        });
+    }
+
     @NonNull
     public <T> List<T> getMessages(Class<T> type) {
-        List<Object> rawList = payloadsByType.getOrDefault(type.getName(), List.of());
-        if (rawList.isEmpty()) {
-            return List.of();
-        }
-        List<T> result = new ArrayList<>(rawList.size());
-        for (Object item : rawList) {
-            if (type.isInstance(item)) {
-                result.add(type.cast(item));
+        List<T> result = new ArrayList<>();
+        for (Entry<String, List<Object>> entry : payloadsByType.entrySet()) {
+            String entryType = entry.getKey();
+            Class<?> entryClass = resolveClass(entryType);
+            if (ReflectionUtils.canAssign(entryClass, type)) {
+                for (Object item : entry.getValue()) {
+                    if (type.isInstance(item)) {
+                        result.add(type.cast(item));
+                    }
+                }
             }
         }
         return result;
@@ -235,7 +253,7 @@ public class IpcServer implements AutoCloseable {
 
             // Send server PID etc in the IPC handshake header
             IpcConfig config = new IpcConfig();
-            config.setVersion(Cascara.instance().getVersion());
+            config.setVersion(Cascara.get().getVersion());
             config.setIpcServerPid(ProcessHandle.current().pid());
             config.setIpcDebug(ipcDebug);
             config.setPropIpcSerializer(serializer.getClass().getName());

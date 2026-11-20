@@ -52,7 +52,7 @@ public class SplJmxTest extends JmxTestBase {
 
     protected Path createModuleA() throws IOException {
         SyntheticJar testJar = SyntheticJar.forUseIn(SplJmxTest.class)
-            .setPath(Cascara.instance().getModulePath().resolve("provider-a.jar"))
+            .setPath(Cascara.get().getModulePath().resolve("provider-a.jar"))
             .setMinCascaraVersion("0.10.0")
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")

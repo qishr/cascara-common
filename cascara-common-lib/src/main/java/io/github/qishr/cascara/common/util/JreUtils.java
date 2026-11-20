@@ -84,7 +84,8 @@ public class JreUtils {
                 : ClassLoader.getSystemResourceAsStream(normalizedPath);
 
         }
-        // Fallback 12 to Class-relative lookup if needed
+
+        // Fallback 2 to Class-relative lookup if needed
         if (is == null) {
             is = clazz.getResourceAsStream(path.startsWith("/") ? path : "/" + path);
         }
@@ -98,36 +99,70 @@ public class JreUtils {
 
         // If clazz is in a JPMS module, check if the module opens the package to the class's module.
         // If it doesn't, put that detail in the exception.
+        // if (is == null) {
+        //     // Determine the package name of the resource from its path
+        //     String packageName = getPackageNameFromResourcePath(path);
+
+        //     if ("META-INF".equals(packageName)) {
+        //         throw new LocalizableIOException(FileMessage.FILE_NOT_FOUND, path);
+        //     }
+
+        //     Module targetModule = clazz.getModule();
+        //     if (targetModule.isNamed()) {
+        //         if (!packageName.isEmpty()) {
+        //             Module myModule = JreUtils.class.getModule();
+
+        //             // Check if targetModule does NOT open this package to the class's module
+        //             if (!targetModule.isOpen(packageName, myModule)) {
+        //                 throw new LocalizableIOException(
+        //                     GenericMessage.RESOURCE_INACCESSIBLE,
+        //                     path,
+        //                     targetModule.getName(),
+        //                     packageName,
+        //                     myModule.isNamed() ? myModule.getName() : "ALL-UNNAMED",
+        //                     packageName,
+        //                     myModule.isNamed() ? myModule.getName() : "ALL-UNNAMED",
+        //                     targetModule.getName()
+        //                 );
+        //             }
+        //         }
+        //     }
+        //     throw new LocalizableIOException(FileMessage.FILE_NOT_FOUND, path);
+        // }
+
         if (is == null) {
-            // Determine the package name of the resource from its path
-            String packageName = getPackageNameFromResourcePath(path);
+            // 1. Resolve package name: use clazz.getPackageName() for relative paths,
+            //    or extract from path for absolute leading-slash paths.
+            String packageName = path.startsWith("/")
+                ? getPackageNameFromResourcePath(path)
+                : clazz.getPackageName();
 
             if ("META-INF".equals(packageName)) {
                 throw new LocalizableIOException(FileMessage.FILE_NOT_FOUND, path);
             }
 
             Module targetModule = clazz.getModule();
-            if (targetModule.isNamed()) {
-                if (!packageName.isEmpty()) {
-                    Module myModule = clazz.getModule();
+            if (targetModule.isNamed() && !packageName.isEmpty()) {
+                // 2. Compare targetModule (e.g. cascara.ui.demo) against JreUtils's module (cascara.common)
+                Module myModule = JreUtils.class.getModule();
 
-                    // Check if targetModule does NOT open this package to the class's module
-                    if (!targetModule.isOpen(packageName, myModule)) {
-                        throw new LocalizableIOException(
-                            GenericMessage.RESOURCE_INACCESSIBLE,
-                            path,
-                            targetModule.getName(),
-                            packageName,
-                            myModule.isNamed() ? myModule.getName() : "ALL-UNNAMED",
-                            packageName,
-                            myModule.isNamed() ? myModule.getName() : "ALL-UNNAMED",
-                            targetModule.getName()
-                        );
-                    }
+                // Check if targetModule does NOT open this package to JreUtils's module
+                if (!targetModule.isOpen(packageName, myModule)) {
+                    throw new LocalizableIOException(
+                        GenericMessage.RESOURCE_INACCESSIBLE,
+                        path,
+                        targetModule.getName(),
+                        packageName,
+                        myModule.isNamed() ? myModule.getName() : "ALL-UNNAMED",
+                        packageName,
+                        myModule.isNamed() ? myModule.getName() : "ALL-UNNAMED",
+                        targetModule.getName()
+                    );
                 }
             }
             throw new LocalizableIOException(FileMessage.FILE_NOT_FOUND, path);
         }
+
         return is;
     }
 

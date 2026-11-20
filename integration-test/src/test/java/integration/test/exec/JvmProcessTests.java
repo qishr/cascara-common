@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import integration.test.fixtures.task.GlobalReporterTestTask;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
@@ -24,6 +25,7 @@ import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
 
+@Isolated
 public class JvmProcessTests extends ExecTestBase {
     @RegisterExtension
     static final AssertReportedExtension assertReported = new AssertReportedExtension();

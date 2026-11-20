@@ -35,21 +35,26 @@
 package io.github.qishr.cascara.common.service.internal;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
-import io.github.qishr.cascara.common.security.policy.SignaturePolicy;
+import io.github.qishr.cascara.common.diagnostic.report.ReporterConfig;
+import io.github.qishr.cascara.common.i18n.LangConfig;
 import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.policy.SignaturePolicy;
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
-import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.SPL;
+import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.Config.Setting;
 import io.github.qishr.cascara.common.util.ContentType;
@@ -60,6 +65,7 @@ import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
 public class SPLRoot extends SPLBranch {
     // private static final Properties EMPTY_PROPERTIES = new Properties();
+    private static final String NL = "\n";
 
     private static SignaturePolicy signaturePolicy;
 
@@ -83,7 +89,7 @@ public class SPLRoot extends SPLBranch {
         contentTypes = new HashSet<>();
         moduleLayer = ModuleLayer.boot();
         loadPolicy();
-        displayEnvironmentInformation();
+        displayBootInfo();
         if (config.isDiscoveryEnabled()) {
             autoDiscover();
         }
@@ -239,48 +245,88 @@ public class SPLRoot extends SPLBranch {
             .build();
     }
 
-    private void displayEnvironmentInformation() {
-        if (REPORTER.getLevel().includes(Level.DEBUG)) {
-            REPORTER.debug("Environment Information:");
+    private void displayBootInfo() {
+        if (!config.bootInfoToConsole() && !REPORTER.getLevel().includes(Level.DEBUG)) {
+            return;
+        }
 
-            REPORTER.debug("  JVM Vendor: " + System.getProperty("java.vendor"));
-            REPORTER.debug("  JVM Version: " + System.getProperty("java.version"));
-            REPORTER.debug("  JVM Home: " + System.getProperty("java.home"));
-            REPORTER.debug("  Operating System: " +
+        Writer writer = config.bootInfoToConsole()
+            ? new PrintWriter(System.out)
+            : REPORTER.getWriter(Level.DEBUG);
+
+        writeBootInfo(writer);
+    }
+
+    private void writeBootInfo(Writer writer) {
+        try {
+            writer.write("Environment Information:" + NL);
+
+            writer.write("  JVM Vendor: " + System.getProperty("java.vendor") + NL);
+            writer.write("  JVM Version: " + System.getProperty("java.version") + NL);
+            writer.write("  JVM Home: " + System.getProperty("java.home") + NL);
+            writer.write("  Operating System: " +
                 System.getProperty("os.name") + " " +
                 System.getProperty("os.version") + " " +
-                System.getProperty("os.arch")
+                System.getProperty("os.arch") + NL
             );
 
-            REPORTER.debug("  Cascara Version: " + Cascara.instance().getVersion());
-            REPORTER.debug("  Module cascara.common Version: " + Cascara.instance().getCommonVersion());
+            writer.write("  Cascara Version: " + Cascara.get().getVersion() + NL);
+            writer.write("  Module cascara.common Version: " + Cascara.get().getCommonVersion() + NL);
 
-            REPORTER.debug("  JPMS Enabled: " + JreUtils.isJpmsEnabled());
-            displayPaths("Module Path", System.getProperty("jdk.module.path"));
-            displayPaths("Class Path", System.getProperty("java.class.path"));
+            writer.write("  JPMS Enabled: " + JreUtils.isJpmsEnabled() + NL);
+            displayPaths(writer, "Module Path", System.getProperty("jdk.module.path") + NL);
+            displayPaths(writer, "Class Path", System.getProperty("java.class.path") + NL);
 
-            REPORTER.debug("  Console: " + JreUtils.isRunningInTerminal());
+            writer.write("  Console: " + JreUtils.isRunningInTerminal() + NL);
             // REPORTER.debug("  Eclipse: " + JreUtils.isRunningViaEclipse());
             // REPORTER.debug("  Gradle: " + JreUtils.isRunningViaGradle());
 
-            REPORTER.debug("SPL Config:");
-            List<Setting> settings = config.getSettings();
-            for (Setting s : settings) {
-                REPORTER.debug("  " + s);
+            writer.write("Cascara properties path: " + Cascara.get().getCascaraPropertiesPath() + NL);
+
+            writer.write("Cascara Config:" + NL);
+            for (Setting s : Cascara.get().getSettings()) {
+                writer.write("  " + s + NL);
             }
+
+            writer.write("SPL Config:" + NL);
+            for (Setting s : config.getSettings()) {
+                writer.write("  " + s + NL);
+            }
+
+            writer.write("Reporter Config:" + NL);
+            for (Setting s : ReporterConfig.get().getSettings()) {
+                writer.write("  " + s + NL);
+            }
+
+            writer.write("Reporter Format Config:" + NL);
+            for (Setting s : FormatConfig.get().getSettings()) {
+                writer.write("  " + s + NL);
+            }
+
+            writer.write("Language Config:" + NL);
+            for (Setting s : LangConfig.get().getSettings()) {
+                writer.write("  " + s + NL);
+            }
+
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    private void displayPaths(String name, String paths) {
+    private void displayPaths(Writer writer, String name, String paths) throws IOException {
         String[] array = paths == null
             ? new String[]{}
             : paths.split(File.pathSeparator, -1);
         if (array.length == 0) {
-            REPORTER.debug("  No " + name);
+            writer.write("  No " + name + NL);
         } else {
-            REPORTER.debug("  " + name);
-            for (String path : array) {
-                REPORTER.debug("    " + path);
+            writer.write("  " + name + ":" + NL);
+            for (int i = 0; i < array.length; i++) {
+                if (i > 0) {
+                    writer.write(NL);
+                }
+                writer.write("    " + array[i]);
             }
         }
     }

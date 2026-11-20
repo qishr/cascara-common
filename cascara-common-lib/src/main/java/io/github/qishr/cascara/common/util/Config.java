@@ -35,6 +35,7 @@
 package io.github.qishr.cascara.common.util;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.Type;
@@ -45,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
@@ -60,30 +62,64 @@ import io.github.qishr.cascara.common.property.Property;
 public abstract class Config {
 
     private static final Map<Class<? extends Config>, Config> INSTANCES = new ConcurrentHashMap<>();
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
 
     private String configNameSpace;
     private Map<String,ConfigField> configFields;
     private Properties settings;
 
+    protected Path suppliedProperties;
+    protected InputStream suppliedStream;
+
+    // Virtual Reference Path
+    private static Path vrp;
+
     protected Config() {}
 
+    protected static <T extends Config> T get(Class<T> configClass) {
+        return get(configClass, null, null, null);
+    }
+
+    protected static <T extends Config> T get(Class<T> configClass, Path properties) {
+        return get(configClass, properties, null, null);
+    }
+
+    protected static <T extends Config> T get(Class<T> configClass, InputStream properties) {
+        return get(configClass, null, properties, null);
+    }
+
     @SuppressWarnings("unchecked")
-    public static <T extends Config> T get(Class<T> configClass) {
-        return (T) INSTANCES.computeIfAbsent(configClass, clazz -> {
+    protected static <T extends Config> T get(Class<T> configClass, Path file, InputStream stream, Path vrp) {
+        T instance = (T) INSTANCES.computeIfAbsent(configClass, clazz -> {
             try {
                 // 1. Run constructor & inline Java field initializers
-                T instance = (T) clazz.getDeclaredConstructor().newInstance();
-                // 2. Bind sysprops, env vars, and properties files over defaults
-                instance.init();
-                return instance;
+                T inst = (T) clazz.getDeclaredConstructor().newInstance();
+                inst.suppliedProperties = file;
+                inst.suppliedStream = stream;
+
+                // 2. Virtual Refrence Path
+                if (vrp != null) {
+                    Config.vrp = vrp;
+                }
+
+                return inst;
             } catch (ReflectiveOperationException e) {
                 throw new ConfigException(e, GenericMessage.CONFIG_LOAD_FAILED, clazz.getName());
             }
         });
+        instance.ensureInitialized();
+        return instance;
     }
 
-    public static void reset() {
+    protected void ensureInitialized() {
+        if (initialized.compareAndSet(false, true)) {
+            init();
+        }
+    }
+
+    public static void resetAll() {
         INSTANCES.clear();
+        vrp = null;
     }
 
     public List<Setting> getSettings() {
@@ -96,47 +132,34 @@ public abstract class Config {
             configNameSpace = ns.value();
         }
 
-        // 1. Create map of fields
         settings = new Properties(Setting.class);
         configFields = new HashMap<>();
+
+        // 1. Create map of fields
         collectConfigFields(configFields);
 
-        // 2. Load from global properties file
+        // 2. Load from global Cascara properties file
         if (getClass() != Cascara.class) {
-            Path propertiesPath = Cascara.instance().getCascaraPropertiesPath();
-            try {
-                Properties cascaraProperties = Properties.fromFile(propertiesPath);
-                for (Property<?> prop : cascaraProperties) {
-                    if (include(prop.getName(), Source.FILE)) {
-                        Setting setting = new Setting(prop.getName(), prop.asString(), Source.FILE, propertiesPath);
-                        settings.add(setting);
-                    }
-                }
-            } catch (IOException ignored) {
-                // Ignore it
-            }
+            Path propertiesPath = Cascara.get().getCascaraPropertiesPath();
+            mergePropertiesFile(propertiesPath, null);
         }
 
-        // 3. Load from namespace properties file
+        // 3. Load from namespace properties supplie via API
+        if (suppliedProperties != null) {
+            mergePropertiesFile(suppliedProperties, configNameSpace);
+        }
+
+        if (suppliedStream != null) {
+            mergePropertiesStream(suppliedStream, configNameSpace);
+        }
+
+        // 4. Load from namespace properties file
         Path propertiesPath = getPropertiesPath();
         if (propertiesPath != null) {
-            try {
-                Properties namespaceProperties = Properties.fromFile(propertiesPath);
-                for (Property<?> prop : namespaceProperties) {
-                    String qualifiedName = configNameSpace == null
-                        ? prop.getName()
-                        : configNameSpace + "." + prop.getName();
-                    if (include(qualifiedName, Source.FILE)) {
-                        Setting setting = new Setting(qualifiedName, prop.asString(), Source.FILE, propertiesPath);
-                        settings.add(setting);
-                    }
-                }
-            } catch (IOException ignored) {
-                // Ignore it
-            }
+            mergePropertiesFile(propertiesPath, configNameSpace);
         }
 
-        // 4. Load from system properties
+        // 5. Load from system properties
         System.getProperties().forEach((k,v) -> {
             if (configNameSpace == null || k.toString().startsWith(configNameSpace)) {
                 if (v != null && v instanceof String value) {
@@ -149,7 +172,7 @@ public abstract class Config {
             }
         });
 
-        // 5. Load from environment variables
+        // 6. Load from environment variables
         for (Entry<String,ConfigField> entry : configFields.entrySet()) {
             ConfigField field = entry.getValue();
             String value = System.getenv(field.envName);
@@ -161,7 +184,7 @@ public abstract class Config {
             }
         }
 
-        // 6. Apply values to fields
+        // 7. Apply values to fields
         for (Entry<String,ConfigField> entry : configFields.entrySet()) {
             ConfigField field = entry.getValue();
             if (field.isMap) {
@@ -172,6 +195,36 @@ public abstract class Config {
                     continue;
                 }
                 setValue(field, value);
+            }
+        }
+    }
+
+    private void mergePropertiesFile(Path propertiesPath, String namespace) {
+        try {
+            Properties namespaceProperties = Properties.fromFile(propertiesPath);
+            mergeProperties(namespaceProperties, namespace, Source.FILE, propertiesPath);
+        } catch (IOException ignored) {
+            // Ignore it
+        }
+    }
+
+    private void mergePropertiesStream(InputStream stream, String namespace) {
+        try {
+            Properties namespaceProperties = Properties.fromStream(stream);
+            mergeProperties(namespaceProperties, namespace, Source.STREAM, null);
+        } catch (IOException ignored) {
+            // Ignore it
+        }
+    }
+
+    private void mergeProperties(Properties properties, String namespace, Source source, Path propertiesPath) {
+        for (Property<?> prop : properties) {
+            String qualifiedName = namespace == null
+                ? prop.getName()
+                : namespace + "." + prop.getName();
+            if (include(qualifiedName, source)) {
+                Setting setting = new Setting(qualifiedName, prop.asString(), source, propertiesPath);
+                settings.add(setting);
             }
         }
     }
@@ -393,7 +446,14 @@ public abstract class Config {
             return null;
         }
 
-        return Cascara.instance().getPath(pathString);
+        if (vrp == null) {
+            // This needs to go via Cascara.getPath() because the Cascara instance
+            // might be using a virtual fileystem that was specified by environment
+            // variable rather than API, so Config's VRP won't be set.
+            return Cascara.get().getPath(pathString);
+        } else {
+            return vrp.getFileSystem().getPath(pathString);
+        }
     }
 
     private static record ConfigField(

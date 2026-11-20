@@ -34,6 +34,7 @@
 
 package io.github.qishr.cascara.common.diagnostic.report;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,6 +56,10 @@ public class ReporterConfig extends Config {
 
     public static ReporterConfig get() {
         return get(ReporterConfig.class);
+    }
+
+    public static ReporterConfig get(InputStream is) {
+        return get(ReporterConfig.class, is);
     }
 
     public Level getLevel() {
