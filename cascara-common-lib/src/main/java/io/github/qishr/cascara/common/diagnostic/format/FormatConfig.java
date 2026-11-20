@@ -34,13 +34,15 @@
 
 package io.github.qishr.cascara.common.diagnostic.format;
 
+import java.io.InputStream;
+
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.util.Config;
 
 @Experimental
-@ConfigNamespace("cascara.report.format")
+@ConfigNamespace("cascara.diagnostic.format")
 public class FormatConfig extends Config {
     @ConfigSetting()
     private boolean prefixEveryLine = true;
@@ -71,6 +73,10 @@ public class FormatConfig extends Config {
 
     public static FormatConfig get() {
         return get(FormatConfig.class);
+    }
+
+    public static FormatConfig get(InputStream is) {
+        return get(FormatConfig.class, is);
     }
 
     public boolean prefixEveryLine() {

@@ -79,9 +79,6 @@ public class SPLRoot extends SPLBranch {
     private ContentTypeResolver contentTypeStore;
     private Set<ContentType> contentTypes;
 
-    // private FileWatcher propsFileWatcher;
-    // private Properties properties;
-
     private SPLRoot() {
         isBooting = true;
         rootLayer = this;

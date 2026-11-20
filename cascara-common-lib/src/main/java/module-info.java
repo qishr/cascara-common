@@ -51,7 +51,6 @@ module cascara.common {
     exports io.github.qishr.cascara.common.exception;
     exports io.github.qishr.cascara.common.exec;
     exports io.github.qishr.cascara.common.exec.ipc;
-    exports io.github.qishr.cascara.common.filewatcher;
     exports io.github.qishr.cascara.common.i18n;
     exports io.github.qishr.cascara.common.i18n.exception;
     exports io.github.qishr.cascara.common.lang.generic;
