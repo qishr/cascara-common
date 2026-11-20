@@ -43,6 +43,24 @@ tasks.withType(Jar).configureEach {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+def addCascaraCommonTestOpens = { Test task ->
+    def packages = [
+        'data',
+        'diagnostic',
+        'lang.generic',
+        'lang.processor',
+        'property',
+        'trackable',
+        'util'
+    ]
+
+    packages.each { pkg ->
+        task.jvmArgs([
+            '--add-opens', "cascara.common/io.github.qishr.cascara.common.${pkg}=org.junit.platform.commons,ALL-UNNAMED"
+        ])
+    }
+}
+
 tasks.named('test', Test) {
     description = 'Runs tests in a JPMS modular environment (exploded classes).'
 
@@ -180,6 +198,12 @@ tasks.register('testJarWithoutJPMS', Test) {
 tasks.named('check') {
     dependsOn tasks.named('test'), tasks.named('testJarJPMS'), tasks.named('testWithoutJPMS'), tasks.named('testJarWithoutJPMS')
 }
+
+tasks.named('test', addCascaraCommonTestOpens)
+tasks.named('testJarJPMS', addCascaraCommonTestOpens)
+
+
+
 
 tasks.named('processResources', ProcessResources) { task ->
     // Capture configuration-phase values into local final variables

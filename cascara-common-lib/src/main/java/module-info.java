@@ -90,13 +90,10 @@ module cascara.common {
     exports io.github.qishr.cascara.common.type.util;
     exports io.github.qishr.cascara.common.util;
 
-    opens io.github.qishr.cascara.common.data;           // For tests
-    opens io.github.qishr.cascara.common.diagnostic;     // For tests and SchmeaGenerator
-    opens io.github.qishr.cascara.common.lang.generic;   // For tests
-    opens io.github.qishr.cascara.common.lang.processor; // For tests
-    opens io.github.qishr.cascara.common.property;       // For tests and SchmeaGenerator
-    opens io.github.qishr.cascara.common.trackable;      // For tests and SchmeaGenerator
-    opens io.github.qishr.cascara.common.util;           // For tests and SchmeaGenerator
+    opens io.github.qishr.cascara.common.diagnostic to cascara.schema;
+    opens io.github.qishr.cascara.common.property to cascara.schema;
+    opens io.github.qishr.cascara.common.trackable to cascara.schema;
+    opens io.github.qishr.cascara.common.util to cascara.schema;
 
     provides io.github.qishr.cascara.common.service.ServiceProvider
         with io.github.qishr.cascara.common.type.cascara.LocalizableMessageDescriptor,
