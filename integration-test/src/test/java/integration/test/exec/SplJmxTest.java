@@ -66,7 +66,7 @@ public class SplJmxTest extends JmxTestBase {
     //
 
     @Test
-    void test_1() throws Throwable {
+    void test_jmx_1() throws Throwable {
         REPORTER.debug("CASCARA_HOME=" + getPhysicalHomePath());
         Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
         String json = serializer.toString("hello-isolated-world");
@@ -176,7 +176,7 @@ public class SplJmxTest extends JmxTestBase {
     }
 
     @Test
-    void test_2() throws Exception {
+    void test_jmx_2() throws Exception {
         // TODO: Make this configurable at *TestBase level
         // Configurator.setLevel("integration.test", org.apache.logging.log4j.Level.DEBUG);
         TimeSequencedAggregatorLogger aggregator = new TimeSequencedAggregatorLogger(new Log4jLogger(), 800);

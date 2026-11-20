@@ -38,7 +38,9 @@ package io.github.qishr.cascara.common.diagnostic;
 import java.net.URI;
 import java.text.MessageFormat;
 import java.time.Instant;
+import java.util.Objects;
 
+import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 import io.github.qishr.cascara.common.lang.token.Token;
 
@@ -66,9 +68,9 @@ public class Diagnostic {
     private final Object[] details;
 
     private final String formattedMessage;
-    private final String thread;    // This can be taken from the Thread class. No param needed.
+    @NonNull private final String thread;    // This can be taken from the Thread class. No param needed.
     private final long processId;
-    private final Instant timestamp;
+    @NonNull private final Instant timestamp;
 
     /// Constructs a fully qualified [Diagnostic] entry with absolute location indicators.
     ///
@@ -100,9 +102,9 @@ public class Diagnostic {
         this.message = message;
         this.details = details;
 
-        this.thread = Thread.currentThread().getName();
+        this.thread = Objects.requireNonNull(Thread.currentThread().getName());
         this.processId = ProcessHandle.current().pid();
-        this.timestamp = Instant.now();
+        this.timestamp = Objects.requireNonNull(Instant.now());
 
         String formattedMessage;
 
@@ -206,11 +208,13 @@ public class Diagnostic {
     public Throwable getCause() { return cause; }
 
     /// Returns the name of the execution thread that instantiated this diagnostic instance.
+    @NonNull
     public String getThread() { return thread; }
 
     public long getProcessId() { return processId; }
 
     /// Returns the exact timestamp indicating when this diagnostic was instantiated.
+    @NonNull
     public Instant getTimestamp() { return timestamp; }
 
     /// Sets the URI of the source resource associated with this diagnostic.

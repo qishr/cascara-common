@@ -73,13 +73,6 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     protected ConsoleLogger consoleLogger;
     protected LineLogger lineLogger;
 
-    // /// Consumes diagnostics included in the current Level or more
-    // /// important, with ERROR being the most important.
-    // protected Set<Consumer<Diagnostic>> diagnosticConsumers = new HashSet<>();
-
-    // /// Consumes ERROR, WARN, and INFO diagnostics.
-    // protected Consumer<Diagnostic> problemConsumer;
-
     protected Level level = Level.INFO;
 
     // ConsoleLogger config
@@ -137,56 +130,6 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         lineLogger.setLineConsumer(consumer);
         return self();
     }
-
-    // @Experimental
-    // protected Set<Consumer<Diagnostic>> getDiagnosticConsumers() {
-    //     return diagnosticConsumers;
-    // }
-
-    // /// {@inheritDoc}
-    // @Experimental
-    // @Override
-    // public T addDiagnosticConsumer(Consumer<Diagnostic> consumer) {
-    //     diagnosticConsumers.add(consumer);
-    //     return self();
-    // }
-
-    // /// {@inheritDoc}
-    // @Experimental
-    // @Override
-    // public T removeDiagnosticConsumer(Consumer<Diagnostic> consumer) {
-    //     diagnosticConsumers.remove(consumer);
-    //     return self();
-    // }
-
-    // @Experimental
-    // protected Consumer<Diagnostic> getProblemConsumer() {
-    //     return problemConsumer;
-    // }
-
-    // /// {@inheritDoc}
-    // @Experimental
-    // @Override
-    // public T setProblemConsumer(Consumer<Diagnostic> consumer) {
-    //     problemConsumer = consumer;
-    //     return self();
-    // }
-
-    // TODO: This should probably move too...
-
-    // /// {@inheritDoc}
-    // @Experimental
-    // @Override
-    // public boolean collectsProblems() {
-    //     return problemConsumer != null;
-    // }
-
-    //================================
-
-
-
-
-
 
     public T setStackTraceEnabled(boolean b) {
         formatConfig.setIncludeStackTrace(b);
@@ -532,12 +475,6 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected void reportAnyLevel(Diagnostic diagnostic) {
         log(diagnostic);
-        // for (Consumer<Diagnostic> consumer : diagnosticConsumers) {
-        //     consumer.accept(diagnostic);
-        // }
-        // if (getProblemConsumer() != null && isProblem(level)) {
-        //     getProblemConsumer().accept(diagnostic);
-        // }
     }
 
     protected void log(Diagnostic diagnostic) {

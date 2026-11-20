@@ -36,20 +36,20 @@
 package io.github.qishr.cascara.common.diagnostic.report;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
+import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
@@ -65,6 +65,12 @@ import io.github.qishr.cascara.common.type.time.ZonedDateTimeDescriptor;
 public class GlobalReporter extends ClassReporter implements DiagnosticReporter {
     public static final String SERIALIZATION_FORMAT = "application/json";
 
+    private static final AtomicBoolean shutdownHookRegistered = new AtomicBoolean(false);
+    private static final AtomicBoolean isShuttingDown = new AtomicBoolean(false);
+
+    // Thread-safe queue for pre-boot & shutdown diagnostics
+    private final ConcurrentLinkedQueue<Diagnostic> queue = new ConcurrentLinkedQueue<>();
+
     private static GlobalReporter globalInstance = new GlobalReporter().init();
 
     private static ReporterConfig config;
@@ -75,7 +81,7 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
 
     private IpcClient ipcClient;
     private boolean ipcUnavailable = false;
-    private List<Diagnostic> queue = new ArrayList<>();
+    // private List<Diagnostic> queue = new ArrayList<>();
 
     /// Consumes diagnostics included in the current Level or more
     /// important, with ERROR being the most important.
@@ -111,6 +117,8 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
                 setLevelInternal(fqcn, level);
             }
         }
+
+        registerShutdownHook();
 
         return this;
     }
@@ -317,6 +325,13 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
         return reporter;
     }
 
+    private void setLevelsForAll(Level level) {
+        this.level = level;
+        for (ClassReporter reporter : classInstances.values()) {
+            reporter.level = level;
+        }
+    }
+
     GlobalReporter setLevelInternal(Level level) {
         if (this == globalInstance) {
             setLevelsForAll(level);
@@ -326,7 +341,15 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
         return this;
     }
 
-    private void sendDiagnostic(Diagnostic diagnostic) {
+    private static void registerShutdownHook() {
+        if (shutdownHookRegistered.compareAndSet(false, true)) {
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                shutdown();
+            }, "cascara-global-reporter-shutdown"));
+        }
+    }
+
+    private synchronized void sendDiagnostic(Diagnostic diagnostic) {
         if (ipcUnavailable || serializer == null) {
             return;
         }
@@ -335,48 +358,69 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
             try {
                 ipcClient = IpcClient.tryConnect(serializer);
             } catch (Exception e) {
-                // There was no IpcServer to connect to, which is okay
+                // No IpcServer available
                 ipcUnavailable = true;
             }
         }
 
         if (ipcUnavailable || ipcClient == null) {
-            // Discard queued diagnostics
-            // TODO:  write them to System.err if allowed by option (see below)
-            queue.clear();
+            // Fallback: Drain queue to System.err if IPC is unavailable
+            drainQueueToFallback();
         } else {
             try {
-                // Send queued diagnostics
-                if (!queue.isEmpty()) {
-                    // System.out.println("GR-IPC: Sending queued diagnostics");
-                    for (Diagnostic d : queue) {
-                        if (ipcClient.getServerProcessId() != d.getProcessId()) {
-                            ipcClient.send(d);
-                        }
+                // Non-blocking drain of queued pre-boot diagnostics
+                Diagnostic queued;
+                while ((queued = queue.poll()) != null) {
+                    if (ipcClient.getServerProcessId() != queued.getProcessId()) {
+                        ipcClient.send(queued);
                     }
-                    queue.clear();
                 }
 
-                // TODO: This guard should use the JVM ID (with host name)
-                // instead of just PID
-                if (ipcClient.getServerProcessId() != diagnostic.getProcessId()) {
+                // Send current diagnostic
+                if (diagnostic != null && ipcClient.getServerProcessId() != diagnostic.getProcessId()) {
                     ipcClient.send(diagnostic);
                 }
 
             } catch (IOException e) {
-                // TODO: Possible option to silence this?
                 System.err.println("sendDiagnostic failed (" +
                     e.getMessage() + "): " +
-                    diagnostic.getFormattedMessage()
+                    (diagnostic != null ? diagnostic.getFormattedMessage() : "queued diagnostic")
                 );
             }
         }
     }
 
-    private void setLevelsForAll(Level level) {
-        this.level = level;
-        for (ClassReporter reporter : classInstances.values()) {
-            reporter.level = level;
+    private void drainQueueToFallback() {
+        Diagnostic queued;
+        while ((queued = queue.poll()) != null) {
+            // Fallback formatting to stderr so pre-boot diagnostics aren't lost
+            System.err.println("[EARLY-DIAGNOSTIC] " + queued.getFormattedMessage());
+        }
+    }
+
+    public static void shutdown() {
+        if (!isShuttingDown.compareAndSet(false, true)) {
+            return; // Already executed
+        }
+
+        // 1. Drain any remaining pre-boot or buffered diagnostics
+        if (!globalInstance.queue.isEmpty()) {
+            if (SPL.hasBooted() && !globalInstance.ipcUnavailable) {
+                globalInstance.sendDiagnostic(null); // Triggers queue drain to IPC
+            } else {
+                globalInstance.drainQueueToFallback();
+            }
+        }
+
+        // 2. Flush and close IPC Client
+        if (globalInstance.ipcClient != null) {
+            try {
+                // TODO:
+                // globalInstance.ipcClient.flush();
+                globalInstance.ipcClient.close();
+            } catch (Exception e) {
+                // Ignore socket errors during JVM termination
+            }
         }
     }
 }

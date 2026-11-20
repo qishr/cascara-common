@@ -49,7 +49,6 @@ public class ReportWriter extends Writer {
         this.level = level;
     }
 
-
     public void write(int indent, Object obj) {
         try {
             String str = obj.toString();
@@ -74,7 +73,6 @@ public class ReportWriter extends Writer {
 
     @Override
     public void write(char[] cbuf, int off, int len) {
-        // buffer.append(" ".repeat(indent));
         buffer.append(cbuf, off, len);
         flushLines(false);
     }
@@ -94,25 +92,17 @@ public class ReportWriter extends Writer {
         int newlineIdx;
         while ((newlineIdx = buffer.indexOf("\n")) != -1) {
             String line = buffer.substring(0, newlineIdx).replace("\r", "");
-            // reporter.displayLine(level, line, msgLineNumber);
             reporter.logLine(level, line);
             buffer.delete(0, newlineIdx + 1);
         }
         if (force && buffer.length() > 0) {
-            // reporter.displayLine(level, buffer.toString(), msgLineNumber);
             reporter.logLine(level, buffer.toString());
             buffer.setLength(0);
         }
     }
 
-    // void displayLine(String msgLine, int msgLineNumber) {
-    //     flush();
-    //     reporter.displayLine(level, msgLine, msgLineNumber);
-    // }
-
     void logLine(String msgLine) {
         flush();
         reporter.logLine(level, msgLine);
     }
-
 }
