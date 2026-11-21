@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.Isolated;
 
+import io.github.qishr.cascara.common.annotation.ConfigExtends;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.ConfigSetting.Source;
@@ -49,6 +49,10 @@ public class ConfigTests {
             return get(BaseTestConfig.class);
         }
 
+        public static BaseTestConfig get(InputStream properties) {
+            return get(BaseTestConfig.class, properties);
+        }
+
         public boolean isTrue() {
             return booleanValue;
         }
@@ -74,6 +78,7 @@ public class ConfigTests {
         }
     }
 
+    @ConfigExtends(BaseTestConfig.class)
     @ConfigNamespace("test.ext")
     public static class ExtendedTestConfig extends Config {
         @ConfigSetting
@@ -173,13 +178,15 @@ public class ConfigTests {
     void test_specifyPropertiesFile() throws IOException {
         Path appProperties = temp.resolve("app.properties");
         Files.writeString(appProperties, """
-            noise = Meow!
+            ext.noise = Meow!
             """);
 
-        ExtendedTestConfig extCfg = null;
         try (InputStream is = Files.newInputStream(appProperties)) {
-            extCfg = ExtendedTestConfig.get(is);
+            BaseTestConfig.get(is);
         }
+
+        ExtendedTestConfig extCfg = ExtendedTestConfig.get();
+
         assertNotNull(extCfg);
         assertEquals("Meow!", extCfg.getNoise());
     }

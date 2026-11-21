@@ -36,12 +36,15 @@ package io.github.qishr.cascara.common.diagnostic.format;
 
 import java.io.InputStream;
 
+import io.github.qishr.cascara.common.annotation.ConfigExtends;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.Config;
 
 @Experimental
+@ConfigExtends(Cascara.class)
 @ConfigNamespace("cascara.diagnostic.format")
 public class FormatConfig extends Config {
     @ConfigSetting()

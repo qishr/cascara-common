@@ -78,7 +78,7 @@ public class LocalReporter extends AbstractReporter<LocalReporter> implements Di
     @Experimental
     @Override
     public boolean collectsProblems() {
-        return GlobalReporter.globalInstance().problemConsumer != null;
+        return problemConsumer != null;
     }
 
     @Experimental
@@ -115,38 +115,17 @@ public class LocalReporter extends AbstractReporter<LocalReporter> implements Di
         return this;
     }
 
-
-
-
-
-
-
     /// Central reporting method. All other reporting methods call this.
     @Override
     public void report(Diagnostic diagnostic) {
+        super.report(diagnostic);
 
-        // if (this == globalInstance) {
-            // super.reportAnyLevel(diagnostic);
-            super.report(diagnostic);
+        for (Consumer<Diagnostic> consumer : diagnosticConsumers) {
+            consumer.accept(diagnostic);
+        }
 
-            for (Consumer<Diagnostic> consumer : diagnosticConsumers) {
-                consumer.accept(diagnostic);
-            }
-
-            if (getProblemConsumer() != null && isProblem(level)) {
-                getProblemConsumer().accept(diagnostic);
-            }
-
-            // if (SPL.hasBooted()) {
-            //     globalInstance.sendDiagnostic(diagnostic);
-            // } else {
-            //     globalInstance.queue.add(diagnostic);
-            // }
-        // } else {
-        //     if (this.level.includes(diagnostic.getLevel())) {
-        //         globalInstance.report(diagnostic);
-        //     }
-        // }
+        if (getProblemConsumer() != null && isProblem(level)) {
+            getProblemConsumer().accept(diagnostic);
+        }
     }
-
 }

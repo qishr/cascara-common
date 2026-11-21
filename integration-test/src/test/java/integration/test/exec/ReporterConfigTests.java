@@ -71,7 +71,7 @@ public class ReporterConfigTests extends ExecTestBase {
     void test_classLevel_cascaraConfig() throws Throwable {
 
         String cascaraProperties = """
-            cascara.report.level.integration.test.fixtures.task.ReporterConfigTask = debug
+            report.level.integration.test.fixtures.task.ReporterConfigTask = debug
             """;
 
         Path cascaraPropertiesPath = Cascara.get().getCascaraPropertiesPath();

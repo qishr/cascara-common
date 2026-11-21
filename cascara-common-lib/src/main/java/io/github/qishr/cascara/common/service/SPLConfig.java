@@ -38,11 +38,14 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.github.qishr.cascara.common.annotation.ConfigExtends;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.Config;
 
+@ConfigExtends(Cascara.class)
 @ConfigNamespace("cascara.spl")
 public class SPLConfig extends Config {
     @ConfigSetting()

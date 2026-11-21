@@ -201,8 +201,11 @@ public abstract class AbstractExecutionTask<I, O> {
     }
 
     protected void error(Throwable cause, String msg) {
-        System.err.println(cause == null
-            ? msg
-            : (cause.getClass().getSimpleName() + ": " + msg));
+        if (cause == null) {
+            System.err.println(msg);
+        } else {
+            System.err.println(cause.getClass().getSimpleName() + ": " + msg);
+            cause.printStackTrace();
+        }
     }
 }

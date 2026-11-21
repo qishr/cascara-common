@@ -50,12 +50,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.github.qishr.cascara.common.annotation.Beta;
+import io.github.qishr.cascara.common.annotation.ConfigExtends;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.ConfigSetting.Source;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.exception.ConfigException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIllegalArgumentException;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableUnsupportedOperationException;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
@@ -65,13 +67,15 @@ import io.github.qishr.cascara.common.property.Property;
 @Beta
 public abstract class Config {
 
-    private static final Map<Class<? extends Config>, Config> CLASS_TO_CONFIG = new ConcurrentHashMap<>();
-    private static final Map<String, Config> NAMESPACE_TO_CONFIG = new ConcurrentHashMap<>();
+    private static final Map<Class<? extends Config>, Config> INSTANCES = new ConcurrentHashMap<>();
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
+    private Class<? extends Config> baseClass;
     private String namespace = "";
     private Map<String,ConfigField> configFields;
     private Properties settings;
+    private Properties appliedSettings;
+    private Path propertiesPath;
     private static FileSystem fileSystem;
 
     protected Path suppliedProperties;
@@ -89,7 +93,7 @@ public abstract class Config {
 
     @SuppressWarnings("unchecked")
     protected static <T extends Config> T get(Class<T> configClass, Path file, InputStream stream, FileSystem fs) {
-        T instance = (T) CLASS_TO_CONFIG.computeIfAbsent(configClass, clazz -> {
+        T instance = (T) INSTANCES.computeIfAbsent(configClass, clazz -> {
             try {
                 // 1. Run constructor & inline Java field initializers
                 T inst = (T) clazz.getDeclaredConstructor().newInstance();
@@ -125,8 +129,7 @@ public abstract class Config {
 
     // TODO: This seems like a security problem
     public static void resetAll() {
-        CLASS_TO_CONFIG.clear();
-        NAMESPACE_TO_CONFIG.clear();
+        INSTANCES.clear();
         Config.fileSystem = null;
     }
 
@@ -134,15 +137,27 @@ public abstract class Config {
         return namespace;
     }
 
-    public List<Setting> getSettings() {
+    public Path getPropertiesPath() {
+        return propertiesPath;
+    }
+
+    public List<Setting> getAllSettings() {
         return settings.asList().stream().map(e -> (Setting)e).toList();
+    }
+
+    public List<Setting> getAppliedSettings() {
+        return appliedSettings.asList().stream().map(e -> (Setting)e).toList();
     }
 
     protected void init() {
         ConfigNamespace ns = getClass().getAnnotation(ConfigNamespace.class);
         if (ns != null) {
             namespace = ns.value();
-            NAMESPACE_TO_CONFIG.put(namespace, this);
+        }
+
+        ConfigExtends baseNs = getClass().getAnnotation(ConfigExtends.class);
+        if (baseNs != null) {
+            baseClass = baseNs.value();
         }
 
         settings = new Properties(Setting.class);
@@ -151,32 +166,29 @@ public abstract class Config {
         // 1. Create map of fields
         collectConfigFields(configFields);
 
-        // 2. Load from global Cascara properties file
-        if (getClass() != Cascara.class) {
-            Path propertiesPath = Cascara.get().getCascaraPropertiesPath();
-            mergePropertiesFile(propertiesPath, null);
-        }
-
-        // // TODO: This replaces the above
-        // if (!baseNameSpace.isEmpty()) {
-        //     Config baseConfig = NAMESPACE_TO_CONFIG.get(baseNameSpace);
-        //     if (baseConfig == null) {
-        //         // TODO: Exception
-        //     }
-        //     mergeConfig(baseConfig);
-        // }
-
-        // 3. Load from namespace properties supplie via API
+        // 2. Load from namespace properties supplied via API
         if (suppliedProperties != null) {
             mergePropertiesFile(suppliedProperties, namespace);
         }
-
         if (suppliedStream != null) {
             mergePropertiesStream(suppliedStream, namespace);
         }
 
+        // 3. Load from base properties file
+        if (baseClass != null) {
+            Config baseConfig = get(baseClass);
+            if (baseConfig == null) {
+                throw new LocalizableIllegalArgumentException(baseClass.getSimpleName());
+            }
+            mergeConfig(baseConfig);
+        }
+
         // 4. Load from namespace properties file
-        Path propertiesPath = getPropertiesPath();
+        propertiesPath = getPropertiesPathInternal();
+        if (propertiesPath == null) {
+            // Allow subclass to specify path
+            propertiesPath = getPropertiesPath();
+        }
         if (propertiesPath != null) {
             mergePropertiesFile(propertiesPath, namespace);
         }
@@ -199,7 +211,7 @@ public abstract class Config {
             ConfigField field = entry.getValue();
             String value = System.getenv(field.envName);
             if (value != null) {
-                if (include(field.propName, Source.ENVIRONMENT_VARIABLE)) {
+                if (include(field, Source.ENVIRONMENT_VARIABLE)) {
                     Setting setting = new Setting(field.propName, value, Source.ENVIRONMENT_VARIABLE, null);
                     settings.add(setting);
                 }
@@ -207,17 +219,37 @@ public abstract class Config {
         }
 
         // 7. Apply values to fields
+        appliedSettings = new Properties(Setting.class);
         for (Entry<String,ConfigField> entry : configFields.entrySet()) {
             ConfigField field = entry.getValue();
+
+            // TODO: Amend Property classso that this isn't so messy...
+            // Setting setting = settings.getProperty(field.propName);
+            Property<String> settingProp = settings.getProperty(field.propName);
+            Setting setting = (Setting) settingProp;
+
             if (field.isMap) {
                 setMapValues(field);
             } else {
+                if (setting == null) {
+                    continue;
+                }
+                if (!include(field, setting.source)) {
+                    continue;
+                }
+                appliedSettings.add(setting);
                 String value = settings.get(field.propName);
                 if (value == null) {
                     continue;
                 }
                 setValue(field, value);
             }
+        }
+    }
+
+    private void mergeConfig(Config config) {
+        for (Setting s : config.getAllSettings()) {
+            settings.add(s);
         }
     }
 
@@ -244,10 +276,8 @@ public abstract class Config {
             String qualifiedName = namespace == null
                 ? prop.getName()
                 : namespace + "." + prop.getName();
-            if (include(qualifiedName, source)) {
-                Setting setting = new Setting(qualifiedName, prop.asString(), source, propertiesPath);
-                settings.add(setting);
-            }
+            Setting setting = new Setting(qualifiedName, prop.asString(), source, propertiesPath);
+            settings.add(setting);
         }
     }
 
@@ -337,6 +367,7 @@ public abstract class Config {
                 }
                 String simpleName =  name.substring(field.propName.length() + 1);
                 map.put(simpleName, val);
+                appliedSettings.add(property);
             }
         }
 
@@ -432,6 +463,10 @@ public abstract class Config {
         if (field == null) {
             return false;
         }
+        return include(field, source);
+    }
+
+    private boolean include(ConfigField field, Source source) {
         if (field.anno.include().length > 0) {
             boolean included = false;
             for (Source s : field.anno.include()) {
@@ -452,7 +487,7 @@ public abstract class Config {
         return true;
     }
 
-    private Path getPropertiesPath() {
+    private Path getPropertiesPathInternal() {
         String fileName = namespace.isEmpty()
             ? "cascara"
             : namespace;
@@ -463,6 +498,11 @@ public abstract class Config {
         if (pathString == null) {
             pathString = System.getProperty(propName);
         }
+
+        // TODO: This breaks a test
+        // if (pathString == null) {
+        //     pathString = settings.get(propName);
+        // }
 
         if (pathString == null) {
             return null;

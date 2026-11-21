@@ -120,9 +120,10 @@ public class Cascara extends Config {
         return get(Cascara.class);
     }
 
-    //
-    //
-    //
+    @Override
+    public Path getPropertiesPath() {
+        return getCascaraPropertiesPath();
+    }
 
     public Path getPath(String pathString) {
         return home.getFileSystem().getPath(pathString);

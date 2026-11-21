@@ -39,10 +39,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
+import io.github.qishr.cascara.common.annotation.ConfigExtends;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.Config;
 
+@ConfigExtends(Cascara.class)
 @ConfigNamespace("cascara.report")
 public class ReporterConfig extends Config {
     @ConfigSetting(name = "level")

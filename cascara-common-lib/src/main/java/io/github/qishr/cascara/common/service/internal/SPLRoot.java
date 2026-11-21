@@ -278,30 +278,28 @@ public class SPLRoot extends SPLBranch {
             // REPORTER.debug("  Eclipse: " + JreUtils.isRunningViaEclipse());
             // REPORTER.debug("  Gradle: " + JreUtils.isRunningViaGradle());
 
-            writer.write("Cascara properties path: " + Cascara.get().getCascaraPropertiesPath() + NL);
-
             writer.write("Cascara Config:" + NL);
-            for (Setting s : Cascara.get().getSettings()) {
+            for (Setting s : Cascara.get().getAppliedSettings()) {
                 writer.write("  " + s + NL);
             }
 
             writer.write("SPL Config:" + NL);
-            for (Setting s : config.getSettings()) {
+            for (Setting s : config.getAppliedSettings()) {
                 writer.write("  " + s + NL);
             }
 
             writer.write("Reporter Config:" + NL);
-            for (Setting s : ReporterConfig.get().getSettings()) {
+            for (Setting s : ReporterConfig.get().getAppliedSettings()) {
                 writer.write("  " + s + NL);
             }
 
             writer.write("Reporter Format Config:" + NL);
-            for (Setting s : FormatConfig.get().getSettings()) {
+            for (Setting s : FormatConfig.get().getAppliedSettings()) {
                 writer.write("  " + s + NL);
             }
 
             writer.write("Language Config:" + NL);
-            for (Setting s : LangConfig.get().getSettings()) {
+            for (Setting s : LangConfig.get().getAppliedSettings()) {
                 writer.write("  " + s + NL);
             }
 

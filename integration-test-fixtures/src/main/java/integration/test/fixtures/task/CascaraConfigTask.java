@@ -26,7 +26,7 @@ public class CascaraConfigTask extends AbstractExecutionTask<Void, Map<String,St
         settings.put("cascara.shared.path", cascara.getSharedPath().toString());
         settings.put("cascara.module.path", cascara.getModulePath().toString());
 
-        for (Setting s : SPLConfig.get().getSettings()) {
+        for (Setting s : SPLConfig.get().getAllSettings()) {
             settings.put(s.getName(), s.asString());
         }
 

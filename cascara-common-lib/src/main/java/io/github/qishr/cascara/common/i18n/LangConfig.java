@@ -34,12 +34,15 @@
 
 package io.github.qishr.cascara.common.i18n;
 
+import io.github.qishr.cascara.common.annotation.ConfigExtends;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.Config;
 
+@ConfigExtends(Cascara.class)
 @ConfigNamespace("cascara.lang")
 public class LangConfig extends Config {
     @ConfigSetting()
