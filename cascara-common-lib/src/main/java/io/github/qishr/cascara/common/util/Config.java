@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.Type;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,6 +49,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.ConfigSetting.Source;
@@ -55,24 +57,25 @@ import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.exception.ConfigException;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableRuntimeException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableUnsupportedOperationException;
 import io.github.qishr.cascara.common.lang.diagnostic.LangMessage;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.property.Property;
 
+@Beta
 public abstract class Config {
 
-    private static final Map<Class<? extends Config>, Config> INSTANCES = new ConcurrentHashMap<>();
+    private static final Map<Class<? extends Config>, Config> CLASS_TO_CONFIG = new ConcurrentHashMap<>();
+    private static final Map<String, Config> NAMESPACE_TO_CONFIG = new ConcurrentHashMap<>();
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    private String configNameSpace;
+    private String namespace = "";
     private Map<String,ConfigField> configFields;
     private Properties settings;
+    private static FileSystem fileSystem;
 
     protected Path suppliedProperties;
     protected InputStream suppliedStream;
-
-    // Virtual Reference Path
-    private static Path vrp;
 
     protected Config() {}
 
@@ -80,17 +83,13 @@ public abstract class Config {
         return get(configClass, null, null, null);
     }
 
-    protected static <T extends Config> T get(Class<T> configClass, Path properties) {
-        return get(configClass, properties, null, null);
-    }
-
     protected static <T extends Config> T get(Class<T> configClass, InputStream properties) {
         return get(configClass, null, properties, null);
     }
 
     @SuppressWarnings("unchecked")
-    protected static <T extends Config> T get(Class<T> configClass, Path file, InputStream stream, Path vrp) {
-        T instance = (T) INSTANCES.computeIfAbsent(configClass, clazz -> {
+    protected static <T extends Config> T get(Class<T> configClass, Path file, InputStream stream, FileSystem fs) {
+        T instance = (T) CLASS_TO_CONFIG.computeIfAbsent(configClass, clazz -> {
             try {
                 // 1. Run constructor & inline Java field initializers
                 T inst = (T) clazz.getDeclaredConstructor().newInstance();
@@ -98,8 +97,8 @@ public abstract class Config {
                 inst.suppliedStream = stream;
 
                 // 2. Virtual Refrence Path
-                if (vrp != null) {
-                    Config.vrp = vrp;
+                if (fs != null) {
+                    Config.fileSystem = fs;
                 }
 
                 return inst;
@@ -117,9 +116,22 @@ public abstract class Config {
         }
     }
 
+    protected static void setFileSystem(FileSystem fs) {
+        if (fileSystem != null) {
+            throw new LocalizableUnsupportedOperationException(GenericMessage.CONFIG_FS_ALREADY_SET);
+        }
+        Config.fileSystem = fs;
+    }
+
+    // TODO: This seems like a security problem
     public static void resetAll() {
-        INSTANCES.clear();
-        vrp = null;
+        CLASS_TO_CONFIG.clear();
+        NAMESPACE_TO_CONFIG.clear();
+        Config.fileSystem = null;
+    }
+
+    public String getNamespace() {
+        return namespace;
     }
 
     public List<Setting> getSettings() {
@@ -129,7 +141,8 @@ public abstract class Config {
     protected void init() {
         ConfigNamespace ns = getClass().getAnnotation(ConfigNamespace.class);
         if (ns != null) {
-            configNameSpace = ns.value();
+            namespace = ns.value();
+            NAMESPACE_TO_CONFIG.put(namespace, this);
         }
 
         settings = new Properties(Setting.class);
@@ -144,24 +157,33 @@ public abstract class Config {
             mergePropertiesFile(propertiesPath, null);
         }
 
+        // // TODO: This replaces the above
+        // if (!baseNameSpace.isEmpty()) {
+        //     Config baseConfig = NAMESPACE_TO_CONFIG.get(baseNameSpace);
+        //     if (baseConfig == null) {
+        //         // TODO: Exception
+        //     }
+        //     mergeConfig(baseConfig);
+        // }
+
         // 3. Load from namespace properties supplie via API
         if (suppliedProperties != null) {
-            mergePropertiesFile(suppliedProperties, configNameSpace);
+            mergePropertiesFile(suppliedProperties, namespace);
         }
 
         if (suppliedStream != null) {
-            mergePropertiesStream(suppliedStream, configNameSpace);
+            mergePropertiesStream(suppliedStream, namespace);
         }
 
         // 4. Load from namespace properties file
         Path propertiesPath = getPropertiesPath();
         if (propertiesPath != null) {
-            mergePropertiesFile(propertiesPath, configNameSpace);
+            mergePropertiesFile(propertiesPath, namespace);
         }
 
         // 5. Load from system properties
         System.getProperties().forEach((k,v) -> {
-            if (configNameSpace == null || k.toString().startsWith(configNameSpace)) {
+            if (namespace.isEmpty() || k.toString().startsWith(namespace)) {
                 if (v != null && v instanceof String value) {
                     String name = k.toString();
                     if (include(name, Source.SYSTEM_PROPERTY)) {
@@ -247,17 +269,17 @@ public abstract class Config {
             ConfigSetting anno = field.getAnnotation(ConfigSetting.class);
 
             String propName =
-                (configNameSpace == null
+                (namespace.isEmpty()
                     ? ""
-                    : configNameSpace + ".") +
+                    : namespace + ".") +
                 (anno.name().isEmpty()
                     ? StringUtils.toKebabCase(field.getName())
                     : anno.name());
 
             String envName =
-                (configNameSpace == null
+                (namespace.isEmpty()
                     ? ""
-                    : StringUtils.toSnakeCase(configNameSpace).toUpperCase() + "_") +
+                    : StringUtils.toSnakeCase(namespace).toUpperCase() + "_") +
                 (anno.name().isEmpty()
                     ? StringUtils.toSnakeCase(field.getName())
                     : StringUtils.toSnakeCase(anno.name())).toUpperCase();
@@ -431,9 +453,9 @@ public abstract class Config {
     }
 
     private Path getPropertiesPath() {
-        String fileName = configNameSpace == null
+        String fileName = namespace.isEmpty()
             ? "cascara"
-            : configNameSpace;
+            : namespace;
         String envName = StringUtils.toSnakeCase(fileName).toUpperCase() + "_PROPERTIES";
         String propName = fileName + ".properties";
 
@@ -446,14 +468,9 @@ public abstract class Config {
             return null;
         }
 
-        if (vrp == null) {
-            // This needs to go via Cascara.getPath() because the Cascara instance
-            // might be using a virtual fileystem that was specified by environment
-            // variable rather than API, so Config's VRP won't be set.
-            return Cascara.get().getPath(pathString);
-        } else {
-            return vrp.getFileSystem().getPath(pathString);
-        }
+        return fileSystem == null
+            ? Path.of(pathString)
+            : fileSystem.getPath(pathString);
     }
 
     private static record ConfigField(

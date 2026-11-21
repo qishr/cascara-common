@@ -86,7 +86,7 @@ public class Cascara extends Config {
     private Path home;
 
     protected Cascara() {
-        // The default physicalCascaraPath
+        // The default physicalHome
         String userHome = System.getProperty("user.home");
         physicalHome = userHome + File.separator + ".cascara";
     }
@@ -98,6 +98,7 @@ public class Cascara extends Config {
             home = specifiedHome == null
                 ? Path.of(physicalHome)
                 : specifiedHome;
+            Config.setFileSystem(home.getFileSystem());
         } else {
             home = apiSpecifiedHome;
             physicalHome = home.toString();
@@ -111,7 +112,7 @@ public class Cascara extends Config {
 
     public static Cascara get(Path homePath) {
         apiSpecifiedHome = homePath;
-        return get(Cascara.class, null, null, homePath);
+        return get(Cascara.class, null, null, homePath.getFileSystem());
     }
 
     public static Cascara get() {

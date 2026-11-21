@@ -2,9 +2,12 @@ package io.github.qishr.cascara.common.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -80,7 +83,7 @@ public class ConfigTests {
             return get(ExtendedTestConfig.class);
         }
 
-        public static ExtendedTestConfig get(Path properties) {
+        public static ExtendedTestConfig get(InputStream properties) {
             return get(ExtendedTestConfig.class, properties);
         }
 
@@ -173,7 +176,11 @@ public class ConfigTests {
             noise = Meow!
             """);
 
-        ExtendedTestConfig extCfg = ExtendedTestConfig.get(appProperties);
+        ExtendedTestConfig extCfg = null;
+        try (InputStream is = Files.newInputStream(appProperties)) {
+            extCfg = ExtendedTestConfig.get(is);
+        }
+        assertNotNull(extCfg);
         assertEquals("Meow!", extCfg.getNoise());
     }
 }

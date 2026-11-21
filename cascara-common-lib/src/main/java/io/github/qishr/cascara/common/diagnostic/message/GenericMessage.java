@@ -56,6 +56,7 @@ public enum GenericMessage implements LocalizableMessage {
         "To fix this, add 'opens {4} to {5};' to the module-info.java of '{6}'"),
     STREAM_READ_ERROR("ERROR-109", "Failed to read from stream"),
     CONFIG_LOAD_FAILED("ERROR-110", "Failed to load config: {0}"),
+    CONFIG_FS_ALREADY_SET("ERROR-111", "Config filesystem is already set"),
 
     // JRE Exceptions
     EXCEPTION("ERROR-401", "Exception: {0}"),
