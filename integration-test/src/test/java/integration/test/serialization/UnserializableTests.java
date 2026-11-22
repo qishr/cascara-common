@@ -42,7 +42,7 @@ public class UnserializableTests extends ExecTestBase {
 
         exec.setJvmConfig(new JvmConfig()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
-            .setModulePath(getModulePath())
+            .setModulePath(getJvmModulePath())
         );
 
         FunctionInput input = new FunctionInput();

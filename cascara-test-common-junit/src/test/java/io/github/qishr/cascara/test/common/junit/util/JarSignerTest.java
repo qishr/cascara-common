@@ -33,7 +33,7 @@ public class JarSignerTest extends MetaTestBase {
     @Test
     void testSignSyntheticJar() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("provider.jar"))
             .addSources("code/ModuleInfoA.txt", "code/ProviderA.txt")
             .sign()
             .packageJar();
@@ -56,7 +56,7 @@ public class JarSignerTest extends MetaTestBase {
     @Test
     void testSignedJarEntryHasCertificate() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSignerTest.class)
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("provider.jar"))
             .addSources("code/ModuleInfoA.txt", "code/ProviderA.txt")
             .sign()
             .packageJar();

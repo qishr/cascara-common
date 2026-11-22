@@ -13,7 +13,7 @@ public class ModulePackagerTest extends MetaTestBase {
     @Test
     void testModulePackager() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(ModulePackagerTest.class)
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("provider.jar"))
             // .setMinCascaraVersion("0.14.0")
             .addSources(sourceCode())
             // .addSources("/java/Main.txt", "/java/module-info.txt")

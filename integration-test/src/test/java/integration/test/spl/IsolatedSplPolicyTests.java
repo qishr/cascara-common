@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -40,6 +41,7 @@ import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.junit.extension.AssertNotReportedExtension;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
+import io.github.qishr.cascara.test.common.util.TestCascara;
 
 // TODO: Find out why these tests take orderds of magnitude longer in
 // VS Code's test runner compared to running them from the Gradle command.
@@ -58,158 +60,160 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @RegisterExtension
     static final AssertNotReportedExtension assertNotReported = new AssertNotReportedExtension();
 
-    @TempDir
-    public Path tempDir;
+    @BeforeEach
+    protected void setUp() {
+        // We want this process's GlobalReporter to receive diagnostics, but not display them.
+        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
+        super.setUp();
+    }
 
     @Test
-    void test_reject_expiredCert(@TempDir Path tempDir) throws Throwable {
-        // 1. Issue an expired identity
-        TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
+    void test_reject_expiredCert() throws Throwable {
+        try (TestCascara cascara = new TestCascara()) {
+            // 1. Issue an expired identity
+            TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
-        // 2. Package and sign JAR
-        Path jarPath = tempDir.resolve("provider-a.jar");
+            // 2. Package and sign JAR
+            Path jarPath = cascara.getModulePath().resolve("provider-a.jar");
 
-        SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
-            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .sign(s -> s.withIdentity(expiredIdentity))
-            .packageJar(jarPath);
+            SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
+                .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
+                .addDependencies("cascara-common", "integration-test-fixtures")
+                .sign(s -> s.withIdentity(expiredIdentity))
+                .packageJar(jarPath);
 
-        IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
+            IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
-        // Enable forwarding of reports from isolated JVM
-        exec.setDiagnosticForwarding(true);
+            // Enable forwarding of reports from isolated JVM
+            exec.setDiagnosticForwarding(true);
 
-        // TODO: Remove this
-        // exec.setIpcDebug(true);
-        GlobalReporter.globalInstance().getFormatConfig().setIncludeTime(true);
+            // TODO: Remove this
+            // exec.setIpcDebug(true);
+            GlobalReporter.globalInstance().getFormatConfig().setIncludeTime(true);
 
-        // Add the JAR to the module path
-        String modulePath = getModulePath() + File.pathSeparator + jarPath;
+            // Add the JAR to the module path
+            String modulePath = getJvmModulePath() + File.pathSeparator + jarPath;
 
-        exec.setJvmConfig(new JvmConfig()
-            .setModuleName(SplPolicyTestTask.class.getModule().getName())
-            .setModulePath(modulePath)
-            .setEnv(CASCARA_HOME, getPhysicalHomePath())
-            .setSystemProperty(SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
-            .setSystemProperty(SP_CASCARA_SPL_VERIFY, "true")
-            .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
-            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "debug")
-            .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
-            .setTimeout(Duration.ofSeconds(120))
-            .setDebug(PROCESS_DEBUG_ENABLED)
-        );
+            exec.setJvmConfig(new JvmConfig()
+                .setModuleName(SplPolicyTestTask.class.getModule().getName())
+                .setModulePath(modulePath)
+                .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
+                .setSystemProperty(SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
+                .setSystemProperty(SP_CASCARA_SPL_VERIFY, "true")
+                .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
+                // .setSystemProperty("cascara.report.level." + SPL.class.getName(), "debug")
+                .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
+                .setTimeout(Duration.ofSeconds(120))
+                .setDebug(PROCESS_DEBUG_ENABLED)
+            );
 
-        Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
+            Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
 
-        debug(result);
+            debug(result);
 
-        System.out.println("Duration = " + result.getDuration());
+            System.out.println("Duration = " + result.getDuration());
 
-        assertTrue(result.getSystemErr().contains("CERTIFICATE_EXPIRED"));
-        assertReported.warnContains("CERTIFICATE_EXPIRED");
+            assertTrue(result.getSystemErr().contains("CERTIFICATE_EXPIRED"));
+            assertReported.warnContains("CERTIFICATE_EXPIRED");
+        }
     }
 
     // The above, but with cascara.sec.verify = false
     @Test
-    void test_accept_expiredCert(@TempDir Path tempDir) throws Throwable {
-        // 1. Issue an expired identity
-        TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
+    void test_accept_expiredCert() throws Throwable {
+        try (TestCascara cascara = new TestCascara()) {
+            // 1. Issue an expired identity
+            TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
-        // 2. Package and sign JAR
-        Path jarPath = tempDir.resolve("provider-a.jar");
+            // 2. Package and sign JAR
+            Path jarPath = cascara.getModulePath().resolve("provider-a.jar");
 
-        SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
-            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .sign(s -> s.withIdentity(expiredIdentity))
-            .packageJar(jarPath);
+            SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
+                .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
+                .addDependencies("cascara-common", "integration-test-fixtures")
+                .sign(s -> s.withIdentity(expiredIdentity))
+                .packageJar(jarPath);
 
-        IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
+            IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
 
-        // Enable forwarding of reports from isolated JVM
-        exec.setDiagnosticForwarding(true);
+            // Enable forwarding of reports from isolated JVM
+            exec.setDiagnosticForwarding(true);
 
-        // Add the JAR to the module path
-        String modulePath = getModulePath() + File.pathSeparator + jarPath;
+            // Add the JAR to the module path
+            String modulePath = getJvmModulePath() + File.pathSeparator + jarPath;
 
-        exec.setJvmConfig(new JvmConfig()
-            .setModuleName(SplPolicyTestTask.class.getModule().getName())
-            .setModulePath(modulePath)
-            .setEnv(CASCARA_HOME, getPhysicalHomePath())
-            .setSystemProperty(SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
-            .setSystemProperty(SP_CASCARA_SPL_VERIFY, "false")
-            .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
-            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
-            .setTimeout(Duration.ofSeconds(120))
-            .setDebug(PROCESS_DEBUG_ENABLED));
+            exec.setJvmConfig(new JvmConfig()
+                .setModuleName(SplPolicyTestTask.class.getModule().getName())
+                .setModulePath(modulePath)
+                .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
+                .setSystemProperty(SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
+                .setSystemProperty(SP_CASCARA_SPL_VERIFY, "false")
+                .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
+                // .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+                .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
+                .setTimeout(Duration.ofSeconds(120))
+                .setDebug(PROCESS_DEBUG_ENABLED));
 
-        Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
+            Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
 
-        debug(result);
+            debug(result);
 
-        // for (Diagnostic d : result.getDiagnostics()) {
-        //     String s = d.getFormattedMessage();
-        //     if (s.contains("CERTIFICATE_EXPIRED")) {
-        //         System.out.println("******** " + s);
-        //     }
-        // }
+            // for (Diagnostic d : result.getDiagnostics()) {
+            //     String s = d.getFormattedMessage();
+            //     if (s.contains("CERTIFICATE_EXPIRED")) {
+            //         System.out.println("******** " + s);
+            //     }
+            // }
 
-        assertFalse(result.getSystemErr().contains("CERTIFICATE_EXPIRED"));
-
-        // TODO: This is still aproblem...
-        assertNotReported.warnContains("CERTIFICATE_EXPIRED");
+            assertFalse(result.getSystemErr().contains("CERTIFICATE_EXPIRED"));
+            assertNotReported.warnContains("CERTIFICATE_EXPIRED");
+        }
     }
 
     // TODO: Fix this
     @Disabled
     @Test
-    void test_reject_withVFS__expiredCert(@TempDir Path tempDir) throws Throwable {
-        // 1. Issue an expired identity
-        TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
+    void test_reject_withVFS__expiredCert() throws Throwable {
+        try (TestCascara cascara = new TestCascara()) {
+            // 1. Issue an expired identity
+            TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
-        // 2. Package and sign JAR
-        Path jarPath = Cascara.get().getModulePath().resolve("provider-a.jar");
-        SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
-            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .sign(s -> s.withIdentity(expiredIdentity))
-            .packageJar(jarPath);
+            // 2. Package and sign JAR
+            Path jarPath = cascara.getModulePath().resolve("provider-a.jar");
+            SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
+                .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
+                .addDependencies("cascara-common", "integration-test-fixtures")
+                .sign(s -> s.withIdentity(expiredIdentity))
+                .packageJar(jarPath);
 
-        syncVfs();
-        try(Stream<Path> jarFiles = Files.walk(Cascara.get().getModulePath())) {
-            for (Path jarFile : jarFiles.toList()) {
-                System.out.println("> " + jarFile);
-            }
+            IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
+
+            // Enable forwarding of reports from isolated JVM
+            exec.setDiagnosticForwarding(true);
+
+            // Add the JAR to the module path
+            String modulePath = getJvmModulePath() + File.pathSeparator + jarPath;
+
+            exec.setJvmConfig(new JvmConfig()
+                .setModuleName(SplPolicyTestTask.class.getModule().getName())
+                .setModulePath(modulePath)
+                .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
+                .setSystemProperty(SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, true)
+                .setSystemProperty(SP_CASCARA_SPL_VERIFY, true)
+                .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, true)
+                // .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+                .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
+                .setTimeout(Duration.ofSeconds(120))
+                .setDebug(PROCESS_DEBUG_ENABLED)
+            );
+
+            Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
+
+            debug(result);
+
+            assertTrue(result.getSystemErr().contains("EXPIRED"));
         }
-
-        IsolatedExecutor exec = IsolatedExecutor.forTask(SplPolicyTestTask.class, ReporterTestOutput.class);
-
-        // Enable forwarding of reports from isolated JVM
-        exec.setDiagnosticForwarding(true);
-
-        // Add the JAR to the module path
-        String modulePath = getModulePath() + File.pathSeparator + jarPath;
-
-        exec.setJvmConfig(new JvmConfig()
-            .setModuleName(SplPolicyTestTask.class.getModule().getName())
-            .setModulePath(modulePath)
-            .setEnv(CASCARA_HOME, getPhysicalHomePath())
-            .setSystemProperty(SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
-            .setSystemProperty(SP_CASCARA_SPL_VERIFY, "true")
-            .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
-            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
-            .setTimeout(Duration.ofSeconds(120))
-            .setDebug(PROCESS_DEBUG_ENABLED)
-            .setEnv("CASCARA_HOME", getPhysicalHomePath()));
-
-        Response<ReporterTestOutput> result = exec.run("hello-isolated-world");
-
-        debug(result);
-
-        assertTrue(result.getSystemErr().contains("EXPIRED"));
     }
 
     /// Unsigned jar on module path loaded by jvm at boot time
@@ -217,146 +221,156 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     /// SPL.registerClass() in SplRegisterClassTestTask. with
     /// CASCARA_SPL_POLICY_REQUIRE_CLASS, that should alsso fail.
     @Test
-    void test_reject_registerClass_unsignedJar(@TempDir Path tempDir) throws Throwable {
-        GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
+    void test_reject_registerClass_unsignedJar() throws Throwable {
+        try (TestCascara cascara = new TestCascara()) {
+            GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
 
-        Path jarPath = tempDir.resolve("provider-a.jar");
+            Path jarPath = cascara.getModulePath().resolve("provider-a.jar");
 
-        SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
-            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .packageJar(jarPath);
+            SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
+                .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
+                .addDependencies("cascara-common", "integration-test-fixtures")
+                .packageJar(jarPath);
 
-        // Add the JAR to the module path
-        String modulePath = getModulePath() + File.pathSeparator + jarPath;
+            // Add the JAR to the module path
+            String modulePath = getJvmModulePath() + File.pathSeparator + jarPath;
 
-        IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterClassTestTask.class, SplRegisterClassTestOutput.class);
+            IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterClassTestTask.class, SplRegisterClassTestOutput.class);
 
-        // Enable forwarding of reports from isolated JVM
-        exec.setDiagnosticForwarding(true);
+            // Enable forwarding of reports from isolated JVM
+            exec.setDiagnosticForwarding(true);
 
-        exec.setJvmConfig(new JvmConfig()
-            .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
-            .setModulePath(modulePath)
-            .setEnv(CASCARA_HOME, getPhysicalHomePath())
-            .setSystemProperty(SP_CASCARA_SPL_VERIFY, "true")
-            .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
-            .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED, "true")
-            .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, "true")
-            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "DEBUG")
-            .setTimeout(Duration.ofSeconds(120))
-            .setDebug(PROCESS_DEBUG_ENABLED));
+            exec.setJvmConfig(new JvmConfig()
+                .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
+                .setModulePath(modulePath)
+                .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
+                .setSystemProperty(SP_CASCARA_SPL_VERIFY, true)
+                .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, true)
+                .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED, true)
+                .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, true)
+                // .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+                .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "DEBUG")
+                .setTimeout(Duration.ofSeconds(120))
+                .setDebug(PROCESS_DEBUG_ENABLED));
 
-        // Response<Boolean> result =
-        // try {exec.run(jarPath.toString());} catch(Throwable t){}
-        assertThrows(SignatureException.class, () -> exec.run("com.example.providera.ProviderA"));
+            // Response<Boolean> result =
+            // try {exec.run(jarPath.toString());} catch(Throwable t){}
+            assertThrows(SignatureException.class, () -> exec.run("com.example.providera.ProviderA"));
 
-        // debug(result);
+            // debug(result);
+        }
     }
 
     // TODO: Remove this or change the way it works
     @Disabled("lang-json is trusted so no longer causes this")
     @Test
-    void test_cascaraLangJson_notSigned(@TempDir Path tempDir) throws Throwable {
-        GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
+    void test_cascaraLangJson_notSigned() throws Throwable {
+        try (TestCascara cascara = new TestCascara()) {
+            GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
 
-        Path jarPath = tempDir.resolve("provider-a.jar");
+            Path jarPath = cascara.getModulePath().resolve("provider-a.jar");
 
-        SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
-            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .packageJar(jarPath);
+            SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
+                .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
+                .addDependencies("cascara-common", "integration-test-fixtures")
+                .packageJar(jarPath);
 
-        // Add the JAR to the module path
-        String modulePath = getModulePath() + File.pathSeparator + jarPath;
+            // Add the JAR to the module path
+            String modulePath = getJvmModulePath() + File.pathSeparator + jarPath;
 
-        IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterClassTestTask.class, SplRegisterClassTestOutput.class);
+            IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterClassTestTask.class, SplRegisterClassTestOutput.class);
 
-        // Enable forwarding of reports from isolated JVM
-        exec.setDiagnosticForwarding(true);
+            // Enable forwarding of reports from isolated JVM
+            exec.setDiagnosticForwarding(true);
 
-        // TODO: Remove this
-        // exec.setIpcDebug(true);
+            // TODO: Remove this
+            // exec.setIpcDebug(true);
 
-        exec.setJvmConfig(new JvmConfig()
-            .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
-            .setModulePath(modulePath)
-            .setEnv(CASCARA_HOME, getPhysicalHomePath())
-            .setSystemProperty(SP_CASCARA_SPL_VERIFY, "true")
-            .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
-            .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED, "true")
-            .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, "true")
-            .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
-            .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "DEBUG")
-            .setTimeout(Duration.ofSeconds(120))
-            .setDebug(PROCESS_DEBUG_ENABLED));
+            exec.setJvmConfig(new JvmConfig()
+                .setModuleName(SplRegisterClassTestTask.class.getModule().getName())
+                .setModulePath(modulePath)
+                .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
+                .setSystemProperty(SP_CASCARA_SPL_VERIFY, true)
+                .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, true)
+                .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED, true)
+                .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, true)
+                // .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
+                .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "DEBUG")
+                .setTimeout(Duration.ofSeconds(120))
+                .setSystemProperty(SP_CASCARA_SPL_BOOT_INFO_TO_CONSOLE, true)
+                .setDebug(PROCESS_DEBUG_ENABLED));
 
-        // Response<Boolean> result = exec.run("com.example.providera.ProviderA");
+            // Response<Boolean> result = exec.run("com.example.providera.ProviderA");
 
-        // try {
-            exec.run("com.example.providera.ProviderA");
-        // } catch (Throwable t) {}
+            // try {
+                exec.run("com.example.providera.ProviderA");
+            // } catch (Throwable t) {}
 
-        debug(exec.getResponse());
+            debug(exec.getResponse());
 
-        assertTrue(!exec.getResponse().getSystemErr().contains("Serializer not available"));
+            assertTrue(!exec.getResponse().getSystemErr().contains("Serializer not available"));
+        }
     }
 
     @Test
-    void test_reject_splWithPolicy_expiredCert(@TempDir Path tempDir) throws Throwable {
-        // 1. Issue an expired identity
-        TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
+    void test_reject_splWithPolicy_expiredCert() throws Throwable {
+        try (TestCascara cascara = new TestCascara()) {
+            // 1. Issue an expired identity
+            TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
-        // 2. Package and sign JAR
-        Path jarPath = Cascara.get().getModulePath().resolve("provider-a.jar");
-        SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
-            .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
-            .sign(s -> s.withIdentity(expiredIdentity))
-            .packageJar(jarPath);
+            // 2. Package and sign JAR
+            Path jarPath = cascara.getModulePath().resolve("provider-a.jar");
+            SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
+                .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
+                .addDependencies("cascara-common", "integration-test-fixtures")
+                .sign(s -> s.withIdentity(expiredIdentity))
+                .packageJar(jarPath);
 
-        // 3. Add the JAR to the module path
-        String modulePath = getModulePath();
+            String modulePath = getJvmModulePath();
 
-        // 4a. Create a Cascara properties file
-        String cascaraProperties = """
-            cascara.spl.boot-errors-to-console = true
-            """;
-        Path cascaraPropertiesPath = Cascara.get().getCascaraPropertiesPath();
-        Files.createDirectories(cascaraPropertiesPath.getParent());
-        Files.writeString(cascaraPropertiesPath, cascaraProperties);
+            // 4a. Create a Cascara properties file
+            String cascaraProperties = """
+                cascara.spl.boot-errors-to-console = true
+                """;
 
-        // 4b. Create an SPL properties file
-        String splProperties = """
-            verify = true
-            policy.check-expiry = true
-            policy.require-signed = true
-            """;
-        Path splPropertiesPath = Cascara.get().getSplPropertiesPath();
-        Files.createDirectories(splPropertiesPath.getParent());
-        Files.writeString(splPropertiesPath, splProperties);
-        syncVfs();
 
-        // 5. Set up isolated executor
-        IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterJarTestTask.class, Boolean.class)
-            .setDiagnosticForwarding(true)
-            .setJvmConfig(
-                new JvmConfig()
-                    .setModuleName(ReporterConfigTask.class.getModule().getName())
-                    .setModulePath(modulePath)
-                    .setEnv(EV_CASCARA_HOME, getPhysicalHomePath())
-                    .setSystemProperty("cascara.report.level." + SplRegisterJarTestTask.class.getName(), "debug")
-                    .setSystemProperty("cascara.report.level." + SplSignaturePolicy.class.getName(), "debug")
-                    .setSystemProperty("cascara.spl.boot-info-to-console", true)
-                    .setSystemProperty(SP_CASCARA_SPL_PROPERTIES, splPropertiesPath)
-                    .setTimeout(Duration.ofSeconds(120))
-            );
+            // TODO
+            Path cascaraPropertiesPath = cascara.getSharedPath().resolve("cascara.properties");
 
-        // 6. Run the test task
-        // try {exec.run(jarPath.toString());} catch(Throwable t){}
-        assertThrows(ServiceException.class, () -> exec.run(jarPath.toString()));
-        debug(exec.getResponse());
+
+            Files.createDirectories(cascaraPropertiesPath.getParent());
+            Files.writeString(cascaraPropertiesPath, cascaraProperties);
+
+            // 4b. Create an SPL properties file
+            String splProperties = """
+                verify = true
+                policy.check-expiry = true
+                policy.require-signed = true
+                """;
+            Path splPropertiesPath = cascara.getSharedPath().resolve("spl.properties");
+            Files.createDirectories(splPropertiesPath.getParent());
+            Files.writeString(splPropertiesPath, splProperties);
+
+            // 5. Set up isolated executor
+            IsolatedExecutor exec = IsolatedExecutor.forTask(SplRegisterJarTestTask.class, Boolean.class)
+                .setDiagnosticForwarding(true)
+                .setJvmConfig(
+                    new JvmConfig()
+                        .setModuleName(ReporterConfigTask.class.getModule().getName())
+                        .setModulePath(modulePath)
+                        .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
+                        .setSystemProperty("cascara.report.level." + SplRegisterJarTestTask.class.getName(), "debug")
+                        .setSystemProperty("cascara.report.level." + SplSignaturePolicy.class.getName(), "debug")
+                        .setSystemProperty(SP_CASCARA_SPL_BOOT_INFO_TO_CONSOLE, true)
+                        .setSystemProperty(SP_CASCARA_SPL_PROPERTIES, splPropertiesPath)
+                        .setTimeout(Duration.ofSeconds(120))
+                );
+
+            // 6. Run the test task
+            // try {exec.run(jarPath.toString());} catch(Throwable t){}
+            assertThrows(ServiceException.class, () -> exec.run(jarPath.toString()));
+            debug(exec.getResponse());
+        }
     }
 
     // TODO: Same as above, but JAR on module path

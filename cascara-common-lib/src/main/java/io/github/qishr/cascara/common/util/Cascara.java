@@ -45,18 +45,23 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
+import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.exception.UnexpectedNullValueException;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableIllegalStateException;
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.semver.SemVerException;
 
 @ConfigNamespace("cascara")
 public class Cascara extends Config {
+
+    private static final AtomicBoolean initialized = new AtomicBoolean(false);
 
     @ConfigSetting(name = "home")
     private String physicalHome;
@@ -66,6 +71,9 @@ public class Cascara extends Config {
 
     @ConfigSetting(name = "spl.properties")
     private String splPropertiesPath;
+
+    @ConfigSetting(name = "report.properties")
+    private String reportPropertiesPath;
 
     // These paths are determined based on cascaraPropertiesPath
     // - content types path
@@ -110,13 +118,22 @@ public class Cascara extends Config {
         super.init();
     }
 
+    public static boolean isInitialized() {
+        return initialized.get();
+    }
+
     public static Cascara get(Path homePath) {
-        apiSpecifiedHome = homePath;
-        return get(Cascara.class, null, null, homePath.getFileSystem());
+        // TODO: Should SecurityConfig and Splconfig have this check?
+        if (initialized.compareAndSet(false, true)) {
+            apiSpecifiedHome = homePath;
+            return get(Cascara.class, null, null, homePath.getFileSystem());
+        } else {
+            throw new LocalizableIllegalStateException(GenericMessage.CASCARA_CONFIG_ALREADY_INIT);
+        }
     }
 
     public static Cascara get() {
-        apiSpecifiedHome = null;
+        initialized.compareAndSet(false, true);
         return get(Cascara.class);
     }
 

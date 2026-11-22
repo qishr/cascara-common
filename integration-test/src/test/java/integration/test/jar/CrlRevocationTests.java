@@ -4,23 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Path;
 import java.security.cert.X509CRL;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
-import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
+import io.github.qishr.cascara.test.common.junit.base.TestBase;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
-class CrlRevocationTests {
+class CrlRevocationTests extends TestBase {
 
     private static TestCertificateAuthority ca;
     private static TestSigningIdentity activeSigner;
@@ -30,7 +29,7 @@ class CrlRevocationTests {
     // TODO: Make this extend JarTestBase and use it's rootCA
 
     @BeforeAll
-    static void setUp() throws Exception {
+    static void init() throws Exception {
         ca = TestCertificateAuthority.create("Revocation CA");
         activeSigner = ca.issueIdentity("active-module");
         revokedSigner = ca.issueIdentity("revoked-module");
@@ -50,10 +49,10 @@ class CrlRevocationTests {
     }
 
     @Test
-    void test_policyEvaluation_failsForRevokedModuleJar(@TempDir Path tempDir) throws Exception {
+    void test_policyEvaluation_failsForRevokedModuleJar() throws Exception {
         // Sign JAR with revoked identity
         SyntheticJar jar = SyntheticJar.forUseIn(CrlRevocationTests.class)
-            .setPath(tempDir.resolve("revoked.jar"))
+            .setPath(getTempPath().resolve("revoked.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             // .signWith(revokedSigner)
             .sign(s -> s.withIdentity(revokedSigner))

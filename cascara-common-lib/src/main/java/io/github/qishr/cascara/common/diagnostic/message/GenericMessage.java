@@ -57,6 +57,7 @@ public enum GenericMessage implements LocalizableMessage {
     STREAM_READ_ERROR("ERROR-109", "Failed to read from stream"),
     CONFIG_LOAD_FAILED("ERROR-110", "Failed to load config: {0}"),
     CONFIG_FS_ALREADY_SET("ERROR-111", "Config filesystem is already set"),
+    CASCARA_CONFIG_ALREADY_INIT("ERROR-112", "Cascara config already initialized"),
 
     // JRE Exceptions
     EXCEPTION("ERROR-401", "Exception: {0}"),

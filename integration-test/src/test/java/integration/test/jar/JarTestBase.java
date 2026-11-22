@@ -10,10 +10,10 @@ import org.junit.jupiter.api.BeforeAll;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
-import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
+import io.github.qishr.cascara.test.common.junit.base.TestBase;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 
-public abstract class JarTestBase extends VfsTestBase {
+public abstract class JarTestBase extends TestBase {
 
     protected static TestCertificateAuthority rootCA;
 

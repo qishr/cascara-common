@@ -25,7 +25,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
         exec.setJvmConfig(new JvmConfig()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
-            .setModulePath(getModulePath())
+            .setModulePath(getJvmModulePath())
             .setEnv("CASCARA_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED));
@@ -47,7 +47,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
             "hello-isolated-world",
             new JvmConfig()
                 .setModuleName(GlobalReporterTestTask.class.getModule().getName())
-                .setModulePath(getModulePath())
+                .setModulePath(getJvmModulePath())
                 .setEnv("CASCARA_REPORT_LEVEL_IO_GITHUB_QISHR_CASCARA_COMMON_DIAGNOSTIC_GLOBALREPORTERTESTS", "DEBUG")
                 .setTimeout(Duration.ofSeconds(20))
                 .setDebug(PROCESS_DEBUG_ENABLED)
@@ -63,7 +63,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
         JvmConfig config = new JvmConfig()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
             .setModuleName(null) // Forces pure -cp launch
-            .setClassPath(getModulePath())
+            .setClassPath(getJvmModulePath())
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED);
 
@@ -82,7 +82,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
     void test_isolatedExecution_jpmsModuleMode() throws Throwable {
         JvmConfig config = new JvmConfig()
             .setModuleName(GlobalReporterTestTask.class.getModule().getName()) // Forces --module-path launch
-            .setModulePath(getModulePath())
+            .setModulePath(getJvmModulePath())
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED);
 
@@ -106,7 +106,7 @@ public class IsolatedExecutorTests extends ExecTestBase {
 
         exec.setJvmConfig(new JvmConfig()
             .setModuleName(ThrowableTestTask.class.getModule().getName())
-            .setModulePath(getModulePath())
+            .setModulePath(getJvmModulePath())
             .setTimeout(Duration.ofSeconds(20)));
 
         // TODO: Send class rather than string

@@ -38,12 +38,14 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.SPL;
-import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
+import io.github.qishr.cascara.test.common.junit.base.TestBase;
 
-public class SplTestBase extends VfsTestBase {
+@Isolated
+public class SplTestBase extends TestBase {
     @BeforeEach
     protected void setUp() {
         super.setUp();

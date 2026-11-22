@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import integration.test.jar.JarSignatureInvalidTests;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
@@ -17,10 +16,8 @@ import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
 public class SplPolicyTests extends SplTestBase {
-
-
     @Test
-    void test_accept_splWithoutPolicy_expiredCert(@TempDir Path tempDir) throws Exception {
+    void test_accept_splWithoutPolicy_expiredCert() throws Exception {
         // 1. Issue an expired identity
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 

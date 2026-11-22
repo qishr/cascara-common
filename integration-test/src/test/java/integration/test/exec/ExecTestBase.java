@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
@@ -14,14 +15,13 @@ import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmProcess;
 import io.github.qishr.cascara.common.util.Pair;
-import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
+import io.github.qishr.cascara.test.common.junit.base.TestBase;
 import io.github.qishr.cascara.test.common.util.ArtifactResolver;
 
-public class ExecTestBase extends VfsTestBase {
-    protected static final boolean TEST_DEBUG_ENABLED = true;
+@Isolated
+public class ExecTestBase extends TestBase {
+    protected static final boolean TEST_DEBUG_ENABLED = false;
     protected static final boolean PROCESS_DEBUG_ENABLED = false;
-
-    protected static final String CASCARA_HOME = "CASCARA_HOME";
 
     @BeforeEach
     protected void setUp() {
@@ -34,7 +34,7 @@ public class ExecTestBase extends VfsTestBase {
         super.tearDown();
     }
 
-    protected String getModulePath() {
+    protected String getJvmModulePath() {
         Pair<String,String> mp = ArtifactResolver.buildModulePath(
             List.of("cascara-common", "integration-test-fixtures", "cascara-lang-json"),
             ExecTestBase.class

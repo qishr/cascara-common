@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -14,12 +13,9 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableIOException;
-import io.github.qishr.cascara.common.security.policy.SignatureStatus;
-import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.security.asn1.ASN1InputStream;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Decoder;
 import io.github.qishr.cascara.common.security.asn1.encodingrules.der.DERDecoder;
@@ -27,9 +23,11 @@ import io.github.qishr.cascara.common.security.asn1.types.ASN1Object;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Sequence;
 import io.github.qishr.cascara.common.security.asn1.types.constructed.ASN1Set;
+import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.security.cms.CertificateSet;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
@@ -44,7 +42,7 @@ public class JarSignatureValidTests extends JarTestBase {
     @Test
     void test_verifySignature() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("jar-signature-tests-1.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             .sign()
             .packageJar();
@@ -110,7 +108,7 @@ public class JarSignatureValidTests extends JarTestBase {
     @Test
     void test_valid_readJarEntries() {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("jar-signature-tests-2.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             .sign()
             .packageJar();
@@ -131,17 +129,14 @@ public class JarSignatureValidTests extends JarTestBase {
 
 
     @Test
-    void test_ecSignedJar_evaluatesValid(@TempDir Path tempDir) throws Exception {
-        // GlobalReporter.globalInstance().setLevel("io.github.qishr.cascara.test.common.security.TestCertificateAuthority", Level.DEBUG);
-        // GlobalReporter.globalInstance().setLevel("io.github.qishr.cascara.test.common.security.TestJarSigner", Level.DEBUG);
-
+    void test_ecSignedJar_evaluatesValid() throws Exception {
         // 1. Create an EC Root CA
         TestCertificateAuthority ecCA = TestCertificateAuthority.create("Cascara EC Root CA", KeyAlgorithm.EC);
         TestSigningIdentity ecIdentity = ecCA.issueIdentity("ec-provider-module");
 
         // 2. Build synthetic JAR signed with EC identity
         SyntheticJar ecSignedJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
-                .setPath(tempDir.resolve("ec-provider.jar"))
+                .setPath(getTempPath().resolve("jar-signature-tests-ec-provider.jar"))
                 .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
                 .sign(s -> s.withIdentity(ecIdentity))
                 .packageJar();

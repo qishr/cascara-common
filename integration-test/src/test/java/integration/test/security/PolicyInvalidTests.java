@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import integration.test.jar.JarSignatureInvalidTests;
 import integration.test.jar.JarSignatureValidTests;
@@ -23,7 +22,7 @@ import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.Tes
 public class PolicyInvalidTests extends JarTestBase {
 
     @Test
-    void test_invalid_untrustedSigner_signaturePolicy() throws Exception {
+    void test_invalid_foreignCA_signaturePolicy() throws Exception {
         // 1. Create a trusted CA and a foreign CA
         TestCertificateAuthority cascaraCA = TestCertificateAuthority.create("Cascara Root CA");
         TestCertificateAuthority foreignCA = TestCertificateAuthority.create("Foreign Root CA");
@@ -32,7 +31,7 @@ public class PolicyInvalidTests extends JarTestBase {
 
         // 2. Sign module with foreign identity
         SyntheticJar foreignSignedJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
-            .setPath(getTempDir().resolve("foreign-provider.jar"))
+            .setPath(getTempPath().resolve("foreign-provider.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             // .signWith(foreignCA.issueIdentity("foreign-module"))
             .sign(s -> s.withIdentity(identity))
@@ -52,11 +51,11 @@ public class PolicyInvalidTests extends JarTestBase {
     }
 
     @Test
-    void test_invalid_untrustedSigner_signaturePolicy(@TempDir Path tempDir) throws Exception {
+    void test_invalid_untrustedSigner_signaturePolicy() throws Exception {
         // Sign with an untrusted external CA
         TestCertificateAuthority rogueCA = TestCertificateAuthority.create("Rogue Root CA");
         TestSigningIdentity rogueIdentity = rogueCA.issueIdentity("rogue-module");
-        Path jarPath = tempDir.resolve("untrusted-signer.jar");
+        Path jarPath = getTempPath().resolve("untrusted-signer.jar");
 
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
                 .setPath(jarPath)
@@ -78,9 +77,9 @@ public class PolicyInvalidTests extends JarTestBase {
     }
 
     @Test
-    void test_invalid_emptyTrustStore_rejectsAllSigners(@TempDir Path tempDir) throws Exception {
+    void test_invalid_emptyTrustStore_rejectsAllSigners() throws Exception {
         TestSigningIdentity validIdentity = rootCA.issueIdentity("legit-module");
-        Path jarPath = tempDir.resolve("legit-empty-ts.jar");
+        Path jarPath = getTempPath().resolve("legit-empty-ts.jar");
 
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
                 .setPath(jarPath)
@@ -102,8 +101,8 @@ public class PolicyInvalidTests extends JarTestBase {
     }
 
     @Test
-    void test_invalid_unsignedJar_failsRequiredPolicy(@TempDir Path tempDir) throws Exception {
-        Path jarPath = tempDir.resolve("unsigned.jar");
+    void test_invalid_unsignedJar_failsRequiredPolicy() throws Exception {
+        Path jarPath = getTempPath().resolve("unsigned.jar");
 
         // Build plain JAR without calling .signWith(...)
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
@@ -123,10 +122,10 @@ public class PolicyInvalidTests extends JarTestBase {
     }
 
     @Test
-    void test_invalid_expiredCert_policyEvaluationFails(@TempDir Path tempDir) throws Exception {
+    void test_invalid_expiredCert_policyEvaluationFails() throws Exception {
         // 1. Issue an expired identity
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
-        Path jarPath = tempDir.resolve("expired-cert.jar");
+        Path jarPath = getTempPath().resolve("expired-cert.jar");
 
         // 2. Package and sign JAR
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
@@ -148,10 +147,10 @@ public class PolicyInvalidTests extends JarTestBase {
     }
 
     @Test
-    void test_invalid_notYetValidCert_policyEvaluationFails(@TempDir Path tempDir) throws Exception {
+    void test_invalid_notYetValidCert_policyEvaluationFails() throws Exception {
         // 1. Issue an identity whose validity window starts in the future
         TestSigningIdentity futureIdentity = rootCA.issueFutureIdentity("future-module");
-        Path jarPath = tempDir.resolve("not-yet-valid-cert.jar");
+        Path jarPath = getTempPath().resolve("not-yet-valid-cert.jar");
 
         // 2. Package and sign JAR
         SyntheticJar.forUseIn(PolicyInvalidTests.class)

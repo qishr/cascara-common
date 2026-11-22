@@ -85,7 +85,7 @@ class CertPathValidationTests extends TestBase {
     @Test
     void test_emptyTrustStore_rejectsAllSignatures() throws Exception {
         SyntheticJar jar = SyntheticJar.forUseIn(CertPathValidationTests.class)
-            .setPath(getTempDir().resolve("expired-intermediate.jar"))
+            .setPath(getTempPath().resolve("expired-intermediate.jar"))
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
@@ -113,7 +113,7 @@ class CertPathValidationTests extends TestBase {
 
         // 3. Sign SyntheticJar with this identity
         SyntheticJar jar = SyntheticJar.forUseIn(CertPathValidationTests.class)
-                .setPath(getTempDir().resolve("pathlen-violation.jar"))
+                .setPath(getTempPath().resolve("pathlen-violation.jar"))
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
                 .addDependencies("cascara-common", "integration-test-fixtures")
                 .sign(s -> s.withIdentity(identity))
@@ -141,7 +141,7 @@ class CertPathValidationTests extends TestBase {
 
         // 2. Sign SyntheticJar with the expired identity
         SyntheticJar jar = SyntheticJar.forUseIn(CertPathValidationTests.class)
-                .setPath(getTempDir().resolve("expired-intermediate.jar"))
+                .setPath(getTempPath().resolve("expired-intermediate.jar"))
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
                 .addDependencies("cascara-common", "integration-test-fixtures")
                 .sign(s -> s.withIdentity(expiredIdentity))

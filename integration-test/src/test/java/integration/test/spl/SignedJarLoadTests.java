@@ -15,7 +15,7 @@ public class SignedJarLoadTests extends SplTestBase {
     @Test
     void testLoadSignedJar() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("provider.jar"))
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()

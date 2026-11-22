@@ -112,6 +112,11 @@ public class IsolatedExecutor {
 
     /// Filter forwarded diagnostic reporting by the level specified in
     /// this process's GlobalReporter.
+    ///
+    /// WHen true, this process's GlobalReporter will not reveive
+    /// diagnostics from the isolated JVM if their level is not included
+    /// in this process's GlobalReporter level for the class they're
+    /// reported from.
     public IsolatedExecutor setFilterDiagnosticsByLevel(boolean enabled) {
         filterDiagnosticsByLevel = enabled;
         return  this;

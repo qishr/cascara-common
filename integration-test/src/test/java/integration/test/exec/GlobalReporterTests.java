@@ -34,7 +34,7 @@ public class GlobalReporterTests extends ExecTestBase {
         JvmConfig config = new JvmConfig()
             .setSystemProperty(classReportLevel, "DEBUG")
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
-            .setModulePath(getModulePath())
+            .setModulePath(getJvmModulePath())
             .setTimeout(Duration.ofSeconds(20))
             .setDebug(PROCESS_DEBUG_ENABLED);
 

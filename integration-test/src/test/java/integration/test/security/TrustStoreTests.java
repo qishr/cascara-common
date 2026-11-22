@@ -14,12 +14,12 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import io.github.qishr.cascara.common.security.cert.TrustStore;
+import io.github.qishr.cascara.test.common.junit.base.TestBase;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 
-class TrustStoreTests {
+class TrustStoreTests extends TestBase {
 
     private static TestCertificateAuthority rootCA;
     private static X509Certificate validCert;
@@ -40,7 +40,7 @@ class TrustStoreTests {
     //
 
     @BeforeAll
-    static void setUp() throws Exception {
+    static void init() throws Exception {
         rootCA = TestCertificateAuthority.create("Cascara Root CA");
         validCert = rootCA.issueIdentity("valid-service").certificate();
         // Identity with past validity window:
@@ -80,8 +80,8 @@ class TrustStoreTests {
     }
 
     @Test
-    void test_load_fromKeyStoreFile(@TempDir Path tempDir) throws Exception {
-        Path ksPath = tempDir.resolve("truststore.p12");
+    void test_load_fromKeyStoreFile() throws Exception {
+        Path ksPath = getTempPath().resolve("truststore.p12");
         char[] password = "changeit".toCharArray();
 
         // Helper to save rootCA.certificate() to a PKCS12 / JKS file

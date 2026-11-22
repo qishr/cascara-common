@@ -7,17 +7,15 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.parallel.Isolated;
 
 import integration.test.fixtures.task.ReporterConfigApiOverrideTask;
 import integration.test.fixtures.task.ReporterConfigTask;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.JvmConfig;
-import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.junit.extension.AssertNotReportedExtension;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
+import io.github.qishr.cascara.test.common.util.TestCascara;
 
-@Isolated
 public class ReporterConfigTests extends ExecTestBase {
 
     @RegisterExtension
@@ -31,7 +29,7 @@ public class ReporterConfigTests extends ExecTestBase {
             .setJvmConfig(
                 new JvmConfig()
                     .setModuleName(ReporterConfigTask.class.getModule().getName())
-                    .setModulePath(getModulePath())
+                    .setModulePath(getJvmModulePath())
                     .setSystemProperty("cascara.report.level." + ReporterConfigTask.class.getName(), "debug")
                     .setSystemProperty("cascara.spl.boot-info-to-console", true)
             );
@@ -47,7 +45,7 @@ public class ReporterConfigTests extends ExecTestBase {
             .setJvmConfig(
                 new JvmConfig()
                     .setModuleName(ReporterConfigApiOverrideTask.class.getModule().getName())
-                    .setModulePath(getModulePath())
+                    .setModulePath(getJvmModulePath())
                     .setSystemProperty("cascara.report.allow-api-override", "false")
             );
 
@@ -60,7 +58,7 @@ public class ReporterConfigTests extends ExecTestBase {
             .setJvmConfig(
                 new JvmConfig()
                     .setModuleName(ReporterConfigApiOverrideTask.class.getModule().getName())
-                    .setModulePath(getModulePath())
+                    .setModulePath(getJvmModulePath())
                     .setEnv("CASCARA_REPORT_ALLOW_API_OVERRIDE", false)
             );
 
@@ -69,58 +67,51 @@ public class ReporterConfigTests extends ExecTestBase {
 
     @Test
     void test_classLevel_cascaraConfig() throws Throwable {
+        try (TestCascara cascara = new TestCascara()) {
+            Path cascaraPropertiesPath = cascara.getSharedPath().resolve("cascara.properties");
+            Files.writeString(cascaraPropertiesPath, """
+                report.level.integration.test.fixtures.task.ReporterConfigTask = debug
+                """);
 
-        String cascaraProperties = """
-            report.level.integration.test.fixtures.task.ReporterConfigTask = debug
-            """;
+            IsolatedExecutor exec = IsolatedExecutor.forTask(ReporterConfigTask.class, String.class)
+                .setDiagnosticForwarding(true)
+                .setJvmConfig(
+                    new JvmConfig()
+                        .setModuleName(ReporterConfigTask.class.getModule().getName())
+                        .setModulePath(getJvmModulePath())
+                        .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
+                        .setDebug(PROCESS_DEBUG_ENABLED)
+                    );
 
-        Path cascaraPropertiesPath = Cascara.get().getCascaraPropertiesPath();
-        Files.createDirectories(cascaraPropertiesPath.getParent());
-        Files.writeString(cascaraPropertiesPath, cascaraProperties);
-        syncVfs();
-
-        IsolatedExecutor exec = IsolatedExecutor.forTask(ReporterConfigTask.class, String.class)
-            .setDiagnosticForwarding(true)
-            .setJvmConfig(
-                new JvmConfig()
-                    .setModuleName(ReporterConfigTask.class.getModule().getName())
-                    .setModulePath(getModulePath())
-                    .setEnv("CASCARA_HOME", getPhysicalHomePath())
-                    .setSystemProperty("cascara.spl.boot-info-to-console", true)
-                    .setDebug(PROCESS_DEBUG_ENABLED)
-                );
-
-        exec.run("Woof!");
-        debug(exec.getResponse());
-        assertReported.debug("Woof!");
+            exec.run("Woof!");
+            debug(exec.getResponse());
+            assertReported.debug("Woof!");
+        }
     }
 
     @Test
     void test_classLevel_reportConfig() throws Throwable {
+        try (TestCascara cascara = new TestCascara()) {
+            Path reportPropertiesPath = cascara.getSharedPath().resolve("report.properties");
+            Files.writeString(reportPropertiesPath, """
+                level.integration.test.fixtures.task.ReporterConfigTask = debug
+                """);
 
-        String reportProperties = """
-            level.integration.test.fixtures.task.ReporterConfigTask = debug
-            """;
+            IsolatedExecutor exec = IsolatedExecutor.forTask(ReporterConfigTask.class, String.class)
+                .setDiagnosticForwarding(true)
+                .setJvmConfig(
+                    new JvmConfig()
+                        .setModuleName(ReporterConfigTask.class.getModule().getName())
+                        .setModulePath(getJvmModulePath())
+                        .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
 
-        Path reportPropertiesPath = Cascara.get().getSharedPath().resolve("report.properties");
-        Files.createDirectories(reportPropertiesPath.getParent());
-        Files.writeString(reportPropertiesPath, reportProperties);
-        syncVfs();
+                        // Specify the path of report.properties via system propery
+                        .setSystemProperty(SP_CASCARA_REPORT_PROPERTIES, reportPropertiesPath)
+                );
 
-        IsolatedExecutor exec = IsolatedExecutor.forTask(ReporterConfigTask.class, String.class)
-            .setDiagnosticForwarding(true)
-            .setJvmConfig(
-                new JvmConfig()
-                    .setModuleName(ReporterConfigTask.class.getModule().getName())
-                    .setModulePath(getModulePath())
-                    .setEnv("CASCARA_HOME", getPhysicalHomePath())
-
-                    // Specify the path of report.properties via system propery
-                    .setSystemProperty(SP_CASCARA_REPORT_PROPERTIES, reportPropertiesPath)
-            );
-
-        exec.run("Woof!");
-        debug(exec.getResponse());
-        assertReported.debug("Woof!");
+            exec.run("Woof!");
+            debug(exec.getResponse());
+            assertReported.debug("Woof!");
+        }
     }
 }

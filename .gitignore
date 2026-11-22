@@ -41,3 +41,4 @@ replay_pid*
 .vscode/bookmarks.json
 *.csv
 # /*.txt
+.vscode/add-opens.txt

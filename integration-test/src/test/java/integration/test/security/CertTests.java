@@ -28,7 +28,7 @@ public class CertTests extends JarTestBase {
     @Test
     void test_invalid_expiredCertificate() throws Exception {
         TestSigningIdentity identity = rootCA.issueExpiredIdentity("injected-entry-module");
-        Path jarPath = tempDir.resolve("expired-cert.jar");
+        Path jarPath = getTempPath().resolve("expired-cert.jar");
 
         SyntheticJar jar = SyntheticJar.forUseIn(CertTests.class)
                 .setPath(jarPath)

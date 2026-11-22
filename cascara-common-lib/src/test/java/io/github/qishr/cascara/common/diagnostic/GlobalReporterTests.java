@@ -28,6 +28,7 @@ public class GlobalReporterTests {
     void resetGlobalReporter() {
         GlobalReporter.globalInstance().setLineConsumer(null);
         GlobalReporter.globalInstance().setLevel(GlobalReporterTests.class.getName(), Level.INFO);
+        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
     }
 
     @Test

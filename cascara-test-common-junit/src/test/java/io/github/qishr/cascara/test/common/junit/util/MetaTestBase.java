@@ -2,9 +2,9 @@ package io.github.qishr.cascara.test.common.junit.util;
 
 import java.util.Map;
 
-import io.github.qishr.cascara.test.common.junit.base.VfsTestBase;
+import io.github.qishr.cascara.test.common.junit.base.TestBase;
 
-public class MetaTestBase extends VfsTestBase {
+public class MetaTestBase extends TestBase {
     protected Map<String, String> sourceCode() {
         return Map.of(
             "module-info",

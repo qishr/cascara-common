@@ -31,7 +31,7 @@ public class IsolatedInternationalizationTests extends ExecTestBase {
 
         exec.setJvmConfig(new JvmConfig()
             .setModuleName(ThrowableTestTask.class.getModule().getName())
-            .setModulePath(getModulePath())
+            .setModulePath(getJvmModulePath())
             .setSystemProperty("cascara.lang.locale", "fr-FR")
             .setSystemProperty("cascara.lang.localize-exceptions", "true")
             .setTimeout(Duration.ofSeconds(20))
@@ -50,11 +50,10 @@ public class IsolatedInternationalizationTests extends ExecTestBase {
         exec.setExceptionForwarding(true);
 
         exec.setJvmConfig(new JvmConfig()
-            .setClassPath(getModulePath())
+            .setClassPath(getJvmModulePath())
             .setSystemProperty("cascara.lang.locale", "fr-FR")
             .setSystemProperty("cascara.lang.localize-exceptions", "true")
             .setTimeout(Duration.ofSeconds(20))
-            .setDebug(true)
         );
 
         DetailedMessage dm = new DetailedMessage(GenericMessage.CLASS_CAST_EXCEPTION, "Class1", "Class2");
@@ -76,7 +75,7 @@ public class IsolatedInternationalizationTests extends ExecTestBase {
             // .setIpcDebug(true)
 
         SyntheticJar testJar = SyntheticJar.forUseIn(IsolatedInternationalizationTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("provider.jar"))
             .addDependencies("cascara-common")
             .addSources("code/i18n/module-info.txt", "code/i18n/TestMessage.txt")
             .addResource("META-INF/es-ES.properties", """
@@ -86,14 +85,13 @@ public class IsolatedInternationalizationTests extends ExecTestBase {
                 """)
             .packageJar();
 
-        String classPath = getModulePath() + File.pathSeparator + testJar.getPath();
+        String classPath = getJvmModulePath() + File.pathSeparator + testJar.getPath();
 
         exec.setJvmConfig(new JvmConfig()
             .setClassPath(classPath)
             .setSystemProperty("cascara.lang.locale", "es-ES")
             .setSystemProperty("cascara.lang.localize-exceptions", "true")
             .setTimeout(Duration.ofSeconds(20))
-            // .setDebug(true)
         );
 
         MessageEnumTestInput input = new MessageEnumTestInput();

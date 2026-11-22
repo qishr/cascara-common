@@ -71,9 +71,6 @@ public class LocalReporter extends AbstractReporter<LocalReporter> implements Di
             .setIncluedSource(false);
     }
 
-
-
-
     /// {@inheritDoc}
     @Experimental
     @Override

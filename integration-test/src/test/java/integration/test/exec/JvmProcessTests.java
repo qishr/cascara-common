@@ -38,7 +38,7 @@ public class JvmProcessTests extends ExecTestBase {
         JvmConfig config = new JvmConfig()
             .setTimeout(Duration.ofHours(24))
             .setModuleName(GlobalReporterTestTask.class.getModule().getName())
-            .setModulePath(getModulePath())
+            .setModulePath(getJvmModulePath())
             .setDebug(PROCESS_DEBUG_ENABLED);
 
         JvmProcess tp = JvmProcess.forClass(GlobalReporterTestTask.class)
@@ -72,7 +72,7 @@ public class JvmProcessTests extends ExecTestBase {
             JvmConfig config = new JvmConfig()
                 .setTimeout(Duration.ofHours(24))
                 .setModuleName(taskClass.getModule().getName())
-                .setModulePath(getModulePath())
+                .setModulePath(getJvmModulePath())
                 .setDebug(PROCESS_DEBUG_ENABLED)
                 .setEnv(classKey, "DEBUG")
                 .setSystemProperty("cascara.report.level." + taskClass.getName(), "DEBUG")
@@ -115,14 +115,15 @@ public class JvmProcessTests extends ExecTestBase {
             JvmConfig config = new JvmConfig()
                 .setTimeout(Duration.ofHours(24))
                 .setModuleName(taskClass.getModule().getName())
-                .setModulePath(getModulePath())
+                .setModulePath(getJvmModulePath())
                 .setDebug(PROCESS_DEBUG_ENABLED)
                 .setSystemProperty("cascara.report.level." + SPL.class.getName(), "DEBUG")
                 .setSystemProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
 
             // Run sub-JVM process...
-            JvmProcess.Response response = JvmProcess.forClass(taskClass).setConfig(config).run(json);
-            debug(response);
+            // JvmProcess.Response response =
+            JvmProcess.forClass(taskClass).setConfig(config).run(json);
+            // debug(response);
         } catch (IpcException e) {
 
         }

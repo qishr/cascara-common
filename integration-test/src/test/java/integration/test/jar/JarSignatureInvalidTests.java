@@ -12,13 +12,12 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableSecurityException;
-import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ZipFile;
@@ -32,7 +31,7 @@ public class JarSignatureInvalidTests extends JarTestBase {
     @Test
     void test_invalid_missingKey_readJarEntries() throws IOException {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("provider.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             .sign()
             .packageJar();
@@ -65,7 +64,7 @@ public class JarSignatureInvalidTests extends JarTestBase {
     @Test
     void test_invalid_modifiedClass_readJarEntries() throws IOException {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("provider.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             .sign()
             .packageJar();
@@ -99,7 +98,7 @@ public class JarSignatureInvalidTests extends JarTestBase {
     @Test
     void test_invalid_tamperedSF_readJarEntries() throws IOException {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("provider.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             .sign()
             .packageJar();
@@ -131,7 +130,7 @@ public class JarSignatureInvalidTests extends JarTestBase {
     @Test
     void test_invalid_missingSF_readJarEntries() throws IOException {
         SyntheticJar testJar = SyntheticJar.forUseIn(JarSignatureValidTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("provider.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             .sign()
             .packageJar();
@@ -159,9 +158,9 @@ public class JarSignatureInvalidTests extends JarTestBase {
     }
 
     @Test
-    void test_invalid_tamperedManifest_failsVerification(@TempDir Path tempDir) throws Exception {
+    void test_invalid_tamperedManifest_failsVerification() throws Exception {
         TestSigningIdentity identity = rootCA.issueIdentity("tamper-mf-module");
-        Path jarPath = tempDir.resolve("tampered-mf.jar");
+        Path jarPath = getTempPath().resolve("tampered-mf.jar");
 
         // 1. Create a signed JAR
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
@@ -188,9 +187,9 @@ public class JarSignatureInvalidTests extends JarTestBase {
     }
 
     @Test
-    void test_invalid_unsignedEntryInjected_failsOnRead(@TempDir Path tempDir) throws Exception {
+    void test_invalid_unsignedEntryInjected_failsOnRead() throws Exception {
         TestSigningIdentity identity = rootCA.issueIdentity("injected-entry-module");
-        Path jarPath = tempDir.resolve("injected-entry.jar");
+        Path jarPath = getTempPath().resolve("injected-entry.jar");
 
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
                 .setPath(jarPath)
@@ -218,9 +217,9 @@ public class JarSignatureInvalidTests extends JarTestBase {
     //
 
     @Test
-    void test_invalid_corruptedSignatureBytes_failsVerification(@TempDir Path tempDir) throws Exception {
+    void test_invalid_corruptedSignatureBytes_failsVerification() throws Exception {
         TestSigningIdentity identity = rootCA.issueIdentity("corrupt-sig-bytes-module");
-        Path jarPath = tempDir.resolve("corrupt-sig.jar");
+        Path jarPath = getTempPath().resolve("corrupt-sig.jar");
 
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
                 .setPath(jarPath)
@@ -246,10 +245,10 @@ public class JarSignatureInvalidTests extends JarTestBase {
     }
 
     @Test
-    void test_invalid_mismatchedSignerCertificate_failsVerification(@TempDir Path tempDir) throws Exception {
+    void test_invalid_mismatchedSignerCertificate_failsVerification() throws Exception {
         TestSigningIdentity signerA = rootCA.issueIdentity("signer-a");
         TestSigningIdentity signerB = rootCA.issueIdentity("signer-b");
-        Path jarPath = tempDir.resolve("mismatched-cert.jar");
+        Path jarPath = getTempPath().resolve("mismatched-cert.jar");
 
         // Package the JAR where the SF is signed by signerA's private key,
         // but the PKCS#7 block packages signerB's certificate
@@ -271,9 +270,9 @@ public class JarSignatureInvalidTests extends JarTestBase {
     }
 
     @Test
-    void test_invalid_tamperedSFWithSignedAttrs_failsVerification(@TempDir Path tempDir) throws Exception {
+    void test_invalid_tamperedSFWithSignedAttrs_failsVerification() throws Exception {
         TestSigningIdentity identity = rootCA.issueIdentity("signed-attrs-module");
-        Path jarPath = tempDir.resolve("tampered-sf-attrs.jar");
+        Path jarPath = getTempPath().resolve("tampered-sf-attrs.jar");
 
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
                 .setPath(jarPath)
@@ -298,9 +297,9 @@ public class JarSignatureInvalidTests extends JarTestBase {
     }
 
     @Test
-    void test_invalid_missingSignerCertInBlock_failsVerification(@TempDir Path tempDir) throws Exception {
+    void test_invalid_missingSignerCertInBlock_failsVerification() throws Exception {
         TestSigningIdentity identity = rootCA.issueIdentity("missing-cert-module");
-        Path jarPath = tempDir.resolve("missing-cert-block.jar");
+        Path jarPath = getTempPath().resolve("missing-cert-block.jar");
 
         // Package PKCS#7 block with an empty certificate set
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
@@ -328,13 +327,13 @@ public class JarSignatureInvalidTests extends JarTestBase {
     //
 
     @Test
-    void test_invalid_unsupportedDigestOid_failsVerification(@TempDir Path tempDir) throws Exception {
+    void test_invalid_unsupportedDigestOid_failsVerification() throws Exception {
 
         // GlobalReporter.globalInstance().setLevel("io.github.qishr.cascara.test.common.security.TestCertificateAuthority", Level.DEBUG);
         // GlobalReporter.globalInstance().setLevel("io.github.qishr.cascara.test.common.security.TestJarSigner", Level.DEBUG);
 
         TestSigningIdentity identity = rootCA.issueIdentity("unknown-digest-module");
-        Path jarPath = tempDir.resolve("unknown-digest.jar");
+        Path jarPath = getTempPath().resolve("unknown-digest.jar");
 
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
                 .setPath(jarPath)
@@ -355,7 +354,7 @@ public class JarSignatureInvalidTests extends JarTestBase {
     }
 
     @Test
-    void test_invalid_intermediateNotCA_failsValidation(@TempDir Path tempDir) throws Exception {
+    void test_invalid_intermediateNotCA_failsValidation() throws Exception {
         // 1. Root CA issues an intermediate that is NOT a CA (isCA = false)
         TestCertificateAuthority fakeSubCA = rootCA.issueUnauthorizedSubCA("unauthorized-sub-ca");
 
@@ -363,7 +362,7 @@ public class JarSignatureInvalidTests extends JarTestBase {
         TestSigningIdentity leafIdentity = fakeSubCA.issueIdentity("provider-module");
 
         // 3. Package and sign JAR with leaf + intermediate in the cert bundle
-        Path jarPath = tempDir.resolve("unauthorized-intermediate.jar");
+        Path jarPath = getTempPath().resolve("unauthorized-intermediate.jar");
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
                 .setPath(jarPath)
                 .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")

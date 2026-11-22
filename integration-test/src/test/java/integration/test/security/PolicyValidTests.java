@@ -25,7 +25,7 @@ public class PolicyValidTests extends JarTestBase {
 
         // 2. Build and sign a synthetic module JAR using the issued identity
         SyntheticJar testJar = SyntheticJar.forUseIn(PolicyValidTests.class)
-            .setPath(getTempDir().resolve("provider.jar"))
+            .setPath(getTempPath().resolve("provider.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             // .signWith(signer)
             .sign(s -> s.withIdentity(signer))
@@ -51,7 +51,7 @@ public class PolicyValidTests extends JarTestBase {
         TestCertificateAuthority.TestSigningIdentity signer = ca.issueIdentity("provider-module");
 
         SyntheticJar testJar = SyntheticJar.forUseIn(PolicyValidTests.class)
-            .setPath(getTempDir().resolve("signed-foo.jar"))
+            .setPath(getTempPath().resolve("signed-foo.jar"))
             .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
             // .signWith(signer)
             .sign(s -> s.withIdentity(signer))

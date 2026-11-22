@@ -35,6 +35,8 @@
 
 package io.github.qishr.cascara.common.lang.generic;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.lang.ast.AstNode;
@@ -47,8 +49,9 @@ public class GenericAstSequenceTests {
             .add(new GenericAstScalar("two"))
             .add(new GenericAstScalar("three"));
 
-        for (AstNode node : seq) {
-            System.out.println("Node: " + node);
-        }
+        assertEquals(3, seq.size());
+        assertEquals("one", seq.getString(0));
+        assertEquals("two", seq.getString(1));
+        assertEquals("three", seq.getString(2));
     }
 }

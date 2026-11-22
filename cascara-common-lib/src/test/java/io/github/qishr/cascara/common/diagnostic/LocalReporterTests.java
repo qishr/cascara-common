@@ -2,6 +2,9 @@ package io.github.qishr.cascara.common.diagnostic;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.InaccessibleObjectException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
@@ -54,16 +57,20 @@ public class LocalReporterTests {
 
     @Test
     void testFormatter() {
-        LocalReporter r = new LocalReporter().setLevel(Level.DEBUG);
+        LocalReporter reporter = new LocalReporter().setLevel(Level.DEBUG);
 
-        r.setPrefixEveryLine(true);
-        r.debug("One");
-        r.debug("  Two");
-        r.debug("Split1\n  Split2");
+        List<String> lines = new ArrayList<>();
+        reporter.addDiagnosticConsumer(d -> {
+            lines.add(d.getFormattedMessage());
+        });
 
-        // r.setPrefixEveryLine(false);
-        // r.debug("One");
-        // r.debug("  Two");
-        // r.debug("Split1\n  Split2");
+        reporter.setPrefixEveryLine(true);
+        reporter.debug("One");
+        reporter.debug("  Two");
+        reporter.debug("Split1\n  Split2");
+
+        assertTrue(lines.contains("One"));
+        assertTrue(lines.contains("  Two"));
+        assertTrue(lines.contains("Split1\n  Split2"));
     }
 }

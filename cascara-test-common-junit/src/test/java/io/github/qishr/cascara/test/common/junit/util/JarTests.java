@@ -14,7 +14,7 @@ public class JarTests extends MetaTestBase {
     @Test
     void testOpenSyntheticJar() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
-            .setPath(createTempFile())
+            .setPath(getTempPath().resolve("jar-tests.jar"))
             .addSources("code/ModuleInfoA.txt")
             .addSources("code/ProviderA.txt")
             .packageJar();

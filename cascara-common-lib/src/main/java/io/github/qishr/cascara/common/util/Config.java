@@ -68,18 +68,17 @@ import io.github.qishr.cascara.common.property.Property;
 public abstract class Config {
 
     private static final Map<Class<? extends Config>, Config> INSTANCES = new ConcurrentHashMap<>();
-    private final AtomicBoolean initialized = new AtomicBoolean(false);
+    private static FileSystem fileSystem;
 
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
     private Class<? extends Config> baseClass;
     private String namespace = "";
     private Map<String,ConfigField> configFields;
     private Properties settings;
     private Properties appliedSettings;
     private Path propertiesPath;
-    private static FileSystem fileSystem;
-
-    protected Path suppliedProperties;
-    protected InputStream suppliedStream;
+    private Path suppliedProperties;
+    private InputStream suppliedStream;
 
     protected Config() {}
 
@@ -95,17 +94,15 @@ public abstract class Config {
     protected static <T extends Config> T get(Class<T> configClass, Path file, InputStream stream, FileSystem fs) {
         T instance = (T) INSTANCES.computeIfAbsent(configClass, clazz -> {
             try {
-                // 1. Run constructor & inline Java field initializers
-                T inst = (T) clazz.getDeclaredConstructor().newInstance();
-                inst.suppliedProperties = file;
-                inst.suppliedStream = stream;
+                T newInstance = (T) clazz.getDeclaredConstructor().newInstance();
+                ((Config)newInstance).suppliedProperties = file;
+                ((Config)newInstance).suppliedStream = stream;
 
-                // 2. Virtual Refrence Path
                 if (fs != null) {
                     Config.fileSystem = fs;
                 }
 
-                return inst;
+                return newInstance;
             } catch (ReflectiveOperationException e) {
                 throw new ConfigException(e, GenericMessage.CONFIG_LOAD_FAILED, clazz.getName());
             }
@@ -127,8 +124,8 @@ public abstract class Config {
         Config.fileSystem = fs;
     }
 
-    // TODO: This seems like a security problem
-    public static void resetAll() {
+    // Package private. We do not want arbitrary code calling this.
+    static void resetAll() {
         INSTANCES.clear();
         Config.fileSystem = null;
     }

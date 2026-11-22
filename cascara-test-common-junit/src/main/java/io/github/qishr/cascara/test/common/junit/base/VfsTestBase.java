@@ -5,62 +5,53 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.util.Map;
-import java.util.stream.Stream;
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Isolated;
 
-import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
-import io.github.qishr.cascara.common.util.Config;
 import io.github.qishr.cascara.test.common.util.TestException;
 
+@Isolated
 public class VfsTestBase extends TestBase {
-    private static final String vfsHomeDir = "/.cascara";
+    private static final String VFS_HOME_DIR = "/.cascara";
 
-    private SPL rootLayer;
-    private FileSystem vfs;
-    private String physicalHome;
-    private URI vfsUri;
-    public SPL spl;
+    private static @TempDir Path vfsTempDir;
+    private static FileSystem vfs;
+    private static String physicalHome;
+    private static URI vfsUri;
 
     @BeforeEach
     protected void setUp() {
-        Path zipFile = tempDir.resolve("cascara-vfs.zip");
-        physicalHome = zipFile.toString() + "!" + vfsHomeDir;
-
-        vfsUri = URI.create("jar:" + zipFile.toUri());
-
-        Config.resetAll();
-
-        try {
-            vfs = FileSystems.newFileSystem(vfsUri, Map.of("create", "true"));
-            Path vHome = vfs.getPath(vfsHomeDir);
-            Files.createDirectories(vHome);
-            Cascara.get(vHome);
-            Files.createDirectories(Cascara.get().getModulePath());
-        } catch (IOException e) {
-            throw new TestException(e, "Failed to initialize VFS: " + e.getLocalizedMessage());
+        if (Cascara.isInitialized()) {
+            Cascara cascara = Cascara.get();
+            homePath = cascara.getHome();
+        } else {
+            Path zipFile = vfsTempDir.resolve("cascara-vfs.zip");
+            physicalHome = zipFile.toString() + "!" + VFS_HOME_DIR;
+            vfsUri = URI.create("jar:" + zipFile.toUri());
+            try {
+                vfs = FileSystems.newFileSystem(vfsUri, Map.of("create", "true"));
+                homePath = vfs.getPath(VFS_HOME_DIR);
+                Files.createDirectories(homePath);
+                Cascara.get(homePath);
+                Files.createDirectories(Cascara.get().getModulePath());
+            } catch (IOException e) {
+                throw new TestException(e, "Failed to initialize VFS: " + e.getLocalizedMessage());
+            }
         }
 
         // This must come after VFS is set up
         super.setUp();
-        rootLayer = SPL.getRoot();
-        spl = rootLayer.create("baseTestLayer");
     }
 
     @AfterEach
     protected void tearDown() throws IOException {
         super.tearDown();
-        if (rootLayer != null && spl != null) {
-            rootLayer.remove(spl.getName());
-        }
-        if (vfs != null && vfs.isOpen()) {
-            vfs.close();
-        }
-        Config.resetAll();
     }
 
     protected String getPhysicalHomePath() {
@@ -69,40 +60,5 @@ public class VfsTestBase extends TestBase {
 
     protected FileSystem getVFS() {
         return vfs;
-    }
-
-    protected void syncVfs() {
-        try {
-            vfs.close();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        try {
-            vfs = FileSystems.newFileSystem(vfsUri, Map.of());
-
-
-            // Cascara.get().setHomePath(vFs.getPath(vfsHomeDir));
-
-
-            // Cascara.get().reset();
-            Config.resetAll();
-            Cascara.get(vfs.getPath(vfsHomeDir));
-
-
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-
-    protected void displayVfs() {
-        if (vfs != null && vfs.isOpen()) {
-            try (Stream<Path> walk = Files.walk(vfs.getPath("/"))) {
-                walk.filter(Files::isRegularFile).forEach(System.out::println);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 }

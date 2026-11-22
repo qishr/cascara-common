@@ -4,6 +4,11 @@
     "java.test.config":  {
         "vmArgs": [
             "--add-reads", "cascara.common=org.junit.jupiter.api",
+
+            // This is needed for each package, so the @ syntax below reads the arguments for each package in.
+            // "--add-opens=cascara.common/io.github.qishr.cascara.common.diagnostic=ALL-UNNAMED,org.junit.platform.commons",
+            "@${workspaceFolder}/.vscode/add-opens.txt",
+
             "--add-opens", "java.base/java.lang=cascara.common",
             "--add-opens", "java.base/java.lang=cascara.test.common.junit",
             "--add-opens", "java.base/java.lang=integration.test",
@@ -23,6 +28,8 @@
         ],
     },
 
+    // "java.test.defaultConfig": "gradle",
+
     "java.compile.nullAnalysis.nullable": [
         "io.github.qishr.cascara.common.annotation.Nullable",
     ],
@@ -31,10 +38,8 @@
     ],
     // TODO: NonNullByDefault
 
-
     "java.import.gradle.wrapper.enabled": true,
     "java.configuration.updateBuildConfiguration": "automatic",
-
     "java.gradle.buildServer.enabled": "off",
     "java.debug.settings.onBuildFailureProceed": true
 }
