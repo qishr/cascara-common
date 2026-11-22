@@ -32,7 +32,7 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.util;
+package io.github.qishr.cascara.common.util.internal;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 

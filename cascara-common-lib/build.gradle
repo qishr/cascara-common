@@ -51,7 +51,8 @@ def addCascaraCommonTestOpens = { Test task ->
         'lang.processor',
         'property',
         'trackable',
-        'util'
+        'util',
+        'util.internal'
     ]
 
     packages.each { pkg ->

@@ -40,8 +40,8 @@ import java.time.ZonedDateTime;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.util.TermUtils;
 import io.github.qishr.cascara.common.util.UriScheme;
+import io.github.qishr.cascara.common.util.internal.TermUtils;
 
 public class ColoredLogFormatter extends PlainLogFormatter {
     protected static final String[] levelColors = new String[7];
