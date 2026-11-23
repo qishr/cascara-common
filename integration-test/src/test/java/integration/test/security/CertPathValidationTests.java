@@ -105,8 +105,6 @@ class CertPathValidationTests extends ExecTestBase {
 
     @Test
     void test_pathLenConstraint_exceeded_rejected() throws Exception {
-        // GlobalReporter.globalInstance().setLevel(TestModuleCompiler.class, Level.DEBUG);
-
         // 1. Issue an unauthorized subordinate CA (violates CA basic constraints / pathLen)
         TestCertificateAuthority unauthorizedSubCa = rootCA.issueUnauthorizedSubCA("CN=Cascara Sub CA 1");
 
@@ -117,7 +115,6 @@ class CertPathValidationTests extends ExecTestBase {
         SyntheticJar jar = SyntheticJar.forUseIn(CertPathValidationTests.class)
                 .setPath(getTempPath().resolve("pathlen-violation.jar"))
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-                // .addDependencies("cascara-common", "integration-test-fixtures")
                 .addDependencies(getDependencies())
                 .sign(s -> s.withIdentity(identity))
                 .packageJar();
@@ -146,7 +143,6 @@ class CertPathValidationTests extends ExecTestBase {
         SyntheticJar jar = SyntheticJar.forUseIn(CertPathValidationTests.class)
                 .setPath(getTempPath().resolve("expired-intermediate.jar"))
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-                // .addDependencies("cascara-common", "integration-test-fixtures")
                 .addDependencies(getDependencies())
                 .sign(s -> s.withIdentity(expiredIdentity))
                 .packageJar();

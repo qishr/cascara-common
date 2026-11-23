@@ -27,7 +27,6 @@ public class SplPolicyTests extends ExecTestBase {
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies(getDependencies())
-            // .addDependencies("cascara-common", "integration-test-fixtures")
             .sign(s -> s.withIdentity(expiredIdentity))
             .packageJar(jarPath);
 

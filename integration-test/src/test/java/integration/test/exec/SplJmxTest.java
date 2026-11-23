@@ -55,7 +55,6 @@ public class SplJmxTest extends JmxTestBase {
             .setPath(cascara.getModulePath().resolve("provider-a.jar"))
             .setMinCascaraVersion("0.10.0")
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-            // .addDependencies("cascara-common", "integration-test-fixtures")
             .addDependencies(getDependencies())
             .sign()
             .packageJar();

@@ -72,12 +72,10 @@ public class IsolatedInternationalizationTests extends ExecTestBase {
         IsolatedExecutor exec = IsolatedExecutor.forTask(MessageEnumTestTask.class, String.class)
             .setExceptionForwarding(true)
             .setDiagnosticForwarding(true);
-            // .setIpcDebug(true)
 
         SyntheticJar testJar = SyntheticJar.forUseIn(IsolatedInternationalizationTests.class)
             .setPath(getTempPath().resolve("provider.jar"))
             .addDependencies(getDependencies())
-            // .addDependencies("cascara-common")
             .addSources("code/i18n/module-info.txt", "code/i18n/TestMessage.txt")
             .addResource("META-INF/es-ES.properties", """
                 meta.lang = es-ES

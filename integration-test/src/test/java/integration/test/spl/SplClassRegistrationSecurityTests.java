@@ -95,7 +95,6 @@ public class SplClassRegistrationSecurityTests extends ExecTestBase {
                     .setPath(getTempPath().resolve("signed-provider.jar"))
                     .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
                     .addDependencies(getDependencies())
-                    // .addDependencies("cascara-common", "integration-test-fixtures")
                     .sign(s -> s.withIdentity(identity))
                     .packageJar();
 
@@ -159,40 +158,6 @@ public class SplClassRegistrationSecurityTests extends ExecTestBase {
             assertEquals(SignatureStatus.NOT_SIGNED, ex.getSignatureStatus());
         }
     }
-
-    // ****************************************
-    // TODO: This needs to use IsolatedExecutor
-    // ****************************************
-    // @Test
-    // void test_registerClass_dynamicClassWithoutSignedJar_rejectedWhenRequireSigned() {
-    //     SplSignaturePolicy policy = SplSignaturePolicy.builder()
-    //             .requireSignedClasses(true)
-    //             .build();
-
-    //     SPL.setSignaturePolicy(policy);
-    //     SPL layer = spl.create("testLayer");
-
-    //     // Create a dynamic proxy instance with a working handler so SPL's property checks pass
-    //     ServiceProvider proxyInstance = (ServiceProvider) Proxy.newProxyInstance(
-    //             SplClassRegistrationSecurityTests.class.getClassLoader(),
-    //             new Class<?>[]{ ServiceProvider.class },
-    //             (proxy, method, args) -> {
-    //                 if ("getServiceProperties".equals(method.getName())) {
-    //                     return Map.of(); // Return empty properties map cleanly
-    //                 }
-    //                 return null;
-    //             }
-    //     );
-
-    //     // Register the class of the dynamic proxy
-    //     Class<?> dynamicClass = proxyInstance.getClass();
-
-    //     SignatureException ex = assertThrows(SignatureException.class, () -> {
-    //         layer.registerClass(dynamicClass);
-    //     });
-
-    //     assertEquals(SignatureStatus.NOT_SIGNED, ex.getSignatureStatus());
-    // }
 
     @Test
     void test_registerClass_dynamicClassWithoutSignedJar_rejectedWhenRequireSigned() throws Throwable {

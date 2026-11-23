@@ -19,7 +19,6 @@ public class SignedJarLoadTests extends ExecTestBase {
             .setPath(getTempPath().resolve("provider.jar"))
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies(getDependencies())
-            // .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();
 

@@ -101,7 +101,6 @@ class ModuleRegistrationTests extends ExecTestBase {
             .setMinCascaraVersion("0.10.0")
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
             .addDependencies(getDependencies())
-            // .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();
 
@@ -148,7 +147,6 @@ class ModuleRegistrationTests extends ExecTestBase {
             .setMinCascaraVersion("0.10.0")
             .addSources("code/singleton/module-info.txt", "code/singleton/DemoSingletonImpl.txt")
             .addDependencies(getDependencies())
-            // .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();
 
