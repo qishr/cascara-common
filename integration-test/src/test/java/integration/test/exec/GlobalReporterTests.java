@@ -17,8 +17,7 @@ import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
 
-// ./gradlew :cascara-common:build publishToMavenLocal -x javadoc -x test -x testClasspath -x testJarClasspath --refresh-dependencies
-// ./gradlew :spl-test:build -x javadoc :spl-test:test --tests "*GlobalReporterTests*"
+// ./gradlew :spl-test:build -x javadoc :integration-test:test --tests "*GlobalReporterTests*"
 
 @Isolated
 public class GlobalReporterTests extends ExecTestBase {
@@ -27,7 +26,7 @@ public class GlobalReporterTests extends ExecTestBase {
 
     @Test
     void test_debugLevel() throws Throwable {
-        GlobalReporter.get().setSystemOutputEnabled(false);
+        GlobalReporter.get().setConsoleOutputEnabled(false);
 
         String classReportLevel = "cascara.report.level." + GlobalReporterTestTask.class.getName();
 
@@ -43,7 +42,7 @@ public class GlobalReporterTests extends ExecTestBase {
 
         Response<ReporterTestOutput> result = exec.run("debug-message", config);
 
-        GlobalReporter.get().setSystemOutputEnabled(true);
+        GlobalReporter.get().setConsoleOutputEnabled(true);
         debug(result);
 
         ReporterTestOutput output = result.orElseThrow();

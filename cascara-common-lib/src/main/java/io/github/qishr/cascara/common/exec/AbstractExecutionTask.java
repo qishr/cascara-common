@@ -43,7 +43,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.report.ReporterConfig;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
 import io.github.qishr.cascara.common.exec.ipc.IpcConfig;
 import io.github.qishr.cascara.common.exec.ipc.IpcException;
@@ -117,12 +119,10 @@ public abstract class AbstractExecutionTask<I, O> {
         O response = null;
 
         try {
-            // TODO: Make this configurable via -D
-            // same for spl boot errors to system.err
-
-            GlobalReporter.get().setSystemOutputEnabled(false);
-
-            GlobalReporter.get().setStackTraceEnabled(true);
+            if (ReporterConfig.get().allowApiOverride()) {
+                GlobalReporter.get().setConsoleOutputEnabled(false);
+            }
+            LogFormatConfig.get().setIncludeStackTrace(true);
 
             StringBuilder sb = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
@@ -187,7 +187,7 @@ public abstract class AbstractExecutionTask<I, O> {
     }
 
     protected void displayHomeContents() {
-        try(Stream<Path> jarFiles = Files.walk(Cascara.get().getHome())) {
+        try(Stream<Path> jarFiles = Files.walk(Cascara.get().getHomePath())) {
             for (Path jarFile : jarFiles.toList()) {
                 System.out.println("> " + jarFile);
             }

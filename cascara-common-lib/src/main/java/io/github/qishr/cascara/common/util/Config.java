@@ -46,13 +46,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.annotation.Beta;
 import io.github.qishr.cascara.common.annotation.ConfigExtends;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
+import io.github.qishr.cascara.common.annotation.ConfigSetting.Op;
 import io.github.qishr.cascara.common.annotation.ConfigSetting.Source;
 import io.github.qishr.cascara.common.diagnostic.message.DiagnosticMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
@@ -94,7 +97,8 @@ public abstract class Config {
     protected static <T extends Config> T get(Class<T> configClass, Path file, InputStream stream, FileSystem fs) {
         T instance = (T) INSTANCES.computeIfAbsent(configClass, clazz -> {
             try {
-                T newInstance = (T) clazz.getDeclaredConstructor().newInstance();
+                T newInstance = (T) ReflectionUtils.createInstance(clazz);
+
                 ((Config)newInstance).suppliedProperties = file;
                 ((Config)newInstance).suppliedStream = stream;
 
@@ -226,12 +230,15 @@ public abstract class Config {
             ConfigField field = entry.getValue();
 
             // TODO: Amend Property class so that this isn't so messy...
-            // Setting setting = settings.getProperty(field.propName);
             Property<String> settingProp = settings.getProperty(field.propName);
             Setting setting = (Setting) settingProp;
 
             if (field.isMap) {
-                setMapValues(field);
+                applyMapValues(field);
+            } else if (field.isList) {
+                applyListValues(field, settings.get(field.propName));
+            } else if (field.isSet) {
+                applySetValues(field, settings.get(field.propName));
             } else {
                 if (setting == null) {
                     continue;
@@ -239,12 +246,12 @@ public abstract class Config {
                 if (!include(field, setting.source)) {
                     continue;
                 }
-                appliedSettings.add(setting);
                 String value = settings.get(field.propName);
                 if (value == null) {
                     continue;
                 }
-                setValue(field, value);
+                applyValue(field, value);
+                appliedSettings.add(setting);
             }
         }
     }
@@ -317,7 +324,10 @@ public abstract class Config {
                     : StringUtils.toSnakeCase(anno.name())).toUpperCase();
 
             boolean isMap = ReflectionUtils.canAssign(field.getType(), Map.class);
-            ConfigField configField = new ConfigField(field, anno, propName, envName, isMap);
+            boolean isList = ReflectionUtils.canAssign(field.getType(), List.class);
+            boolean isSet = ReflectionUtils.canAssign(field.getType(), Set.class);
+
+            ConfigField configField = new ConfigField(field, anno, propName, envName, isMap, isList, isSet);
             configFields.put(field.getName(), configField);
 
             try {
@@ -329,6 +339,10 @@ public abstract class Config {
                             throw new LocalizableRuntimeException(LangMessage.NON_STRING_KEY, keyType);
                         }
                         settings.addAll(mapToSettings(configField, value));
+                    } else if (isList) {
+                        settings.add(listToSetting(configField, value));
+                    } else if (isSet) {
+                        settings.add(setToSetting(configField, value));
                     } else {
                         Setting setting = new Setting(propName, value.toString(), Source.DEFAULT, null);
                         settings.add(setting);
@@ -340,7 +354,7 @@ public abstract class Config {
         }
     }
 
-    private void setValue(ConfigField field, String valueString) {
+    private void applyValue(ConfigField field, String valueString) {
         Object value = parseValue(valueString, field.field.getType());
         try {
             field.field.set(this, value);
@@ -350,7 +364,7 @@ public abstract class Config {
         }
     }
 
-    private void setMapValues(ConfigField field) {
+    private void applyMapValues(ConfigField field) {
         Type valueType = ReflectionUtils.getValueTypeOfMapType(field.field.getGenericType());
 
         if (!(valueType instanceof Class valueClass)) {
@@ -378,6 +392,84 @@ public abstract class Config {
         } catch (Exception e) {
             throw LocalizableRuntimeException.of(e);
         }
+    }
+
+    private void applyListValues(ConfigField field, String values) {
+        List<String> valuesList = StringUtils.parseStringList(values, field.anno.delimiter());
+        List<String> resultList;
+        if (field.anno.operation() == Op.ADD) {
+            try {
+                List<?> untypedList = (List<?>) field.field.get(this);
+                resultList = untypedList.stream()
+                    .map(i -> (i == null ? null : i.toString()))
+                    .collect(Collectors.toList());
+                resultList.addAll(valuesList);
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                throw LocalizableRuntimeException.of(e);
+            }
+        } else {
+            resultList = valuesList;
+        }
+        try {
+            field.field.set(this, resultList);
+        } catch (Exception e) {
+            throw LocalizableRuntimeException.of(e);
+        }
+    }
+
+    private void applySetValues(ConfigField field, String values) {
+        Set<String> valuesSet = StringUtils.parseStringSet(values, field.anno.delimiter());
+        Set<String> resultSet;
+        if (field.anno.operation() == Op.ADD) {
+            try {
+                Set<?> untypedSet = (Set<?>) field.field.get(this);
+                resultSet = untypedSet.stream()
+                    .map(i -> (i == null ? null : i.toString()))
+                    .collect(Collectors.toSet());
+                resultSet.addAll(valuesSet);
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                throw LocalizableRuntimeException.of(e);
+            }
+        } else {
+            resultSet = valuesSet;
+        }
+        try {
+            field.field.set(this, resultSet);
+        } catch (Exception e) {
+            throw LocalizableRuntimeException.of(e);
+        }
+    }
+
+    // When this is called, mapObject is known to be a Map and its key is known to be a String.
+    private List<Setting> mapToSettings(ConfigField field, Object mapObject) {
+        Map<?,?> map = (Map<?,?>)  mapObject;
+        List<Setting> settings = new ArrayList<>();
+        for (Entry<?,?> entry : map.entrySet()) {
+            String stringValue = entry.getValue() == null
+                ? null
+                : entry.getValue().toString();
+            String name = field.propName + "." + entry.getKey().toString();
+            settings.add(new Setting(name, stringValue, Source.DEFAULT, null));
+        }
+        return settings;
+    }
+
+    private Setting listToSetting(ConfigField field, Object listObject) {
+        List<?> untypedList = (List<?>) listObject;
+        List<String> stringList = untypedList.stream()
+            .map(i -> (i == null ? null : i.toString()))
+            .collect(Collectors.toList());
+        String string = String.join(field.anno.delimiter(), stringList);
+        return new Setting(field.propName, string, Source.DEFAULT, null);
+    }
+
+    private Setting setToSetting(ConfigField field, Object setObject) {
+        Set<?> untypedSet = (Set<?>) setObject;
+        Set<String> stringSet = untypedSet.stream()
+            .map(i -> (i == null ? null : i.toString()))
+            .collect(Collectors.toSet());
+        String string = String.join(field.anno.delimiter(), stringSet);
+        return new Setting(field.propName, string, Source.DEFAULT, null);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -437,20 +529,6 @@ public abstract class Config {
         return null;
     }
 
-    // When this is called, mapObject is known to be a Map and its key is known to be a String.
-    private List<Setting> mapToSettings(ConfigField field, Object mapObject) {
-        Map<?,?> map = (Map<?,?>)  mapObject;
-        List<Setting> settings = new ArrayList<>();
-        for (Entry<?,?> entry : map.entrySet()) {
-            String stringValue = entry.getValue() == null
-                ? null
-                : entry.getValue().toString();
-            String name = field.propName + "." + entry.getKey().toString();
-            settings.add(new Setting(name, stringValue, Source.DEFAULT, null));
-        }
-        return settings;
-    }
-
     private boolean include(String name, Source source) {
         ConfigField field = null;
         for (ConfigField f : configFields.values()) {
@@ -501,10 +579,9 @@ public abstract class Config {
             pathString = System.getProperty(propName);
         }
 
-        // TODO: This breaks a test
-        // if (pathString == null) {
-        //     pathString = settings.get(propName);
-        // }
+        if (pathString == null) {
+            pathString = settings.get(propName);
+        }
 
         if (pathString == null) {
             return null;
@@ -520,7 +597,9 @@ public abstract class Config {
         ConfigSetting anno,
         String propName,
         String envName,
-        boolean isMap
+        boolean isMap,
+        boolean isList,
+        boolean isSet
     ) {}
 
     public static class Setting extends Property<String> {

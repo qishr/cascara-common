@@ -53,9 +53,7 @@ public class ClassReporter extends AbstractReporter<ClassReporter> {
     /// {@inheritDoc}
     @Override
     public ClassReporter setLevel(Level level) {
-        if (!GlobalReporter.get().allowApiOverride) {
-            throw new UnsupportedOperationException("This reporter does not allow setting its level via the API");
-        }
+        assertApiOverrideEnabled();
         return setLevelInternal(level);
     }
 

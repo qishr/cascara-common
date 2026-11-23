@@ -17,8 +17,8 @@ public class CascaraConfigTask extends AbstractExecutionTask<Void, Map<String,St
 
         Map<String,String> settings = new HashMap<>();
 
-        settings.put("cascara.properties", cascara.getCascaraPropertiesPath().toString());
-        settings.put("cascara.spl.properties", cascara.getSplPropertiesPath().toString());
+        settings.put("cascara.properties", cascara.getPropertiesPath().toString());
+        settings.put("cascara.spl.properties", cascara.getSPLPropertiesPath().toString());
 
         settings.put("cascara.content-types.path", cascara.getContentTypesPath().toString());
 

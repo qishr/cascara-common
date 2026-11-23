@@ -40,6 +40,7 @@ import java.io.Reader;
 import java.io.Writer;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.diagnostic.SerializerException;
@@ -52,22 +53,22 @@ import io.github.qishr.cascara.common.lang.util.LanguageConfig;
 import io.github.qishr.cascara.common.type.TypeReference;
 import io.github.qishr.cascara.common.util.ContentType;
 
-// public class SerializerImpl extends AbstractSerializer<SerializerImpl,PlainNode,ScalarAstNode<PlainNode>,SequenceAstNode<PlainNode>,MapAstNode<PlainNode,PlainNode,MapEntryAstNode<PlainNode,PlainNode>,MapEntryAstNode<PlainNode,PlainNode>,PlainNode> {
-public class SerializerImpl extends AbstractSerializer<SerializerImpl,AstNode,GenericAstScalar,GenericAstSequence,GenericAstMap,GenericAstMapEntry,AstNode> {
+// A serializer of GenericAst classes for testing.
+public class TestGenericSerializer extends AbstractSerializer<TestGenericSerializer,AstNode,GenericAstScalar,GenericAstSequence,GenericAstMap,GenericAstMapEntry,AstNode> {
 
-    public SerializerImpl() {
+    public TestGenericSerializer() {
         super("", new GenericAstNodeFactory(), null);
     }
 
     @Override
     @NonNull
-    protected SerializerImpl self() {
+    protected TestGenericSerializer self() {
         return this;
     }
 
     @Override
     @NonNull
-    public SerializerImpl setProviderFactoryEnabled(boolean b) {
+    public TestGenericSerializer setProviderFactoryEnabled(boolean b) {
         return this;
     }
 
@@ -83,22 +84,27 @@ public class SerializerImpl extends AbstractSerializer<SerializerImpl,AstNode,Ge
 
     /// {@inheritDoc}
     @Override
-    public SerializerImpl setReporter(Reporter reporter) {
+    public TestGenericSerializer setReporter(Reporter reporter) {
         this.reporter = reporter;
+        if (reporter instanceof LocalReporter lr) {
+            if (lr.getSource() == null || lr.getSource().isEmpty()) {
+                lr.setSource(getClass().getName());
+            }
+        }
         return this;
     }
 
     /// {@inheritDoc}
     @Override
     @NonNull
-    public SerializerImpl setConfig(LanguageConfig<?> config) {
+    public TestGenericSerializer setConfig(LanguageConfig<?> config) {
         return this;
     }
 
     /// {@inheritDoc}
     @Override
     @NonNull
-    public SerializerImpl setParser(AstParser<AstNode,?,?> parser) {
+    public TestGenericSerializer setParser(AstParser<AstNode,?,?> parser) {
         return this;
     }
 

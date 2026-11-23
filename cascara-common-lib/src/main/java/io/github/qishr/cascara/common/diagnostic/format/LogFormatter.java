@@ -70,5 +70,5 @@ public interface LogFormatter {
 
     String formatStackTrace(Level level, StackTraceElement[] stackTrace, Throwable t);
 
-    LogFormatter setConfig(FormatConfig config);
+    LogFormatter setConfig(LogFormatConfig config);
 }

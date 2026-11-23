@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import integration.test.exec.ExecTestBase;
 import integration.test.fixtures.task.CascaraConfigTask;
-import integration.test.fixtures.task.ReporterConfigTask;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmConfig;
@@ -34,7 +33,7 @@ public class CascaraConfigTest extends ExecTestBase {
                 .setJvmConfig(
                     new JvmConfig()
                         .setTimeout(Duration.ofSeconds(120))
-                        .setModuleName(ReporterConfigTask.class.getModule().getName())
+                        .setModuleName(CascaraConfigTask.class.getModule().getName())
                         .setModulePath(getJvmModulePath())
                         .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
                 );
@@ -78,7 +77,7 @@ public class CascaraConfigTest extends ExecTestBase {
                 .setJvmConfig(
                     new JvmConfig()
                         .setTimeout(Duration.ofSeconds(120))
-                        .setModuleName(ReporterConfigTask.class.getModule().getName())
+                        .setModuleName(CascaraConfigTask.class.getModule().getName())
                         .setModulePath(getJvmModulePath())
                         .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
                         .setEnv("CASCARA_SPL_PROPERTIES", splPropertiesPath)

@@ -49,7 +49,6 @@ import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
-import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 import io.github.qishr.cascara.common.exec.ipc.IpcClient;
@@ -73,15 +72,12 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
 
     private static GlobalReporter globalInstance = new GlobalReporter().init();
 
-    private static ReporterConfig config;
-
     private final Map<String,ClassReporter> classInstances = new HashMap<>();
 
-    boolean allowApiOverride;
+    private boolean consoleOutputEnabled;
 
     private IpcClient ipcClient;
     private boolean ipcUnavailable = false;
-    // private List<Diagnostic> queue = new ArrayList<>();
 
     /// Consumes diagnostics included in the current Level or more
     /// important, with ERROR being the most important.
@@ -91,41 +87,6 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
     protected Consumer<Diagnostic> problemConsumer;
 
     GlobalReporter() {}
-
-    private GlobalReporter init() {
-        globalInstance = this;
-
-        consoleLogger = new ConsoleLogger();
-        consoleLogger.setFormatConfig(formatConfig);
-
-        lineLogger = new LineLogger();
-        lineLogger.setFormatConfig(formatConfig);
-
-        // TODO: support full JlsName
-
-        config = ReporterConfig.get();
-
-        allowApiOverride = config.allowApiOverride();
-
-        setLevelInternal(config.getLevel());
-
-        // These levels include settings from system properties and properties files
-        for (Entry<String,Level> property : config.getLevels().entrySet()) {
-            String fqcn = property.getKey();
-            Level level = property.getValue();
-            if (level != null) {
-                setLevelInternal(fqcn, level);
-            }
-        }
-
-        registerShutdownHook();
-
-        return this;
-    }
-
-    //
-    //
-    //
 
     public static GlobalReporter get() {
         return globalInstance;
@@ -144,71 +105,19 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
         return reporter;
     }
 
-    public static void configureSerializer() {
-        try {
-            Serializer<?> serializer = IpcConfig.createSerializer();
-            if (serializer != null) {
-                // Prevent the serializer from using SPL to find TypeDescriptor and
-                // TypeSerializer providers to avoid infinite recursion:
-                //     SPL -> GlobalReporter -> Serializer -> SPL
-                serializer.setProviderFactoryEnabled(false);
+    //
+    //
+    //
 
-                // Instead of letting the Serializer use SPL, give it the type
-                // descriptors and type serializers it needs for Diagnostic serialization.
-                serializer.registerTypeDescriptor(new InstantDescriptor());
-                serializer.registerTypeDescriptor(new ZonedDateTimeDescriptor());
-                serializer.registerTypeDescriptor(new LocalizableMessageDescriptor());
-                serializer.registerTypeDescriptor(new StackTraceElementSerializer());
-
-                if (get().serializer == null) {
-                    globalInstance.serializer = serializer;
-                }
-            }
-        } catch (IpcException ignored) {
-            // Reporter will still function without a serializer, so ignore this exception.
-        }
-    }
-
-    @Experimental
-    public FormatConfig getFormatConfig() {
-        return formatConfig;
-    }
-
-    /// {@inheritDoc}
     @Override
-    public GlobalReporter setLevel(Level level) {
-        if (!globalInstance.allowApiOverride) {
-            throw new UnsupportedOperationException("This reporter does not allow setting its level via the API");
-        }
-        return setLevelInternal(level);
+    protected boolean isConsoleOutputEnabled() {
+        return consoleOutputEnabled;
     }
 
-    /// Sets the reporting level for the specified class.
-    /// @param cls the class to set the level for.
-    /// @param level the level to set for the class.
-    public GlobalReporter setLevel(Class<?> cls, Level level) {
-        // TODO: getCanonicalName ?
-        if (!globalInstance.allowApiOverride) {
-            throw new UnsupportedOperationException("This reporter does not allow setting its level via the API");
-        }
-        return setLevel(cls.getName(), level);
-    }
-
-    /// Sets the reporting level for the specified class.
-    /// @param fqcn the fully qualified class name of the class to set the level for.
-    /// @param level the level to set for the class.
-    public GlobalReporter setLevel(String fqcn, Level level) {
-        // TODO: Only throw here if the API call would actually override an environment setting
-        if (!globalInstance.allowApiOverride) {
-        // if (!allowApiOverride && !fqcn.equals(source)) {
-            throw new UnsupportedOperationException("This reporter does not allow setting its level via the API");
-        }
-        return setLevelInternal(fqcn, level);
-    }
-
-    public GlobalReporter setLevelInternal(String fqcn, Level level) {
-        ClassReporter reporter = GlobalReporter.forSourceInternal(fqcn);
-        reporter.setLevelInternal(level);
+    /// Controls whether diagnostic logging to console is enabled.
+    public GlobalReporter setConsoleOutputEnabled(boolean b) {
+        assertApiOverrideEnabled();
+        consoleOutputEnabled = b;
         return this;
     }
 
@@ -246,25 +155,42 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
         return this;
     }
 
-    public GlobalReporter setSystemOutputEnabled(boolean b) {
-        super.setSystemOutputEnabled(b);
+    //
+    // Levels
+    //
+
+    /// {@inheritDoc}
+    @Override
+    public GlobalReporter setLevel(Level level) {
+        return setLevelInternal(level);
+    }
+
+    /// Sets the reporting level for the specified class.
+    /// @param cls the class to set the level for.
+    /// @param level the level to set for the class.
+    public GlobalReporter setLevel(Class<?> cls, Level level) {
+        // TODO: getCanonicalName ?
+        assertApiOverrideEnabled();
+        return setLevel(cls.getName(), level);
+    }
+
+    /// Sets the reporting level for the specified class.
+    /// @param fqcn the fully qualified class name of the class to set the level for.
+    /// @param level the level to set for the class.
+    public GlobalReporter setLevel(String fqcn, Level level) {
+        assertApiOverrideEnabled();
+        return setLevelInternal(fqcn, level);
+    }
+
+    public GlobalReporter setLevelInternal(String fqcn, Level level) {
+        ClassReporter reporter = GlobalReporter.forSourceInternal(fqcn);
+        reporter.setLevelInternal(level);
         return this;
     }
 
-    public GlobalReporter setImmediateFlushEnabled(boolean b) {
-        super.setImmediateFlushEnabled(b);
-        return this;
-    }
-
-    @Override
-    protected boolean isSystemOutputEnabled() {
-        return this == globalInstance ? systemOutputEnabled : globalInstance.isSystemOutputEnabled();
-    }
-
-    @Override
-    protected boolean isImmediateFlushEnabled() {
-        return this == globalInstance ? flushEnabled : globalInstance.isImmediateFlushEnabled();
-    }
+    //
+    //
+    //
 
     @Experimental
     public void closeIpc() {
@@ -306,9 +232,63 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
         globalInstance.log(diagnostic);
     }
 
+    public static void configureSerializer() {
+        try {
+            Serializer<?> serializer = IpcConfig.createSerializer();
+            if (serializer != null) {
+                // Prevent the serializer from using SPL to find TypeDescriptor and
+                // TypeSerializer providers to avoid infinite recursion:
+                //     SPL -> GlobalReporter -> Serializer -> SPL
+                serializer.setProviderFactoryEnabled(false);
+
+                // Instead of letting the Serializer use SPL, give it the type
+                // descriptors and type serializers it needs for Diagnostic serialization.
+                serializer.registerTypeDescriptor(new InstantDescriptor());
+                serializer.registerTypeDescriptor(new ZonedDateTimeDescriptor());
+                serializer.registerTypeDescriptor(new LocalizableMessageDescriptor());
+                serializer.registerTypeDescriptor(new StackTraceElementSerializer());
+
+                if (get().serializer == null) {
+                    globalInstance.serializer = serializer;
+                }
+            }
+        } catch (IpcException ignored) {
+            // Reporter will still function without a serializer, so ignore this exception.
+        }
+    }
+
     //
     //
     //
+
+    private GlobalReporter init() {
+        globalInstance = this;
+
+        consoleLogger = new ConsoleLogger();
+        consoleLogger.setFormatConfig(formatConfig);
+
+        lineLogger = new LineLogger();
+        lineLogger.setFormatConfig(formatConfig);
+
+        // TODO: support full JlsName
+
+        consoleOutputEnabled = globalConfig.isConsoleOutputEnabled();
+
+        setLevelInternal(globalConfig.getLevel());
+
+        // These levels include settings from system properties and properties files
+        for (Entry<String,Level> property : globalConfig.getLevels().entrySet()) {
+            String fqcn = property.getKey();
+            Level level = property.getValue();
+            if (level != null) {
+                setLevelInternal(fqcn, level);
+            }
+        }
+
+        registerShutdownHook();
+
+        return this;
+    }
 
     private static ClassReporter forSourceInternal(String fqcn) {
         ClassReporter reporter = globalInstance.classInstances.get(fqcn);
@@ -317,7 +297,7 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
             reporter = new ClassReporter(fqcn);
             root.classInstances.put(fqcn, reporter);
 
-            Level level = config.getLevel(fqcn);
+            Level level = globalConfig.getLevel(fqcn);
             if (level != null) {
                 reporter.level = level;
             }
@@ -398,7 +378,8 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
         }
     }
 
-    public static void shutdown() {
+    private static void shutdown() {
+        assertApiOverrideEnabled();
         if (!isShuttingDown.compareAndSet(false, true)) {
             return; // Already executed
         }

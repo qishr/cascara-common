@@ -45,9 +45,7 @@ import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.DiagnosticBuilder;
-import io.github.qishr.cascara.common.diagnostic.format.ColoredLogFormatter;
-import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
-import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 import io.github.qishr.cascara.common.diagnostic.log.Logger;
@@ -62,27 +60,25 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected static final ZoneId UTC = ZoneId.of("UTC");
 
+    protected static ReporterConfig globalConfig;
+
     /// The simple name of the class that made the report
     protected String source;
 
     protected Serializer<?> serializer;
 
-    protected FormatConfig formatConfig = defaultFormatConfig();
+    protected LogFormatConfig formatConfig = LogFormatConfig.get();
     protected ReportWriter[] writers = new ReportWriter[7];
+
     protected List<Logger> loggers = new ArrayList<>();
     protected ConsoleLogger consoleLogger;
     protected LineLogger lineLogger;
 
     protected Level level = Level.INFO;
 
-    // ConsoleLogger config
-    protected boolean systemOutputEnabled = true;
-    protected boolean flushEnabled = false;
-    protected boolean systemErrorEnabled = false;
-    protected boolean ansiColoringEnabled;
-
-
     protected AbstractReporter() {
+        globalConfig = ReporterConfig.get();
+
         // TODO: Lazy getters for these...
         writers[Level.ERROR.ordinal()] = new ReportWriter(this, Level.ERROR);
         writers[Level.WARN.ordinal()] = new ReportWriter(this, Level.WARN);
@@ -93,9 +89,12 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     protected abstract T self();
 
-    /// To be overridden by reporters needing specific default config
-    protected FormatConfig defaultFormatConfig() {
-        return FormatConfig.get();
+    protected boolean isConsoleOutputEnabled() { return false; }
+
+    protected static void assertApiOverrideEnabled() {
+        if (!globalConfig.allowApiOverride()) {
+            throw new UnsupportedOperationException("API override disabled");
+        }
     }
 
     public T addLogger(Logger logger) {
@@ -117,80 +116,11 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
         return self();
     }
 
-
-
-
-    //================================
-    // TODO: These should perhaps be able to add/remove consumers (trackers?)
-
     /// {@inheritDoc}
     @Experimental
     @Override
     public T setLineConsumer(Consumer<String> consumer) {
         lineLogger.setLineConsumer(consumer);
-        return self();
-    }
-
-    public T setStackTraceEnabled(boolean b) {
-        formatConfig.setIncludeStackTrace(b);
-        // TODO: Make this controllable via system properties, at least for GlobalReporter
-        return self();
-    }
-
-    @Experimental
-    public T setPrefixEveryLine(boolean b) {
-        formatConfig.setPrefixEveryLine(b);
-        return self();
-    }
-
-    public T setShowProblemCodes(boolean b) {
-        formatConfig.setIncludeProblemCodes(b);
-        return self();
-    }
-
-    //
-    // ConsoleLogger config
-    //
-
-    // TODO: Make these controllable via system properties, at least for GlobalReporter
-
-    protected boolean isSystemOutputEnabled() { return systemOutputEnabled; }
-
-    /// Controls whether diagnostic logging to console is enabled.
-    public T setSystemOutputEnabled(boolean b) {
-        systemOutputEnabled = b;
-        return self();
-    }
-
-    protected boolean isImmediateFlushEnabled() { return flushEnabled; }
-
-    /// Controls whether diagnostics logged to console are flushed immediately.
-    public T setImmediateFlushEnabled(boolean b) {
-        if (consoleLogger != null) {
-            consoleLogger.setSystemErrorEnabled(b);
-        }
-        flushEnabled = b;
-        return self();
-    }
-
-    /// Controls whether errors logged to console go to System.out or System.err.
-    public T setSystemErrorEnabled(boolean b) {
-        if (consoleLogger != null) {
-            consoleLogger.setSystemErrorEnabled(b);
-        }
-        systemErrorEnabled = b;
-        return self();
-    }
-
-    /// Controls whether diagnostics logged to console use ANSI coloring.
-    public T setAnsiColoringEnabled(boolean b) {
-        if (consoleLogger != null) {
-            if (b) {
-                consoleLogger.setFormatter(new ColoredLogFormatter(formatConfig));
-            } else {
-                consoleLogger.setFormatter(new PlainLogFormatter(formatConfig));
-            }
-        }
         return self();
     }
 
@@ -478,12 +408,14 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     }
 
     protected void log(Diagnostic diagnostic) {
-        if (consoleLogger != null && isSystemOutputEnabled()) {
+        // lineLogger and consoleLogger are treated as special cases
+        if (consoleLogger != null && isConsoleOutputEnabled()) {
             consoleLogger.log(diagnostic);
         }
         if (lineLogger != null) {
             lineLogger.log(diagnostic);
         }
+
         for (Logger logger : loggers) {
             logger.log(diagnostic);
         }
@@ -491,8 +423,7 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
 
     /// Used by LogWriter to log lines of text
     protected void logLine(Level level, String msgLine) {
-        // TODO source should be null, but test it
-        Diagnostic diagnostic = DiagnosticBuilder.build("", level, msgLine);
+        Diagnostic diagnostic = DiagnosticBuilder.build(source, level, msgLine);
         log(diagnostic);
     }
 

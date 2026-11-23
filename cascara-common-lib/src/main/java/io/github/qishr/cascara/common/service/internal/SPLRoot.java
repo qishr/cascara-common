@@ -46,7 +46,7 @@ import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.ReporterConfig;
 import io.github.qishr.cascara.common.i18n.LangConfig;
@@ -293,8 +293,8 @@ public class SPLRoot extends SPLBranch {
                 writer.write("  " + s + NL);
             }
 
-            writer.write("Reporter Format Config:" + NL);
-            for (Setting s : FormatConfig.get().getAppliedSettings()) {
+            writer.write("Log Format Config:" + NL);
+            for (Setting s : LogFormatConfig.get().getAppliedSettings()) {
                 writer.write("  " + s + NL);
             }
 

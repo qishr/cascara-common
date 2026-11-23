@@ -188,7 +188,8 @@ public class Diagnostic {
 
     /// Returns the identifier string of the subsystem that produced this diagnostic.
     /// This is usually the FQCN of the class creating the diagnostic report.
-    public String getSource() { return source; }
+    @NonNull
+    public String getSource() { return source == null ? "" : source; }
 
     /// Returns the severity [Level] classification of this diagnostic.
     public Level getLevel() { return level; }

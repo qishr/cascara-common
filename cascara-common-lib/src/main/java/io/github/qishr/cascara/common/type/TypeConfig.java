@@ -36,11 +36,14 @@ package io.github.qishr.cascara.common.type;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.ConfigExtends;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
+import io.github.qishr.cascara.common.annotation.ConfigSetting.Op;
 import io.github.qishr.cascara.common.annotation.NonNull;
 import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.util.Cascara;
@@ -49,11 +52,23 @@ import io.github.qishr.cascara.common.util.Config;
 @ConfigExtends(Cascara.class)
 @ConfigNamespace("cascara.type")
 public class TypeConfig extends Config {
+    @NonNull
     @ConfigSetting()
     private Map<String,String> mapping = new HashMap<>();
 
-    // TODO: Fix Config so that this can be private
-    public TypeConfig() {
+    @NonNull
+    @ConfigSetting(delimiter = ",", operation = Op.ADD)
+    private Set<String> ignore = new HashSet<>();
+
+    private TypeConfig() {
+        ignore = new HashSet<>(Set.of(
+            "org.mockito.", "jdk.", "sun.", "com.sun.", "net.bytebuddy.",
+            "worker.org.gradle.", "org.objenesis.", "org.opentest4j.",
+            "org.jcp.xml.dsig.internal.", "org.junit",
+            "com.apple", "apple.laf", "apple.security",
+            "java.awt.", "javax.swing."
+        ));
+
         // Core Java Collections & Interfaces Defaults
         addMapping(java.util.List.class, java.util.ArrayList.class);
         addMapping(java.util.Set.class, java.util.HashSet.class);
@@ -80,7 +95,7 @@ public class TypeConfig extends Config {
     }
 
     /// Returns the mappings of abstract names to concrete names.
-    @Nullable
+    @NonNull
     public Map<String,String> getMappings() {
         return mapping;
     }
@@ -89,5 +104,10 @@ public class TypeConfig extends Config {
     @Nullable
     public String getMapping(String abstractName) {
         return mapping.get(abstractName);
+    }
+
+    @NonNull
+    public Set<String> getIgnore() {
+        return ignore;
     }
 }

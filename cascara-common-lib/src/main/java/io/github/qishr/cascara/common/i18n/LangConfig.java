@@ -51,6 +51,10 @@ public class LangConfig extends Config {
     @ConfigSetting()
     private boolean localizeExceptions;
 
+    private LangConfig() {
+        // No public constructor
+    }
+
     @NonNull
     public static LangConfig get() {
         return get(LangConfig.class);

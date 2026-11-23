@@ -37,42 +37,27 @@ package io.github.qishr.cascara.common.diagnostic.log;
 import java.io.PrintStream;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
-import io.github.qishr.cascara.common.annotation.SingletonInitializer;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.format.ColoredLogFormatter;
-import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.format.LogFormatter;
 import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
-import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
-import io.github.qishr.cascara.common.util.JreUtils;
 
 @Experimental
 public class ConsoleLogger implements Logger {
     private LogFormatter formatter;
-    private FormatConfig formatConfig;
-
-    private boolean flushEnabled = false;
-    private boolean systemErrorEnabled = false;
-    private boolean ansiColoringEnabled = true;
+    private LogFormatConfig formatConfig;
+    private ConsoleLoggerConfig config = ConsoleLoggerConfig.get();
+    private boolean ansiColoringEnabled = config.isAnsiColoringEnabled();
 
     public ConsoleLogger() {
-        formatConfig = FormatConfig.get();
+        formatConfig = LogFormatConfig.get();
         init();
     }
 
-    public ConsoleLogger(FormatConfig formatConfig) {
-        this.formatConfig = formatConfig;
-        init();
-    }
-
-    @SingletonInitializer
     private void init() {
-        boolean console = (System.console() != null);
-        boolean gradle = JreUtils.isRunningViaGradle();
-        boolean eclipse = JreUtils.isRunningViaEclipse();
-        ansiColoringEnabled = console||gradle||eclipse;
-        configureFormatter();
+        initializeFormatter();
     }
 
     @Override
@@ -83,48 +68,50 @@ public class ConsoleLogger implements Logger {
 
     @Override
     public ConsoleLogger flush() {
-        throw new UnimplementedMethodException();
+        if (config.isSystemErrorEnabled()) {
+            System.err.flush();
+        }
+        System.out.flush();
+        return this;
     }
 
     //
     // Config
     //
 
+    public ConsoleLoggerConfig getConfig() {
+        return config;
+    }
+
+    public ConsoleLogger setConfig(ConsoleLoggerConfig config) {
+        this.config = config;
+        return this;
+    }
+
     public ConsoleLogger setFormatter(LogFormatter formatter) {
         this.formatter = formatter;
         return this;
     }
 
-    public ConsoleLogger setFormatConfig(FormatConfig config) {
-        // This is required as loggers that are services can't have config
-        // passed into their constructor.
+    public LogFormatConfig getFormatConfig() {
+        return formatConfig;
+    }
+
+    /// Sets the format configuration for this logger.
+    /// This allows LocalReporter to use different formatting
+    /// from GlobalReporter, for example.
+    public ConsoleLogger setFormatConfig(LogFormatConfig config) {
         formatConfig = config;
         formatter.setConfig(config);
         return this;
     }
 
-    public ConsoleLogger setImmediateFlushEnabled(boolean b) {
-        flushEnabled = b;
-        return this;
-    }
-
-    public ConsoleLogger setSystemErrorEnabled(boolean b) {
-        systemErrorEnabled = b;
-        return this;
-    }
-
-    public ConsoleLogger setAnsiColoringEnabled(boolean b) {
-        ansiColoringEnabled = b;
-        configureFormatter();
-        return this;
-    }
-
     //
     //
     //
 
-    private void configureFormatter() {
-        if (ansiColoringEnabled) {
+    private void initializeFormatter() {
+        if (config.isAnsiColoringEnabled()) {
             formatter = new ColoredLogFormatter(formatConfig);
         } else {
             formatter = new PlainLogFormatter(formatConfig);
@@ -134,12 +121,17 @@ public class ConsoleLogger implements Logger {
     /// Reports a Diagnostic to the console and the line consumer if they are enabled.
     protected void writeString(Diagnostic diagnostic) {
         Level level = diagnostic.getLevel();
-        PrintStream stream = (level == Level.ERROR && systemErrorEnabled)
+        PrintStream stream = (level == Level.ERROR && config.isSystemErrorEnabled())
             ? System.err
             : System.out;
 
+        if (ansiColoringEnabled != config.isAnsiColoringEnabled()) {
+            initializeFormatter();
+            ansiColoringEnabled = config.isAnsiColoringEnabled();
+        }
+
         stream.print(formatter.format(diagnostic));
-        if (flushEnabled) {
+        if (config.isImmediateFlushEnabled()) {
             stream.flush();
         }
     }

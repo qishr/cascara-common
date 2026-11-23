@@ -26,9 +26,9 @@ import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 public class GlobalReporterTests {
     @BeforeEach
     void resetGlobalReporter() {
+        GlobalReporter.get().setConsoleOutputEnabled(false);
         GlobalReporter.get().setLineConsumer(null);
         GlobalReporter.get().setLevel(GlobalReporterTests.class.getName(), Level.INFO);
-        GlobalReporter.get().setSystemOutputEnabled(false);
     }
 
     @Test

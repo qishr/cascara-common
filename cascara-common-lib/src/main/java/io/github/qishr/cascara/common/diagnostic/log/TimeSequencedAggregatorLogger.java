@@ -39,7 +39,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 
 public class TimeSequencedAggregatorLogger implements Logger, AutoCloseable {
 
@@ -122,7 +122,7 @@ public class TimeSequencedAggregatorLogger implements Logger, AutoCloseable {
         }
     }
 
-    public TimeSequencedAggregatorLogger setFormatConfig(FormatConfig config) {
+    public TimeSequencedAggregatorLogger setFormatConfig(LogFormatConfig config) {
         return this;
     }
 }

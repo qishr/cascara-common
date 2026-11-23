@@ -40,7 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 
 @Experimental
 public class CollectingLogger implements Logger {
@@ -72,7 +72,7 @@ public class CollectingLogger implements Logger {
     //
     //
 
-    public CollectingLogger setFormatConfig(FormatConfig config) {
+    public CollectingLogger setFormatConfig(LogFormatConfig config) {
         return this;
     }
 }

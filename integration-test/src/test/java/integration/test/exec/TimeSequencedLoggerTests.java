@@ -11,7 +11,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import integration.test.fixtures.task.ReporterConfigTask;
 import integration.test.fixtures.task.ShutdownTestTask;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.log.Logger;
 import io.github.qishr.cascara.common.diagnostic.log.TimeSequencedAggregatorLogger;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
@@ -29,7 +29,7 @@ public class TimeSequencedLoggerTests extends ExecTestBase {
     @Test
     void test_isolated_classReporter() throws Throwable {
         // We want this process's GlobalReporter to receive diagnostics, but not display them.
-        GlobalReporter.get().setSystemOutputEnabled(false);
+        GlobalReporter.get().setConsoleOutputEnabled(false);
 
         try (TestCascara cascara = new TestCascara()) {
             IsolatedExecutor exec = IsolatedExecutor.forTask(ShutdownTestTask.class, String.class)
@@ -68,7 +68,7 @@ public class TimeSequencedLoggerTests extends ExecTestBase {
                     return this;
                 }
 
-                @Override public Logger setFormatConfig(FormatConfig config) {
+                @Override public Logger setFormatConfig(LogFormatConfig config) {
                     return this;
                 }
             },
@@ -76,7 +76,7 @@ public class TimeSequencedLoggerTests extends ExecTestBase {
         );
 
         GlobalReporter.get().addLogger(aggregator);
-        GlobalReporter.get().setSystemOutputEnabled(false);
+        GlobalReporter.get().setConsoleOutputEnabled(false);
 
     }
 }

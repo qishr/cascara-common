@@ -56,6 +56,7 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.qishr.cascara.common.annotation.AnyGetter;
 import io.github.qishr.cascara.common.annotation.AnySetter;
@@ -84,6 +85,7 @@ import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.service.ServiceProviderFactory;
 import io.github.qishr.cascara.common.type.PrimitiveType;
 import io.github.qishr.cascara.common.type.ScalarDescriptor;
+import io.github.qishr.cascara.common.type.TypeConfig;
 import io.github.qishr.cascara.common.type.TypeDescriptor;
 import io.github.qishr.cascara.common.type.TypeReference;
 import io.github.qishr.cascara.common.type.TypeSerializer;
@@ -124,6 +126,7 @@ public abstract class AbstractSerializer<
     private final ServiceProviderFactory providerFactory = new ServiceProviderFactory();
     private final AstNodeFactory<N,S,L,M,E,K> astFactory;
     private final AstConverter<?> astConverter;
+    private final Map<Class<?>,Boolean> ignoredTypes = new ConcurrentHashMap<>();
 
     protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E,K> astFactory, LanguageConfig<?> config) {
         this(contentType, astFactory, null, config);
@@ -271,11 +274,6 @@ public abstract class AbstractSerializer<
         // getAllSerializableFields filters out fields with @DataIgnore
         for (Field field : getAllSerializableFields(jvmType)) {
             String fieldName = ReflectionUtils.getEffectiveName(field);
-            int fieldModifiers = field.getModifiers();
-
-            if (Modifier.isStatic(fieldModifiers) || Modifier.isTransient(fieldModifiers)) {
-                continue;
-            }
 
             // Try to make the field accessible. If this fails, continue to the next field.
             try {
@@ -591,17 +589,6 @@ public abstract class AbstractSerializer<
 
         // 2. Process Declared Fields
         for (Field field : getAllSerializableFields(jvmType)) {
-            // Skip static or transient fields
-            int fieldModifiers = field.getModifiers();
-
-            // TODO: Static SCHEMA_ID field? Make it optional.
-            // - Useful for persisting to storage
-            // - could be useful for validation
-            // - not good for performance.
-            if (Modifier.isStatic(fieldModifiers) || Modifier.isTransient(fieldModifiers)) {
-                continue;
-            }
-
             // Try to make the field accessible. If this fails, continue to the next field.
             try {
                 field.setAccessible(true);
@@ -1040,7 +1027,40 @@ public abstract class AbstractSerializer<
     /// Retrieves all declared fields for a class and all its superclasses (excluding Object).
     @NonNull
     private List<Field> getAllSerializableFields(Class<?> jvmType) {
-        return ReflectionUtils.getFields(jvmType, f -> !f.isAnnotationPresent(DataIgnore.class));
+        // TODO: Static SCHEMA_ID field? Make it optional.
+        // - Useful for persisting to storage
+        // - could be useful for validation
+        // - not good for performance.
+
+        return ReflectionUtils.getFields(jvmType, field -> {
+            // Skip static or transient fields
+            int fieldModifiers = field.getModifiers();
+            if (Modifier.isStatic(fieldModifiers) || Modifier.isTransient(fieldModifiers)) {
+                return false;
+            }
+
+            if (field.isAnnotationPresent(DataIgnore.class)) {
+                return false;
+            }
+
+            if (isExcludeByConfig(jvmType)) {
+                return false;
+            }
+
+            return true;
+        });
+    }
+
+    private boolean isExcludeByConfig(Class<?> jvmType) {
+        return ignoredTypes.computeIfAbsent(jvmType, type -> {
+            String name = type.getName();
+            for (String prefix : TypeConfig.get().getIgnore()) {
+                if (name.startsWith(prefix)) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
     @SuppressWarnings("unchecked")

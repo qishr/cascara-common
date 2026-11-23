@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.Isolated;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.ReportWriter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
@@ -26,7 +26,7 @@ public class ExecTestBase extends TestBase {
     @BeforeEach
     protected void setUp() {
         super.setUp();
-        GlobalReporter.get().getFormatConfig().setIncluedPid(true);
+        LogFormatConfig.get().setIncluedPid(true);
     }
 
     @AfterEach
@@ -49,7 +49,9 @@ public class ExecTestBase extends TestBase {
 
     protected void debug(Response<?> response) {
         if (TEST_DEBUG_ENABLED) {
-            Reporter reporter = new LocalReporter().setLevel(Level.DEBUG);
+            Reporter reporter = new LocalReporter()
+                .setLevel(Level.DEBUG)
+                .setSource(getClass().getName());
             ReportWriter writer = reporter.getWriter(Level.DEBUG);
             if (!response.getSystemOut().isBlank()) {
                 reporter.debug("System.out was:\n");
@@ -64,7 +66,9 @@ public class ExecTestBase extends TestBase {
 
     protected void debug(JvmProcess.Response response) {
         if (TEST_DEBUG_ENABLED) {
-            Reporter reporter = new LocalReporter().setLevel(Level.DEBUG);
+            Reporter reporter = new LocalReporter()
+                .setLevel(Level.DEBUG)
+                .setSource(getClass().getName());
             ReportWriter writer = reporter.getWriter(Level.DEBUG);
             if (!response.out.isBlank()) {
                 reporter.debug("JvmProcess.Response.out was:\n");

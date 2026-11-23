@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.util.Cascara;
@@ -19,6 +20,8 @@ import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 public abstract class TestBase {
     // Environment variables
     public static final String EV_CASCARA_HOME = "CASCARA_HOME";
+    public static final String EV_CASCARA_REPORT_ALLOW_API_OVERRIDE = "CASCARA_REPORT_ALLOW_API_OVERRIDE";
+    public static final String EV_CASCARA_REPORT_CONSOLE_OUTPUT = "CASCARA_REPORT_CONSOLE_OUTPUT";
 
     // System properties
     public static final String SP_CASCARA_SPL_DISCOVER = "cascara.spl.discover";
@@ -28,6 +31,11 @@ public abstract class TestBase {
     public static final String SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED = "cascara.spl.policy.require-signed";
     public static final String SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES = "cascara.spl.policy.require-signed-classes";
     public static final String SP_CASCARA_SPL_POLICY_CHECK_EXPIRY = "cascara.spl.policy.check-expiry";
+
+    public static final String SP_CASCARA_REPORT_LEVEL_ = "cascara.report.level.";
+    public static final String SP_CASCARA_REPORT_ALLOW_API_OVERRIDE = "cascara.report.allow-api-override";
+    public static final String SP_CASCARA_REPORT_CONSOLE_OUTPUT = "cascara.report.console-output";
+    public static final String SP_CASCARA_LOG_FORMAT_INCLUDE_STACK_TRACE = "cascara.log.format.stack-trace";
 
     // Properties file path system properties
     public static final String SP_CASCARA_REPORT_PROPERTIES = "cascara.report.properties";
@@ -56,7 +64,7 @@ public abstract class TestBase {
         Cascara cascara;
         if (Cascara.isInitialized()) {
             cascara = Cascara.get();
-            homePath = cascara.getHome();
+            homePath = cascara.getHomePath();
         } else {
             homePath = tempDir.resolve(".cascara");
             cascara = Cascara.get(homePath);
@@ -86,14 +94,13 @@ public abstract class TestBase {
             e.printStackTrace();
         }
 
-        GlobalReporter.get().setSystemOutputEnabled(true);
+        GlobalReporter.get().setConsoleOutputEnabled(true);
         GlobalReporter.get().setLineConsumer(null);
-        GlobalReporter.get()
-            .getFormatConfig()
-                .setIncludeTime(false)
-                .setIncluedPid(false)
-                .setIncluedThread(false)
-                .setUseSimpleClassName(true);
+        LogFormatConfig.get()
+            .setIncludeTime(false)
+            .setIncluedPid(false)
+            .setIncluedThread(false)
+            .setUseSimpleClassName(true);
     }
 
     @AfterEach

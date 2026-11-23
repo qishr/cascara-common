@@ -64,41 +64,6 @@ public class ModulePathTests extends TestBase {
         }
     }
 
-    // @Disabled
-    // @Test
-    // void test_processDirectoryUrl_callsProcessClassFileForClassFiles() throws Exception {
-    //     Path tempDir = Files.createTempDirectory("lr-processdir");
-    //     File dir = tempDir.toFile();
-    //     try {
-    //         // create a dummy class file in the directory
-    //         File classFile = new File(dir, "MyClass.class");
-    //         assertTrue(classFile.createNewFile(), "create dummy class file");
-
-    //         URL[] urls = new URL[] { dir.toURI().toURL() };
-
-    //         ModulePath modulePath = spy(ModulePath.class);
-    //         // modulePath.ctx = Context.getInstance();
-    //         // modulePath.ctx.setReporter(reporter);
-
-    //         when(modulePath.scanClassFile(any(Path.class), any(Path.class), any(URLClassLoader.class), any(), any())).thenAnswer(invocation -> {
-    //             File directoryArg = invocation.getArgument(0);
-    //             File fileArg = invocation.getArgument(1);
-    //             // assert the arguments are as expected inside the stub
-    //             assertEquals(dir.getAbsoluteFile(), directoryArg.getAbsoluteFile());
-    //             assertEquals(classFile.getName(), fileArg.getName());
-    //             return null;
-    //         });
-
-    //         Set<String> discovered = new HashSet<>();
-    //         modulePath.scanDirectoryUrl(tempDir, urls, "");
-    //         verify(modulePath).scanClassFile(any(), any(), any(), any(), discovered);
-    //     } finally {
-    //         // cleanup
-    //         Files.deleteIfExists(tempDir.resolve("MyClass.class"));
-    //         Files.deleteIfExists(tempDir);
-    //     }
-    // }
-
     @Test
     void test_processClassFile_readsModuleInfoAndSetsSiblingModuleName(@TempDir Path classDir) throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(getClass())

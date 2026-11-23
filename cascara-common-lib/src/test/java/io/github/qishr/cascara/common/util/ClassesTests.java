@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 
 public class ClassesTests {
-    private static Set<String> allClasses ;
+    private static Set<String> allClasses;
 
     @BeforeAll
     static void obtainClasses() {

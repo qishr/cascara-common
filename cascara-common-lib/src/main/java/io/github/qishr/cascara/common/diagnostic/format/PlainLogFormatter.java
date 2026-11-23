@@ -49,10 +49,10 @@ public class PlainLogFormatter implements LogFormatter {
     protected static final ZoneId UTC = ZoneId.of("UTC");
     protected static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ISO_INSTANT;
 
-    protected FormatConfig config;
+    protected LogFormatConfig config;
     protected long processId;
 
-    public PlainLogFormatter(FormatConfig config) {
+    public PlainLogFormatter(LogFormatConfig config) {
         this.config = config;
         processId = ProcessHandle.current().pid();
     }
@@ -61,7 +61,7 @@ public class PlainLogFormatter implements LogFormatter {
         return this;
     }
 
-    public LogFormatter setConfig(FormatConfig config) {
+    public LogFormatter setConfig(LogFormatConfig config) {
         // If a logger is a service, it doesn't have its format config
         // until after it's created. It needs to be able to set the
         // formatter's config later.
@@ -112,8 +112,6 @@ public class PlainLogFormatter implements LogFormatter {
             sb.append("[");
             sb.append(level.getLogPrefix());
             sb.append("] ");
-        } else {
-            sb.append("        ");
         }
 
         if (msgLineNumber == 0) {

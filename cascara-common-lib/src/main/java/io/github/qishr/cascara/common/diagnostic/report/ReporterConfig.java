@@ -57,6 +57,13 @@ public class ReporterConfig extends Config {
     @ConfigSetting
     private boolean allowApiOverride = true;
 
+    @ConfigSetting
+    private boolean consoleOutput = true;
+
+    private ReporterConfig() {
+        // No public constructor
+    }
+
     public static ReporterConfig get() {
         return get(ReporterConfig.class);
     }
@@ -79,5 +86,9 @@ public class ReporterConfig extends Config {
 
     public boolean allowApiOverride() {
         return allowApiOverride;
+    }
+
+    public boolean isConsoleOutputEnabled() {
+        return consoleOutput;
     }
 }

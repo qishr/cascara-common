@@ -51,17 +51,22 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
+import io.github.qishr.cascara.common.type.TypeConfig;
 
 @Experimental
 public final class Classes {
 
-    private static final Set<String> EXCLUDED = Set.of(
-        "org.mockito.", "jdk.", "sun.", "com.sun.", "net.bytebuddy.",
-        "worker.org.gradle.", "org.objenesis.", "org.opentest4j.",
-        "org.jcp.xml.dsig.internal.", "org.junit",
-        "com.apple", "apple.laf", "apple.security",
-        "java.awt.", "javax.swing."
-    );
+    // TODO: Have TypeConfig control this...
+
+    // private static final Set<String> EXCLUDED = Set.of(
+    //     "org.mockito.", "jdk.", "sun.", "com.sun.", "net.bytebuddy.",
+    //     "worker.org.gradle.", "org.objenesis.", "org.opentest4j.",
+    //     "org.jcp.xml.dsig.internal.", "org.junit",
+    //     "com.apple", "apple.laf", "apple.security",
+    //     "java.awt.", "javax.swing."
+    // );
+
+    private static final Set<String> EXCLUDED = TypeConfig.get().getIgnore();
 
     private static final AtomicReference<Set<String>> CLASSES_REF = new AtomicReference<>();
     private static Map<String,Path> classLocations = new HashMap<>();

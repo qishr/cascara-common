@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.diagnostic.log.TimeSequencedAggregatorLogger;
@@ -73,19 +74,14 @@ public class SplJmxTest extends JmxTestBase {
 
             boolean ipcDebug = false;
 
-            GlobalReporter.get().setStackTraceEnabled(true);
-
             Class<?> taskClass = JmxTestTask.class;
 
-            GlobalReporter.forClass(taskClass).setLevel(Level.DEBUG);
-            GlobalReporter.forClass(taskClass).setStackTraceEnabled(true);
-
-            GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
-            GlobalReporter.forClass(SPL.class).setStackTraceEnabled(true);
+            LogFormatConfig.get().setIncludeStackTrace(true);
+            GlobalReporter.get().setLevel(taskClass, Level.DEBUG);
+            GlobalReporter.get().setLevel(SPL.class, Level.DEBUG);
 
             createModuleA(cascara);
 
-            // IpcServer ipcServer = IpcServer.start(true, ipcDebug);
             @SuppressWarnings("resource")
             IpcServer ipcServer = new IpcServer()
                 .setDiagnosticForwarding(true)
@@ -182,14 +178,14 @@ public class SplJmxTest extends JmxTestBase {
             // Configurator.setLevel("integration.test", org.apache.logging.log4j.Level.DEBUG);
             TimeSequencedAggregatorLogger aggregator = new TimeSequencedAggregatorLogger(new Log4jLogger(), 800);
             GlobalReporter.get().addLogger(aggregator);
-            GlobalReporter.get().setSystemOutputEnabled(false);
+            GlobalReporter.get().setConsoleOutputEnabled(false);
 
             Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
             String json = serializer.toString("hello-isolated-world");
 
             boolean ipcDebug = false;
 
-            GlobalReporter.get().setStackTraceEnabled(true);
+            LogFormatConfig.get().setIncludeStackTrace(true);
 
             Class<?> taskClass = JmxTestTask.class;
 

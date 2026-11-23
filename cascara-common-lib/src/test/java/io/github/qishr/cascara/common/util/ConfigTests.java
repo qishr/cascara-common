@@ -9,8 +9,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +24,7 @@ import org.junit.jupiter.api.parallel.Isolated;
 import io.github.qishr.cascara.common.annotation.ConfigExtends;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
+import io.github.qishr.cascara.common.annotation.ConfigSetting.Op;
 import io.github.qishr.cascara.common.annotation.ConfigSetting.Source;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 
@@ -84,6 +89,26 @@ public class ConfigTests {
         @ConfigSetting
         private String noise = "";
 
+        @ConfigSetting(operation = Op.ADD)
+        private Set<String> addingSet = new HashSet<>();
+
+        @ConfigSetting(operation = Op.REPLACE)
+        private Set<String> replacingSet = new HashSet<>();
+
+        @ConfigSetting(operation = Op.ADD)
+        private List<String> addingList = new ArrayList<>();
+
+        // Op.REPLACE is the default operation
+        @ConfigSetting
+        private List<String> replacingList = new ArrayList<>();
+
+        public ExtendedTestConfig() {
+            addingSet.add("first");
+            replacingSet.add("first");
+            addingList.add("first");
+            replacingList.add("first");
+        }
+
         public static ExtendedTestConfig get() {
             return get(ExtendedTestConfig.class);
         }
@@ -94,6 +119,22 @@ public class ConfigTests {
 
         public String getNoise() {
             return noise;
+        }
+
+        public Set<String> getAddingSet() {
+            return addingSet;
+        }
+
+        public Set<String> getReplacingSet() {
+            return replacingSet;
+        }
+
+        public List<String> getAddingList() {
+            return addingList;
+        }
+
+        public List<String> getReplacingList() {
+            return replacingList;
         }
     }
 
@@ -108,6 +149,12 @@ public class ConfigTests {
         System.clearProperty("test.level");
         System.clearProperty("test.level.com.example.Test");
         System.clearProperty("test.ext.noise");
+        System.clearProperty("test.ext.adding-set");
+        System.clearProperty("test.ext.replacing-set");
+        System.clearProperty("test.ext.adding-list");
+        System.clearProperty("test.ext.replacing-list");
+
+        // TODO: This method should not exist:
         Config.resetAll();
     }
 
@@ -190,4 +237,51 @@ public class ConfigTests {
         assertNotNull(extCfg);
         assertEquals("Meow!", extCfg.getNoise());
     }
+
+    @Test
+    void test_adding_set() {
+        System.setProperty("test.ext.adding-set", "second, third");
+
+        ExtendedTestConfig cfg = ExtendedTestConfig.get();
+
+        assertEquals(3, cfg.getAddingSet().size());
+        assertTrue(cfg.getAddingSet().contains("first"));
+        assertTrue(cfg.getAddingSet().contains("second"));
+        assertTrue(cfg.getAddingSet().contains("third"));
+    }
+
+    @Test
+    void test_replacing_set() {
+        System.setProperty("test.ext.replacing-set", "second, third");
+
+        ExtendedTestConfig cfg = ExtendedTestConfig.get();
+
+        assertEquals(2, cfg.getReplacingSet().size());
+        assertTrue(cfg.getReplacingSet().contains("second"));
+        assertTrue(cfg.getReplacingSet().contains("third"));
+    }
+
+    @Test
+    void test_adding_list() {
+        System.setProperty("test.ext.adding-list", "second, third");
+
+        ExtendedTestConfig cfg = ExtendedTestConfig.get();
+
+        assertEquals(3, cfg.getAddingList().size());
+        assertTrue(cfg.getAddingList().contains("first"));
+        assertTrue(cfg.getAddingList().contains("second"));
+        assertTrue(cfg.getAddingList().contains("third"));
+    }
+
+    @Test
+    void test_replacing_list() {
+        System.setProperty("test.ext.replacing-list", "second, third");
+
+        ExtendedTestConfig cfg = ExtendedTestConfig.get();
+
+        assertEquals(2, cfg.getReplacingList().size());
+        assertTrue(cfg.getReplacingList().contains("second"));
+        assertTrue(cfg.getReplacingList().contains("third"));
+    }
+
 }

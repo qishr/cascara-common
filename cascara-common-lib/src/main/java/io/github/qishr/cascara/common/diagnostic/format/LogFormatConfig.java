@@ -40,18 +40,22 @@ import io.github.qishr.cascara.common.annotation.ConfigExtends;
 import io.github.qishr.cascara.common.annotation.ConfigNamespace;
 import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.Config;
 
 @Experimental
 @ConfigExtends(Cascara.class)
-@ConfigNamespace("cascara.diagnostic.format")
-public class FormatConfig extends Config {
+@ConfigNamespace("cascara.log.format")
+public class LogFormatConfig extends Config {
     @ConfigSetting()
     private boolean prefixEveryLine = true;
 
     @ConfigSetting()
     private boolean includeStackTrace = false;
+
+    @ConfigSetting(name = "stack-trace.level")
+    private Level stackTraceLevel = Level.ERROR;
 
     @ConfigSetting()
     private boolean includeProblemCodes = false;
@@ -71,22 +75,21 @@ public class FormatConfig extends Config {
     @ConfigSetting()
     private boolean useSimpleClassName = false;
 
-    // TODO: Private
-    public FormatConfig() {}
+    public LogFormatConfig() {}
 
-    public static FormatConfig get() {
-        return get(FormatConfig.class);
+    public static LogFormatConfig get() {
+        return get(LogFormatConfig.class);
     }
 
-    public static FormatConfig get(InputStream is) {
-        return get(FormatConfig.class, is);
+    public static LogFormatConfig get(InputStream is) {
+        return get(LogFormatConfig.class, is);
     }
 
     public boolean prefixEveryLine() {
         return prefixEveryLine;
     }
 
-    public FormatConfig setPrefixEveryLine(boolean b) {
+    public LogFormatConfig setPrefixEveryLine(boolean b) {
         prefixEveryLine = b;
         return this;
     }
@@ -95,8 +98,17 @@ public class FormatConfig extends Config {
         return includeStackTrace;
     }
 
-    public FormatConfig setIncludeStackTrace(boolean b) {
+    public LogFormatConfig setIncludeStackTrace(boolean b) {
         includeStackTrace = b;
+        return this;
+    }
+
+    public Level getStackTraceLevel() {
+        return  stackTraceLevel;
+    }
+
+    public LogFormatConfig setStackTraceLevel(Level level) {
+        stackTraceLevel = level;
         return this;
     }
 
@@ -104,7 +116,7 @@ public class FormatConfig extends Config {
         return includeProblemCodes;
     }
 
-    public FormatConfig setIncludeProblemCodes(boolean b) {
+    public LogFormatConfig setIncludeProblemCodes(boolean b) {
         includeProblemCodes = b;
         return this;
     }
@@ -113,7 +125,7 @@ public class FormatConfig extends Config {
         return incluedTime;
     }
 
-    public FormatConfig setIncludeTime(boolean b) {
+    public LogFormatConfig setIncludeTime(boolean b) {
         incluedTime = b;
         return this;
     }
@@ -122,7 +134,7 @@ public class FormatConfig extends Config {
         return incluedPid;
     }
 
-    public FormatConfig setIncluedPid(boolean b) {
+    public LogFormatConfig setIncluedPid(boolean b) {
         incluedPid = b;
         return this;
     }
@@ -131,7 +143,7 @@ public class FormatConfig extends Config {
         return incluedThread;
     }
 
-    public FormatConfig setIncluedThread(boolean b) {
+    public LogFormatConfig setIncluedThread(boolean b) {
         incluedThread = b;
         return this;
     }
@@ -140,7 +152,7 @@ public class FormatConfig extends Config {
         return incluedSource;
     }
 
-    public FormatConfig setIncluedSource(boolean b) {
+    public LogFormatConfig setIncluedSource(boolean b) {
         incluedSource = b;
         return this;
     }
@@ -149,7 +161,7 @@ public class FormatConfig extends Config {
         return useSimpleClassName;
     }
 
-    public FormatConfig setUseSimpleClassName(boolean b) {
+    public LogFormatConfig setUseSimpleClassName(boolean b) {
         useSimpleClassName = b;
         return this;
     }

@@ -29,7 +29,7 @@ public class VfsTestBase extends TestBase {
     protected void setUp() {
         if (Cascara.isInitialized()) {
             Cascara cascara = Cascara.get();
-            homePath = cascara.getHome();
+            homePath = cascara.getHomePath();
         } else {
             Path zipFile = vfsTempDir.resolve("cascara-vfs.zip");
             physicalHome = zipFile.toString() + "!" + VFS_HOME_DIR;

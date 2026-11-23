@@ -37,14 +37,13 @@ package io.github.qishr.cascara.common.diagnostic.log;
 import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.format.LogFormatter;
 import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
-import io.github.qishr.cascara.common.exception.UnimplementedMethodException;
 
 public class LineLogger implements  Logger {
     private LogFormatter formatter;
-    private FormatConfig formatConfig;
+    private LogFormatConfig formatConfig = LogFormatConfig.get();
 
     /// Consumes every line of diagnostic output as a String.
     protected Consumer<String> lineConsumer;
@@ -53,12 +52,6 @@ public class LineLogger implements  Logger {
         init();
     }
 
-    public LineLogger(FormatConfig formatConfig) {
-        this.formatConfig = formatConfig;
-        init();
-    }
-
-    // @SingletonInitializer
     private void init() {
         formatter = new PlainLogFormatter(formatConfig);
     }
@@ -77,19 +70,15 @@ public class LineLogger implements  Logger {
 
     @Override
     public LineLogger flush() {
-        throw new UnimplementedMethodException();
+        return this;
     }
-
-    //
-    //
-    //
 
     public LineLogger setFormatter(LogFormatter formatter) {
         this.formatter = formatter;
         return this;
     }
 
-    public LineLogger setFormatConfig(FormatConfig config) {
+    public LineLogger setFormatConfig(LogFormatConfig config) {
         formatter.setConfig(config);
         return this;
     }

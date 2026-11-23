@@ -56,7 +56,7 @@ public class ColoredLogFormatter extends PlainLogFormatter {
 
     protected boolean ansiColoringEnabled = true;
 
-    public ColoredLogFormatter(FormatConfig config) {
+    public ColoredLogFormatter(LogFormatConfig config) {
         super(config);
     }
 
@@ -89,8 +89,6 @@ public class ColoredLogFormatter extends PlainLogFormatter {
                 sb.append(level.getLogPrefix());
             }
             sb.append("] ");
-        } else {
-            sb.append("        ");
         }
 
         if (msgLineNumber == 0) {

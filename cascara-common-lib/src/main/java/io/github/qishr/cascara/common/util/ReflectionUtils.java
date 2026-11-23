@@ -35,6 +35,7 @@
 package io.github.qishr.cascara.common.util;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
@@ -81,9 +82,11 @@ public class ReflectionUtils {
 
     @SuppressWarnings("null")
     @NonNull
-    public static <C> C createInstance(Class<C> targetClass) throws InstantiationException {
+    public static <T> T createInstance(Class<T> targetClass) throws InstantiationException {
         try {
-            return targetClass.getConstructor().newInstance();
+            Constructor<T> constructor = targetClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
         } catch (Throwable t) {
         }
         try {

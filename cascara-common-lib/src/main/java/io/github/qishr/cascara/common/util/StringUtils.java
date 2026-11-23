@@ -36,9 +36,12 @@
 package io.github.qishr.cascara.common.util;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
+import io.github.qishr.cascara.common.exception.UnexpectedNullValueException;
 
 @Experimental
 public class StringUtils {
@@ -196,9 +199,48 @@ public class StringUtils {
         }
     }
 
+    public static List<String> parseStringList(String string) {
+        return parseStringList(string, ",");
+    }
+
+    public static List<String> parseStringList(String string, String delimiter) {
+        if (delimiter == null) {
+            throw new UnexpectedNullValueException("delimiter");
+        }
+        List<String> list = new ArrayList<>();
+        String[] items = string.split(delimiter);
+        for (int i = 0; i < items.length; i++) {
+            list.add(items[i].trim());
+        }
+        return list;
+    }
+
+    public static Set<String> parseStringSet(String string) {
+        return parseStringSet(string, ",");
+    }
+
+    public static Set<String> parseStringSet(String string, String delimiter) {
+        if (delimiter == null) {
+            throw new UnexpectedNullValueException("delimiter");
+        }
+        Set<String> list = new HashSet<>();
+        String[] items = string.split(delimiter);
+        for (int i = 0; i < items.length; i++) {
+            list.add(items[i].trim());
+        }
+        return list;
+    }
+
     public static List<Number> parseNumberList(String numbers) {
+        return parseNumberList(numbers, ",");
+    }
+
+    public static List<Number> parseNumberList(String numbers, String delimiter) {
+        if (delimiter == null) {
+            throw new UnexpectedNullValueException("delimiter");
+        }
         List<Number> list = new ArrayList<>();
-        String[] items = numbers.split(",");
+        String[] items = numbers.split(delimiter);
         for (int i = 0; i < items.length; i++) {
             String item = items[i];
             if (item.contains(".")) {

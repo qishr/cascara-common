@@ -66,7 +66,7 @@ class ModuleRegistrationTests extends ExecTestBase {
 
     @Test
     void loadsPreferredProviderFromVirtualHome() throws IOException {
-        Path splPropertiesPath = Cascara.get().getSplPropertiesPath();
+        Path splPropertiesPath = Cascara.get().getSPLPropertiesPath();
         Files.writeString(splPropertiesPath,
             "provider.io.github.qishr.cascara.common.io.ResourceProvider = " +
             "io.github.qishr.cascara.common.io.provider.FileResourceProvider\n"

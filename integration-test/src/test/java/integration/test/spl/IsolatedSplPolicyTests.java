@@ -20,11 +20,11 @@ import org.junit.jupiter.api.parallel.Isolated;
 import integration.test.exec.ExecTestBase;
 import integration.test.fixtures.payload.ReporterTestOutput;
 import integration.test.fixtures.payload.SplRegisterClassTestOutput;
-import integration.test.fixtures.task.ReporterConfigTask;
 import integration.test.fixtures.task.SplPolicyTestTask;
 import integration.test.fixtures.task.SplRegisterClassTestTask;
 import integration.test.fixtures.task.SplRegisterJarTestTask;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
@@ -59,7 +59,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @BeforeEach
     protected void setUp() {
         // We want this process's GlobalReporter to receive diagnostics, but not display them.
-        GlobalReporter.get().setSystemOutputEnabled(false);
+        GlobalReporter.get().setConsoleOutputEnabled(false);
 
         super.setUp();
     }
@@ -67,7 +67,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_reject_expiredCert() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
-            GlobalReporter.get().setSystemOutputEnabled(false);
+            GlobalReporter.get().setConsoleOutputEnabled(false);
 
             // 1. Issue an expired identity
             TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
@@ -86,7 +86,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             // Enable forwarding of reports from isolated JVM
             exec.setDiagnosticForwarding(true);
 
-            GlobalReporter.get().getFormatConfig().setIncludeTime(true);
+            LogFormatConfig.get().setIncludeTime(true);
 
             // Add the JAR to the module path
             String modulePath = getJvmModulePath() + File.pathSeparator + jarPath;
@@ -98,7 +98,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
                 .setSystemProperty(SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
                 .setSystemProperty(SP_CASCARA_SPL_VERIFY, "true")
                 .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
-                .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
+                .setSystemProperty(SP_CASCARA_REPORT_LEVEL_ + SplPolicyTestTask.class.getName(), "DEBUG")
                 .setTimeout(Duration.ofSeconds(120))
                 .setDebug(PROCESS_DEBUG_ENABLED)
             );
@@ -119,7 +119,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_accept_expiredCert() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
-            GlobalReporter.get().setSystemOutputEnabled(false);
+            GlobalReporter.get().setConsoleOutputEnabled(false);
 
             // 1. Issue an expired identity
             TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
@@ -148,7 +148,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
                 .setSystemProperty(SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, "true")
                 .setSystemProperty(SP_CASCARA_SPL_VERIFY, "false")
                 .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, "true")
-                .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
+                .setSystemProperty(SP_CASCARA_REPORT_LEVEL_ + SplPolicyTestTask.class.getName(), "DEBUG")
                 .setTimeout(Duration.ofSeconds(120))
                 .setDebug(PROCESS_DEBUG_ENABLED));
 
@@ -192,7 +192,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
                 .setSystemProperty(SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE, true)
                 .setSystemProperty(SP_CASCARA_SPL_VERIFY, true)
                 .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, true)
-                .setSystemProperty("cascara.report.level." + SplPolicyTestTask.class.getName(), "DEBUG")
+                .setSystemProperty(SP_CASCARA_REPORT_LEVEL_ + SplPolicyTestTask.class.getName(), "DEBUG")
                 .setTimeout(Duration.ofSeconds(120))
                 .setDebug(PROCESS_DEBUG_ENABLED)
             );
@@ -212,7 +212,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_reject_registerClass_unsignedJar() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
-            GlobalReporter.get().setSystemOutputEnabled(false);
+            GlobalReporter.get().setConsoleOutputEnabled(false);
 
             Path jarPath = cascara.getModulePath().resolve("provider-a.jar");
 
@@ -237,7 +237,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
                 .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, true)
                 .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED, true)
                 .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, true)
-                .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "DEBUG")
+                .setSystemProperty(SP_CASCARA_REPORT_LEVEL_ + SplRegisterClassTestTask.class.getName(), "DEBUG")
                 .setTimeout(Duration.ofSeconds(120))
                 .setDebug(PROCESS_DEBUG_ENABLED));
 
@@ -275,7 +275,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
                 .setSystemProperty(SP_CASCARA_SPL_POLICY_CHECK_EXPIRY, true)
                 .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED, true)
                 .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, true)
-                .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "DEBUG")
+                .setSystemProperty(SP_CASCARA_REPORT_LEVEL_ + SplRegisterClassTestTask.class.getName(), "DEBUG")
                 .setTimeout(Duration.ofSeconds(120))
                 .setSystemProperty(SP_CASCARA_SPL_BOOT_INFO_TO_CONSOLE, true)
                 .setDebug(PROCESS_DEBUG_ENABLED));
@@ -291,7 +291,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_reject_splWithPolicy_expiredCert() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
-            GlobalReporter.get().setSystemOutputEnabled(false);
+            GlobalReporter.get().setConsoleOutputEnabled(false);
 
             // 1. Issue an expired identity
             TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
@@ -331,11 +331,11 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
                 .setDiagnosticForwarding(true)
                 .setJvmConfig(
                     new JvmConfig()
-                        .setModuleName(ReporterConfigTask.class.getModule().getName())
+                        .setModuleName(SplRegisterJarTestTask.class.getModule().getName())
                         .setModulePath(modulePath)
                         .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
-                        .setSystemProperty("cascara.report.level." + SplRegisterJarTestTask.class.getName(), "debug")
-                        .setSystemProperty("cascara.report.level." + SplSignaturePolicy.class.getName(), "debug")
+                        .setSystemProperty(SP_CASCARA_REPORT_LEVEL_ + SplRegisterJarTestTask.class.getName(), "debug")
+                        .setSystemProperty(SP_CASCARA_REPORT_LEVEL_ + SplSignaturePolicy.class.getName(), "debug")
                         .setSystemProperty(SP_CASCARA_SPL_BOOT_INFO_TO_CONSOLE, true)
                         .setSystemProperty(SP_CASCARA_SPL_PROPERTIES, splPropertiesPath)
                         .setTimeout(Duration.ofSeconds(120))

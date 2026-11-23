@@ -75,12 +75,6 @@ public class Cascara extends Config {
     @ConfigSetting(name = "report.properties")
     private String reportPropertiesPath;
 
-    // These paths are determined based on cascaraPropertiesPath
-    // - content types path
-    // - schema path
-    // - shared path
-    // - module path
-
     private static final String ACTIVE_VERSION = "active-version";
     private static final String CASCARA_PROPERTIES = "cascara.properties";
     private static final String CONTENT_TYPES = "content-types.yaml";
@@ -91,7 +85,15 @@ public class Cascara extends Config {
     private static Path apiSpecifiedHome;
 
     // The path of the .cascara directory. May be on a physical or virtual file system.
-    private Path home;
+    private Path homePath;
+
+    // These paths are determined based on `home`
+    // - content types path
+    // - schema path
+    // - shared path
+    // - module path
+
+    private String activeVersionString;
 
     protected Cascara() {
         // The default physicalHome
@@ -103,13 +105,13 @@ public class Cascara extends Config {
     protected void init() {
         if (apiSpecifiedHome == null) {
             Path specifiedHome = getSpecifiedHomePath();
-            home = specifiedHome == null
+            homePath = specifiedHome == null
                 ? Path.of(physicalHome)
                 : specifiedHome;
-            Config.setFileSystem(home.getFileSystem());
+            Config.setFileSystem(homePath.getFileSystem());
         } else {
-            home = apiSpecifiedHome;
-            physicalHome = home.toString();
+            homePath = apiSpecifiedHome;
+            physicalHome = homePath.toString();
         }
 
         cascaraPropertiesPath = getSharedPath().resolve(CASCARA_PROPERTIES).toString();
@@ -123,7 +125,6 @@ public class Cascara extends Config {
     }
 
     public static Cascara get(Path homePath) {
-        // TODO: Should SecurityConfig and Splconfig have this check?
         if (initialized.compareAndSet(false, true)) {
             apiSpecifiedHome = homePath;
             return get(Cascara.class, null, null, homePath.getFileSystem());
@@ -137,19 +138,14 @@ public class Cascara extends Config {
         return get(Cascara.class);
     }
 
-    @Override
-    public Path getPropertiesPath() {
-        return getCascaraPropertiesPath();
-    }
-
     public Path getPath(String pathString) {
-        return home.getFileSystem().getPath(pathString);
+        return homePath.getFileSystem().getPath(pathString);
     }
 
     @SuppressWarnings("null")
     @NonNull
-    public Path getHome() {
-        return home;
+    public Path getHomePath() {
+        return homePath;
     }
 
     /// The path of the content types registry file.
@@ -163,7 +159,7 @@ public class Cascara extends Config {
     }
 
     public Path getSharedPath() {
-        return getHome().resolve("shared");
+        return getHomePath().resolve("shared");
     }
 
     /// The path of the properties file containing definitions of default or preferred service providers
@@ -171,7 +167,7 @@ public class Cascara extends Config {
     /// first  matching provider will be returned by SPL.
     @SuppressWarnings("null")
     @NonNull
-    public Path getSplPropertiesPath() {
+    public Path getSPLPropertiesPath() {
         // This should never be null
         if (splPropertiesPath == null ) {
             throw new UnexpectedNullValueException("splPropertiesPath");
@@ -179,7 +175,8 @@ public class Cascara extends Config {
         return getPath(splPropertiesPath);
     }
 
-    public Path getCascaraPropertiesPath() {
+    @Override
+    public Path getPropertiesPath() {
         // This should never be null
         if (cascaraPropertiesPath == null ) {
             throw new UnexpectedNullValueException("cascaraPropertiesPath");
@@ -193,9 +190,19 @@ public class Cascara extends Config {
         return getActiveVersionPath().resolve(MODULEPATH);
     }
 
+    @SuppressWarnings("null")
+    @NonNull
+    public Path getActiveVersionPath() {
+        String version = getActiveVersionString();
+        if (version == null) {
+            return getHomePath();
+        }
+        return getHomePath().resolve(version);
+    }
+
     public List<String> getInstalledVersions() {
         List<String> versions = new ArrayList<>();
-        Path homePath = getHome();
+        Path homePath = getHomePath();
 
         if (Files.isDirectory(homePath)) {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(homePath)) {
@@ -230,22 +237,15 @@ public class Cascara extends Config {
         }
     }
 
-    @SuppressWarnings("null")
-    @NonNull
-    public Path getActiveVersionPath() {
-        String version = getActiveVersionString();
-        if (version == null) {
-            return getHome();
-        }
-        return getHome().resolve(version);
-    }
-
-    // TODO: Cache this and only re-calculate if properties file is modified
     @Nullable
     public String getActiveVersionString() {
+        if (activeVersionString != null) {
+            return activeVersionString;
+        }
+
         List<String> installedVersions = getInstalledVersions();
 
-        Path path = getCascaraPropertiesPath();
+        Path path = getPropertiesPath();
 
         if (Files.isRegularFile(path)) {
             try {
@@ -253,6 +253,7 @@ public class Cascara extends Config {
                 String version = properties.get(ACTIVE_VERSION);
                 if (version != null && !version.isBlank()) {
                     if (installedVersions.contains(version)) {
+                        activeVersionString = version;
                         return version;
                     }
                 }
@@ -267,11 +268,12 @@ public class Cascara extends Config {
                 highestVersionString = versionString;
             }
         }
+        activeVersionString = highestVersionString;
         return highestVersionString;
     }
 
     public boolean isFileTimeSupported() {
-        return !getHome().toUri().getScheme().equals("jar");
+        return !getHomePath().toUri().getScheme().equals("jar");
     }
 
     //

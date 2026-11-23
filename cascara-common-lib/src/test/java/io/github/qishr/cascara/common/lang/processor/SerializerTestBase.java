@@ -36,24 +36,36 @@ package io.github.qishr.cascara.common.lang.processor;
 
 import org.junit.jupiter.api.BeforeEach;
 
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.report.ClassReporter;
 import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 
 public abstract class SerializerTestBase {
     protected ClassReporter reporter;
-    // protected Serializer<?> serializer;
 
     @BeforeEach
     protected void setUp() {
         reporter = Reporter.forClass(getClass());
-        // serializer = new SerializerImpl();
-        // serializer.setReporter(new LocalReporter());
     }
 
     protected Serializer<?> newSerializer() {
-        Serializer<?> serializer = new SerializerImpl();
-        serializer.setReporter(new LocalReporter());
+        Serializer<?> serializer = new TestGenericSerializer();
+
+        LogFormatConfig format = new LogFormatConfig()
+            .setIncludeStackTrace(true)
+            .setStackTraceLevel(Level.WARN)
+            .setPrefixEveryLine(false)
+            .setIncludeTime(false)
+            .setIncluedPid(false)
+            .setIncluedThread(false)
+            .setIncluedSource(false);
+
+        serializer.setReporter(
+            new LocalReporter().setFormatConfig(format)
+        );
+
         return serializer;
     }
 }

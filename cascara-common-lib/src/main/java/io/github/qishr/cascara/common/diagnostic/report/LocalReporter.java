@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 
 import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
+import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.log.ConsoleLogger;
 import io.github.qishr.cascara.common.diagnostic.log.LineLogger;
 
@@ -53,22 +53,40 @@ public class LocalReporter extends AbstractReporter<LocalReporter> implements Di
     /// Consumes ERROR, WARN, and INFO diagnostics.
     protected Consumer<Diagnostic> problemConsumer;
 
+    private boolean consoleOutputEnabled = ReporterConfig.get().isConsoleOutputEnabled();
+
     public LocalReporter() {
-        consoleLogger = new ConsoleLogger(formatConfig);
-        lineLogger = new LineLogger(formatConfig);
+        consoleLogger = new ConsoleLogger().setFormatConfig(formatConfig);
+        lineLogger = new LineLogger().setFormatConfig(formatConfig);
     }
 
     @Override
     protected LocalReporter self() { return this; }
 
+    public String getSource() {
+        return source;
+    }
+
+    public LocalReporter setSource(String source) {
+        this.source = source;
+        return this;
+    }
+
+    public LocalReporter setFormatConfig(LogFormatConfig config) {
+        consoleLogger.setFormatConfig(config);
+        lineLogger.setFormatConfig(config);
+        return this;
+    }
+
     @Override
-    protected FormatConfig defaultFormatConfig() {
-        return new FormatConfig()
-            .setPrefixEveryLine(false)
-            .setIncludeTime(false)
-            .setIncluedPid(false)
-            .setIncluedThread(false)
-            .setIncluedSource(false);
+    protected boolean isConsoleOutputEnabled() {
+        return consoleOutputEnabled;
+    }
+
+    /// Controls whether diagnostic logging to console is enabled.
+    public LocalReporter setConsoleOutputEnabled(boolean b) {
+        consoleOutputEnabled = b;
+        return this;
     }
 
     /// {@inheritDoc}
