@@ -23,19 +23,15 @@ dependencies {
 
     implementation('io.github.qishr:cascara-logging-log4j')
     implementation('io.github.qishr:cascara-lang-json')
+    implementation 'io.github.qishr:cascara-common-annotation'
 
     implementation project(':cascara-common-lib')
     testImplementation project(':cascara-test-common-junit')
-
     api(project(':integration-test-fixtures'))
 }
 
 tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:-missing', '-quiet')
-}
-
-tasks.named('test', Test) {
-    systemProperty 'java.net.preferIPv4Stack', 'true'
 }
 
 tasks.named('javadocJar') {
@@ -46,6 +42,11 @@ tasks.named('sourcesJar') {
     enabled = false
 }
 
+
+tasks.named('test', Test) {
+    systemProperty 'java.net.preferIPv4Stack', 'true'
+}
+
 tasks.named('compileTestJava', JavaCompile) {
     // TODO: This is specified for org.gradle.api.tasks.testing.Test
     // in the build conventions, but there is no compileTestJava
@@ -53,6 +54,12 @@ tasks.named('compileTestJava', JavaCompile) {
     modularity.inferModulePath = true
 }
 
+tasks.withType(Test).configureEach {
+    testLogging {
+        events = ['failed']
+        showStandardStreams = true
+    }
+}
 
 
 eclipse {

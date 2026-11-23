@@ -58,9 +58,6 @@ public final class ArtifactResolver {
         String queryingModule = null;
         StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
 
-        // System.out.println("\n---- getCaller ----");
-        // Thread.dumpStack();
-
         for (StackTraceElement frame : callStack) {
             String moduleName = frame.getModuleName();
             String className = frame.getClassName();
@@ -85,25 +82,13 @@ public final class ArtifactResolver {
     }
 
     public static Path getProjectPath() {
-        // StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
-        // StackTraceElement directCaller = callStack[2];
-        // String dcName = directCaller.getClassName();
-
-        // Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true, true);
         Pair<Class<?>,String> caller = getCaller(true, true);
         if (caller == null) {
             throw new UnexpectedNullReturnException("this", "getCaller");
         }
-        // Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true, false);
         Class<?> callingClass = caller.getL();
         return getProjectPath(callingClass);
     }
-
-    // static Path getProjectPathInternal() {
-    //     Pair<Class<?>,String> caller = ReflectionUtils.getCaller(true, false);
-    //     Class<?> callingClass = caller.getL();
-    //     return getProjectPath(callingClass);
-    // }
 
     public static Path getProjectPath(Class<?> callingClass) {
         try {
@@ -172,10 +157,8 @@ public final class ArtifactResolver {
 
     public static Path getModulepathDir(Class<?> hostClass)  {
         Path projectRoot = getProjectPath(hostClass);
-        // Path projectRoot = projectPath == null
-        //     ? getProjectPath()
-        //     : projectPath;
-        // 3. Locate build/libs inside the resolved module root
+
+        // Locate build/libs inside the resolved module root
         Path modulepathDir = projectRoot.resolve("build").resolve("modulepath");
         if (!Files.exists(modulepathDir)) {
             throw new IllegalStateException(
@@ -194,15 +177,9 @@ public final class ArtifactResolver {
 
     public static Path resolveJarPath(String mavenName, Class<?> hostClass) {
         try {
-            Path modulePath;
+            Path modulePath = getModulepathDir(hostClass);
 
-            // if (subprojectName == null) {
-                modulePath = getModulepathDir(hostClass);
-            // } else {
-            //     modulePath = getModulepathDir(getRootProjectPath().resolve(subprojectName));
-            // }
-
-            // 4. Find the main target JAR in build/libs
+            // Find the main target JAR in build/libs
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(modulePath, "*.jar")) {
                 for (Path jarPath : stream) {
                     String name = jarPath.getFileName().toString();

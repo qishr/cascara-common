@@ -1,5 +1,6 @@
 module singleton.demo {
     requires cascara.common;
+    requires cascara.common.annotation;
     requires integration.test.fixtures;
     exports com.example.singleton;
     opens com.example.singleton to cascara.common;

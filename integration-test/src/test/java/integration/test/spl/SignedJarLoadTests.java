@@ -6,18 +6,20 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import integration.test.exec.ExecTestBase;
 import integration.test.fixtures.TestService;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 
-public class SignedJarLoadTests extends SplTestBase {
+public class SignedJarLoadTests extends ExecTestBase {
     @Test
     void testLoadSignedJar() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
             .setPath(getTempPath().resolve("provider.jar"))
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addDependencies(getDependencies())
+            // .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();
 

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import integration.test.exec.ExecTestBase;
 import integration.test.jar.JarSignatureInvalidTests;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
@@ -15,7 +16,7 @@ import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
-public class SplPolicyTests extends SplTestBase {
+public class SplPolicyTests extends ExecTestBase {
     @Test
     void test_accept_splWithoutPolicy_expiredCert() throws Exception {
         // 1. Issue an expired identity
@@ -25,7 +26,8 @@ public class SplPolicyTests extends SplTestBase {
         Path jarPath = Cascara.get().getModulePath().resolve("provider-a.jar");
         SyntheticJar.forUseIn(JarSignatureInvalidTests.class)
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addDependencies(getDependencies())
+            // .addDependencies("cascara-common", "integration-test-fixtures")
             .sign(s -> s.withIdentity(expiredIdentity))
             .packageJar(jarPath);
 

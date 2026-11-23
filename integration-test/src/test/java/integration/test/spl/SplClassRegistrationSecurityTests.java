@@ -94,7 +94,8 @@ public class SplClassRegistrationSecurityTests extends ExecTestBase {
             SyntheticJar signedJar = SyntheticJar.forUseIn(SplClassRegistrationSecurityTests.class)
                     .setPath(getTempPath().resolve("signed-provider.jar"))
                     .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-                    .addDependencies("cascara-common", "integration-test-fixtures")
+                    .addDependencies(getDependencies())
+                    // .addDependencies("cascara-common", "integration-test-fixtures")
                     .sign(s -> s.withIdentity(identity))
                     .packageJar();
 

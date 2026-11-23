@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import integration.test.fixtures.task.ReporterConfigTask;
 import integration.test.fixtures.task.ShutdownTestTask;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
-import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.format.FormatConfig;
 import io.github.qishr.cascara.common.diagnostic.log.Logger;
 import io.github.qishr.cascara.common.diagnostic.log.TimeSequencedAggregatorLogger;

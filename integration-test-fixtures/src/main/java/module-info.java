@@ -36,6 +36,7 @@ module integration.test.fixtures {
     requires java.management;
 
     requires transitive cascara.common;
+    requires transitive cascara.common.annotation;
 
     exports integration.test.fixtures;
     opens integration.test.fixtures;

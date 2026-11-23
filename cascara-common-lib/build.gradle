@@ -20,10 +20,16 @@ dependencies {
 
     testImplementation 'org.mockito:mockito-core'
     testImplementation 'org.mockito:mockito-junit-jupiter'
+
+    api 'io.github.qishr:cascara-common-annotation'
 }
 
 tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:-missing', '-quiet')
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-Xlint:-module']
 }
 
 tasks.named('compileTestJava', JavaCompile) {
@@ -62,6 +68,8 @@ def addCascaraCommonTestOpens = { Test task ->
     }
 }
 
+def jarFileName = tasks.named('jar').get().archiveFile.get().asFile.name
+
 tasks.named('test', Test) {
     description = 'Runs tests in a JPMS modular environment (exploded classes).'
 
@@ -95,7 +103,9 @@ tasks.named('test', Test) {
             '--add-modules', 'org.junit.platform.launcher',
             '--add-reads', "${mainModuleName}=org.junit.jupiter.api",
             '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
-            '--add-opens', "java.base/java.lang=${mainModuleName}"
+            '--add-opens', "java.base/java.lang=${mainModuleName}",
+            '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+            '--add-opens', "java.base/java.util=${mainModuleName}"
         ])
     }
 }
@@ -113,13 +123,15 @@ tasks.register('testJarJPMS', Test) {
 
     modularity.inferModulePath = true
 
+    def mainJarName = tasks.named('jar').get().archiveFile.get().asFile.name
+
     testClassesDirs = project.sourceSets.test.output.classesDirs
 
     classpath = files(
         tasks.named('jar').flatMap { it.archiveFile },
         project.sourceSets.test.output,
-        configurations.testRuntimeClasspath.filter { File file ->
-            !file.name.contains("cascara-common")
+        configurations.testRuntimeClasspath.filter {
+            File file -> file.name != mainJarName
         }
     )
 
@@ -128,7 +140,7 @@ tasks.register('testJarJPMS', Test) {
     def testResourcesDir = sourceSets.test.output.resourcesDir.absolutePath
     def testOutputs = "${testClassesDir}${File.pathSeparator}${testResourcesDir}"
     def jarPath = tasks.named('jar').get().archiveFile.get().asFile.absolutePath
-    def runtimeLibs = configurations.testRuntimeClasspath.filter { !it.name.contains('cascara-common') }.asPath
+    def runtimeLibs = configurations.testRuntimeClasspath.filter { it.name != mainJarName }.asPath
     def runtimeClasspath = "${jarPath}${File.pathSeparator}${runtimeLibs}"
 
     doFirst {
@@ -141,7 +153,9 @@ tasks.register('testJarJPMS', Test) {
             '--add-modules', 'org.junit.platform.launcher',
             '--add-reads', "${mainModuleName}=org.junit.jupiter.api",
             '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
-            '--add-opens', "java.base/java.lang=${mainModuleName}"
+            '--add-opens', "java.base/java.lang=${mainModuleName}",
+            '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+            '--add-opens', "java.base/java.util=${mainModuleName}"
         ])
     }
 }
@@ -165,8 +179,8 @@ tasks.register('testWithoutJPMS', Test) {
         project.sourceSets.main.output.classesDirs,
         project.sourceSets.main.output.resourcesDir,
         project.sourceSets.test.output,
-        configurations.testRuntimeClasspath.filter { File file ->
-            !file.name.contains("cascara-common")
+        configurations.testRuntimeClasspath.filter {
+            File file -> file.name != jarFileName
         }
     )
 }
@@ -189,8 +203,11 @@ tasks.register('testJarWithoutJPMS', Test) {
     classpath = files(
         tasks.named('jar').flatMap { it.archiveFile },
         project.sourceSets.test.output,
-        configurations.testRuntimeClasspath.filter { File file ->
-            !file.name.contains("cascara-common")
+        // configurations.testRuntimeClasspath.filter { File file ->
+        //     !file.name.contains("cascara-common")
+        // }
+        configurations.testRuntimeClasspath.filter {
+            File file -> file.name != jarFileName
         }
     )
 }
@@ -203,7 +220,14 @@ tasks.named('check') {
 tasks.named('test', addCascaraCommonTestOpens)
 tasks.named('testJarJPMS', addCascaraCommonTestOpens)
 
-
+tasks.withType(Test).configureEach {
+    testLogging {
+        events = ['failed']
+        showStandardStreams = true
+    }
+    jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+            '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+}
 
 
 tasks.named('processResources', ProcessResources) { task ->

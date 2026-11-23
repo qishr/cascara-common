@@ -57,10 +57,11 @@ import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.trackable.tracker.ArrayChangeTracker;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
+import integration.test.exec.ExecTestBase;
 import integration.test.fixtures.DemoSingleton;
 import integration.test.fixtures.TestService;
 
-class ModuleRegistrationTests extends SplTestBase {
+class ModuleRegistrationTests extends ExecTestBase {
     private static final Reporter REPORTER = Reporter.forClass(ModuleRegistrationTests.class);
 
     @Test
@@ -99,7 +100,8 @@ class ModuleRegistrationTests extends SplTestBase {
             .setPath(Cascara.get().getModulePath().resolve("provider-a.jar"))
             .setMinCascaraVersion("0.10.0")
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addDependencies(getDependencies())
+            // .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();
 
@@ -145,7 +147,8 @@ class ModuleRegistrationTests extends SplTestBase {
             .setPath(Cascara.get().getModulePath().resolve("singleton.jar"))
             .setMinCascaraVersion("0.10.0")
             .addSources("code/singleton/module-info.txt", "code/singleton/DemoSingletonImpl.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addDependencies(getDependencies())
+            // .addDependencies("cascara-common", "integration-test-fixtures")
             .sign()
             .packageJar();
 

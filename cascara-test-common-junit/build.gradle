@@ -25,9 +25,18 @@ dependencies {
     implementation 'org.junit.platform:junit-platform-commons'
 
     api project(':cascara-common-lib')
+    implementation 'io.github.qishr:cascara-common-annotation'
 }
 
 
 tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:-missing', '-quiet')
+}
+
+
+tasks.withType(Test).configureEach {
+    testLogging {
+        events = ['failed']
+        showStandardStreams = true
+    }
 }

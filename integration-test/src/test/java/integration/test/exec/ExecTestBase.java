@@ -34,9 +34,13 @@ public class ExecTestBase extends TestBase {
         super.tearDown();
     }
 
+    protected List<String> getDependencies() {
+        return List.of("cascara-common", "cascara-common-annotation", "integration-test-fixtures");
+    }
+
     protected String getJvmModulePath() {
         Pair<String,String> mp = ArtifactResolver.buildModulePath(
-            List.of("cascara-common", "integration-test-fixtures", "cascara-lang-json"),
+            List.of("cascara-common", "cascara-common-annotation", "integration-test-fixtures", "cascara-lang-json"),
             ExecTestBase.class
         );
         String modulePath = mp.getL();

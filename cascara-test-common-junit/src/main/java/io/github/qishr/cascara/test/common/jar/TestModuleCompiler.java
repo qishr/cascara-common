@@ -39,11 +39,7 @@ public class TestModuleCompiler {
 
             List<String> options = new ArrayList<>();
 
-
-
             Pair<String,String> mp = ArtifactResolver.buildModulePath(testJar.dependencies, testJar.hostClass);
-
-
 
             String argModulePath = mp.getL();
             String argAddModules = mp.getR();
@@ -58,6 +54,13 @@ public class TestModuleCompiler {
                 options.add(argAddModules);
             }
 
+            if (REPORTER.getLevel().includes(Level.DEBUG)) {
+                REPORTER.debug("Compiler options:");
+                for (String s : options) {
+                    REPORTER.debug("  " + s);
+                }
+            }
+
             JavaCompiler.CompilationTask task = compiler.getTask(
                 null, fileManager, diagnostics, options, null, compilationUnits
             );
@@ -65,8 +68,7 @@ public class TestModuleCompiler {
             success = task.call();
             compiled = fileManager.getCompiledBytes();
         } catch (Exception e) {
-            // e.printStackTrace();
-            throw new RuntimeException("File manage exception: " + e.getMessage());
+            throw new TestJarException(e, GenericMessage.ERROR, "Compilation failed: " + e.getLocalizedMessage());
         }
 
         if (success) {
@@ -74,20 +76,14 @@ public class TestModuleCompiler {
         } else {
             REPORTER.error(GenericMessage.ERROR, "Compilation failed");
             ReportWriter writer = REPORTER.getWriter(Level.ERROR);
-            // StringBuilder sb = new StringBuilder("Compilation failed\n");
             if (!diagnostics.getDiagnostics().isEmpty()) {
                 writer.write(0,"Diagnostics:\n");
                 for (Diagnostic<?> d : diagnostics.getDiagnostics()) {
                     writer.write(2, d.toString() + "\n");
                 }
             }
-            // System.err.println(sb.toString());
             throw new TestJarException(GenericMessage.ERROR, "Compilation failed");
         }
-
-            // fileManager.close();
-
-            // return fileManager.getCompiledBytes();
     }
 
     private static class StringJavaFileObject extends SimpleJavaFileObject {

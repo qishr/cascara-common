@@ -17,7 +17,7 @@ public class ModulePackagerTest extends MetaTestBase {
             // .setMinCascaraVersion("0.14.0")
             .addSources(sourceCode())
             // .addSources("/java/Main.txt", "/java/module-info.txt")
-            .addDependencies("cascara-common", "cascara-test-common-junit")
+            .addDependencies("cascara-common", "cascara-common-annotation", "cascara-test-common-junit")
             .packageJar();
 
         // Check the JAR can be opened

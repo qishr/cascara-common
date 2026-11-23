@@ -37,10 +37,10 @@ module cascara.common {
     requires java.base;
     requires java.management;
     requires jdk.unsupported;
+    requires transitive cascara.common.annotation;
 
     uses io.github.qishr.cascara.common.service.ServiceProvider;
 
-    exports io.github.qishr.cascara.common.annotation;
     exports io.github.qishr.cascara.common.color;
     exports io.github.qishr.cascara.common.data;
     exports io.github.qishr.cascara.common.diagnostic;

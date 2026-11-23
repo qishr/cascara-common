@@ -146,6 +146,7 @@ public abstract class Config {
         return appliedSettings.asList().stream().map(e -> (Setting)e).toList();
     }
 
+    @SuppressWarnings("unchecked")
     protected void init() {
         ConfigNamespace ns = getClass().getAnnotation(ConfigNamespace.class);
         if (ns != null) {
@@ -154,7 +155,11 @@ public abstract class Config {
 
         ConfigExtends baseNs = getClass().getAnnotation(ConfigExtends.class);
         if (baseNs != null) {
-            baseClass = baseNs.value();
+            if (Config.class.isAssignableFrom(baseNs.value())) {
+                baseClass = (Class<? extends Config>) baseNs.value();
+            } else {
+                throw new IllegalArgumentException(baseNs.value().toString());
+            }
         }
 
         settings = new Properties(Setting.class);

@@ -4,6 +4,7 @@ module cascara.test.common.junit {
     requires transitive cascara.common;
     requires transitive org.junit.jupiter.api;
     requires org.junit.platform.commons;
+    requires cascara.common.annotation;
 
     exports io.github.qishr.cascara.test.common.jar;
     exports io.github.qishr.cascara.test.common.junit.base;

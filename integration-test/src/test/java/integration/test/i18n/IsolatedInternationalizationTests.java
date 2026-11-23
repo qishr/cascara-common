@@ -76,7 +76,8 @@ public class IsolatedInternationalizationTests extends ExecTestBase {
 
         SyntheticJar testJar = SyntheticJar.forUseIn(IsolatedInternationalizationTests.class)
             .setPath(getTempPath().resolve("provider.jar"))
-            .addDependencies("cascara-common")
+            .addDependencies(getDependencies())
+            // .addDependencies("cascara-common")
             .addSources("code/i18n/module-info.txt", "code/i18n/TestMessage.txt")
             .addResource("META-INF/es-ES.properties", """
                 meta.lang = es-ES

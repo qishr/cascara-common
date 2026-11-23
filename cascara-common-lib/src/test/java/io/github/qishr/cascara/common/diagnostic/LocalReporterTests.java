@@ -2,7 +2,6 @@ package io.github.qishr.cascara.common.diagnostic;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.reflect.InaccessibleObjectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -16,8 +15,9 @@ import io.github.qishr.cascara.common.diagnostic.report.LocalReporter;
 public class LocalReporterTests {
     @Test
     void test_reportHasLevel() {
-        LocalReporter reporter = new LocalReporter();
-        reporter.setLevel(Level.DEBUG);
+        LocalReporter reporter = new LocalReporter()
+            .setSystemOutputEnabled(false)
+            .setLevel(Level.DEBUG);
 
         AtomicBoolean lineHasLevel = new AtomicBoolean();
         reporter.setLineConsumer(line -> {
@@ -57,7 +57,9 @@ public class LocalReporterTests {
 
     @Test
     void testFormatter() {
-        LocalReporter reporter = new LocalReporter().setLevel(Level.DEBUG);
+        LocalReporter reporter = new LocalReporter()
+            .setSystemOutputEnabled(false)
+            .setLevel(Level.DEBUG);
 
         List<String> lines = new ArrayList<>();
         reporter.addDiagnosticConsumer(d -> {

@@ -8,13 +8,11 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.Isolated;
@@ -34,9 +32,7 @@ import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
 import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
-import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.service.ServiceException;
-import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.junit.extension.AssertNotReportedExtension;
 import io.github.qishr.cascara.test.common.junit.extension.AssertReportedExtension;
@@ -79,7 +75,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
             SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-                .addDependencies("cascara-common", "integration-test-fixtures")
+                .addDependencies(getDependencies())
+                // .addDependencies("cascara-common", "integration-test-fixtures")
                 .sign(s -> s.withIdentity(expiredIdentity))
                 .packageJar(jarPath);
 
@@ -123,6 +120,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_accept_expiredCert() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
+            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
             // 1. Issue an expired identity
             TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
@@ -131,7 +130,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
             SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-                .addDependencies("cascara-common", "integration-test-fixtures")
+                .addDependencies(getDependencies())
+                // .addDependencies("cascara-common", "integration-test-fixtures")
                 .sign(s -> s.withIdentity(expiredIdentity))
                 .packageJar(jarPath);
 
@@ -183,7 +183,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             Path jarPath = cascara.getModulePath().resolve("provider-a.jar");
             SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-                .addDependencies("cascara-common", "integration-test-fixtures")
+                .addDependencies(getDependencies())
+                // .addDependencies("cascara-common", "integration-test-fixtures")
                 .sign(s -> s.withIdentity(expiredIdentity))
                 .packageJar(jarPath);
 
@@ -229,7 +230,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
             SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-                .addDependencies("cascara-common", "integration-test-fixtures")
+                .addDependencies(getDependencies())
+                // .addDependencies("cascara-common", "integration-test-fixtures")
                 .packageJar(jarPath);
 
             // Add the JAR to the module path
@@ -272,7 +274,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
             SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-                .addDependencies("cascara-common", "integration-test-fixtures")
+                .addDependencies(getDependencies())
+                // .addDependencies("cascara-common", "integration-test-fixtures")
                 .packageJar(jarPath);
 
             // Add the JAR to the module path
@@ -322,7 +325,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
             Path jarPath = cascara.getModulePath().resolve("provider-a.jar");
             SyntheticJar.forUseIn(IsolatedSplPolicyTests.class)
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-                .addDependencies("cascara-common", "integration-test-fixtures")
+                .addDependencies(getDependencies())
+                // .addDependencies("cascara-common", "integration-test-fixtures")
                 .sign(s -> s.withIdentity(expiredIdentity))
                 .packageJar(jarPath);
 

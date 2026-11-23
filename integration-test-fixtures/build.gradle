@@ -19,6 +19,7 @@ repositories {
 dependencies {
     implementation(platform("io.github.qishr:cascara-meta-bom:$cascara_version"))
     implementation(project(':cascara-common-lib'))
+    implementation 'io.github.qishr:cascara-common-annotation'
 }
 
 tasks.withType(Javadoc).configureEach {

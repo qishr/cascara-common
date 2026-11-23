@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 
+import integration.test.exec.ExecTestBase;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
@@ -20,12 +21,11 @@ import io.github.qishr.cascara.common.security.cert.CertPathVerifier;
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
-import io.github.qishr.cascara.test.common.junit.base.TestBase;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
 @Isolated
-class CertPathValidationTests extends TestBase {
+class CertPathValidationTests extends ExecTestBase {
     private static final Reporter REPORTER = Reporter.forClass(CertPathValidationTests.class);
 
     private static TestCertificateAuthority rootCA;
@@ -87,7 +87,7 @@ class CertPathValidationTests extends TestBase {
         SyntheticJar jar = SyntheticJar.forUseIn(CertPathValidationTests.class)
             .setPath(getTempPath().resolve("expired-intermediate.jar"))
             .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-            .addDependencies("cascara-common", "integration-test-fixtures")
+            .addDependencies(getDependencies())
             .sign()
             .packageJar();
 
@@ -105,6 +105,8 @@ class CertPathValidationTests extends TestBase {
 
     @Test
     void test_pathLenConstraint_exceeded_rejected() throws Exception {
+        // GlobalReporter.globalInstance().setLevel(TestModuleCompiler.class, Level.DEBUG);
+
         // 1. Issue an unauthorized subordinate CA (violates CA basic constraints / pathLen)
         TestCertificateAuthority unauthorizedSubCa = rootCA.issueUnauthorizedSubCA("CN=Cascara Sub CA 1");
 
@@ -115,7 +117,8 @@ class CertPathValidationTests extends TestBase {
         SyntheticJar jar = SyntheticJar.forUseIn(CertPathValidationTests.class)
                 .setPath(getTempPath().resolve("pathlen-violation.jar"))
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-                .addDependencies("cascara-common", "integration-test-fixtures")
+                // .addDependencies("cascara-common", "integration-test-fixtures")
+                .addDependencies(getDependencies())
                 .sign(s -> s.withIdentity(identity))
                 .packageJar();
 
@@ -143,7 +146,8 @@ class CertPathValidationTests extends TestBase {
         SyntheticJar jar = SyntheticJar.forUseIn(CertPathValidationTests.class)
                 .setPath(getTempPath().resolve("expired-intermediate.jar"))
                 .addSources("code/providera/module-info.txt", "code/providera/ProviderA.txt")
-                .addDependencies("cascara-common", "integration-test-fixtures")
+                // .addDependencies("cascara-common", "integration-test-fixtures")
+                .addDependencies(getDependencies())
                 .sign(s -> s.withIdentity(expiredIdentity))
                 .packageJar();
 

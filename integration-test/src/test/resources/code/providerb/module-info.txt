@@ -1,5 +1,6 @@
 module provider.b {
     requires cascara.common;
+    requires cascara.common.annotation;
     requires integration.test.fixtures;
     exports com.example.providerb;
     opens com.example.providerb to cascara.common;
