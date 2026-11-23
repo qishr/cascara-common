@@ -45,7 +45,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class ClassPath extends AbstractClassFinder {
+import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
+import io.github.qishr.cascara.common.util.internal.AbstractClassFinder;
+
+public final class ClassPath extends AbstractClassFinder {
     // private static final Reporter REPORTER = GlobalReporter.forClass(ClassPath.class);
     private static final String PATHS = System.getProperty("java.class.path");
 
@@ -73,6 +76,18 @@ public class ClassPath extends AbstractClassFinder {
         this.excluded = excluded;
         this.virtualReferencePath = virtualReferencePath;
         loadClassPath(classPaths);
+    }
+
+    public Set<String> getClasses() {
+        return super.getClasses();
+    }
+
+    public boolean containsClass(String className) {
+        return super.containsClass(className);
+    }
+
+    public Set<DiscoveredModule> getDiscoveredModules() {
+        return super.getDiscoveredModules();
     }
 
     private void loadClassPath(Set<String> classPaths) {

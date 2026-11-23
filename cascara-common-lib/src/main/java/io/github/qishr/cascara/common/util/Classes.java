@@ -53,7 +53,7 @@ import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.annotation.NonNull;
 
 @Experimental
-public class Classes {
+public final class Classes {
 
     private static final Set<String> EXCLUDED = Set.of(
         "org.mockito.", "jdk.", "sun.", "com.sun.", "net.bytebuddy.",

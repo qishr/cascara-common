@@ -51,12 +51,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.github.qishr.cascara.common.annotation.Experimental;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.util.internal.AbstractClassFinder;
 
-@Experimental
-public class ModulePath extends AbstractClassFinder {
+public final class ModulePath extends AbstractClassFinder {
     private static final String PATHS = System.getProperty("jdk.module.path");
 
     public ModulePath(Reporter reporter) {
@@ -103,6 +102,18 @@ public class ModulePath extends AbstractClassFinder {
         this.excluded = excluded;
         this.virtualReferencePath = virtualReferencePath;
         loadModulePath(modulePaths);
+    }
+
+    public Set<String> getClasses() {
+        return super.getClasses();
+    }
+
+    public boolean containsClass(String className) {
+        return super.containsClass(className);
+    }
+
+    public Set<DiscoveredModule> getDiscoveredModules() {
+        return super.getDiscoveredModules();
     }
 
     public Set<String> getModuleNames() {

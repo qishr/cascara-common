@@ -46,7 +46,7 @@ import io.github.qishr.cascara.common.util.Config;
 
 @ConfigExtends(Cascara.class)
 @ConfigNamespace("cascara.sec")
-public class SecurityConfig extends Config {
+public final class SecurityConfig extends Config {
     @ConfigSetting(name = "trust-store")
     private Path trustStorePath;
 

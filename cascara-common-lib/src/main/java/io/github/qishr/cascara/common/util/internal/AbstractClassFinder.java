@@ -32,7 +32,7 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.util;
+package io.github.qishr.cascara.common.util.internal;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +54,7 @@ import io.github.qishr.cascara.common.annotation.Nullable;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
 import io.github.qishr.cascara.common.diagnostic.report.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
 
 public abstract class AbstractClassFinder {
@@ -106,35 +107,6 @@ public abstract class AbstractClassFinder {
                 reporter.warn(GenericMessage.WARN, "No classes found in JAR " + path);
                 return null;
             }
-            if (jarModuleName == null || jarModuleName.isEmpty()) {
-                reporter.warn(GenericMessage.WARN, "Scanning non-modular JAR: " + path);
-            } else {
-                reporter.warn(GenericMessage.WARN, "Scanning modular (" + jarModuleName + ") JAR: " + path);
-            }
-            // Set<String> classNames = new HashSet<>();
-            // for (String className : jarClassNames) {
-
-
-            //     if (className.equals("io.github.qishr.cascara.common.security.InvalidKeyException")) {
-            //         System.out.println("Debug");
-            //     }
-
-
-            //     if (!isExcluded(className)) {
-            //         if (!(reporter instanceof NoOpReporter)) {
-            //             reporter.debug("  Found class: " + className);
-            //         }
-
-            //         // addClassToModule(className, jarModuleName);
-            //         // classNames.add(className);
-
-            //         addClass(className); // ------------------------------------------------ 1
-            //     } else {
-            //         if (!(reporter instanceof NoOpReporter)) {
-            //             reporter.trace("  Class excluded: " + className);
-            //         }
-            //     }
-            // }
 
             // TODO: Scan class file. Without doing that we miss nested classes.
 
@@ -195,9 +167,8 @@ public abstract class AbstractClassFinder {
             }
         } catch (IllegalAccessError e) {
             error(e);
-        } catch (java.lang.NoClassDefFoundError e) {
+        } catch (java.lang.NoClassDefFoundError ignored) {
             // Don't report
-            // error(new LocalizableClassNotFoundException(e, className));
         } catch (Exception e) {
             error(e);
         }

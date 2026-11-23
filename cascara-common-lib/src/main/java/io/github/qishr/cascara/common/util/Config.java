@@ -225,7 +225,7 @@ public abstract class Config {
         for (Entry<String,ConfigField> entry : configFields.entrySet()) {
             ConfigField field = entry.getValue();
 
-            // TODO: Amend Property classso that this isn't so messy...
+            // TODO: Amend Property class so that this isn't so messy...
             // Setting setting = settings.getProperty(field.propName);
             Property<String> settingProp = settings.getProperty(field.propName);
             Setting setting = (Setting) settingProp;

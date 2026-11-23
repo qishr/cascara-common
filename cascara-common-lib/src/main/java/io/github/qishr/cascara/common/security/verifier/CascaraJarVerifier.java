@@ -82,7 +82,7 @@ import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.util.Pair;
 
-public class CascaraJarVerifier implements JarVerifier {
+public final class CascaraJarVerifier implements JarVerifier {
     private byte[] manifestBytes;
     private Map<String,byte[]> signatureFiles;
 

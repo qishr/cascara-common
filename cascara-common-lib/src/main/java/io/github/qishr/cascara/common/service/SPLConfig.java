@@ -47,7 +47,7 @@ import io.github.qishr.cascara.common.util.Config;
 
 @ConfigExtends(Cascara.class)
 @ConfigNamespace("cascara.spl")
-public class SPLConfig extends Config {
+public final class SPLConfig extends Config {
     @ConfigSetting()
     private boolean discover = true;
 
