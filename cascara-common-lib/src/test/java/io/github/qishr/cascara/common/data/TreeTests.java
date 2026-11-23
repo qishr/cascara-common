@@ -64,5 +64,7 @@ public class TreeTests {
         PrintWriter writer = new PrintWriter(System.out);
         tree.render(writer);
         writer.flush();
+
+        // TODO: assertions
     }
 }

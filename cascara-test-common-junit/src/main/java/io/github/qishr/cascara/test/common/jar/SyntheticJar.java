@@ -51,6 +51,10 @@ public class SyntheticJar {
         return signedBundle;
     }
 
+    public Map<String, byte[]> getClasses() {
+        return classes;
+    }
+
     public Path getPath() {
         return path;
     }

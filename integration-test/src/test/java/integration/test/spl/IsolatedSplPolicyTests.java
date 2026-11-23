@@ -67,6 +67,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_reject_expiredCert() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
+            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
             // 1. Issue an expired identity
             TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
@@ -109,7 +111,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
             debug(result);
 
-            System.out.println("Duration = " + result.getDuration());
+            // See the comment at the top of this class
+            // System.out.println("Duration = " + result.getDuration());
 
             assertTrue(result.getSystemErr().contains("CERTIFICATE_EXPIRED"));
             assertReported.warnContains("CERTIFICATE_EXPIRED");
@@ -224,7 +227,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_reject_registerClass_unsignedJar() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
-            GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
+            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+            // GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
 
             Path jarPath = cascara.getModulePath().resolve("provider-a.jar");
 
@@ -318,6 +322,8 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_reject_splWithPolicy_expiredCert() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
+            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+
             // 1. Issue an expired identity
             TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
 
