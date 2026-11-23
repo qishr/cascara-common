@@ -17,12 +17,12 @@ public class AbstractDiagnosticExtension implements BeforeTestExecutionCallback,
 
     @Override
     public void beforeTestExecution(ExtensionContext context) {
-        GlobalReporter.globalInstance().addDiagnosticConsumer(consumer);
+        GlobalReporter.get().addDiagnosticConsumer(consumer);
     }
 
     @Override
     public void afterTestExecution(ExtensionContext context) {
-        GlobalReporter.globalInstance().removeDiagnosticConsumer(consumer);
+        GlobalReporter.get().removeDiagnosticConsumer(consumer);
         diagnostics.clear();
     }
 }

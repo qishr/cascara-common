@@ -40,7 +40,7 @@ public class SplClassRegistrationSecurityTests extends ExecTestBase {
         super.setUp();
 
         // We want this process's GlobalReporter to receive diagnostics, but not display them.
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.get().setSystemOutputEnabled(false);
 
         System.setProperty(SP_CASCARA_SPL_VERIFY, "true");
     }

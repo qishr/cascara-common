@@ -58,7 +58,7 @@ public class JvmProcessTests extends ExecTestBase {
         Serializer<?> serializer = new ProcessorFactory().createSerializer("application/json");
         String json = serializer.toString("hello-isolated-world");
 
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.get().setSystemOutputEnabled(false);
 
         try (IpcServer ipcServer = new IpcServer()) {
             ipcServer.setDiagnosticForwarding(true)
@@ -83,7 +83,7 @@ public class JvmProcessTests extends ExecTestBase {
 
             ipcServer.close();
 
-            GlobalReporter.globalInstance().setSystemOutputEnabled(true);
+            GlobalReporter.get().setSystemOutputEnabled(true);
             debug(response);
 
             // Fetch diagnostics
@@ -110,7 +110,7 @@ public class JvmProcessTests extends ExecTestBase {
             Class<?> taskClass = GlobalReporterTestTask.class;
 
             GlobalReporter.forClass(SPL.class).setLevel(Level.DEBUG);
-            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+            GlobalReporter.get().setSystemOutputEnabled(false);
 
             JvmConfig config = new JvmConfig()
                 .setTimeout(Duration.ofHours(24))

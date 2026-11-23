@@ -56,7 +56,7 @@ public abstract class Localizer {
     // an infinite loop.
     private static List<Throwable> initializationErrors = new ArrayList<>();
 
-    public static Localizer instance() {
+    public static Localizer get() {
         if (INSTANCE == null) {
             INSTANCE = new NoOpLocalizer();
             isInitializing = true;

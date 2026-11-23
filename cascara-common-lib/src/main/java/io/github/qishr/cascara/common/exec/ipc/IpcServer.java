@@ -320,7 +320,7 @@ public class IpcServer implements AutoCloseable {
                             }
                         } else {
                             // This reports all forwarded diagnostics:
-                            GlobalReporter reporter = GlobalReporter.globalInstance();
+                            GlobalReporter reporter = GlobalReporter.get();
                             reporter.report(diagnostic);
                         }
                     }

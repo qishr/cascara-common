@@ -43,13 +43,13 @@ public class LocalizableSecurityException extends SecurityException implements L
     private final Object[] details;
 
     public LocalizableSecurityException(LocalizableMessage message, Object... details) {
-        super(Localizer.instance().formatException(message, details));
+        super(Localizer.get().formatException(message, details));
         this.localizableMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
     public LocalizableSecurityException(Throwable cause, LocalizableMessage message, Object... details) {
-        super(Localizer.instance().formatException(message, details), cause);
+        super(Localizer.get().formatException(message, details), cause);
         this.localizableMessage = message;
         this.details = details != null ? details : new Object[0];
     }
@@ -69,12 +69,12 @@ public class LocalizableSecurityException extends SecurityException implements L
     /// {@inheritDoc}
     @Override
     public String getLocalizedMessage() {
-        return Localizer.instance().format(localizableMessage, details);
+        return Localizer.get().format(localizableMessage, details);
     }
 
     /// {@inheritDoc}
     @Override
     public String getMessage() {
-        return Localizer.instance().formatException(localizableMessage, details);
+        return Localizer.get().formatException(localizableMessage, details);
     }
 }

@@ -39,8 +39,8 @@ public class JmxTests extends JmxTestBase {
     void test_JMX() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
             Configurator.setLevel("integration.test", org.apache.logging.log4j.Level.DEBUG);
-            GlobalReporter.globalInstance().addLogger(new Log4jLogger());
-            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+            GlobalReporter.get().addLogger(new Log4jLogger());
+            GlobalReporter.get().setSystemOutputEnabled(false);
 
             Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
             String json = serializer.toString("hello-isolated-world");

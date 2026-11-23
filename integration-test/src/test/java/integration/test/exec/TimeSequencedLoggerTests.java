@@ -29,7 +29,7 @@ public class TimeSequencedLoggerTests extends ExecTestBase {
     @Test
     void test_isolated_classReporter() throws Throwable {
         // We want this process's GlobalReporter to receive diagnostics, but not display them.
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.get().setSystemOutputEnabled(false);
 
         try (TestCascara cascara = new TestCascara()) {
             IsolatedExecutor exec = IsolatedExecutor.forTask(ShutdownTestTask.class, String.class)
@@ -75,8 +75,8 @@ public class TimeSequencedLoggerTests extends ExecTestBase {
              800
         );
 
-        GlobalReporter.globalInstance().addLogger(aggregator);
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.get().addLogger(aggregator);
+        GlobalReporter.get().setSystemOutputEnabled(false);
 
     }
 }

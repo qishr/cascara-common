@@ -44,13 +44,13 @@ public class LocalizableRuntimeException extends RuntimeException implements Loc
     private final Object[] details;
 
     public LocalizableRuntimeException(LocalizableMessage message, Object... details) {
-        super(Localizer.instance().format(message, details));
+        super(Localizer.get().format(message, details));
         this.localizableMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
     public LocalizableRuntimeException(Throwable cause, LocalizableMessage message, Object... details) {
-        super(Localizer.instance().format(message, details), cause);
+        super(Localizer.get().format(message, details), cause);
         this.localizableMessage = message;
         this.details = details != null ? details : new Object[0];
     }
@@ -73,12 +73,12 @@ public class LocalizableRuntimeException extends RuntimeException implements Loc
     /// {@inheritDoc}
     @Override
     public String getLocalizedMessage() {
-        return Localizer.instance().format(localizableMessage, details);
+        return Localizer.get().format(localizableMessage, details);
     }
 
     /// {@inheritDoc}
     @Override
     public String getMessage() {
-        return Localizer.instance().formatException(localizableMessage, details);
+        return Localizer.get().formatException(localizableMessage, details);
     }
 }

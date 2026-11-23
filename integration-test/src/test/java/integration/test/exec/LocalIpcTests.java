@@ -29,12 +29,12 @@ public class LocalIpcTests extends ExecTestBase {
 
             System.setProperty(IpcClient.PROP_IPC_SOCKET, ipcServer.getSocketPath().toString());
 
-            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+            GlobalReporter.get().setSystemOutputEnabled(false);
             ClassReporter reporter = Reporter.forClass(LocalIpcTests.class);
             reporter.setLevel(Level.DEBUG);
             reporter.debug("local");
 
-            GlobalReporter.globalInstance().closeIpc();
+            GlobalReporter.get().closeIpc();
 
             // ipcServer.close();
 

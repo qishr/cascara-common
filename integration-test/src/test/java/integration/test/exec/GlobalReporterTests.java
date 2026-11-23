@@ -27,7 +27,7 @@ public class GlobalReporterTests extends ExecTestBase {
 
     @Test
     void test_debugLevel() throws Throwable {
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.get().setSystemOutputEnabled(false);
 
         String classReportLevel = "cascara.report.level." + GlobalReporterTestTask.class.getName();
 
@@ -43,7 +43,7 @@ public class GlobalReporterTests extends ExecTestBase {
 
         Response<ReporterTestOutput> result = exec.run("debug-message", config);
 
-        GlobalReporter.globalInstance().setSystemOutputEnabled(true);
+        GlobalReporter.get().setSystemOutputEnabled(true);
         debug(result);
 
         ReporterTestOutput output = result.orElseThrow();

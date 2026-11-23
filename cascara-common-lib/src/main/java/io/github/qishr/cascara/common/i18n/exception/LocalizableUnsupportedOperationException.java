@@ -43,7 +43,7 @@ public class LocalizableUnsupportedOperationException extends UnsupportedOperati
     private final Object[] details = new Object[]{};
 
     public LocalizableUnsupportedOperationException(LocalizableMessage message) {
-        super(Localizer.instance().format(message));
+        super(Localizer.get().format(message));
         localizableMessage = message;
     }
 
@@ -62,12 +62,12 @@ public class LocalizableUnsupportedOperationException extends UnsupportedOperati
     /// {@inheritDoc}
     @Override
     public String getLocalizedMessage() {
-        return Localizer.instance().format(localizableMessage, details);
+        return Localizer.get().format(localizableMessage, details);
     }
 
     /// {@inheritDoc}
     @Override
     public String getMessage() {
-        return Localizer.instance().formatException(localizableMessage, details);
+        return Localizer.get().formatException(localizableMessage, details);
     }
 }

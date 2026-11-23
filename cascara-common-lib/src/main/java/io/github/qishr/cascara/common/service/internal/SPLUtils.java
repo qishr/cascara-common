@@ -68,7 +68,7 @@ public class SPLUtils {
             throw new ServiceException(ServiceMessage.NOT_A_SERVICE_PROVIDER, serviceType);
         }
 
-        SPLRoot rootLayer = SPLRoot.instance();
+        SPLRoot rootLayer = SPLRoot.get();
         List<ServiceMetadata> providers = rootLayer.findAllProviders((Class) serviceType);
 
         Class<T> providerClass;
@@ -245,7 +245,7 @@ public class SPLUtils {
     //
 
     private static ServiceMetadata getPreferredMeta(Class<?> serviceType, List<ServiceMetadata> providers) {
-        SPLRoot rootLayer = SPLRoot.instance();
+        SPLRoot rootLayer = SPLRoot.get();
         ServiceMetadata providerMeta = null;
         String preferredProviderName = rootLayer.getPreferredProviderClassName(serviceType);
         if (preferredProviderName != null) {

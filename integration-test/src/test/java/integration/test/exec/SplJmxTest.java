@@ -74,7 +74,7 @@ public class SplJmxTest extends JmxTestBase {
 
             boolean ipcDebug = false;
 
-            GlobalReporter.globalInstance().setStackTraceEnabled(true);
+            GlobalReporter.get().setStackTraceEnabled(true);
 
             Class<?> taskClass = JmxTestTask.class;
 
@@ -129,7 +129,7 @@ public class SplJmxTest extends JmxTestBase {
 
 
             AtomicBoolean sawUnload = new AtomicBoolean(false);
-            GlobalReporter.globalInstance().setLineConsumer(line -> {
+            GlobalReporter.get().setLineConsumer(line -> {
                 if (line.contains("unloaded: 1")) {
                     sawUnload.set(true);
                 }
@@ -182,15 +182,15 @@ public class SplJmxTest extends JmxTestBase {
             // TODO: Make this configurable at *TestBase level
             // Configurator.setLevel("integration.test", org.apache.logging.log4j.Level.DEBUG);
             TimeSequencedAggregatorLogger aggregator = new TimeSequencedAggregatorLogger(new Log4jLogger(), 800);
-            GlobalReporter.globalInstance().addLogger(aggregator);
-            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+            GlobalReporter.get().addLogger(aggregator);
+            GlobalReporter.get().setSystemOutputEnabled(false);
 
             Serializer<?> serializer = ProcessorFactory.system().createSerializer("application/json");
             String json = serializer.toString("hello-isolated-world");
 
             boolean ipcDebug = false;
 
-            GlobalReporter.globalInstance().setStackTraceEnabled(true);
+            GlobalReporter.get().setStackTraceEnabled(true);
 
             Class<?> taskClass = JmxTestTask.class;
 

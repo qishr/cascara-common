@@ -98,7 +98,7 @@ public class SPLRoot extends SPLBranch {
     /// On the initial call, the root layer will be configured.
     @SuppressWarnings("null")
     @NonNull
-    public static SPLRoot instance() {
+    public static SPLRoot get() {
         if (rootLayer == null) {
             rootLayer = new SPLRoot();
         }

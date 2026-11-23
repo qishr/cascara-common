@@ -12,7 +12,7 @@ public class MessageEnumTestTask extends AbstractExecutionTask<MessageEnumTestIn
     @Override
     public String run(MessageEnumTestInput input) throws Throwable {
 
-        Localizer localizer = Localizer.instance();
+        Localizer localizer = Localizer.get();
 
         // 1. Load the specified message enum
         Class<?> messageEnum = Class.forName(input.messageEnumFqcn);

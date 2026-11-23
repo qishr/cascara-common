@@ -71,12 +71,12 @@ public class LocalizableIllegalArgumentException extends IllegalArgumentExceptio
     /// {@inheritDoc}
     @Override
     public String getLocalizedMessage() {
-        return Localizer.instance().format(localizableMessage, details);
+        return Localizer.get().format(localizableMessage, details);
     }
 
     /// {@inheritDoc}
     @Override
     public String getMessage() {
-        return Localizer.instance().formatException(localizableMessage, details);
+        return Localizer.get().formatException(localizableMessage, details);
     }
 }

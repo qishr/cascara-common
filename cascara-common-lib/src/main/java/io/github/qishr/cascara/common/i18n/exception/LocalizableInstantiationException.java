@@ -43,7 +43,7 @@ public class LocalizableInstantiationException extends InstantiationException im
     private final DiagnosticMessage detailedMessage;
 
     public LocalizableInstantiationException(Throwable cause) {
-        super(Localizer.instance().formatException(DiagnosticMessage.forException(cause)));
+        super(Localizer.get().formatException(DiagnosticMessage.forException(cause)));
         this.cause = cause;
         this.detailedMessage = DiagnosticMessage.forException(cause);
     }
@@ -69,12 +69,12 @@ public class LocalizableInstantiationException extends InstantiationException im
     /// {@inheritDoc}
     @Override
     public String getLocalizedMessage() {
-        return Localizer.instance().format(detailedMessage);
+        return Localizer.get().format(detailedMessage);
     }
 
     /// {@inheritDoc}
     @Override
     public String getMessage() {
-        return Localizer.instance().formatException(detailedMessage);
+        return Localizer.get().formatException(detailedMessage);
     }
 }

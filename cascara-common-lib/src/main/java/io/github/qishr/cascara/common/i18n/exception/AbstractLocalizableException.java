@@ -44,13 +44,13 @@ public class AbstractLocalizableException extends Exception implements Localizab
     private final Object[] details;
 
     public AbstractLocalizableException(LocalizableMessage message, Object... details) {
-        super(Localizer.instance().format(message, details));
+        super(Localizer.get().format(message, details));
         this.localizableMessage = message;
         this.details = details != null ? details : new Object[0];
     }
 
     public AbstractLocalizableException(Throwable cause, LocalizableMessage message, Object... details) {
-        super(Localizer.instance().format(message, details));
+        super(Localizer.get().format(message, details));
         this.localizableMessage = message;
         this.details = details != null ? details : new Object[0];
     }
@@ -70,12 +70,12 @@ public class AbstractLocalizableException extends Exception implements Localizab
     /// Returns a localized, formatted error message.
     @Override
     public String getLocalizedMessage() {
-        return Localizer.instance().format(localizableMessage, details);
+        return Localizer.get().format(localizableMessage, details);
     }
 
     /// Returns a formatted error message, only localized if cascara.lang.localize-exceptions is set to true.
     @Override
     public String getMessage() {
-        return Localizer.instance().formatException(localizableMessage, details);
+        return Localizer.get().formatException(localizableMessage, details);
     }
 }

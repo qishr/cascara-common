@@ -86,9 +86,9 @@ public abstract class TestBase {
             e.printStackTrace();
         }
 
-        GlobalReporter.globalInstance().setSystemOutputEnabled(true);
-        GlobalReporter.globalInstance().setLineConsumer(null);
-        GlobalReporter.globalInstance()
+        GlobalReporter.get().setSystemOutputEnabled(true);
+        GlobalReporter.get().setLineConsumer(null);
+        GlobalReporter.get()
             .getFormatConfig()
                 .setIncludeTime(false)
                 .setIncluedPid(false)
@@ -99,7 +99,7 @@ public abstract class TestBase {
     @AfterEach
     protected void tearDown() throws IOException {
         // Do this here in case a test wants to set SPL level itself
-        GlobalReporter.globalInstance().setLevel(Level.INFO);
+        GlobalReporter.get().setLevel(Level.INFO);
 
         if (rootLayer != null && spl != null) {
             rootLayer.remove(spl.getName());

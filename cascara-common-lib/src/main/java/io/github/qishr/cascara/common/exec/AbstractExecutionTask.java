@@ -120,9 +120,9 @@ public abstract class AbstractExecutionTask<I, O> {
             // TODO: Make this configurable via -D
             // same for spl boot errors to system.err
 
-            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+            GlobalReporter.get().setSystemOutputEnabled(false);
 
-            GlobalReporter.globalInstance().setStackTraceEnabled(true);
+            GlobalReporter.get().setStackTraceEnabled(true);
 
             StringBuilder sb = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {

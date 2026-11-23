@@ -127,7 +127,7 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
     //
     //
 
-    public static GlobalReporter globalInstance() {
+    public static GlobalReporter get() {
         return globalInstance;
     }
 
@@ -160,7 +160,7 @@ public class GlobalReporter extends ClassReporter implements DiagnosticReporter 
                 serializer.registerTypeDescriptor(new LocalizableMessageDescriptor());
                 serializer.registerTypeDescriptor(new StackTraceElementSerializer());
 
-                if (globalInstance().serializer == null) {
+                if (get().serializer == null) {
                     globalInstance.serializer = serializer;
                 }
             }

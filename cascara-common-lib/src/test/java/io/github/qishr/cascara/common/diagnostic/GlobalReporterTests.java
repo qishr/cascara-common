@@ -26,15 +26,15 @@ import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 public class GlobalReporterTests {
     @BeforeEach
     void resetGlobalReporter() {
-        GlobalReporter.globalInstance().setLineConsumer(null);
-        GlobalReporter.globalInstance().setLevel(GlobalReporterTests.class.getName(), Level.INFO);
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.get().setLineConsumer(null);
+        GlobalReporter.get().setLevel(GlobalReporterTests.class.getName(), Level.INFO);
+        GlobalReporter.get().setSystemOutputEnabled(false);
     }
 
     @Test
     void test_reportHasClassNameAndMessage() {
         List<String> lines = new ArrayList<>();
-        GlobalReporter.globalInstance().setLineConsumer(line -> lines.add(line));
+        GlobalReporter.get().setLineConsumer(line -> lines.add(line));
 
         Reporter reporter = Reporter.forClass(GlobalReporterTests.class);
         reporter.info(GenericMessage.INFO, "foo");
@@ -48,7 +48,7 @@ public class GlobalReporterTests {
     @Test
     void test_debugReportDoesNotAppearAtInfoLevel() {
         List<String> lines = new ArrayList<>();
-        GlobalReporter.globalInstance().setLineConsumer(line -> lines.add(line));
+        GlobalReporter.get().setLineConsumer(line -> lines.add(line));
 
         Reporter reporter = Reporter.forClass(GlobalReporterTests.class);
         reporter.debug("foo");
@@ -68,7 +68,7 @@ public class GlobalReporterTests {
     @Test
     void test_setLocalLevelViaLocalInstance() {
         List<String> lines = new ArrayList<>();
-        GlobalReporter.globalInstance().setLineConsumer(line -> lines.add(line));
+        GlobalReporter.get().setLineConsumer(line -> lines.add(line));
 
         Reporter reporter = Reporter.forClass(GlobalReporterTests.class);
         reporter.setLevel(Level.DEBUG);
@@ -83,8 +83,8 @@ public class GlobalReporterTests {
     @Test
     void test_setLocalLevelViaGlobalInstance() {
         List<String> lines = new ArrayList<>();
-        GlobalReporter.globalInstance().setLevel(GlobalReporterTests.class.getName(), Level.DEBUG);
-        GlobalReporter.globalInstance().setLineConsumer(line -> lines.add(line));
+        GlobalReporter.get().setLevel(GlobalReporterTests.class.getName(), Level.DEBUG);
+        GlobalReporter.get().setLineConsumer(line -> lines.add(line));
 
         Reporter reporter = Reporter.forClass(GlobalReporterTests.class);
         reporter.debug("foo");
@@ -123,7 +123,7 @@ public class GlobalReporterTests {
     @Test
     void test_setLocalLevelViaSystemProperty() {
         List<String> lines = new ArrayList<>();
-        GlobalReporter.globalInstance().setLineConsumer(lines::add);
+        GlobalReporter.get().setLineConsumer(lines::add);
 
         String key = "cascara.report.level." + GlobalReporterTests.class.getName();
         System.setProperty(key, "DEBUG");
@@ -148,7 +148,7 @@ public class GlobalReporterTests {
         String key = "CASCARA_REPORT_LEVEL_" + GlobalReporterTests.class.getName().replace('.', '_').toUpperCase();
         setEnv(key, "DEBUG");
 
-        GlobalReporter.globalInstance().setLineConsumer(lines::add);
+        GlobalReporter.get().setLineConsumer(lines::add);
 
         try {
             // Execute test against reporter reading system properties

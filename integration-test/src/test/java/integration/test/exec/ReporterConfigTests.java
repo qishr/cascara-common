@@ -25,7 +25,7 @@ public class ReporterConfigTests extends ExecTestBase {
 
     @Test
     void test_classLevel_sysProp() throws Throwable {
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.get().setSystemOutputEnabled(false);
         IsolatedExecutor exec = IsolatedExecutor.forTask(ReporterConfigTask.class, String.class)
             .setDiagnosticForwarding(true)
             .setJvmConfig(
@@ -69,7 +69,7 @@ public class ReporterConfigTests extends ExecTestBase {
 
     @Test
     void test_classLevel_cascaraConfig() throws Throwable {
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.get().setSystemOutputEnabled(false);
         try (TestCascara cascara = new TestCascara()) {
             Path cascaraPropertiesPath = cascara.getSharedPath().resolve("cascara.properties");
             Files.writeString(cascaraPropertiesPath, """
@@ -94,7 +94,7 @@ public class ReporterConfigTests extends ExecTestBase {
 
     @Test
     void test_classLevel_reportConfig() throws Throwable {
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.get().setSystemOutputEnabled(false);
         try (TestCascara cascara = new TestCascara()) {
             Path reportPropertiesPath = cascara.getSharedPath().resolve("report.properties");
             Files.writeString(reportPropertiesPath, """

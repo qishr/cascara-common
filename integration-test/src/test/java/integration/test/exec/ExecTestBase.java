@@ -26,7 +26,7 @@ public class ExecTestBase extends TestBase {
     @BeforeEach
     protected void setUp() {
         super.setUp();
-        GlobalReporter.globalInstance().getFormatConfig().setIncluedPid(true);
+        GlobalReporter.get().getFormatConfig().setIncluedPid(true);
     }
 
     @AfterEach

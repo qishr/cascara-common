@@ -59,7 +59,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @BeforeEach
     protected void setUp() {
         // We want this process's GlobalReporter to receive diagnostics, but not display them.
-        GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+        GlobalReporter.get().setSystemOutputEnabled(false);
 
         super.setUp();
     }
@@ -67,7 +67,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_reject_expiredCert() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
-            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+            GlobalReporter.get().setSystemOutputEnabled(false);
 
             // 1. Issue an expired identity
             TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
@@ -89,7 +89,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
 
             // TODO: Remove this
             // exec.setIpcDebug(true);
-            GlobalReporter.globalInstance().getFormatConfig().setIncludeTime(true);
+            GlobalReporter.get().getFormatConfig().setIncludeTime(true);
 
             // Add the JAR to the module path
             String modulePath = getJvmModulePath() + File.pathSeparator + jarPath;
@@ -123,7 +123,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_accept_expiredCert() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
-            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+            GlobalReporter.get().setSystemOutputEnabled(false);
 
             // 1. Issue an expired identity
             TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");
@@ -227,7 +227,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_reject_registerClass_unsignedJar() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
-            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+            GlobalReporter.get().setSystemOutputEnabled(false);
             // GlobalReporter.forClass(IpcServer.class).setLevel(Level.DEBUG);
 
             Path jarPath = cascara.getModulePath().resolve("provider-a.jar");
@@ -322,7 +322,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
     @Test
     void test_reject_splWithPolicy_expiredCert() throws Throwable {
         try (TestCascara cascara = new TestCascara()) {
-            GlobalReporter.globalInstance().setSystemOutputEnabled(false);
+            GlobalReporter.get().setSystemOutputEnabled(false);
 
             // 1. Issue an expired identity
             TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");

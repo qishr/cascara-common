@@ -11,7 +11,7 @@ public class LocalizerTestTask extends AbstractExecutionTask<DetailedMessage, St
     @Override
     public String run(DetailedMessage dm) throws Throwable {
 
-        Localizer localizer = Localizer.instance();
+        Localizer localizer = Localizer.get();
 
         System.out.println("System locale: " + localizer.getSystemLocale());
         System.out.println("Active locale: " + localizer.getActiveLocale());

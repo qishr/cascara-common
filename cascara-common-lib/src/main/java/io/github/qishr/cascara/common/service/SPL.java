@@ -82,7 +82,7 @@ public interface SPL extends TreeNode<SPL> {
     /// Retrieves the root Service Provider Layer.
     @NonNull
     static SPL getRoot() {
-        return SPLRoot.instance();
+        return SPLRoot.get();
     }
 
     static boolean isBooting() {

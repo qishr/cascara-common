@@ -43,7 +43,7 @@ public class ClassReporter extends AbstractReporter<ClassReporter> {
 
     ClassReporter(String source) {
         this.source = source;
-        this.level = GlobalReporter.globalInstance().level;
+        this.level = GlobalReporter.get().level;
     }
 
     /// {@inheritDoc}
@@ -53,7 +53,7 @@ public class ClassReporter extends AbstractReporter<ClassReporter> {
     /// {@inheritDoc}
     @Override
     public ClassReporter setLevel(Level level) {
-        if (!GlobalReporter.globalInstance().allowApiOverride) {
+        if (!GlobalReporter.get().allowApiOverride) {
             throw new UnsupportedOperationException("This reporter does not allow setting its level via the API");
         }
         return setLevelInternal(level);
@@ -63,14 +63,14 @@ public class ClassReporter extends AbstractReporter<ClassReporter> {
     @Override
     public void report(Diagnostic diagnostic) {
         if (this.level.includes(diagnostic.getLevel())) {
-            GlobalReporter.globalInstance().report(diagnostic);
+            GlobalReporter.get().report(diagnostic);
         }
     }
 
     /// {@inheritDoc}
     @Override
     public boolean collectsProblems() {
-        return GlobalReporter.globalInstance().problemConsumer != null;
+        return GlobalReporter.get().problemConsumer != null;
     }
 
     ClassReporter setLevelInternal(Level level) {

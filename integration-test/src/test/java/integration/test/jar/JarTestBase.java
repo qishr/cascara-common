@@ -24,7 +24,7 @@ public abstract class JarTestBase extends TestBase {
 
     @AfterAll
     static void end() {
-        GlobalReporter.globalInstance()
+        GlobalReporter.get()
             .setLevel(Level.INFO);
     }
 

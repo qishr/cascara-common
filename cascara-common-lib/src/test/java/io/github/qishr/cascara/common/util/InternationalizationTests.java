@@ -21,17 +21,17 @@ import io.github.qishr.cascara.common.property.Properties;
 public class InternationalizationTests {
 
     private void loadFromResources(String languageTag) throws IOException {
-        Localizer.instance().registerTranslations(getClass(), "/" + languageTag + ".properties");
+        Localizer.get().registerTranslations(getClass(), "/" + languageTag + ".properties");
     }
 
     @BeforeEach
     void setUp() {
-        Localizer.instance().setActiveLanguage("en-US");
+        Localizer.get().setActiveLanguage("en-US");
     }
 
     @Test
     void test_translationConstructed() {
-        Localizer localizer = Localizer.instance();
+        Localizer localizer = Localizer.get();
 
         LocalizedMessages translation = new LocalizedMessages("en-US", "English");
         Map<String,Object> titleMap = new HashMap<>();
@@ -45,7 +45,7 @@ public class InternationalizationTests {
 
     @Test
     void test_translationFromProperties() {
-        Localizer localizer = Localizer.instance();
+        Localizer localizer = Localizer.get();
 
         Properties properties = new Properties()
             .set("meta.lang", "en-US")
@@ -61,7 +61,7 @@ public class InternationalizationTests {
 
     @Test
     void test_translationFromEnglishResources() throws IOException {
-        Localizer localizer = Localizer.instance();
+        Localizer localizer = Localizer.get();
 
         loadFromResources("en-US");
 
@@ -70,7 +70,7 @@ public class InternationalizationTests {
 
     @Test
     void test_translationFromArabicResources() throws IOException {
-        Localizer localizer = Localizer.instance();
+        Localizer localizer = Localizer.get();
 
         loadFromResources("ar-AE");
 
@@ -80,7 +80,7 @@ public class InternationalizationTests {
 
     @Test
     void test_translationFromMessageEnum() {
-        Localizer localizer = Localizer.instance();
+        Localizer localizer = Localizer.get();
 
         DetailedMessage message = new DetailedMessage(HttpMessage.NOT_FOUND, "nonexistentfile");
 
@@ -89,7 +89,7 @@ public class InternationalizationTests {
 
     @Test
     void test_messageEnumFallbackToDefaultLanguage() throws IOException {
-        Localizer localizer = Localizer.instance();
+        Localizer localizer = Localizer.get();
 
         DetailedMessage message = new DetailedMessage(InetMessage.CONNECTION_REFUSED, "example.com");
 
@@ -99,7 +99,7 @@ public class InternationalizationTests {
 
     @Test
     void test_resourceFileFallbackToDefaultLanguage() throws IOException {
-        Localizer localizer = Localizer.instance();
+        Localizer localizer = Localizer.get();
 
         loadFromResources("en-US");
         loadFromResources("fr-FR");
@@ -114,7 +114,7 @@ public class InternationalizationTests {
     /// Resource file overrides default Enum message
     @Test
     void test_resourceFileOverridesEnumMessage() throws IOException {
-        Localizer localizer = Localizer.instance();
+        Localizer localizer = Localizer.get();
 
         DetailedMessage message = new DetailedMessage(InetMessage.CONNECTION_REFUSED, "example.com");
 
@@ -129,7 +129,7 @@ public class InternationalizationTests {
 
     @Test
     void test_acceptSetLanguageWithNoTranslations() throws IOException {
-        Localizer localizer = Localizer.instance();
+        Localizer localizer = Localizer.get();
 
         // There are no translations for Trinidad and Tobago at the moment.
         localizer.setActiveLanguage("en-TT");
