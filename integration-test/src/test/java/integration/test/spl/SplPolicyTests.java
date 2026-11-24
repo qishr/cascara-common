@@ -5,19 +5,21 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import java.nio.file.Path;
 import java.util.Set;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import integration.test.exec.ExecTestBase;
 import integration.test.jar.JarSignatureInvalidTests;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
+import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.service.SPL;
-import io.github.qishr.cascara.common.service.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
 
 public class SplPolicyTests extends ExecTestBase {
     @Test
+    @Tag("requires-jpms")
     void test_accept_splWithoutPolicy_expiredCert() throws Exception {
         // 1. Issue an expired identity
         TestSigningIdentity expiredIdentity = rootCA.issueExpiredIdentity("expired-module");

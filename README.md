@@ -13,50 +13,54 @@
 ### All Tests
 
 ```
-./gradlew -x javadoc :cascara-common-lib:check :integration-test:test
+./gradlew -x javadoc :cascara-common-lib:check :integration-test:check
 ```
 
-### All Unit Tests
+### Unit Tests
+
+Unit tests run using class files on exploded class path or moule path.
+
+#### All Unit Tests
 
 ```
 ./gradlew -x javadoc :cascara-common-lib:check
 ```
 
-### Modular Unit Tests
-
-#### Class Files in JPMS Environment
+#### Unit Tests in JPMS Environment
 
 ```
-./gradlew -x javadoc :cascara-common-lib:test --tests "*EnvironmentAwareTests*" --rerun-tasks
+./gradlew -x javadoc :cascara-common-lib:test
 ```
 
-#### JAR File in JPMS Environment
+#### Unit Tests in non-JPMS Environment
 
 ```
-./gradlew -x javadoc -x test :cascara-common-lib:testJarJPMS --tests "*EnvironmentAwareTests*" --rerun-tasks
+./gradlew -x javadoc -x test :cascara-common-lib:testWithoutJPMS
 ```
 
-### Non-Modular Unit Tests
+### Integration Tests
 
-#### Class Files in non-JPMS Environment
+Integration tests run using JAR files on the class path or module path.
 
-```
-./gradlew -x javadoc -x test :cascara-common-lib:testWithoutJPMS --tests "*EnvironmentAwareTests*" --rerun-tasks
-```
-
-#### JAR File in non-JPMS Environment
+#### All Integration Tests
 
 ```
- ./gradlew -x javadoc -x test :cascara-common-lib:testJarWithoutJPMS --tests "*EnvironmentAwareTests*" --rerun-tasks
- ```
-
-### All Integration Tests
-
-```
- ./gradlew :integration-test:test
+ ./gradlew :integration-test:check
 ```
 
-Specific test
+#### Integration Tests in JPMS Environment
+
+```
+./gradlew -x javadoc :integration-test:test
+```
+
+#### Integration Tests in non-JPMS Environment
+
+```
+ ./gradlew -x javadoc -x test :integration-test:testWithoutJPMS
+```
+
+### Specific test
 
 ```
 ./gradlew :integration-test:test --tests "*test_subclassDeserializationSameFields"

@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 
-import io.github.qishr.cascara.common.service.SPLSignaturePolicy;
+import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.util.Classes;
 
 @Isolated

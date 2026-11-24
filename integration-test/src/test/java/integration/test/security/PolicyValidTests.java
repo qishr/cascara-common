@@ -10,8 +10,8 @@ import java.util.jar.JarEntry;
 import org.junit.jupiter.api.Test;
 
 import integration.test.jar.JarTestBase;
+import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
-import io.github.qishr.cascara.common.service.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;

@@ -14,8 +14,8 @@ import org.junit.jupiter.api.parallel.Isolated;
 
 import integration.test.exec.ExecTestBase;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
+import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
-import io.github.qishr.cascara.common.service.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.security.cert.CertPathValidationResult;
 import io.github.qishr.cascara.common.security.cert.CertPathVerifier;

@@ -32,7 +32,7 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.service;
+package io.github.qishr.cascara.common.security.policy;
 
 import java.io.IOException;
 import java.lang.reflect.Proxy;
@@ -64,8 +64,6 @@ import io.github.qishr.cascara.common.security.cert.CertPathValidationResult;
 import io.github.qishr.cascara.common.security.cert.CertPathVerifier;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.security.exception.SignatureException;
-import io.github.qishr.cascara.common.security.policy.SignaturePolicy;
-import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.util.JarFile;
 
 @Experimental

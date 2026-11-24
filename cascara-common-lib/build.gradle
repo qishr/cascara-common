@@ -110,56 +110,6 @@ tasks.named('test', Test) {
     }
 }
 
-tasks.register('testJarJPMS', Test) {
-    description = 'Runs tests against the packaged JAR in a JPMS modular environment.'
-    group = 'verification'
-
-    dependsOn tasks.named('jar'), tasks.named('compileTestJava'), tasks.named('processTestResources')
-
-    useJUnitPlatform {
-        includeTags 'requires-jar'
-        excludeTags 'no-jar'
-    }
-
-    modularity.inferModulePath = true
-
-    def mainJarName = tasks.named('jar').get().archiveFile.get().asFile.name
-
-    testClassesDirs = project.sourceSets.test.output.classesDirs
-
-    classpath = files(
-        tasks.named('jar').flatMap { it.archiveFile },
-        project.sourceSets.test.output,
-        configurations.testRuntimeClasspath.filter {
-            File file -> file.name != mainJarName
-        }
-    )
-
-    // Capture source set output paths lazily during configuration time
-    def testClassesDir = sourceSets.test.output.classesDirs.asPath
-    def testResourcesDir = sourceSets.test.output.resourcesDir.absolutePath
-    def testOutputs = "${testClassesDir}${File.pathSeparator}${testResourcesDir}"
-    def jarPath = tasks.named('jar').get().archiveFile.get().asFile.absolutePath
-    def runtimeLibs = configurations.testRuntimeClasspath.filter { it.name != mainJarName }.asPath
-    def runtimeClasspath = "${jarPath}${File.pathSeparator}${runtimeLibs}"
-
-    doFirst {
-        def mainModuleName = 'cascara.common'
-        jvmArgs([
-            '--module-path', "${runtimeClasspath}",
-            '--add-modules', mainModuleName,
-            '--patch-module', "${mainModuleName}=${testOutputs}",
-            '--add-reads', "${mainModuleName}=ALL-UNNAMED",
-            '--add-modules', 'org.junit.platform.launcher',
-            '--add-reads', "${mainModuleName}=org.junit.jupiter.api",
-            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
-            '--add-opens', "java.base/java.lang=${mainModuleName}",
-            '--add-opens', 'java.base/java.util=ALL-UNNAMED',
-            '--add-opens', "java.base/java.util=${mainModuleName}"
-        ])
-    }
-}
-
 tasks.register('testWithoutJPMS', Test) {
     description = 'Runs tests in a non-modular classpath environment (exploded classes only).'
     group = 'verification'
@@ -185,40 +135,14 @@ tasks.register('testWithoutJPMS', Test) {
     )
 }
 
-tasks.register('testJarWithoutJPMS', Test) {
-    description = 'Runs tests against the packaged JAR on a non-modular flat classpath.'
-    group = 'verification'
-
-    dependsOn tasks.named('jar'), tasks.named('compileTestJava'), tasks.named('processTestResources')
-
-    useJUnitPlatform {
-        includeTags 'requires-jar'
-        excludeTags 'no-jar'
-    }
-
-    modularity.inferModulePath = false
-
-    testClassesDirs = project.sourceSets.test.output.classesDirs
-
-    classpath = files(
-        tasks.named('jar').flatMap { it.archiveFile },
-        project.sourceSets.test.output,
-        // configurations.testRuntimeClasspath.filter { File file ->
-        //     !file.name.contains("cascara-common")
-        // }
-        configurations.testRuntimeClasspath.filter {
-            File file -> file.name != jarFileName
-        }
-    )
-}
-
 // Ensure running `gradle check` triggers all test modes
 tasks.named('check') {
-    dependsOn tasks.named('test'), tasks.named('testJarJPMS'), tasks.named('testWithoutJPMS'), tasks.named('testJarWithoutJPMS')
+    // dependsOn tasks.named('test'), tasks.named('testJarJPMS'), tasks.named('testWithoutJPMS'), tasks.named('testJarWithoutJPMS')
+    dependsOn tasks.named('test'), tasks.named('testWithoutJPMS')
 }
 
 tasks.named('test', addCascaraCommonTestOpens)
-tasks.named('testJarJPMS', addCascaraCommonTestOpens)
+// tasks.named('testJarJPMS', addCascaraCommonTestOpens)
 
 tasks.withType(Test).configureEach {
     testLogging {

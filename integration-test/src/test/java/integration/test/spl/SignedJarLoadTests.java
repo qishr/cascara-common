@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import integration.test.exec.ExecTestBase;
@@ -14,6 +15,7 @@ import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 
 public class SignedJarLoadTests extends ExecTestBase {
     @Test
+    @Tag("requires-jpms")
     void testLoadSignedJar() throws Exception {
         SyntheticJar testJar = SyntheticJar.forUseIn(getClass())
             .setPath(getTempPath().resolve("provider.jar"))

@@ -12,23 +12,6 @@ import io.github.qishr.cascara.common.security.asn1.encodingrules.ASN1Encoder;
 import io.github.qishr.cascara.common.security.asn1.types.ASN1Tag;
 
 public final class ASN1UTCTime extends ASN1String<byte[]> {
-
-    // public static final ASN1Tag<ASN1UTCTime> TAG =
-    //     ASN1Tag.register(
-    //         ASN1TagClass.UNIVERSAL,
-    //         ASN1Encoding.PRIMITIVE,
-    //         23,
-    //         Parser::new,
-    //         Serializer::new
-    //     );
-
-    // public ASN1UTCTime(String value) {
-    //     super(TAG, value);
-    // }
-
-
-
-
     public ASN1UTCTime(byte[] bytes) {
         super(ASN1Tag.UTC_TIME, bytes);
     }

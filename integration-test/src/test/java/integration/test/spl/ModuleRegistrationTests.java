@@ -45,6 +45,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
@@ -85,6 +86,7 @@ class ModuleRegistrationTests extends ExecTestBase {
     }
 
     @Test
+    @Tag("requires-jpms")
     void test_loadingAndUnloading() throws IOException {
         // Create a layer
         SPL layer = spl.create("testLayer");
@@ -130,6 +132,7 @@ class ModuleRegistrationTests extends ExecTestBase {
     }
 
     @Test
+    @Tag("requires-jpms")
     void neoSingletonLifecycle() throws IOException {
 
         // Track reactive changes

@@ -36,13 +36,16 @@ package io.github.qishr.cascara.common.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.module.ModuleDescriptor;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.github.qishr.cascara.common.util.ModulePath.DiscoveredModule;
@@ -90,7 +93,46 @@ public final class ClassPath extends AbstractClassFinder {
         return super.getDiscoveredModules();
     }
 
+
+    public Set<String> getModuleNames() {
+        return discoveredModules.keySet()
+            .stream()
+            .filter(s -> !s.equals("UNNAMED"))
+            .collect(Collectors.toSet());
+    }
+
+    public ModuleDescriptor getDescriptor(String moduleName) {
+        return descriptors.get(moduleName);
+    }
+
+    public Path getPathForModule(String moduleName) {
+        DiscoveredModule mod;
+        if (moduleName == null) {
+            mod = discoveredModules.get(DiscoveredModule.UNNAMED);
+        } else {
+            mod = discoveredModules.get(moduleName);
+        }
+        if (mod == null) {
+            throw new IllegalArgumentException("No module named " + moduleName);
+        }
+        return mod.getJarPath();
+    }
+
+    public String getModuleForClass(String className) {
+        return classToModule.get(className);
+    }
+
+    public boolean containsModule(String moduleName) {
+        return discoveredModules.keySet().contains(moduleName);
+    }
+
+    //
+    // Private Methods
+    //
+
     private void loadClassPath(Set<String> classPaths) {
+        classToModule = new HashMap<>();
+
         if (classPaths == null || classPaths.isEmpty()) {
             classPaths = new HashSet<>();
             if (PATHS != null) {

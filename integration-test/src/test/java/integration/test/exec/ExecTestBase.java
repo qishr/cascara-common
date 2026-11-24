@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.Isolated;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
@@ -19,6 +20,7 @@ import io.github.qishr.cascara.test.common.junit.base.TestBase;
 import io.github.qishr.cascara.test.common.util.ArtifactResolver;
 
 @Isolated
+@Tag("isolated-executor")
 public class ExecTestBase extends TestBase {
     protected static final boolean TEST_DEBUG_ENABLED = false;
     protected static final boolean PROCESS_DEBUG_ENABLED = false;

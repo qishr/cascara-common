@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -55,21 +56,10 @@ import io.github.qishr.cascara.common.type.TypeConfig;
 
 @Experimental
 public final class Classes {
-
-    // TODO: Have TypeConfig control this...
-
-    // private static final Set<String> EXCLUDED = Set.of(
-    //     "org.mockito.", "jdk.", "sun.", "com.sun.", "net.bytebuddy.",
-    //     "worker.org.gradle.", "org.objenesis.", "org.opentest4j.",
-    //     "org.jcp.xml.dsig.internal.", "org.junit",
-    //     "com.apple", "apple.laf", "apple.security",
-    //     "java.awt.", "javax.swing."
-    // );
-
     private static final Set<String> EXCLUDED = TypeConfig.get().getIgnore();
 
     private static final AtomicReference<Set<String>> CLASSES_REF = new AtomicReference<>();
-    private static Map<String,Path> classLocations = new HashMap<>();
+    private static Map<String,Path> classLocations = new ConcurrentHashMap<>();
     private static ModulePath modulePath;
     private static ClassPath classPath;
     private static Instant timestamp = Instant.now();
@@ -139,7 +129,7 @@ public final class Classes {
         return false;
     }
 
-    private static void scanSystemModules(Set<String> classes) {
+    private static void scanSystemModules(Set<String> classNames) {
         try {
             FileSystem jrt = FileSystems.getFileSystem(URI.create("jrt:/"));
             Files.walk(jrt.getPath("/modules")).forEach(p -> {
@@ -152,7 +142,7 @@ public final class Classes {
                             String clsFileName = p.getFileName().toString();
                             if (!clsFileName.equals("module-info.class")) {
                                 String clsName = pkgName + "." + clsFileName.substring(0, clsFileName.length() - 6);
-                                classes.add(clsName);
+                                classNames.add(clsName);
                             }
                         }
                     }
@@ -164,20 +154,32 @@ public final class Classes {
         }
     }
 
-    private static void scanModulePath(Set<String> classes) {
+    private static void scanModulePath(Set<String> classNames) {
         Set<String> mpClasses = modulePath.getClasses();
-        classes.addAll(mpClasses);
+        classNames.addAll(mpClasses);
         for (String name : mpClasses) {
             String moduleName = modulePath.getModuleForClass(name);
             if (moduleName != null) {
                 Path jarPath = modulePath.getPathForModule(moduleName);
-                classLocations.put(name, jarPath);
+                if (jarPath != null) {
+                    classLocations.computeIfAbsent(name, n -> jarPath);
+                }
             }
         }
     }
 
     private static void scanClassPath(Set<String> classNames) {
-        classNames.addAll(classPath.getClasses());
+        Set<String> cpClasses = classPath.getClasses();
+        classNames.addAll(cpClasses);
+        for (String name : cpClasses) {
+            String moduleName = classPath.getModuleForClass(name);
+            if (moduleName != null) {
+                Path jarPath = classPath.getPathForModule(moduleName);
+                if (jarPath != null) {
+                    classLocations.computeIfAbsent(name, n -> jarPath);
+                }
+            }
+        }
     }
 
     public static class Annotated {
@@ -240,14 +242,5 @@ public final class Classes {
         if (tc != ClassNotFoundException.class && tc != NoClassDefFoundError.class) {
             System.err.println(className + ": " + t.getClass().getSimpleName() + ": " + t.getMessage());
         }
-
-        // Exceptions handled so far:
-        // java.lang.Error
-        // java.lang.InternalError
-        // java.lang.UnsatisfiedLinkError
-        // java.lang.ClassNotFoundException
-        // java.lang.ExceptionInInitializerError
-        // java.lang.NoClassDefFoundError
-        // java.lang.IllegalAccessError
     }
 }
