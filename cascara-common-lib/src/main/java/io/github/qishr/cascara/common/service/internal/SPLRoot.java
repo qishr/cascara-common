@@ -49,11 +49,11 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.diagnostic.format.LogFormatConfig;
 import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.ReporterConfig;
-import io.github.qishr.cascara.common.i18n.LangConfig;
-import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.i18n.I18nConfig;
+import io.github.qishr.cascara.common.security.exception.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SignaturePolicy;
-import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.SPL;
+import io.github.qishr.cascara.common.service.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.Config.Setting;
@@ -235,7 +235,7 @@ public class SPLRoot extends SPLBranch {
     }
 
     private void loadPolicy() {
-        signaturePolicy = SplSignaturePolicy.builder()
+        signaturePolicy = SPLSignaturePolicy.builder()
             .requireSigned(config.policyRequireSigned())
             .checkExpiry(config.policyCheckExpiry())
             .requireSignedClasses(config.policyRequireSignedClasses())
@@ -299,7 +299,7 @@ public class SPLRoot extends SPLBranch {
             }
 
             writer.write("Language Config:" + NL);
-            for (Setting s : LangConfig.get().getAppliedSettings()) {
+            for (Setting s : I18nConfig.get().getAppliedSettings()) {
                 writer.write("  " + s + NL);
             }
 

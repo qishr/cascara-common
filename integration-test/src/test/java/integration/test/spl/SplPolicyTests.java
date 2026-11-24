@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import integration.test.exec.ExecTestBase;
 import integration.test.jar.JarSignatureInvalidTests;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
-import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.SPL;
+import io.github.qishr.cascara.common.service.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority.TestSigningIdentity;
@@ -31,7 +31,7 @@ public class SplPolicyTests extends ExecTestBase {
             .packageJar(jarPath);
 
         // 3. Configure policy requiring valid signatures trusted by rootCA
-        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();

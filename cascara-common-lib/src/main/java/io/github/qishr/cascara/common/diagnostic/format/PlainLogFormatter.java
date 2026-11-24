@@ -39,7 +39,6 @@ import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Set;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
@@ -52,13 +51,9 @@ public class PlainLogFormatter implements LogFormatter {
     protected LogFormatConfig config;
     protected long processId;
 
-    public PlainLogFormatter(LogFormatConfig config) {
-        this.config = config;
+    public PlainLogFormatter() {
+        config = LogFormatConfig.get();
         processId = ProcessHandle.current().pid();
-    }
-
-    public PlainLogFormatter withFields(Set<Field> fields) {
-        return this;
     }
 
     public LogFormatter setConfig(LogFormatConfig config) {

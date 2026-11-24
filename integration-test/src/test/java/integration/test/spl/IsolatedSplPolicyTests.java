@@ -30,8 +30,8 @@ import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.IsolatedExecutor.Response;
 import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.common.exec.ipc.IpcServer;
-import io.github.qishr.cascara.common.security.policy.SignatureException;
-import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
+import io.github.qishr.cascara.common.security.exception.SignatureException;
+import io.github.qishr.cascara.common.service.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.junit.extension.AssertNotReportedExtension;
@@ -335,7 +335,7 @@ public class IsolatedSplPolicyTests extends ExecTestBase {
                         .setModulePath(modulePath)
                         .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
                         .setSystemProperty(SP_CASCARA_REPORT_LEVEL_ + SplRegisterJarTestTask.class.getName(), "debug")
-                        .setSystemProperty(SP_CASCARA_REPORT_LEVEL_ + SplSignaturePolicy.class.getName(), "debug")
+                        .setSystemProperty(SP_CASCARA_REPORT_LEVEL_ + SPLSignaturePolicy.class.getName(), "debug")
                         .setSystemProperty(SP_CASCARA_SPL_BOOT_INFO_TO_CONSOLE, true)
                         .setSystemProperty(SP_CASCARA_SPL_PROPERTIES, splPropertiesPath)
                         .setTimeout(Duration.ofSeconds(120))

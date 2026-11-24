@@ -43,7 +43,6 @@ import io.github.qishr.cascara.common.diagnostic.format.PlainLogFormatter;
 
 public class LineLogger implements  Logger {
     private LogFormatter formatter;
-    private LogFormatConfig formatConfig = LogFormatConfig.get();
 
     /// Consumes every line of diagnostic output as a String.
     protected Consumer<String> lineConsumer;
@@ -53,7 +52,7 @@ public class LineLogger implements  Logger {
     }
 
     private void init() {
-        formatter = new PlainLogFormatter(formatConfig);
+        formatter = new PlainLogFormatter();
     }
 
     @Override

@@ -15,10 +15,10 @@ import org.junit.jupiter.api.parallel.Isolated;
 import integration.test.exec.ExecTestBase;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
+import io.github.qishr.cascara.common.service.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.security.cert.CertPathValidationResult;
 import io.github.qishr.cascara.common.security.cert.CertPathVerifier;
-import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
 import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
@@ -92,7 +92,7 @@ class CertPathValidationTests extends ExecTestBase {
             .packageJar();
 
         // Configured TrustStore is explicitly empty
-        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(TrustStore.empty())
                 .build();
@@ -120,7 +120,7 @@ class CertPathValidationTests extends ExecTestBase {
                 .packageJar();
 
         TrustStore trustStore = new TrustStore(Set.of(rootCA.certificate()));
-        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(trustStore)
                 .build();
@@ -148,7 +148,7 @@ class CertPathValidationTests extends ExecTestBase {
                 .packageJar();
 
         TrustStore trustStore = new TrustStore(Set.of(rootCA.certificate()));
-        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(trustStore)
                 .build();

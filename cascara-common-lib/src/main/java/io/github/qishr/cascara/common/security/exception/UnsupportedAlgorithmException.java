@@ -36,7 +36,6 @@ package io.github.qishr.cascara.common.security.exception;
 
 import io.github.qishr.cascara.common.i18n.LocalizableMessage;
 import io.github.qishr.cascara.common.security.SecurityMessage;
-import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 
 public class UnsupportedAlgorithmException extends SignatureException {

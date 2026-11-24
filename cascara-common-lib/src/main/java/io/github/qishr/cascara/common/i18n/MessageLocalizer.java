@@ -62,7 +62,7 @@ public class MessageLocalizer extends Localizer {
     private MessageFormatter formatter;
 
     MessageLocalizer() {
-        LangConfig config = LangConfig.get();
+        I18nConfig config = I18nConfig.get();
         formatter = new MessageFormatter(this::getPattern, config.localizeExceptions());
 
         registerTranslations(Localizer.class, "/META-INF/fr-FR.properties");

@@ -13,8 +13,8 @@ import java.util.jar.Manifest;
 
 import io.github.qishr.cascara.common.diagnostic.message.FileMessage;
 import io.github.qishr.cascara.common.diagnostic.message.GenericMessage;
+import io.github.qishr.cascara.common.security.exception.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
-import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.util.Pair;
 
 public final class JarManifestVerifier {

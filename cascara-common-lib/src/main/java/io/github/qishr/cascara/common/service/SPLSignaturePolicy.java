@@ -32,7 +32,7 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.security.policy;
+package io.github.qishr.cascara.common.service;
 
 import java.io.IOException;
 import java.lang.reflect.Proxy;
@@ -63,12 +63,15 @@ import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.security.cert.CertPathValidationResult;
 import io.github.qishr.cascara.common.security.cert.CertPathVerifier;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
+import io.github.qishr.cascara.common.security.exception.SignatureException;
+import io.github.qishr.cascara.common.security.policy.SignaturePolicy;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.util.JarFile;
 
 @Experimental
 @SchemaDefinition(title = "SPL Signature Policy")
-public final class SplSignaturePolicy implements SignaturePolicy {
-    private final static Reporter REPORTER = Reporter.forClass(SplSignaturePolicy.class);
+public final class SPLSignaturePolicy implements SignaturePolicy {
+    private final static Reporter REPORTER = Reporter.forClass(SPLSignaturePolicy.class);
 
     @SchemaID
     public static final String SCHEMA = "https://qishr.github.io/schemas/spl-signature-policy.json";
@@ -92,7 +95,7 @@ public final class SplSignaturePolicy implements SignaturePolicy {
     @DataIgnore
     private final X509CRL crl;
 
-    private SplSignaturePolicy(Builder builder) {
+    private SPLSignaturePolicy(Builder builder) {
         this.requireSigned = builder.requireSigned;
         this.requireSignedClasses = builder.requireSignedClasses;
         this.checkExpiry = builder.checkExpiry;
@@ -400,8 +403,8 @@ public final class SplSignaturePolicy implements SignaturePolicy {
             return this;
         }
 
-        public SplSignaturePolicy build() {
-            return new SplSignaturePolicy(this);
+        public SPLSignaturePolicy build() {
+            return new SPLSignaturePolicy(this);
         }
     }
 }

@@ -112,10 +112,11 @@ public class ConsoleLogger implements Logger {
 
     private void initializeFormatter() {
         if (config.isAnsiColoringEnabled()) {
-            formatter = new ColoredLogFormatter(formatConfig);
+            formatter = new ColoredLogFormatter();
         } else {
-            formatter = new PlainLogFormatter(formatConfig);
+            formatter = new PlainLogFormatter();
         }
+        formatter.setConfig(formatConfig);
     }
 
     /// Reports a Diagnostic to the console and the line consumer if they are enabled.

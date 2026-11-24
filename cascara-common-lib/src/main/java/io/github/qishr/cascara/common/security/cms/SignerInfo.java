@@ -51,9 +51,9 @@ import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1Integer;
 import io.github.qishr.cascara.common.security.asn1.types.primitive.ASN1ObjectIdentifier;
 import io.github.qishr.cascara.common.security.asn1.types.string.ASN1OctetString;
 import io.github.qishr.cascara.common.security.exception.InvalidKeyException;
+import io.github.qishr.cascara.common.security.exception.SignatureException;
 import io.github.qishr.cascara.common.security.exception.UnsupportedAlgorithmException;
 import io.github.qishr.cascara.common.security.exception.UnsupportedDigestException;
-import io.github.qishr.cascara.common.security.policy.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 
 public final class SignerInfo {

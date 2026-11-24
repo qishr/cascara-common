@@ -46,18 +46,15 @@ import io.github.qishr.cascara.common.util.internal.TermUtils;
 public class ColoredLogFormatter extends PlainLogFormatter {
     protected static final String[] levelColors = new String[7];
     {
-        // levelColors[Level.DEFAULT.ordinal()] = ANSI_WHITE;
         levelColors[Level.ERROR.ordinal()] = TermUtils.ANSI_RED;
         levelColors[Level.WARN.ordinal()] = TermUtils.ANSI_YELLOW;
         levelColors[Level.INFO.ordinal()] = TermUtils.ANSI_BLUE;
-        // levelColors[Level.DEBUG.ordinal()] = TermUtils.ANSI_WHITE;
-        // levelColors[Level.TRACE.ordinal()] = TermUtils.ANSI_WHITE;
     }
 
     protected boolean ansiColoringEnabled = true;
 
-    public ColoredLogFormatter(LogFormatConfig config) {
-        super(config);
+    public ColoredLogFormatter() {
+        super();
     }
 
     @Override
@@ -108,7 +105,6 @@ public class ColoredLogFormatter extends PlainLogFormatter {
                 } else {
                     sb.append(diagnostic.getProcessId());
                 }
-                // sb.append(diagnostic.getProcessId());
                 sb.append("] ");
             }
 

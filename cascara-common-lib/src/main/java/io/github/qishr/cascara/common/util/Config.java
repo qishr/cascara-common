@@ -95,12 +95,13 @@ public abstract class Config {
 
     @SuppressWarnings("unchecked")
     protected static <T extends Config> T get(Class<T> configClass, Path file, InputStream stream, FileSystem fs) {
-        T instance = (T) INSTANCES.computeIfAbsent(configClass, clazz -> {
+        T instance = (T) INSTANCES.computeIfAbsent(configClass, c -> {
             try {
-                T newInstance = (T) ReflectionUtils.createInstance(clazz);
+                T newInstance = ReflectionUtils.createInstance(configClass);
 
-                ((Config)newInstance).suppliedProperties = file;
-                ((Config)newInstance).suppliedStream = stream;
+                Config base = newInstance;
+                base.suppliedProperties = file;
+                base.suppliedStream = stream;
 
                 if (fs != null) {
                     Config.fileSystem = fs;
@@ -108,7 +109,7 @@ public abstract class Config {
 
                 return newInstance;
             } catch (ReflectiveOperationException e) {
-                throw new ConfigException(e, GenericMessage.CONFIG_LOAD_FAILED, clazz.getName());
+                throw new ConfigException(e, GenericMessage.CONFIG_LOAD_FAILED, configClass.getName());
             }
         });
         instance.ensureInitialized();

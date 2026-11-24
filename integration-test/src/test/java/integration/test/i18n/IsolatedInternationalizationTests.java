@@ -32,8 +32,8 @@ public class IsolatedInternationalizationTests extends ExecTestBase {
         exec.setJvmConfig(new JvmConfig()
             .setModuleName(ThrowableTestTask.class.getModule().getName())
             .setModulePath(getJvmModulePath())
-            .setSystemProperty("cascara.lang.locale", "fr-FR")
-            .setSystemProperty("cascara.lang.localize-exceptions", "true")
+            .setSystemProperty(SP_CASCARA_I18N_LOCALE, "fr-FR")
+            .setSystemProperty(SP_CASCARA_I18N_LOCALIZE_EXCEPTIONS, true)
             .setTimeout(Duration.ofSeconds(20))
         );
 
@@ -51,8 +51,8 @@ public class IsolatedInternationalizationTests extends ExecTestBase {
 
         exec.setJvmConfig(new JvmConfig()
             .setClassPath(getJvmModulePath())
-            .setSystemProperty("cascara.lang.locale", "fr-FR")
-            .setSystemProperty("cascara.lang.localize-exceptions", "true")
+            .setSystemProperty(SP_CASCARA_I18N_LOCALE, "fr-FR")
+            .setSystemProperty(SP_CASCARA_I18N_LOCALIZE_EXCEPTIONS, true)
             .setTimeout(Duration.ofSeconds(20))
         );
 
@@ -88,8 +88,8 @@ public class IsolatedInternationalizationTests extends ExecTestBase {
 
         exec.setJvmConfig(new JvmConfig()
             .setClassPath(classPath)
-            .setSystemProperty("cascara.lang.locale", "es-ES")
-            .setSystemProperty("cascara.lang.localize-exceptions", "true")
+            .setSystemProperty(SP_CASCARA_I18N_LOCALE, "es-ES")
+            .setSystemProperty(SP_CASCARA_I18N_LOCALIZE_EXCEPTIONS, true)
             .setTimeout(Duration.ofSeconds(20))
         );
 

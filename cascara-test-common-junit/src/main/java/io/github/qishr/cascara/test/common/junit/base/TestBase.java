@@ -24,6 +24,14 @@ public abstract class TestBase {
     public static final String EV_CASCARA_REPORT_CONSOLE_OUTPUT = "CASCARA_REPORT_CONSOLE_OUTPUT";
 
     // System properties
+    public static final String SP_CASCARA_I18N_LOCALE = "cascara.i18n.locale";
+    public static final String SP_CASCARA_I18N_LOCALIZE_EXCEPTIONS = "cascara.i18n.localize-exceptions";
+
+    public static final String SP_CASCARA_LOG_FORMAT_INCLUDE_STACK_TRACE = "cascara.log.format.stack-trace";
+    public static final String SP_CASCARA_REPORT_LEVEL_ = "cascara.report.level.";
+    public static final String SP_CASCARA_REPORT_ALLOW_API_OVERRIDE = "cascara.report.allow-api-override";
+    public static final String SP_CASCARA_REPORT_CONSOLE_OUTPUT = "cascara.report.console-output";
+
     public static final String SP_CASCARA_SPL_DISCOVER = "cascara.spl.discover";
     public static final String SP_CASCARA_SPL_BOOT_ERRORS_TO_CONSOLE = "cascara.spl.boot-errors-to-console";
     public static final String SP_CASCARA_SPL_BOOT_INFO_TO_CONSOLE = "cascara.spl.boot-info-to-console";
@@ -32,10 +40,6 @@ public abstract class TestBase {
     public static final String SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES = "cascara.spl.policy.require-signed-classes";
     public static final String SP_CASCARA_SPL_POLICY_CHECK_EXPIRY = "cascara.spl.policy.check-expiry";
 
-    public static final String SP_CASCARA_REPORT_LEVEL_ = "cascara.report.level.";
-    public static final String SP_CASCARA_REPORT_ALLOW_API_OVERRIDE = "cascara.report.allow-api-override";
-    public static final String SP_CASCARA_REPORT_CONSOLE_OUTPUT = "cascara.report.console-output";
-    public static final String SP_CASCARA_LOG_FORMAT_INCLUDE_STACK_TRACE = "cascara.log.format.stack-trace";
 
     // Properties file path system properties
     public static final String SP_CASCARA_REPORT_PROPERTIES = "cascara.report.properties";

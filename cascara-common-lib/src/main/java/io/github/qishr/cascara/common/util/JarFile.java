@@ -65,7 +65,7 @@ import io.github.qishr.cascara.common.i18n.exception.LocalizableSecurityExceptio
 import io.github.qishr.cascara.common.property.Properties;
 import io.github.qishr.cascara.common.security.SecurityConfig;
 import io.github.qishr.cascara.common.security.SecurityMessage;
-import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.exception.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.security.verifier.CascaraJarVerifier;
 import io.github.qishr.cascara.common.security.verifier.JarVerifier;

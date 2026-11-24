@@ -16,9 +16,9 @@ import org.junit.jupiter.api.Test;
 import io.github.qishr.cascara.common.diagnostic.report.Reporter;
 import io.github.qishr.cascara.common.i18n.exception.LocalizableSecurityException;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
-import io.github.qishr.cascara.common.security.policy.SignatureException;
+import io.github.qishr.cascara.common.security.exception.SignatureException;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
-import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
+import io.github.qishr.cascara.common.service.SPLSignaturePolicy;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ZipFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
@@ -371,7 +371,7 @@ public class JarSignatureInvalidTests extends JarTestBase {
                 .packageJar();
 
         // 4. Configure policy requiring valid signatures anchored at rootCA
-        SplSignaturePolicy policy = SplSignaturePolicy.builder()
+        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();

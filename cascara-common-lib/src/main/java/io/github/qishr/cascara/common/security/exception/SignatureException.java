@@ -32,40 +32,35 @@
 // you do not wish to do so, delete this exception statement from your
 // version.
 
-package io.github.qishr.cascara.common.i18n;
+package io.github.qishr.cascara.common.security.exception;
 
-import io.github.qishr.cascara.common.annotation.ConfigExtends;
-import io.github.qishr.cascara.common.annotation.ConfigNamespace;
-import io.github.qishr.cascara.common.annotation.ConfigSetting;
 import io.github.qishr.cascara.common.annotation.NonNull;
-import io.github.qishr.cascara.common.annotation.Nullable;
-import io.github.qishr.cascara.common.util.Cascara;
-import io.github.qishr.cascara.common.util.Config;
+import io.github.qishr.cascara.common.exception.UnexpectedNullValueException;
+import io.github.qishr.cascara.common.i18n.LocalizableMessage;
+import io.github.qishr.cascara.common.i18n.exception.LocalizableSecurityException;
+import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 
-@ConfigExtends(Cascara.class)
-@ConfigNamespace("cascara.lang")
-public class LangConfig extends Config {
-    @ConfigSetting()
-    private String locale;
+public class SignatureException extends LocalizableSecurityException {
+    @NonNull private final SignatureStatus signatureStatus;
 
-    @ConfigSetting()
-    private boolean localizeExceptions;
+    public SignatureException(SignatureStatus signatureStatus, LocalizableMessage message, Object... details) {
+        super(message, details);
+        if (signatureStatus == null) {
+            throw new UnexpectedNullValueException("signatureStatus");
+        }
+        this.signatureStatus = signatureStatus;
+    }
 
-    private LangConfig() {
-        // No public constructor
+    public SignatureException(Throwable t, SignatureStatus signatureStatus, LocalizableMessage message, Object... details) {
+        super(t, message, details);
+        if (signatureStatus == null) {
+            throw new UnexpectedNullValueException("signatureStatus");
+        }
+        this.signatureStatus = signatureStatus;
     }
 
     @NonNull
-    public static LangConfig get() {
-        return get(LangConfig.class);
-    }
-
-    @Nullable
-    public String getLocale() {
-        return locale;
-    }
-
-    public boolean localizeExceptions() {
-        return localizeExceptions;
+    public SignatureStatus getSignatureStatus() {
+        return signatureStatus;
     }
 }
