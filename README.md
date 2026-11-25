@@ -5,7 +5,7 @@
 ### Without Tests or Javadoc
 
 ```
-./gradlew -x javadoc -x :cascara-common-lib:testWithoutJPMS -x :cascara-common-lib:testJarJPMS -x :cascara-common-lib:testJarWithoutJPMS -x test
+./gradlew -x javadoc -x testWithoutJPMS -x test
 ```
 
 ## Testing
