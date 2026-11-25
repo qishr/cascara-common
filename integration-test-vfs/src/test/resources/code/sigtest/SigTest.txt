@@ -1,0 +1,4 @@
+package com.example.providera;
+public class ProviderA {
+    public String getName() { return "ProviderA"; }
+}

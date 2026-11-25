@@ -9,9 +9,10 @@ import org.junit.jupiter.api.parallel.Isolated;
 
 import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.util.Classes;
+import io.github.qishr.cascara.test.common.junit.base.TestBase;
 
 @Isolated
-public class ClassJarPathTest {
+public class ClassJarPathTest extends TestBase {
     @Test
     void test_jarPath() {
 

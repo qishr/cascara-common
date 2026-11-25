@@ -16,5 +16,6 @@ rootProject.name = 'cascara-root'
 include 'cascara-common-lib'
 include 'cascara-test-common-junit'
 
- include 'integration-test'
- include 'integration-test-fixtures'
+include 'integration-test'
+include 'integration-test-vfs'
+include 'integration-test-fixtures'

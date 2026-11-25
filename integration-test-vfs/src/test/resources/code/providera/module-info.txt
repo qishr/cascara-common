@@ -1,0 +1,9 @@
+module provider.a {
+    requires cascara.common;
+    requires cascara.common.annotation;
+    requires integration.test.fixtures;
+    exports com.example.providera;
+    opens com.example.providera to cascara.common;
+    provides io.github.qishr.cascara.common.service.ServiceProvider
+        with com.example.providera.ProviderA;
+}

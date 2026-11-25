@@ -1,0 +1,6 @@
+module provider.a {
+    requires cascara.common;
+    requires cascara.common.annotation;
+    exports com.example.providera;
+    opens com.example.providera;
+}

@@ -12,18 +12,16 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.test.common.junit.base.TestBase;
-import io.github.qishr.cascara.test.common.security.TestCertificateAuthority;
 
 class TrustStoreTests extends TestBase {
 
-    private static TestCertificateAuthority rootCA;
-    private static X509Certificate validCert;
-    private static X509Certificate expiredCert;
+    private X509Certificate validCert;
+    private X509Certificate expiredCert;
 
     private static void saveToKeyStore(Path path, char[] password, String alias, Certificate cert) throws Exception {
         KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType()); // Defaults to PKCS12 in modern JDKs
@@ -39,11 +37,10 @@ class TrustStoreTests extends TestBase {
     //
     //
 
-    @BeforeAll
-    static void init() throws Exception {
-        rootCA = TestCertificateAuthority.create("Cascara Root CA");
+    @BeforeEach
+    protected void setUp() {
+        super.setUp();
         validCert = rootCA.issueIdentity("valid-service").certificate();
-        // Identity with past validity window:
         expiredCert = rootCA.issueExpiredIdentity("expired-service").certificate();
     }
 

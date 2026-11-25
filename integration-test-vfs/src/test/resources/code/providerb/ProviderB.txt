@@ -1,0 +1,7 @@
+package com.example.providerb;
+import integration.test.fixtures.TestService;
+import io.github.qishr.cascara.common.property.Properties;
+public class ProviderB implements TestService {
+    public String getName() { return "ProviderB"; }
+    public Properties getServiceProperties() { return null; }
+}

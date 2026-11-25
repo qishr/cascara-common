@@ -206,23 +206,23 @@ public final class TestCertificateAuthority {
     //
 
     // Issue an identity inheriting the CA's algorithm
-    public TestSigningIdentity issueIdentity(String commonName) throws Exception {
+    public TestSigningIdentity issueIdentity(String commonName) {
         return issueIdentity(commonName, this.algorithm);
     }
 
     // Or issue an identity with a specific key type
-    public TestSigningIdentity issueIdentity(String commonName, KeyAlgorithm identityAlgorithm) throws Exception {
+    public TestSigningIdentity issueIdentity(String commonName, KeyAlgorithm identityAlgorithm) {
         return issueIdentity(commonName, 365, identityAlgorithm);
     }
 
-    public TestSigningIdentity issueIdentity(String name, long validityDays, KeyAlgorithm algorithm) throws Exception {
+    public TestSigningIdentity issueIdentity(String name, long validityDays, KeyAlgorithm algorithm) {
         Instant now = Instant.now();
         Instant notBeforeInst = validityDays < 0 ? now.minus(30, ChronoUnit.DAYS) : now.minus(1, ChronoUnit.DAYS);
         Instant notAfterInst  = validityDays < 0 ? now.minus(1, ChronoUnit.DAYS)  : now.plus(validityDays, ChronoUnit.DAYS);
         return issueIdentity(name, notBeforeInst, notAfterInst, algorithm);
     }
 
-    public TestSigningIdentity issueExpiredIdentity(String name) throws Exception {
+    public TestSigningIdentity issueExpiredIdentity(String name) {
         Instant notBefore = Instant.now().minus(10, ChronoUnit.DAYS);
         Instant notAfter  = Instant.now().minus(1, ChronoUnit.DAYS);
         return issueIdentity(name, notBefore, notAfter, KeyAlgorithm.RSA);

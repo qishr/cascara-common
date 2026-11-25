@@ -1,0 +1,120 @@
+plugins {
+    id "java-library"
+    id "io.github.qishr.cascara.conventions" version "0.1.0"
+    id 'eclipse'
+}
+
+java { modularity.inferModulePath = true }
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+dependencies {
+    implementation(platform("io.github.qishr:cascara-meta-bom:$cascara_version"))
+
+    implementation("org.junit.jupiter:junit-jupiter-api")
+    implementation("org.junit.jupiter:junit-jupiter-engine")
+    implementation('org.junit.platform:junit-platform-launcher')
+
+    implementation "org.apache.logging.log4j:log4j-api:2.25.5"
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.5'
+
+    implementation('io.github.qishr:cascara-logging-log4j')
+    implementation('io.github.qishr:cascara-lang-json')
+    implementation 'io.github.qishr:cascara-common-annotation'
+
+    implementation project(':cascara-common-lib')
+    testImplementation project(':cascara-test-common-junit')
+    api(project(':integration-test-fixtures'))
+}
+
+eclipse {
+    classpath {
+        file {
+            whenMerged {
+                // Force Buildship to mark external test JARs as JPMS modules for JDT LS
+                entries.findAll { it.kind == 'lib' || it.kind == 'con' }.each { entry ->
+                    entry.entryAttributes['module'] = 'true'
+                }
+            }
+        }
+    }
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.addStringOption('Xdoclint:-missing', '-quiet')
+}
+
+tasks.named('javadocJar') {
+    enabled = false
+}
+
+tasks.named('sourcesJar') {
+    enabled = false
+}
+
+tasks.withType(Test).configureEach { test ->
+    ['cascaraSigningKeystore', 'cascaraSigningStorePass', 'cascaraSigningKeyPass'].each { propName ->
+        if (project.hasProperty(propName)) {
+            test.systemProperty(propName, project.property(propName))
+        }
+    }
+}
+
+tasks.named('test', Test) {
+    systemProperty 'java.net.preferIPv4Stack', 'true'
+}
+
+tasks.named('compileTestJava', JavaCompile) {
+    // TODO: This is specified for org.gradle.api.tasks.testing.Test
+    // in the build conventions, but there is no compileTestJava
+    // there. Should it be there instead of here?
+    modularity.inferModulePath = true
+}
+
+tasks.withType(Test).configureEach {
+    testLogging {
+        // events = ['started', 'skipped', 'failed']
+        events = ['failed']
+        showStandardStreams = true
+    }
+}
+
+def jarFileName = tasks.named('jar').get().archiveFile.get().asFile.name
+
+tasks.register('testWithoutJPMS', Test) {
+    description = 'Runs tests against the packaged JAR on a non-modular flat classpath.'
+    group = 'verification'
+
+    dependsOn tasks.named('jar'), tasks.named('compileTestJava')
+
+    useJUnitPlatform {
+        // Exclude tests that specifically use JPMS features
+        excludeTags 'requires-jpms'
+
+        // Exclude tests that run in an isolated JVM. Their
+        // behavior is not affected by whether JUnit is running
+        // with or without JPMS.
+        excludeTags 'isolated-executor'
+    }
+
+    modularity.inferModulePath = false
+
+    testClassesDirs = project.sourceSets.test.output.classesDirs
+
+    classpath = files(
+        tasks.named('jar').flatMap { it.archiveFile },
+        project.sourceSets.test.output,
+        configurations.testRuntimeClasspath.filter {
+            File file -> file.name != jarFileName
+        }
+    )
+}
+
+// Ensure running `gradle check` triggers all test modes
+tasks.named('check') {
+    dependsOn tasks.named('test'), tasks.named('testWithoutJPMS')
+}
+
