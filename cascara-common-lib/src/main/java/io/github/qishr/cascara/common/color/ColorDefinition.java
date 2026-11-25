@@ -37,7 +37,9 @@ package io.github.qishr.cascara.common.color;
 import java.util.UUID;
 
 import io.github.qishr.cascara.common.annotation.DataField;
+import io.github.qishr.cascara.common.annotation.Experimental;
 
+@Experimental
 public class ColorDefinition {
     private static final String NAME_PLACEHOLDER = "<name>";
     // public static final DataFormat DATA_FORMAT = new DataFormat("application/x-cascara-colordef");

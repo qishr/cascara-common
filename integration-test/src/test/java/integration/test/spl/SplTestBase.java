@@ -40,7 +40,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.Isolated;
 
-import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
+import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.test.common.junit.base.TestBase;
 
@@ -59,7 +59,7 @@ public class SplTestBase extends TestBase {
     }
 
     public static void resetSplPolicy() {
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
             .requireSigned(false)
             .build();
         SPL.setSignaturePolicy(policy);

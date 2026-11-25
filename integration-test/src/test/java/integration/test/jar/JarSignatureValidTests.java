@@ -27,7 +27,7 @@ import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.security.cms.CertificateSet;
 import io.github.qishr.cascara.common.security.cms.SignedData;
 import io.github.qishr.cascara.common.security.cms.SignerInfo;
-import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
+import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
@@ -142,7 +142,7 @@ public class JarSignatureValidTests extends JarTestBase {
                 .packageJar();
 
         // 3. Verify under SignaturePolicy requiring ecCA trust anchor
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(new TrustStore(Set.of(ecCA.certificate())))
                 .build();

@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.security.cert.TrustStore;
-import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
+import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.Classes;
@@ -44,7 +44,7 @@ public class SignedCascaraModuleTests {
         // 3. Load TrustStore using Gradle's credentials & evaluate policy
         TrustStore trustStore = TrustStore.load(keystorePath, storePassStr.toCharArray());
 
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(trustStore)
                 .build();

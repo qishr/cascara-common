@@ -7,12 +7,12 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import io.github.qishr.cascara.common.annotation.SchemaDefinition;
-import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
+import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 
 public class AnnotatedClassesTest extends ClassHierarchyTestBase {
     @Test
     void test_anno() {
         Set<String> schemaClasses = Classes.Annotated.with(SchemaDefinition.class);
-        assertTrue(schemaClasses.contains(SPLSignaturePolicy.class.getName()));
+        assertTrue(schemaClasses.contains(SplSignaturePolicy.class.getName()));
     }
 }

@@ -47,7 +47,7 @@ import io.github.qishr.cascara.common.util.Config;
 
 @ConfigExtends(Cascara.class)
 @ConfigNamespace("cascara.spl")
-public final class SPLConfig extends Config {
+public final class SplConfig extends Config {
     @ConfigSetting()
     private boolean discover = true;
 
@@ -73,13 +73,13 @@ public final class SPLConfig extends Config {
     private Map<String,String> preferredProviders = new HashMap<>();
 
     @NonNull
-    public static SPLConfig get() {
-        return get(SPLConfig.class);
+    public static SplConfig get() {
+        return get(SplConfig.class);
     }
 
     @NonNull
-    public static SPLConfig get(InputStream stream) {
-        return get(SPLConfig.class, stream);
+    public static SplConfig get(InputStream stream) {
+        return get(SplConfig.class, stream);
     }
 
     public boolean isDiscoveryEnabled() {

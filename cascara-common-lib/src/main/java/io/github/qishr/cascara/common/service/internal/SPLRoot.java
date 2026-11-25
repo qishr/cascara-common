@@ -51,7 +51,7 @@ import io.github.qishr.cascara.common.diagnostic.report.GlobalReporter;
 import io.github.qishr.cascara.common.diagnostic.report.ReporterConfig;
 import io.github.qishr.cascara.common.i18n.I18nConfig;
 import io.github.qishr.cascara.common.security.exception.SignatureException;
-import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
+import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.policy.SignaturePolicy;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.common.service.ServiceException;
@@ -235,7 +235,7 @@ public class SPLRoot extends SPLBranch {
     }
 
     private void loadPolicy() {
-        signaturePolicy = SPLSignaturePolicy.builder()
+        signaturePolicy = SplSignaturePolicy.builder()
             .requireSigned(config.policyRequireSigned())
             .checkExpiry(config.policyCheckExpiry())
             .requireSignedClasses(config.policyRequireSignedClasses())

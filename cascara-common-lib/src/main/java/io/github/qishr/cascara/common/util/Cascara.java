@@ -167,7 +167,7 @@ public class Cascara extends Config {
     /// first  matching provider will be returned by SPL.
     @SuppressWarnings("null")
     @NonNull
-    public Path getSPLPropertiesPath() {
+    public Path getSplPropertiesPath() {
         // This should never be null
         if (splPropertiesPath == null ) {
             throw new UnexpectedNullValueException("splPropertiesPath");

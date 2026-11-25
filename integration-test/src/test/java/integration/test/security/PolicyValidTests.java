@@ -10,7 +10,7 @@ import java.util.jar.JarEntry;
 import org.junit.jupiter.api.Test;
 
 import integration.test.jar.JarTestBase;
-import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
+import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
@@ -32,7 +32,7 @@ public class PolicyValidTests extends JarTestBase {
             .packageJar();
 
         // 3. Verify JAR under a SignaturePolicy backed by the CA's TrustStore
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
             .requireSigned(true)
             .setTrustStore(ca.trustStore())
             .build();
@@ -58,7 +58,7 @@ public class PolicyValidTests extends JarTestBase {
             .packageJar();
 
         // 2. Build SignaturePolicy backed by CA's TrustStore
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
             .requireSigned(true)
             .setTrustStore(ca.trustStore())
             .build();

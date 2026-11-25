@@ -25,7 +25,7 @@ import io.github.qishr.cascara.common.exec.IsolatedExecutor;
 import io.github.qishr.cascara.common.exec.JvmConfig;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.security.exception.SignatureException;
-import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
+import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.service.SPL;
 import io.github.qishr.cascara.test.common.jar.SyntheticJar;
@@ -47,7 +47,7 @@ public class SplClassRegistrationSecurityTests extends ExecTestBase {
 
     @AfterEach
     protected void tearDown() throws IOException {
-        SPL.setSignaturePolicy(SPLSignaturePolicy.builder().build());
+        SPL.setSignaturePolicy(SplSignaturePolicy.builder().build());
         System.setProperty(SP_CASCARA_SPL_VERIFY, "false");
         super.tearDown();
     }
@@ -63,7 +63,7 @@ public class SplClassRegistrationSecurityTests extends ExecTestBase {
                         .setModulePath(getJvmModulePath())
                         .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
                         .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "debug")
-                        .setSystemProperty("cascara.report.level." + SPLSignaturePolicy.class.getName(), "debug")
+                        .setSystemProperty("cascara.report.level." + SplSignaturePolicy.class.getName(), "debug")
                         .setSystemProperty(SP_CASCARA_SPL_VERIFY, true)
                         .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, true)
                         .setTimeout(Duration.ofMinutes(2))
@@ -101,7 +101,7 @@ public class SplClassRegistrationSecurityTests extends ExecTestBase {
             TrustStore trustStore = new TrustStore(Set.of(identity.certificate(), rootCA.certificate()));
 
             // 3. Configure policy trusting the test CA
-            SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+            SplSignaturePolicy policy = SplSignaturePolicy.builder()
                     .requireSignedClasses(true)
                     .setTrustStore(trustStore)
                     .build();
@@ -117,7 +117,7 @@ public class SplClassRegistrationSecurityTests extends ExecTestBase {
     @Test
     void test_registerClass_lenientPolicy_allowsUnsignedClass() {
         // Default policy: requireSignedClasses = false
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSignedClasses(false)
                 .build();
 
@@ -138,7 +138,7 @@ public class SplClassRegistrationSecurityTests extends ExecTestBase {
                         .setModulePath(getJvmModulePath())
                         .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
                         .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "debug")
-                        .setSystemProperty("cascara.report.level." + SPLSignaturePolicy.class.getName(), "debug")
+                        .setSystemProperty("cascara.report.level." + SplSignaturePolicy.class.getName(), "debug")
                         .setSystemProperty(SP_CASCARA_SPL_VERIFY, true)
                         .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, true)
                         .setTimeout(Duration.ofMinutes(2))
@@ -165,7 +165,7 @@ public class SplClassRegistrationSecurityTests extends ExecTestBase {
                         .setModulePath(getJvmModulePath())
                         .setEnv(EV_CASCARA_HOME, cascara.getHomePath())
                         .setSystemProperty("cascara.report.level." + SplRegisterClassTestTask.class.getName(), "debug")
-                        .setSystemProperty("cascara.report.level." + SPLSignaturePolicy.class.getName(), "debug")
+                        .setSystemProperty("cascara.report.level." + SplSignaturePolicy.class.getName(), "debug")
                         .setSystemProperty(SP_CASCARA_SPL_VERIFY, true)
                         .setSystemProperty(SP_CASCARA_SPL_POLICY_REQUIRE_SIGNED_CLASSES, true)
                         .setTimeout(Duration.ofMinutes(2))

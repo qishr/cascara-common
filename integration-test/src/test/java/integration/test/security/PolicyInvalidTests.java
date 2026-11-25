@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import integration.test.jar.JarSignatureInvalidTests;
 import integration.test.jar.JarSignatureValidTests;
 import integration.test.jar.JarTestBase;
-import io.github.qishr.cascara.common.security.policy.SPLSignaturePolicy;
+import io.github.qishr.cascara.common.security.policy.SplSignaturePolicy;
 import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.security.cert.TrustStore;
 import io.github.qishr.cascara.common.util.JarFile;
@@ -38,7 +38,7 @@ public class PolicyInvalidTests extends JarTestBase {
             .packageJar();
 
         // 3. Configure SignaturePolicy requiring trust anchors from Cascara CA
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
             .requireSigned(true)
             .setTrustStore(cascaraCA.trustStore())
             .build();
@@ -65,7 +65,7 @@ public class PolicyInvalidTests extends JarTestBase {
                 .packageJar();
 
         // Evaluate against our genuine TrustStore containing only Cascara Root CA
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();
@@ -89,7 +89,7 @@ public class PolicyInvalidTests extends JarTestBase {
                 .packageJar();
 
         // Empty TrustStore should fail to trust even a valid Cascara identity
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(new TrustStore(Collections.emptySet()))
                 .build();
@@ -110,7 +110,7 @@ public class PolicyInvalidTests extends JarTestBase {
                 .addSources("code/sigtest/module-info.txt", "code/sigtest/SigTest.txt")
                 .packageJar();
 
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();
@@ -134,7 +134,7 @@ public class PolicyInvalidTests extends JarTestBase {
                 .packageJar(jarPath);
 
         // 3. Configure policy requiring valid signatures trusted by rootCA
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();
@@ -159,7 +159,7 @@ public class PolicyInvalidTests extends JarTestBase {
                 .packageJar(jarPath);
 
         // 3. Configure policy requiring valid signatures trusted by rootCA
-        SPLSignaturePolicy policy = SPLSignaturePolicy.builder()
+        SplSignaturePolicy policy = SplSignaturePolicy.builder()
                 .requireSigned(true)
                 .setTrustStore(new TrustStore(Set.of(rootCA.certificate())))
                 .build();

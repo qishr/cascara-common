@@ -68,8 +68,8 @@ import io.github.qishr.cascara.common.util.JarFile;
 
 @Experimental
 @SchemaDefinition(title = "SPL Signature Policy")
-public final class SPLSignaturePolicy implements SignaturePolicy {
-    private final static Reporter REPORTER = Reporter.forClass(SPLSignaturePolicy.class);
+public final class SplSignaturePolicy implements SignaturePolicy {
+    private final static Reporter REPORTER = Reporter.forClass(SplSignaturePolicy.class);
 
     @SchemaID
     public static final String SCHEMA = "https://qishr.github.io/schemas/spl-signature-policy.json";
@@ -93,7 +93,7 @@ public final class SPLSignaturePolicy implements SignaturePolicy {
     @DataIgnore
     private final X509CRL crl;
 
-    private SPLSignaturePolicy(Builder builder) {
+    private SplSignaturePolicy(Builder builder) {
         this.requireSigned = builder.requireSigned;
         this.requireSignedClasses = builder.requireSignedClasses;
         this.checkExpiry = builder.checkExpiry;
@@ -401,8 +401,8 @@ public final class SPLSignaturePolicy implements SignaturePolicy {
             return this;
         }
 
-        public SPLSignaturePolicy build() {
-            return new SPLSignaturePolicy(this);
+        public SplSignaturePolicy build() {
+            return new SplSignaturePolicy(this);
         }
     }
 }

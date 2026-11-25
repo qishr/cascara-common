@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.github.qishr.cascara.common.exec.AbstractExecutionTask;
-import io.github.qishr.cascara.common.service.SPLConfig;
+import io.github.qishr.cascara.common.service.SplConfig;
 import io.github.qishr.cascara.common.util.Cascara;
 import io.github.qishr.cascara.common.util.Config.Setting;
 
@@ -18,7 +18,7 @@ public class CascaraConfigTask extends AbstractExecutionTask<Void, Map<String,St
         Map<String,String> settings = new HashMap<>();
 
         settings.put("cascara.properties", cascara.getPropertiesPath().toString());
-        settings.put("cascara.spl.properties", cascara.getSPLPropertiesPath().toString());
+        settings.put("cascara.spl.properties", cascara.getSplPropertiesPath().toString());
 
         settings.put("cascara.content-types.path", cascara.getContentTypesPath().toString());
 
@@ -26,7 +26,7 @@ public class CascaraConfigTask extends AbstractExecutionTask<Void, Map<String,St
         settings.put("cascara.shared.path", cascara.getSharedPath().toString());
         settings.put("cascara.module.path", cascara.getModulePath().toString());
 
-        for (Setting s : SPLConfig.get().getAllSettings()) {
+        for (Setting s : SplConfig.get().getAllSettings()) {
             settings.put(s.getName(), s.asString());
         }
 

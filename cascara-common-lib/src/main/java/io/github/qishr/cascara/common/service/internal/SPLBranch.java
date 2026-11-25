@@ -73,7 +73,7 @@ import io.github.qishr.cascara.common.security.policy.SignatureStatus;
 import io.github.qishr.cascara.common.semver.SemVer;
 import io.github.qishr.cascara.common.service.ContentTypeProvider;
 import io.github.qishr.cascara.common.service.SPL;
-import io.github.qishr.cascara.common.service.SPLConfig;
+import io.github.qishr.cascara.common.service.SplConfig;
 import io.github.qishr.cascara.common.service.ServiceException;
 import io.github.qishr.cascara.common.service.ServiceMessage;
 import io.github.qishr.cascara.common.service.ServiceMetadata;
@@ -94,7 +94,7 @@ public class SPLBranch implements SPL {
 
     protected static SPLRoot rootLayer;
 
-    protected static SPLConfig config = SPLConfig.get();
+    protected static SplConfig config = SplConfig.get();
 
     // TODO: Remove this
     protected boolean ownsReporter = false;
